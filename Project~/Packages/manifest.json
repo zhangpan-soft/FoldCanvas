@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "com.foldcanvas.core": "file:../../",
+    "com.unity.test-framework": "1.6.0"
+  },
+  "testables": [
+    "com.foldcanvas.core"
+  ]
+}

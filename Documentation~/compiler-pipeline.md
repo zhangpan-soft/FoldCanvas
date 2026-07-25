@@ -1,0 +1,114 @@
+# Compiler pipeline
+
+## Stage 0: source loading
+
+- load ScriptableObject or FoldScript
+- resolve appearance references
+- normalize units to meters
+- preserve stable source identifiers
+
+No geometry is generated before source-level validation completes.
+
+## Stage 1: source validation
+
+Validate:
+
+- schema version
+- unique panel, seam, and operation IDs
+- canvas regions inside `[0,1]`
+- valid physical dimensions
+- valid tessellation counts
+- existing panel and boundary references
+- finite numeric parameters
+- operation ordering prerequisites
+
+## Stage 2: panel tessellation
+
+Each panel tessellator emits:
+
+```text
+positions2D
+canvasUv0
+triangles
+ordered boundaries
+panel ownership
+```
+
+Output order must be stable and documented.
+
+## Stage 3: operation execution
+
+Operations modify explicit geometry buffers. The MVP uses a stable ordered list.
+
+For every operation:
+
+1. resolve target panels or regions
+2. validate parameters
+3. evaluate mapping
+4. update 3D positions and any local frames
+5. preserve UV0
+6. record operation-specific diagnostics
+
+## Stage 4: seam resolution
+
+For each requested seam:
+
+1. extract ordered boundary curves
+2. evaluate current 3D arc lengths
+3. determine orientation
+4. resample to common parameters when necessary
+5. weld, bridge, or retain as requested
+6. update ownership and boundary maps
+
+Seams must be processed in a deterministic order, normally source array order after validation.
+
+## Stage 5: thickness
+
+- classify closed versus open boundaries
+- generate inner shell
+- reverse inner triangles
+- create rim/side-wall topology only where needed
+- maintain source-to-generated vertex provenance
+
+## Stage 6: derived attributes
+
+- triangle normals
+- vertex normals according to smoothing policy
+- bounds
+- optional tangents
+- optional secondary UVs in later versions
+
+## Stage 7: validation
+
+- finite coordinates
+- non-zero triangle area
+- consistent winding where expected
+- open-boundary count
+- manifold edge count
+- duplicate/coincident vertices
+- seam closure error
+- self-intersection when enabled
+
+## Stage 8: artifact creation
+
+The runtime compiler returns an in-memory result. Editor code may save:
+
+- `.mesh` asset
+- material
+- validation report
+- prefab
+- source hash metadata
+
+Editor saving must not change geometry output.
+
+## Stage 9: feedback loop
+
+Diagnostics are structured so humans and AI can repair the source:
+
+```text
+FC2104 SeamLengthMismatch
+panel=wall boundary=vMin
+panel=bottom boundary=perimeter
+relativeDifference=0.032
+suggestions=[increase wall width, choose fitTargetBoundary, enable resampling]
+```

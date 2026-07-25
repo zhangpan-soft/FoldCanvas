@@ -1,0 +1,14 @@
+{
+  "name": "FoldCanvas.Runtime",
+  "rootNamespace": "FoldCanvas",
+  "references": [],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

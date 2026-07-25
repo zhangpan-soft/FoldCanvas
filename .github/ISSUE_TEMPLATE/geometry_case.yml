@@ -1,0 +1,35 @@
+name: Geometry challenge case
+description: Submit an object class that tests the representation
+labels: [geometry-case]
+body:
+  - type: input
+    id: object
+    attributes:
+      label: Object class
+      placeholder: teapot with one handle and one spout
+    validations:
+      required: true
+  - type: textarea
+    id: panels
+    attributes:
+      label: Candidate 2D panels or atlas
+    validations:
+      required: true
+  - type: textarea
+    id: operations
+    attributes:
+      label: Candidate construction operations
+    validations:
+      required: true
+  - type: textarea
+    id: topology
+    attributes:
+      label: Topology, seams, holes, and internal structure
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Numerical and visual success criteria
+    validations:
+      required: true

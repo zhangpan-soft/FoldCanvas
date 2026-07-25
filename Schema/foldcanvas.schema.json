@@ -1,0 +1,329 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-0.1.schema.json",
+  "title": "FoldCanvas FoldScript",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "assetId",
+    "displayName",
+    "units",
+    "canvas",
+    "panels",
+    "seams",
+    "operations",
+    "compile"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "0.1"
+    },
+    "assetId": {
+      "$ref": "#/$defs/id"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "units": {
+      "enum": ["meter", "centimeter", "millimeter"]
+    },
+    "canvas": {
+      "$ref": "#/$defs/canvas"
+    },
+    "panels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4096,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/rectanglePanel" },
+          { "$ref": "#/$defs/diskPanel" }
+        ]
+      }
+    },
+    "seams": {
+      "type": "array",
+      "maxItems": 8192,
+      "items": {
+        "$ref": "#/$defs/seam"
+      }
+    },
+    "operations": {
+      "type": "array",
+      "maxItems": 8192,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/rigidTransform" },
+          { "$ref": "#/$defs/fold" },
+          { "$ref": "#/$defs/roll" },
+          { "$ref": "#/$defs/stitch" },
+          { "$ref": "#/$defs/solidify" }
+        ]
+      }
+    },
+    "compile": {
+      "$ref": "#/$defs/compileSettings"
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
+    },
+    "finiteNumber": {
+      "type": "number",
+      "minimum": -1000000000,
+      "maximum": 1000000000
+    },
+    "positiveNumber": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1000000000
+    },
+    "vec2": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/finiteNumber" },
+        { "$ref": "#/$defs/finiteNumber" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "positiveVec2": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/positiveNumber" },
+        { "$ref": "#/$defs/positiveNumber" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "vec3": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/finiteNumber" },
+        { "$ref": "#/$defs/finiteNumber" },
+        { "$ref": "#/$defs/finiteNumber" }
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "rect": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "minimum": 0, "maximum": 1 },
+        { "type": "number", "minimum": 0, "maximum": 1 },
+        { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["appearance", "width", "height"],
+      "properties": {
+        "appearance": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        }
+      }
+    },
+    "rectanglePanel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "shape", "canvasRect", "physicalSize", "tessellation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "shape": { "const": "rectangle" },
+        "canvasRect": { "$ref": "#/$defs/rect" },
+        "physicalSize": { "$ref": "#/$defs/positiveVec2" },
+        "tessellation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["uSegments", "vSegments"],
+          "properties": {
+            "uSegments": { "type": "integer", "minimum": 1, "maximum": 2048 },
+            "vSegments": { "type": "integer", "minimum": 1, "maximum": 2048 }
+          }
+        }
+      }
+    },
+    "diskPanel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "shape", "canvasRect", "physicalSize", "tessellation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "shape": { "const": "disk" },
+        "canvasRect": { "$ref": "#/$defs/rect" },
+        "physicalSize": { "$ref": "#/$defs/positiveVec2" },
+        "tessellation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["radialSegments", "radialRings"],
+          "properties": {
+            "radialSegments": { "type": "integer", "minimum": 3, "maximum": 4096 },
+            "radialRings": { "type": "integer", "minimum": 1, "maximum": 2048 }
+          }
+        }
+      }
+    },
+    "boundaryRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["panel", "boundary"],
+      "properties": {
+        "panel": { "$ref": "#/$defs/id" },
+        "boundary": { "$ref": "#/$defs/id" }
+      }
+    },
+    "seam": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "a", "b", "mode", "reverseB", "sampleCount"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "a": { "$ref": "#/$defs/boundaryRef" },
+        "b": { "$ref": "#/$defs/boundaryRef" },
+        "mode": { "enum": ["weld", "hinge", "keepOpen"] },
+        "reverseB": { "type": "boolean" },
+        "sampleCount": { "type": "integer", "minimum": 0, "maximum": 8192 }
+      }
+    },
+    "operationBaseProperties": {
+      "id": { "$ref": "#/$defs/id" },
+      "enabled": { "type": "boolean", "default": true }
+    },
+    "rigidTransform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "panel", "translation", "rotationEuler", "scale"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean", "default": true },
+        "type": { "const": "rigidTransform" },
+        "panel": { "$ref": "#/$defs/id" },
+        "translation": { "$ref": "#/$defs/vec3" },
+        "rotationEuler": { "$ref": "#/$defs/vec3" },
+        "scale": { "$ref": "#/$defs/vec3" }
+      }
+    },
+    "fold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "panel", "line", "side", "angleDegrees", "falloff"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean", "default": true },
+        "type": { "const": "fold" },
+        "panel": { "$ref": "#/$defs/id" },
+        "line": {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/vec2" },
+            { "$ref": "#/$defs/vec2" }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "side": { "enum": ["positive", "negative"] },
+        "angleDegrees": { "type": "number", "minimum": -3600, "maximum": 3600 },
+        "falloff": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "roll": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "panel", "direction", "angleDegrees", "radiusMode", "startAngleDegrees"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean", "default": true },
+        "type": { "const": "roll" },
+        "panel": { "$ref": "#/$defs/id" },
+        "direction": { "enum": ["u", "v"] },
+        "angleDegrees": { "type": "number", "minimum": -3600, "maximum": 3600 },
+        "radiusMode": { "enum": ["preserveArcLength", "explicit", "fitTargetBoundary"] },
+        "radius": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000000 },
+        "targetSeam": { "$ref": "#/$defs/id" },
+        "startAngleDegrees": { "type": "number", "minimum": -3600, "maximum": 3600 }
+      }
+    },
+    "stitch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "seams"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean", "default": true },
+        "type": { "const": "stitch" },
+        "seams": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8192,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "solidify": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "targets", "thickness", "direction"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "enabled": { "type": "boolean", "default": true },
+        "type": { "const": "solidify" },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4096,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "thickness": { "$ref": "#/$defs/positiveNumber" },
+        "direction": { "enum": ["inward", "outward", "centered"] }
+      }
+    },
+    "compileSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["weldEpsilon", "recalculateNormals", "validationLevel"],
+      "properties": {
+        "weldEpsilon": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "recalculateNormals": {
+          "type": "boolean"
+        },
+        "validationLevel": {
+          "enum": ["basic", "standard", "strict"]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+UserSettings/
+MemoryCaptures/
+Recordings/
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Unity crash and cache
+sysinfo.txt
+*.stackdump
+
+# Generated FoldCanvas artifacts in host project
+Project~/Assets/FoldCanvasGenerated/
+Project~/Assets/FoldCanvasGenerated.meta
+Project~/Assets/FoldCanvasSamples/
+Project~/Assets/FoldCanvasSamples.meta
+
+# Local package-manager lock can vary during development
+Project~/Packages/packages-lock.json

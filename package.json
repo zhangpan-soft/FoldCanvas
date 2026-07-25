@@ -1,0 +1,28 @@
+{
+  "name": "com.foldcanvas.core",
+  "version": "0.1.0-preview.2",
+  "displayName": "FoldCanvas",
+  "description": "A deterministic 2D-first surface compiler for Unity. Canvas, panels, seams, fold operations, and thickness compile into game-ready mesh artifacts.",
+  "unity": "6000.3",
+  "documentationUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/Documentation~/index.md",
+  "changelogUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/LICENSE.md",
+  "keywords": [
+    "modeling",
+    "mesh",
+    "procedural",
+    "folding",
+    "2d-to-3d",
+    "ai"
+  ],
+  "author": {
+    "name": "FoldCanvas contributors"
+  },
+  "samples": [
+    {
+      "displayName": "Bootstrap Panel",
+      "description": "A minimal source asset demonstrating planar panel compilation and canvas UV preservation.",
+      "path": "Samples~/BootstrapPanel"
+    }
+  ]
+}

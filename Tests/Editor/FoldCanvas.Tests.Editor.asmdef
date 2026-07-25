@@ -1,0 +1,22 @@
+{
+  "name": "FoldCanvas.Tests.Editor",
+  "rootNamespace": "FoldCanvas.Tests",
+  "references": [
+    "FoldCanvas.Runtime",
+    "FoldCanvas.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

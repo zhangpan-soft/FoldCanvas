@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "0.1",
+  "assetId": "gpt-cup",
+  "displayName": "GPT Cup",
+  "units": "meter",
+  "canvas": {
+    "appearance": "gpt-cup-canvas.png",
+    "width": 2048,
+    "height": 2048
+  },
+  "panels": [
+    {
+      "id": "wall",
+      "shape": "rectangle",
+      "canvasRect": [0.05, 0.1, 0.9, 0.5],
+      "physicalSize": [0.31415927, 0.12],
+      "tessellation": {
+        "uSegments": 64,
+        "vSegments": 12
+      }
+    },
+    {
+      "id": "bottom",
+      "shape": "disk",
+      "canvasRect": [0.1, 0.68, 0.22, 0.22],
+      "physicalSize": [0.1, 0.1],
+      "tessellation": {
+        "radialSegments": 64,
+        "radialRings": 8
+      }
+    }
+  ],
+  "seams": [
+    {
+      "id": "close-wall",
+      "a": { "panel": "wall", "boundary": "uMin" },
+      "b": { "panel": "wall", "boundary": "uMax" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 13
+    },
+    {
+      "id": "attach-bottom",
+      "a": { "panel": "wall", "boundary": "vMin" },
+      "b": { "panel": "bottom", "boundary": "perimeter" },
+      "mode": "weld",
+      "reverseB": true,
+      "sampleCount": 64
+    }
+  ],
+  "operations": [
+    {
+      "id": "roll-wall",
+      "type": "roll",
+      "panel": "wall",
+      "direction": "u",
+      "angleDegrees": 360,
+      "radiusMode": "preserveArcLength",
+      "startAngleDegrees": 0
+    },
+    {
+      "id": "place-bottom",
+      "type": "rigidTransform",
+      "panel": "bottom",
+      "translation": [0, -0.06, 0],
+      "rotationEuler": [90, 0, 0],
+      "scale": [1, 1, 1]
+    },
+    {
+      "id": "stitch-all",
+      "type": "stitch",
+      "seams": ["close-wall", "attach-bottom"]
+    },
+    {
+      "id": "solidify",
+      "type": "solidify",
+      "targets": ["wall", "bottom"],
+      "thickness": 0.002,
+      "direction": "inward"
+    }
+  ],
+  "compile": {
+    "weldEpsilon": 0.00001,
+    "recalculateNormals": true,
+    "validationLevel": "strict"
+  }
+}

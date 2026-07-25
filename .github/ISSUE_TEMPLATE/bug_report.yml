@@ -1,0 +1,55 @@
+name: Compiler or editor bug
+description: Report a reproducible FoldCanvas failure
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please attach the smallest source document that reproduces the problem. A screenshot alone is not enough.
+  - type: input
+    id: unity
+    attributes:
+      label: Unity version
+      placeholder: 6000.3.20f1
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: FoldCanvas version or commit
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Minimal source
+      description: Attach or paste FoldScript, panel/operation settings, and artwork dimensions.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected geometry and invariants
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result and diagnostics
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Suspected stage
+      options:
+        - Source validation
+        - Panel tessellation
+        - Fold/roll operation
+        - Seam/stitching
+        - Thickness
+        - Mesh validation
+        - Editor baking
+        - UI/preview
+        - Unknown
+    validations:
+      required: true

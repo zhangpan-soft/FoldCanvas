@@ -1,0 +1,16 @@
+* text=auto eol=lf
+*.cs text diff=csharp
+*.shader text
+*.asmdef text
+*.json text
+*.md text
+*.unity merge=unityyamlmerge eol=lf
+*.prefab merge=unityyamlmerge eol=lf
+*.asset merge=unityyamlmerge eol=lf
+*.meta merge=unityyamlmerge eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.exr binary
+*.fbx binary
+*.glb binary

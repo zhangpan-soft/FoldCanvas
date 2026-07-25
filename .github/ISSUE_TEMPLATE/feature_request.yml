@@ -1,0 +1,30 @@
+name: Feature proposal
+description: Propose a focused operation, validator, or workflow
+labels: [enhancement]
+body:
+  - type: textarea
+    id: user-proof
+    attributes:
+      label: User-visible proof
+      description: What concrete object or workflow proves this feature works?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Proposed 2D source representation
+      description: Panels, boundaries, seams, fields, and operations. Do not describe only the final mesh.
+    validations:
+      required: true
+  - type: textarea
+    id: invariants
+    attributes:
+      label: Geometry invariants and tests
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+    validations:
+      required: true
