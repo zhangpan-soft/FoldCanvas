@@ -11,8 +11,9 @@ Tools > FoldCanvas > Create Bootstrap Sample
 The command creates a checker-pattern appearance canvas and a `FoldCanvasAsset` under `Assets/FoldCanvasSamples`. The asset contains:
 
 - one rectangle panel using the left half of the canvas
-- one disk panel using the right half of the canvas
-- one rigid transform that moves the disk beside the rectangle
+- one decorated ellipse (`disk` shape with unequal physical dimensions) using
+  the right half of the canvas
+- one rigid transform that moves the ellipse beside the rectangle
 
 Bake it from the Inspector or `Window > FoldCanvas > FoldCanvas`.
 

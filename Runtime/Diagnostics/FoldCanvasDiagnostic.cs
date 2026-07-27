@@ -14,9 +14,15 @@ namespace FoldCanvas
         public const string NullAsset = "FC0001";
         public const string DuplicatePanelId = "FC0002";
         public const string DuplicateOperationId = "FC0003";
+        public const string EmptyPanelId = "FC0004";
+        public const string InvalidCompileLimits = "FC0005";
         public const string InvalidPanelDimensions = "FC1001";
         public const string InvalidTessellation = "FC1002";
         public const string CanvasRectOutOfRange = "FC1003";
+        public const string UnsupportedPanelShape = "FC1004";
+        public const string NonFinitePanelSize = "FC1005";
+        public const string NonPositivePanelSize = "FC1006";
+        public const string ExcessiveTessellation = "FC1007";
         public const string MissingPanelReference = "FC2001";
         public const string UnsupportedSeam = "FC2002";
         public const string UnsupportedOperation = "FC3001";

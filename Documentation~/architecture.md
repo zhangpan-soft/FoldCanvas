@@ -126,7 +126,9 @@ MVP operation family:
 
 ### Compile settings
 
-Include tolerances, normal mode, output naming, and validation level. Compiler behavior must not depend on editor selection, locale, frame time, random state, or object discovery.
+Include tolerances, normal mode, output naming, validation level, and cumulative
+generated-vertex/triangle safety limits. Compiler behavior must not depend on
+editor selection, locale, frame time, random state, or object discovery.
 
 ## 4. Coordinate conventions
 

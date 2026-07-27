@@ -38,9 +38,15 @@ Diagnostics are sorted by compiler stage, source order, and code.
 - `FC0001 NullAsset`
 - `FC0002 DuplicatePanelId`
 - `FC0003 DuplicateOperationId`
+- `FC0004 EmptyPanelId`
+- `FC0005 InvalidCompileLimits`
 - `FC1001 InvalidPanelDimensions`
 - `FC1002 InvalidTessellation`
 - `FC1003 CanvasRectOutOfRange`
+- `FC1004 UnsupportedPanelShape`
+- `FC1005 NonFinitePanelSize`
+- `FC1006 NonPositivePanelSize`
+- `FC1007 ExcessiveTessellation`
 - `FC2001 MissingPanelReference`
 - `FC2002 UnsupportedSeam`
 - `FC2104 SeamLengthMismatch`

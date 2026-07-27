@@ -9,6 +9,8 @@ namespace FoldCanvas
 
         public Mesh Mesh { get; internal set; }
 
+        public FoldCanvasCompiledData CompiledData { get; internal set; }
+
         public IReadOnlyList<FoldCanvasDiagnostic> Diagnostics => diagnostics;
 
         public bool Success

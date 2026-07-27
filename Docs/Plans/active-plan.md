@@ -1,155 +1,172 @@
 # Goal
 
-Complete M00 bootstrap and repository-health acceptance without implementing any
-later FoldCanvas operation.
+Complete M01 planar-panel provenance, immutable compiled metadata, ordered
+boundaries, centralized validation, and deterministic Unity mesh conversion
+without implementing any deformation or topology milestone.
 
 # User-visible proof
 
-- The root is a valid `com.foldcanvas.core` UPM package and `Project~` resolves it
-  through a local file dependency.
-- Unity 6.3 LTS can compile the runtime, editor, and test assemblies when a
-  compatible Editor is available.
-- Bootstrap Edit Mode tests prove rectangle and disk compilation, UV retention,
-  target-only rigid transforms, stable diagnostics, idempotent sample creation,
-  and GUID-preserving mesh rebakes.
-- The editor menu can create the bootstrap sample and bake under
-  `Assets/FoldCanvasGenerated`.
+- A decorated rectangle and ellipse compile flat in Unity with the expected
+  source-canvas regions on their corners, center, and perimeter.
+- The compile result exposes immutable vertex provenance and panel metadata.
+- Rectangle and ellipse named boundaries can be inspected in their documented
+  order.
+- Invalid source and unsafe tessellation requests stop with stable diagnostics.
 
 # Scope
 
-- Inspect all package metadata, JSON, asmdefs, C# source, tests, schemas,
-  documentation links, ignore rules, and the local host project.
-- Repair only defects required by M00 acceptance.
-- Add or tighten Edit Mode tests where an M00 acceptance criterion is not
-  covered.
-- Run the strongest available static and Unity validation.
+- Replace the bootstrap-only parallel vertex/UV buffer with compiler-owned
+  vertex records containing current 3D position, panel-local 2D source
+  position, source-canvas UV, panel ownership, and provenance ID.
+- Freeze compiler output into public read-only result metadata before creating
+  the final Unity `Mesh`.
+- Standardize ordered rectangle and disk/ellipse boundary metadata.
+- Centralize panel source validation and geometry tolerances.
+- Add configurable generated-vertex and generated-triangle safety limits.
+- Add focused Edit Mode tests for every M01 acceptance criterion.
+- Update M01 documentation, schema, version, and changelog after validation.
 
 # Non-goals
 
-- Fold, Roll, Stitch, or Solidify geometry.
-- FoldScript import.
-- A 3D preview workspace.
-- Runtime generation optimization, render-pipeline integration, networking, or
-  AI-provider integration.
-- Broad API or repository refactors.
+- Fold, Roll, Stitch, Solidify, thickness, seam welding, or topology changes.
+- Polygon, mask, spline, hole, or adaptive tessellation.
+- Runtime authoring UI, a general 3D preview workspace, render-pipeline
+  integration, network services, or AI-provider integration.
+- Replacing the 2D source with any opaque mesh-generation API.
 
 # Files expected to change
 
 - `Docs/Plans/active-plan.md`
-- Existing M00 runtime, editor, test, package, project, schema, or documentation
-  files only when inspection exposes an acceptance-blocking defect.
-- New Edit Mode test files only when needed to cover M00 behavior.
+- `Runtime/Compiler/*` for compiled data, source validation, tolerances, and
+  Unity mesh conversion
+- `Runtime/Data/FoldCanvasCompileSettings.cs`
+- `Runtime/Diagnostics/FoldCanvasDiagnostic.cs`
+- `Tests/Editor/PlanarPanelCompilerTests.cs`
+- `Tests/Editor/SourceValidationTests.cs`
+- `Documentation~/compiler-pipeline.md`
+- `Documentation~/diagnostics.md`
+- `Schema/foldcanvas.schema.json`
+- package/version task and changelog files only after acceptance passes
 
 # Geometry invariants
 
-- Source panels begin in local XY space, centered on the origin, with front
-  normal `+Z`.
-- Triangle winding is deterministic and faces `+Z` before an explicit
-  transform.
-- UV0 is copied from the normalized source canvas rect with lower-left origin;
-  operations must not rewrite UV order or values.
-- Rectangle boundaries remain ordered as `uMin`/`uMax` bottom-to-top and
-  `vMin`/`vMax` left-to-right. Disk perimeter remains counter-clockwise when
-  viewed from the front.
-- Vertex, triangle, UV, panel, operation, and diagnostic ordering is stable for
-  identical serialized input.
-- M00 introduces no welding. The existing default `weldEpsilon` of `1e-5`
-  remains configuration-only in this milestone; geometric validity uses the
-  compiler's documented finite-value and minimum-area checks.
+- Panel samples start in panel-local XY coordinates in meters with `z = 0` and
+  front normal `+Z`.
+- Rectangle vertices are emitted row-major from bottom-left to top-right.
+- Rectangle boundaries are ordered `uMin`, `uMax`, `vMin`, `vMax`; their sample
+  directions are bottom-to-top, bottom-to-top, left-to-right, and
+  left-to-right respectively.
+- Disk/ellipse vertices emit one center followed by concentric rings; each ring
+  starts at `+X` and advances counter-clockwise when viewed from `+Z`.
+- The disk/ellipse `perimeter` is the outer ring in that same counter-clockwise
+  order and is not closed by duplicating its first index.
+- Triangle winding faces `+Z`.
+- Rigid transforms modify only current 3D position. Source-local coordinates,
+  UV, ownership, provenance, topology, and boundary order remain unchanged.
+- Provenance IDs are assigned in deterministic global vertex order and are
+  preserved by later vertex transforms.
+- Dictionary lookup may resolve an ID, but dictionary enumeration never emits
+  vertices, panels, boundaries, triangles, or diagnostics.
+- Source rect and coordinate comparisons in tests use `1e-6`; generated
+  triangle validity uses one centralized squared double-area threshold.
 
 # Implementation steps
 
-1. Map every M00 acceptance criterion to the current implementation and tests.
-2. Parse all JSON and validate UPM/package/project references, asmdefs, ignore
-   rules, and documentation links.
-3. Inspect every C# file for serialization, accessibility, deterministic
-   ordering, and Editor/Runtime boundary defects.
-4. Make the smallest repairs required for package recognition, compilation,
-   diagnostics, sample idempotence, and GUID-preserving baking.
-5. Add focused Edit Mode coverage for any unproven M00 acceptance criterion.
-6. Run static checks, then Unity Edit Mode tests and editor/bake verification if
-   a compatible Unity Editor is installed.
-7. Record exact results and leave `CURRENT_TASK.md` on M00 unless every
-   acceptance criterion is actually proven.
+1. Map M01 criteria to the current compiler and document representation gaps.
+2. Add immutable compiled vertex, panel, and boundary result types.
+3. Refactor the internal build buffer and tessellators to retain source-local
+   coordinates, ownership, provenance, and ordered boundaries.
+4. Centralize panel validation, size/tessellation estimates, and configured
+   cumulative safety limits before any geometry allocation.
+5. Convert frozen compiled data into Unity `Mesh` as the final compiler step.
+6. Add deterministic, UV, ellipse-radius, winding, provenance, immutability,
+   boundary-index, and validation tests.
+7. Run repository validation and the complete Unity Edit Mode suite.
+8. Verify decorated rectangle/ellipse output and metadata in the real Unity
+   Editor.
+9. Update documentation, changelog, package version, and `CURRENT_TASK.md` only
+   after all M01 acceptance criteria pass.
 
 # Test matrix
 
 | Acceptance area | Automated evidence |
 | --- | --- |
-| Package identity and local resolution | JSON parse plus package/manifest path checks |
-| Runtime isolation | asmdef inspection and search for `UnityEditor` references |
-| Rectangle and disk meshes | vertex/index/UV/winding Edit Mode assertions |
-| Target-only rigid transform | two-panel before/after coordinate and UV assertions |
-| Stable diagnostics | duplicate IDs, invalid canvas rect, unsupported operations, and repeated-compile ordering assertions |
-| Sample idempotence | invoke creator twice and compare asset/object counts |
-| GUID-preserving rebake | bake twice and compare `.meta` GUID |
-| Repository hygiene | ignored/generated/cache path scan |
-| Assembly health | Unity compilation and Edit Mode suite |
+| Immutable compiled representation | read-only vertex/panel/boundary views reject mutation |
+| Per-vertex source provenance | exact source position, UV, panel index, and provenance assertions |
+| Rectangle UV and boundaries | exact four corners plus ordered boundary index arrays |
+| Disk/ellipse mapping | center UV plus expected physical radii and counter-clockwise perimeter |
+| Winding | every planar triangle cross product has positive Z |
+| Transform preservation | current position changes while source/provenance metadata remains byte-equivalent |
+| Determinism | repeated compiles have identical vertex records, indices, panels, boundaries, and Unity arrays |
+| Empty/duplicate IDs | distinct stable diagnostics in source order |
+| Shape and dimensions | unknown enum, non-finite size, and non-positive size diagnostics |
+| Canvas rect | non-finite and out-of-range rect diagnostics |
+| Tessellation safety | minimum-count and configured cumulative-limit diagnostics without allocation |
 
 # Risks and rollback
 
-- Unity may be absent or a different version may be installed. Static checks
-  will still run, and unexecuted Unity proof will be reported explicitly.
-- Editor tests create assets in the disposable host project. Tests must clean up
-  only their own explicit paths.
-- AssetDatabase behavior is stateful. Repairs will preserve existing public
-  paths and update assets in place; no generated artifact will be committed.
-- Any unexpected need for a dependency or architecture change stops
-  implementation and requires an ADR plus explicit authorization.
+- New public compiled metadata becomes an API commitment. Types will expose
+  value data and read-only collections only; existing `Mesh` and diagnostics
+  APIs remain intact.
+- Large integer tessellation products can overflow. Estimates use checked
+  64-bit arithmetic and report excessive tessellation before allocation.
+- Unity collection APIs may copy arrays differently across versions. Tests
+  compare emitted ordered values, and the conversion remains a single explicit
+  final step.
+- Existing M00 editor baking depends on `result.Mesh`; that property and bake
+  behavior remain unchanged.
+- Any need for a dependency, render pipeline, or architecture change stops the
+  milestone and requires a new ADR plus explicit authorization.
 
 # Progress log
 
-- 2026-07-25: Read `CURRENT_TASK.md`, `PLANS.md`,
-  `Documentation~/architecture.md`, `Codex/M00_BOOTSTRAP.md`, and ADRs
+- 2026-07-25: Re-read `CURRENT_TASK.md`, `PLANS.md`,
+  `Documentation~/architecture.md`, `Codex/M01_PLANAR_PANELS.md`, and ADRs
   0001-0006.
-- 2026-07-25: Confirmed M00 is active and later milestones are out of scope.
-- 2026-07-25: Began repository and implementation audit. No Git metadata was
-  present at the workspace root during the initial probe.
-- 2026-07-25: Unity `6000.3.20f1` compiled all three assemblies and passed the
-  original 6/6 Edit Mode tests.
-- 2026-07-25: Added M00 coverage for deterministic geometry, front winding, UV
-  retention, target-only transforms, all deferred operation types, stable
-  diagnostic ordering, sample idempotence, and GUID-preserving rebakes.
-- 2026-07-25: Removed the invalid `Samples~.meta`, repaired the future sample
-  appearance reference, aligned diagnostic documentation, and strengthened
-  repository/GitHub metadata validation.
-- 2026-07-25: Final Unity batch run passed 13/13 Edit Mode tests with no C#
-  compile errors or package-metadata warning.
-- 2026-07-25: Added the `0.1.0-preview.2` changelog entry and initialized the
-  local `main` Git repository after the user explicitly requested GitHub
-  publication.
-- 2026-07-25: After explicit acceptance of Unity's updated software terms, the
-  real editor created the bootstrap sample twice, compiled it in memory, and
-  baked it twice with stable asset GUIDs.
-- 2026-07-25: M00 acceptance passed and `CURRENT_TASK.md` was deliberately
-  advanced to the M01 entry point without implementing M01 behavior.
+- 2026-07-25: Audited runtime compiler, source types, diagnostics, schemas,
+  docs, and current tests against every M01 criterion.
+- 2026-07-25: Confirmed M01 is active and M02+ remain out of scope.
+- 2026-07-25: Added compiler-owned immutable vertex, panel, and ordered
+  boundary data, then moved Unity `Mesh` construction to the final adapter.
+- 2026-07-25: Added centralized source validation, checked geometry estimates,
+  cumulative allocation limits, stable diagnostics, and M01 Edit Mode tests.
+- 2026-07-27: Added the project-background and complete FoldScript JSON field
+  reference, including explicit `roll` semantics and schema descriptions.
+- 2026-07-27: Upgraded the clean sample contract from a circular disk to a
+  visibly non-circular ellipse while preserving legacy generated asset GUIDs.
+- 2026-07-27: Completed repository, Unity Test Runner, bake, and real-editor
+  visual verification; M02+ geometry was not implemented.
 
 # Decisions made
 
-- Treat existing rectangle, disk, and rigid-transform code as bootstrap scope
-  because M00 explicitly requires those behaviors.
-- Git was initially left untouched, then initialized only after the user
-  explicitly requested GitHub publication.
-- Do not advance `CURRENT_TASK.md` until Unity-dependent acceptance is proven.
+- Public M01 output will be `FoldCanvasCompiledData` containing immutable
+  `FoldCanvasCompiledVertex` records and ordered `FoldCanvasCompiledPanel` /
+  `FoldCanvasCompiledBoundary` metadata.
+- A vertex stores current 3D position, panel-local 2D source position,
+  source-canvas UV, zero-based source panel index, and deterministic provenance
+  ID. The panel ID is resolved through the indexed compiled panel metadata.
+- Boundary lookup uses an ordered read-only boundary list plus name lookup;
+  no mutable arrays or compiler dictionaries are exposed.
+- Compile settings gain cumulative `MaxGeneratedVertices` and
+  `MaxGeneratedTriangles` limits with conservative defaults. Invalid or
+  exceeded limits return diagnostics rather than clamping or allocating.
+- Disk remains the serialized shape name; unequal physical X/Y dimensions are
+  the M01 ellipse representation.
 
 # Final verification
 
-- `python3 Scripts/validate_repository.py`: passed after parsing repository JSON,
-  checking UPM identity/local resolution, asmdef boundaries, Markdown links,
-  ignore rules, sample references, and GitHub Issue Form fields.
-- All `.github/**/*.yml` files parsed successfully with the local YAML parser.
-- Unity `6000.3.20f1` final Edit Mode run: 13 total, 13 passed, 0 failed,
-  0 skipped.
-- The editor-workflow tests executed sample creation twice without extra assets
-  or GameObjects and baked the same mesh path twice without changing its GUID.
-- The host project's `Library`, `Logs`, `UserSettings`, and package lock are
-  ignored; menu-generated sample and mesh artifacts are also excluded from
-  source control.
-- In the real Unity GUI, `Tools > FoldCanvas > Create Bootstrap Sample` ran
-  twice with the same asset/texture GUIDs. `Window > FoldCanvas > FoldCanvas`
-  compiled successfully with 192 vertices and 320 triangles and reported no
-  diagnostics.
-- The real GUI baked `BootstrapFoldCanvas_Generated.asset` twice while its GUID
-  remained `621cf59899f7448d98c418004e4f3609`.
-- Fold, Roll, Stitch, Solidify, FoldScript import, and 3D preview behavior were
-  not implemented.
+- `python3 Scripts/validate_repository.py`: passed.
+- All changed JSON files parsed successfully with `python3 -m json.tool`.
+- `git diff --check`: passed.
+- Unity `6000.3.20f1` imported and compiled the package without C# errors.
+- Unity Edit Mode Test Runner: 27 passed, 0 failed, 0 skipped, in 0.097 seconds
+  on the final M01 code.
+- The real editor upgraded the source sample, baked
+  `M01PlanarProof_Generated`, and displayed 192 vertices / 320 triangles with
+  the blue decorated rectangle and orange decorated ellipse visibly flat and
+  correctly mapped.
+- The proof scene was saved locally as
+  `Assets/FoldCanvasGenerated/M01PlanarPreview.unity`; generated source, mesh,
+  material, and scene outputs remain ignored derived artifacts.
+- No Fold, Roll, Stitch, Solidify, seam welding, thickness, or later-milestone
+  behavior was implemented.

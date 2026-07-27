@@ -92,6 +92,11 @@ generatedUv0 = CanvasUv(u,v)
 
 Operations may duplicate vertices for seams, hard edges, or thickness, but duplicated vertices retain the same source UV unless an operation explicitly introduces a new side-wall UV policy.
 
+M01 also retains the panel-local 2D source position, panel ownership, and a
+deterministic provenance ID for every compiled vertex. Later duplication or
+welding stages must preserve or deliberately combine those identifiers rather
+than inferring origin from current 3D proximity.
+
 ## 8. Boundary parameterization
 
 Each boundary is sampled and ordered. For stitching:

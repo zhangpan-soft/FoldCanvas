@@ -1,11 +1,13 @@
 # Current task
 
-Execute **M01: Planar panels and invariants**.
+Execute **M02: Fold operator and box proof**.
 
-Authoritative task file: [`Codex/M01_PLANAR_PANELS.md`](Codex/M01_PLANAR_PANELS.md)
+Authoritative task file: [`Codex/M02_FOLD_BOX.md`](Codex/M02_FOLD_BOX.md)
 
-M00 passed on Unity `6000.3.20f1` with 13/13 Edit Mode tests plus real editor
-sample, in-memory compile, and GUID-preserving bake verification.
+M01 passed on Unity `6000.3.20f1` with 27/27 Edit Mode tests plus a saved real
+editor `M01PlanarPreview` scene showing the decorated rectangle and ellipse,
+immutable compiled provenance, ordered boundaries, and pre-allocation source
+validation.
 
-Do not begin M02 or later milestones until M01 acceptance criteria pass and this
+Do not begin M03 or later milestones until M02 acceptance criteria pass and this
 file is deliberately advanced.

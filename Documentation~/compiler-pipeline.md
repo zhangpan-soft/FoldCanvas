@@ -27,14 +27,22 @@ Validate:
 Each panel tessellator emits:
 
 ```text
-positions2D
-canvasUv0
+currentPosition3D
+sourcePanelPosition2D
+sourceCanvasUv0
 triangles
 ordered boundaries
 panel ownership
+provenance ID
 ```
 
 Output order must be stable and documented.
+
+The compiler freezes this data into `FoldCanvasCompiledData` before creating a
+Unity `Mesh`. Its vertex, triangle, panel, and boundary collections are
+read-only snapshots. A rigid transform changes only `currentPosition3D`;
+source position, UV, ownership, provenance, topology, and boundary order remain
+unchanged.
 
 ## Stage 3: operation execution
 
@@ -100,6 +108,10 @@ The runtime compiler returns an in-memory result. Editor code may save:
 - source hash metadata
 
 Editor saving must not change geometry output.
+
+Configured cumulative vertex and triangle limits are validated before panel
+tessellation. Requests that exceed either limit return `FC1007` without
+allocating partial geometry.
 
 ## Stage 9: feedback loop
 

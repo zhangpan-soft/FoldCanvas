@@ -46,6 +46,11 @@ namespace FoldCanvas.Tests
                 Assert.That(firstAsset, Is.Not.Null);
                 Assert.That(firstAssetGuid, Is.Not.Empty);
                 Assert.That(firstTextureGuid, Is.Not.Empty);
+                Assert.That(firstAsset.Panels.Count, Is.EqualTo(2));
+                Assert.That(firstAsset.Panels[1].Id, Is.EqualTo("ellipse"));
+                Assert.That(
+                    firstAsset.Panels[1].PhysicalSize,
+                    Is.EqualTo(new Vector2(1.1f, 0.7f)));
 
                 FoldCanvas.Editor.FoldCanvasSampleCreator.CreateBootstrapSample();
 

@@ -20,6 +20,7 @@ namespace FoldCanvas
         private static PanelBuildRecord AppendRectangle(PanelDefinition panel, MeshBuildBuffer buffer)
         {
             int start = buffer.Vertices.Count;
+            int panelIndex = buffer.PanelCount;
             int uSegments = panel.USegments;
             int vSegments = panel.VSegments;
             Vector2 size = panel.PhysicalSize;
@@ -34,10 +35,15 @@ namespace FoldCanvas
                 {
                     float fu = u / (float)uSegments;
                     float x = (fu - 0.5f) * size.x;
-                    buffer.Vertices.Add(new Vector3(x, y, 0f));
-                    buffer.Uvs.Add(new Vector2(
+                    Vector2 sourcePosition = new Vector2(x, y);
+                    Vector2 sourceUv = new Vector2(
                         canvasRect.xMin + fu * canvasRect.width,
-                        canvasRect.yMin + fv * canvasRect.height));
+                        canvasRect.yMin + fv * canvasRect.height);
+                    buffer.AddVertex(
+                        new Vector3(sourcePosition.x, sourcePosition.y, 0f),
+                        sourcePosition,
+                        sourceUv,
+                        panelIndex);
                 }
             }
 
@@ -62,7 +68,8 @@ namespace FoldCanvas
             }
 
             PanelBuildRecord record = new PanelBuildRecord(
-                panel.Id,
+                panel,
+                panelIndex,
                 start,
                 (uSegments + 1) * (vSegments + 1));
 
@@ -86,19 +93,24 @@ namespace FoldCanvas
             record.AddBoundary("uMax", uMax);
             record.AddBoundary("vMin", vMin);
             record.AddBoundary("vMax", vMax);
+            buffer.AddPanel(record);
             return record;
         }
 
         private static PanelBuildRecord AppendDisk(PanelDefinition panel, MeshBuildBuffer buffer)
         {
             int start = buffer.Vertices.Count;
+            int panelIndex = buffer.PanelCount;
             int segments = panel.RadialSegments;
             int rings = panel.RadialRings;
             Vector2 radius = panel.PhysicalSize * 0.5f;
             Rect canvasRect = panel.CanvasRect;
 
-            buffer.Vertices.Add(Vector3.zero);
-            buffer.Uvs.Add(canvasRect.center);
+            buffer.AddVertex(
+                Vector3.zero,
+                Vector2.zero,
+                canvasRect.center,
+                panelIndex);
 
             for (int ring = 1; ring <= rings; ring++)
             {
@@ -108,10 +120,17 @@ namespace FoldCanvas
                     float angle = segment * Mathf.PI * 2f / segments;
                     float unitX = Mathf.Cos(angle) * radius01;
                     float unitY = Mathf.Sin(angle) * radius01;
-                    buffer.Vertices.Add(new Vector3(unitX * radius.x, unitY * radius.y, 0f));
-                    buffer.Uvs.Add(new Vector2(
+                    Vector2 sourcePosition = new Vector2(
+                        unitX * radius.x,
+                        unitY * radius.y);
+                    Vector2 sourceUv = new Vector2(
                         canvasRect.xMin + (unitX * 0.5f + 0.5f) * canvasRect.width,
-                        canvasRect.yMin + (unitY * 0.5f + 0.5f) * canvasRect.height));
+                        canvasRect.yMin + (unitY * 0.5f + 0.5f) * canvasRect.height);
+                    buffer.AddVertex(
+                        new Vector3(sourcePosition.x, sourcePosition.y, 0f),
+                        sourcePosition,
+                        sourceUv,
+                        panelIndex);
                 }
             }
 
@@ -148,7 +167,8 @@ namespace FoldCanvas
             }
 
             PanelBuildRecord record = new PanelBuildRecord(
-                panel.Id,
+                panel,
+                panelIndex,
                 start,
                 1 + rings * segments);
 
@@ -160,6 +180,7 @@ namespace FoldCanvas
             }
 
             record.AddBoundary("perimeter", perimeter);
+            buffer.AddPanel(record);
             return record;
         }
     }

@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace FoldCanvas
 {
     public static class FoldCanvasCompiler
     {
-        private const float MinimumTriangleAreaSquared = 1e-18f;
-
         public static FoldCanvasCompileResult Compile(FoldCanvasAsset asset)
         {
             FoldCanvasCompileResult result = new FoldCanvasCompileResult();
@@ -21,12 +18,18 @@ namespace FoldCanvas
                 return result;
             }
 
-            MeshBuildBuffer buffer = new MeshBuildBuffer();
-            ValidateAndBuildPanels(asset, buffer, result);
+            FoldCanvasSourceValidator.ValidatePanels(asset, result);
             ValidateOperationIds(asset, result);
 
+            MeshBuildBuffer buffer = null;
             if (!result.HasErrors())
             {
+                buffer = new MeshBuildBuffer();
+                for (int i = 0; i < asset.Panels.Count; i++)
+                {
+                    PanelTessellator.Append(asset.Panels[i], buffer);
+                }
+
                 ExecuteOperations(asset, buffer, result);
             }
 
@@ -53,107 +56,19 @@ namespace FoldCanvas
                 return result;
             }
 
-            Mesh mesh = new Mesh
-            {
-                name = string.IsNullOrWhiteSpace(asset.name)
-                    ? "FoldCanvas_Generated"
-                    : asset.name + "_Generated"
-            };
+            string meshName = string.IsNullOrWhiteSpace(asset.name)
+                ? "FoldCanvas_Generated"
+                : asset.name + "_Generated";
+            bool recalculateNormals =
+                asset.CompileSettings == null ||
+                asset.CompileSettings.RecalculateNormals;
 
-            if (buffer.Vertices.Count > ushort.MaxValue)
-            {
-                mesh.indexFormat = IndexFormat.UInt32;
-            }
-
-            mesh.SetVertices(buffer.Vertices);
-            mesh.SetUVs(0, buffer.Uvs);
-            mesh.SetTriangles(buffer.Triangles, 0, true);
-
-            if (asset.CompileSettings == null || asset.CompileSettings.RecalculateNormals)
-            {
-                mesh.RecalculateNormals();
-            }
-
-            mesh.RecalculateBounds();
-            result.Mesh = mesh;
+            result.CompiledData = buffer.Freeze();
+            result.Mesh = UnityMeshConverter.Create(
+                result.CompiledData,
+                meshName,
+                recalculateNormals);
             return result;
-        }
-
-        private static void ValidateAndBuildPanels(
-            FoldCanvasAsset asset,
-            MeshBuildBuffer buffer,
-            FoldCanvasCompileResult result)
-        {
-            HashSet<string> panelIds = new HashSet<string>(StringComparer.Ordinal);
-            for (int i = 0; i < asset.Panels.Count; i++)
-            {
-                PanelDefinition panel = asset.Panels[i];
-                if (panel == null)
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.InvalidPanelDimensions,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        $"Panel at index {i} is null."));
-                    continue;
-                }
-
-                if (string.IsNullOrWhiteSpace(panel.Id) || !panelIds.Add(panel.Id))
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.DuplicatePanelId,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "Panel IDs must be non-empty and unique.",
-                        panel.Id));
-                    continue;
-                }
-
-                if (!FiniteMath.IsFinite(panel.PhysicalSize) ||
-                    panel.PhysicalSize.x <= 0f ||
-                    panel.PhysicalSize.y <= 0f)
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.InvalidPanelDimensions,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "Panel physical dimensions must be finite and greater than zero.",
-                        panel.Id));
-                    continue;
-                }
-
-                Rect rect = panel.CanvasRect;
-                if (!FiniteMath.IsFinite(new Vector2(rect.x, rect.y)) ||
-                    !FiniteMath.IsFinite(new Vector2(rect.width, rect.height)) ||
-                    rect.width <= 0f ||
-                    rect.height <= 0f ||
-                    rect.xMin < 0f ||
-                    rect.yMin < 0f ||
-                    rect.xMax > 1f ||
-                    rect.yMax > 1f)
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.CanvasRectOutOfRange,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "Panel canvas rect must be positive and remain inside normalized UV space.",
-                        panel.Id));
-                    continue;
-                }
-
-                bool tessellationValid = panel.Shape == PanelShape.Rectangle
-                    ? panel.USegments >= 1 && panel.VSegments >= 1
-                    : panel.RadialSegments >= 3 && panel.RadialRings >= 1;
-
-                if (!tessellationValid)
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.InvalidTessellation,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "Panel tessellation counts are below the minimum.",
-                        panel.Id));
-                    continue;
-                }
-
-                PanelBuildRecord record = PanelTessellator.Append(panel, buffer);
-                buffer.Panels.Add(panel.Id, record);
-            }
         }
 
         private static void ValidateOperationIds(
@@ -217,7 +132,7 @@ namespace FoldCanvas
         {
             for (int i = 0; i < buffer.Vertices.Count; i++)
             {
-                if (!FiniteMath.IsFinite(buffer.Vertices[i]))
+                if (!FiniteMath.IsFinite(buffer.Vertices[i].Position))
                 {
                     result.Add(new FoldCanvasDiagnostic(
                         FoldCanvasDiagnosticCodes.NonFiniteVertex,
@@ -229,11 +144,12 @@ namespace FoldCanvas
 
             for (int i = 0; i < buffer.Triangles.Count; i += 3)
             {
-                Vector3 a = buffer.Vertices[buffer.Triangles[i]];
-                Vector3 b = buffer.Vertices[buffer.Triangles[i + 1]];
-                Vector3 c = buffer.Vertices[buffer.Triangles[i + 2]];
+                Vector3 a = buffer.Vertices[buffer.Triangles[i]].Position;
+                Vector3 b = buffer.Vertices[buffer.Triangles[i + 1]].Position;
+                Vector3 c = buffer.Vertices[buffer.Triangles[i + 2]].Position;
                 float areaSquared = Vector3.Cross(b - a, c - a).sqrMagnitude;
-                if (areaSquared <= MinimumTriangleAreaSquared)
+                if (areaSquared <=
+                    FoldCanvasGeometryTolerances.MinimumTriangleDoubleAreaSquared)
                 {
                     result.Add(new FoldCanvasDiagnostic(
                         FoldCanvasDiagnosticCodes.ZeroAreaTriangle,

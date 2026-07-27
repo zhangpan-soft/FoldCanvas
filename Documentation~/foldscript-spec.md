@@ -4,6 +4,12 @@ FoldScript is the portable, human-readable interchange format for FoldCanvas sou
 
 Schema file: [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json)
 
+Field-by-field semantics, units, formulas, defaults, and implementation status:
+[`foldscript-field-reference.md`](foldscript-field-reference.md).
+
+Project motivation and the production problem this format addresses:
+[`project-background.md`](project-background.md).
+
 ## 1. Goals
 
 - readable enough for humans to review
@@ -96,7 +102,8 @@ Operations are executed in array order in schema version `0.1`.
 }
 ```
 
-The line is expressed in panel-normalized coordinates unless `coordinateSpace` says otherwise.
+The line is expressed in panel-normalized coordinates. Schema version `0.1`
+does not define an alternative `coordinateSpace`.
 
 ### Roll
 
@@ -112,7 +119,11 @@ The line is expressed in panel-normalized coordinates unless `coordinateSpace` s
 }
 ```
 
-The author says “roll this panel.” The compiler may use trigonometric evaluation internally, but no user-authored vertices or UV unwrap are required.
+`roll` means continuously wrapping one panel dimension onto a circular arc; it
+does **not** mean applying one rigid rotation to the panel. The compiler may use
+trigonometric evaluation internally, but no user-authored vertices or UV unwrap
+are required. Exact direction, radius, angle, and seam semantics are defined in
+the [field reference](foldscript-field-reference.md#63-roll--planned-for-m03).
 
 ### Solidify
 
@@ -235,7 +246,9 @@ Cup-bottom seam:
   "compile": {
     "weldEpsilon": 0.00001,
     "recalculateNormals": true,
-    "validationLevel": "strict"
+    "validationLevel": "strict",
+    "maxGeneratedVertices": 1000000,
+    "maxGeneratedTriangles": 2000000
   }
 }
 ```

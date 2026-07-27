@@ -8,9 +8,52 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ### Planned
 
-- M01 robust planar panels
 - M02 fold operator and box proof
 - M03 roll operator and decorated cup proof
+
+## [0.1.0-preview.3] - 2026-07-27
+
+### Added
+
+- M01 immutable compiled geometry data with current positions, panel-local
+  source positions, source-canvas UVs, panel ownership, provenance IDs, and
+  ordered named boundaries
+- Deterministic rectangle and disk/ellipse metadata, mesh-conversion, winding,
+  source-preservation, and immutability coverage
+- Pre-allocation cumulative vertex and triangle safety limits
+- Stable diagnostics for empty panel IDs, unsupported shapes, non-finite or
+  non-positive sizes, invalid compile limits, and excessive tessellation
+- A decorated rectangle-and-ellipse planar proof sample
+- Bilingual project background explaining the AI 2D-to-programmable-3D
+  production problem
+- A field-by-field FoldScript JSON reference, including exact `roll`
+  direction, angle, radius, UV, seam, and implementation-status semantics
+- Self-documenting JSON Schema descriptions and conditional `roll` radius
+  requirements
+
+### Changed
+
+- Unity `Mesh` creation is now the final adapter step after compiler-owned data
+  is frozen
+- The bootstrap sample upgrades its legacy circular panel in place to an
+  ellipse without replacing asset GUIDs
+- README status and package documentation now begin with the project rationale
+  and link to the complete asset-configuration contract
+
+### Fixed
+
+- Removed an undocumented `coordinateSpace` implication from the FoldScript
+  `0.1` fold definition
+- Clarified that `roll` is a continuous surface mapping, not an Euler rigid
+  rotation, and that coincident edges remain unwelded
+
+### Verified
+
+- Repository validation and JSON parsing passed
+- Unity `6000.3.20f1` compiled the package and passed all 27 Edit Mode tests
+- The real Unity Editor rendered the saved `M01PlanarPreview` scene with 192
+  vertices, 320 triangles, a decorated rectangle, and a visibly non-circular
+  decorated ellipse
 
 ## [0.1.0-preview.2] - 2026-07-25
 

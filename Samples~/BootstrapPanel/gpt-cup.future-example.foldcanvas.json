@@ -82,6 +82,8 @@
   "compile": {
     "weldEpsilon": 0.00001,
     "recalculateNormals": true,
-    "validationLevel": "strict"
+    "validationLevel": "strict",
+    "maxGeneratedVertices": 1000000,
+    "maxGeneratedTriangles": 2000000
   }
 }

@@ -2,6 +2,22 @@
 
 > **Working title. Pre-alpha.** A 2D-first, deterministic surface compiler for Unity.
 
+## Why this project exists
+
+AI image generation is already strong enough to produce useful concept art,
+textures, decals, and other 2D source material. AI-generated 3D meshes are far
+less reliable for a game pipeline: topology, UVs, scale, seams, thickness,
+editability, and repeatability can change unpredictably between generations.
+
+FoldCanvas separates those responsibilities. AI or a human authors a 2D
+appearance canvas and a structured construction description; a deterministic
+compiler reconstructs the 3D surface with stable geometry, UVs, provenance, and
+diagnostics. This turns a generated asset into something that can be reviewed,
+edited, tested, diffed, and rebuilt instead of an opaque triangle result.
+
+Read the full [project background](Documentation~/project-background.md) and
+the [FoldScript JSON field reference](Documentation~/foldscript-field-reference.md).
+
 FoldCanvas treats a three-dimensional game asset as a compiled result rather than the primary source file.
 
 ```text
@@ -14,14 +30,16 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 ## Status
 
-The repository currently contains the **bootstrap compiler**:
+The repository currently contains the **M01 planar compiler**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
-- Rectangle and disk panel tessellation
-- Stable canvas UV preservation
+- Validated rectangle and disk/ellipse panel tessellation
+- Stable source-local coordinates and canvas UV preservation
+- Immutable compiled data with panel ownership, provenance, and ordered boundaries
+- Pre-allocation vertex/triangle safety limits
 - Ordered rigid-transform operations
-- Diagnostics and validation foundations
+- Deterministic diagnostics and validation
 - Mesh baking tools for the Unity Editor
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts

@@ -18,9 +18,20 @@ namespace FoldCanvas.Editor
             FoldCanvasAsset existing = AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(AssetPath);
             if (existing != null)
             {
+                bool changed = false;
                 if (existing.Appearance != appearance)
                 {
                     existing.Appearance = appearance;
+                    changed = true;
+                }
+
+                if (TryUpgradeLegacyDiskToEllipse(existing))
+                {
+                    changed = true;
+                }
+
+                if (changed)
+                {
                     EditorUtility.SetDirty(existing);
                     AssetDatabase.SaveAssets();
                 }
@@ -40,17 +51,17 @@ namespace FoldCanvas.Editor
                 8,
                 6));
             asset.Panels.Add(PanelDefinition.CreateDisk(
-                "disk",
+                "ellipse",
                 new Rect(0.5f, 0f, 0.5f, 1f),
-                new Vector2(0.9f, 0.9f),
+                new Vector2(1.1f, 0.7f),
                 32,
                 4));
 
             asset.Operations.Add(new RigidTransformOperationDefinition
             {
-                Id = "move-disk",
-                PanelId = "disk",
-                Translation = new Vector3(1.2f, 0f, 0f),
+                Id = "move-ellipse",
+                PanelId = "ellipse",
+                Translation = new Vector3(1.3f, 0f, 0f),
                 RotationEuler = Vector3.zero,
                 Scale = Vector3.one
             });
@@ -60,6 +71,26 @@ namespace FoldCanvas.Editor
             Selection.activeObject = asset;
             EditorGUIUtility.PingObject(asset);
             Debug.Log($"FoldCanvas bootstrap sample created at {AssetPath}.", asset);
+        }
+
+        private static bool TryUpgradeLegacyDiskToEllipse(FoldCanvasAsset asset)
+        {
+            if (asset.Panels.Count != 2 ||
+                asset.Operations.Count != 1 ||
+                asset.Panels[1] == null ||
+                asset.Panels[1].Id != "disk" ||
+                !(asset.Operations[0] is RigidTransformOperationDefinition transform) ||
+                transform.PanelId != "disk")
+            {
+                return false;
+            }
+
+            asset.Panels[1].Id = "ellipse";
+            asset.Panels[1].PhysicalSize = new Vector2(1.1f, 0.7f);
+            transform.Id = "move-ellipse";
+            transform.PanelId = "ellipse";
+            transform.Translation = new Vector3(1.3f, 0f, 0f);
+            return true;
         }
 
         private static void EnsureSampleFolder()

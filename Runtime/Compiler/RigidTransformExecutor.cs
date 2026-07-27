@@ -9,7 +9,7 @@ namespace FoldCanvas
             MeshBuildBuffer buffer,
             FoldCanvasCompileResult result)
         {
-            if (!buffer.Panels.TryGetValue(operation.PanelId, out PanelBuildRecord panel))
+            if (!buffer.TryGetPanel(operation.PanelId, out PanelBuildRecord panel))
             {
                 result.Add(new FoldCanvasDiagnostic(
                     FoldCanvasDiagnosticCodes.MissingPanelReference,
@@ -37,8 +37,10 @@ namespace FoldCanvas
             int end = panel.VertexStart + panel.VertexCount;
             for (int i = panel.VertexStart; i < end; i++)
             {
-                Vector3 scaled = Vector3.Scale(buffer.Vertices[i], operation.Scale);
-                buffer.Vertices[i] = rotation * scaled + operation.Translation;
+                MeshBuildVertex vertex = buffer.Vertices[i];
+                Vector3 scaled = Vector3.Scale(vertex.Position, operation.Scale);
+                vertex.Position = rotation * scaled + operation.Translation;
+                buffer.Vertices[i] = vertex;
             }
 
             return true;

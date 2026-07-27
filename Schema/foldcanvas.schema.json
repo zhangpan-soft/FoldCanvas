@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://foldcanvas.dev/schema/foldcanvas-0.1.schema.json",
   "title": "FoldCanvas FoldScript",
+  "description": "Portable 2D-first source contract for deterministic FoldCanvas geometry compilation.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,23 +18,29 @@
   ],
   "properties": {
     "schemaVersion": {
+      "description": "Exact FoldScript contract version interpreted by the importer.",
       "const": "0.1"
     },
     "assetId": {
+      "description": "Stable machine identifier for the complete source asset.",
       "$ref": "#/$defs/id"
     },
     "displayName": {
+      "description": "Human-readable asset name; it has no geometric effect.",
       "type": "string",
       "minLength": 1,
       "maxLength": 128
     },
     "units": {
+      "description": "Physical unit used by all source lengths in this document.",
       "enum": ["meter", "centimeter", "millimeter"]
     },
     "canvas": {
+      "description": "Metadata for the authoritative 2D appearance image.",
       "$ref": "#/$defs/canvas"
     },
     "panels": {
+      "description": "Ordered 2D source domains that are tessellated into geometry.",
       "type": "array",
       "minItems": 1,
       "maxItems": 4096,
@@ -45,6 +52,7 @@
       }
     },
     "seams": {
+      "description": "Ordered named relationships between panel boundaries; declaring a seam alone does not execute it.",
       "type": "array",
       "maxItems": 8192,
       "items": {
@@ -52,6 +60,7 @@
       }
     },
     "operations": {
+      "description": "Geometry program executed strictly in array order.",
       "type": "array",
       "maxItems": 8192,
       "items": {
@@ -65,29 +74,35 @@
       }
     },
     "compile": {
+      "description": "Validation, normal-generation, tolerance, and allocation-safety settings.",
       "$ref": "#/$defs/compileSettings"
     },
     "extensions": {
+      "description": "Namespaced forward-compatible metadata; unknown extension data must not change core geometry.",
       "type": "object",
       "additionalProperties": true
     }
   },
   "$defs": {
     "id": {
+      "description": "Case-sensitive stable identifier used for references and diagnostics.",
       "type": "string",
       "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
     },
     "finiteNumber": {
+      "description": "Finite scalar within the supported interchange range.",
       "type": "number",
       "minimum": -1000000000,
       "maximum": 1000000000
     },
     "positiveNumber": {
+      "description": "Finite scalar strictly greater than zero.",
       "type": "number",
       "exclusiveMinimum": 0,
       "maximum": 1000000000
     },
     "vec2": {
+      "description": "Two-component vector ordered as [x, y].",
       "type": "array",
       "prefixItems": [
         { "$ref": "#/$defs/finiteNumber" },
@@ -98,6 +113,7 @@
       "maxItems": 2
     },
     "positiveVec2": {
+      "description": "Strictly positive two-component vector ordered as [x, y].",
       "type": "array",
       "prefixItems": [
         { "$ref": "#/$defs/positiveNumber" },
@@ -108,6 +124,7 @@
       "maxItems": 2
     },
     "vec3": {
+      "description": "Three-component vector ordered as [x, y, z].",
       "type": "array",
       "prefixItems": [
         { "$ref": "#/$defs/finiteNumber" },
@@ -119,33 +136,38 @@
       "maxItems": 3
     },
     "rect": {
+      "description": "Normalized canvas rectangle ordered as [x, y, width, height]. The compiler also verifies that the complete rectangle remains inside the canvas.",
       "type": "array",
       "prefixItems": [
-        { "type": "number", "minimum": 0, "maximum": 1 },
-        { "type": "number", "minimum": 0, "maximum": 1 },
-        { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
-        { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+        { "description": "Normalized left edge x.", "type": "number", "minimum": 0, "maximum": 1 },
+        { "description": "Normalized bottom edge y.", "type": "number", "minimum": 0, "maximum": 1 },
+        { "description": "Normalized positive width.", "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        { "description": "Normalized positive height.", "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
       ],
       "items": false,
       "minItems": 4,
       "maxItems": 4
     },
     "canvas": {
+      "description": "Authoritative 2D appearance-image metadata.",
       "type": "object",
       "additionalProperties": false,
       "required": ["appearance", "width", "height"],
       "properties": {
         "appearance": {
+          "description": "Relative asset path or importer-resolvable image reference; not an arbitrary network request.",
           "type": "string",
           "minLength": 1,
           "maxLength": 512
         },
         "width": {
+          "description": "Source image width in pixels for validation and authoring tools.",
           "type": "integer",
           "minimum": 1,
           "maximum": 32768
         },
         "height": {
+          "description": "Source image height in pixels for validation and authoring tools.",
           "type": "integer",
           "minimum": 1,
           "maximum": 32768
@@ -153,95 +175,216 @@
       }
     },
     "rectanglePanel": {
+      "description": "Planar rectangular source domain emitted as a deterministic row-major grid.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "shape", "canvasRect", "physicalSize", "tessellation"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "shape": { "const": "rectangle" },
-        "canvasRect": { "$ref": "#/$defs/rect" },
-        "physicalSize": { "$ref": "#/$defs/positiveVec2" },
+        "id": {
+          "description": "Unique panel identifier referenced by seams and operations.",
+          "$ref": "#/$defs/id"
+        },
+        "shape": {
+          "description": "Selects rectangular panel semantics.",
+          "const": "rectangle"
+        },
+        "canvasRect": {
+          "description": "Region of the appearance canvas mapped across this panel.",
+          "$ref": "#/$defs/rect"
+        },
+        "physicalSize": {
+          "description": "Physical [width, height] of the planar panel in document units.",
+          "$ref": "#/$defs/positiveVec2"
+        },
         "tessellation": {
+          "description": "Deterministic rectangular sampling counts.",
           "type": "object",
           "additionalProperties": false,
           "required": ["uSegments", "vSegments"],
           "properties": {
-            "uSegments": { "type": "integer", "minimum": 1, "maximum": 2048 },
-            "vSegments": { "type": "integer", "minimum": 1, "maximum": 2048 }
+            "uSegments": {
+              "description": "Number of horizontal cells; each row contains uSegments + 1 vertices.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2048
+            },
+            "vSegments": {
+              "description": "Number of vertical cells; the grid contains vSegments + 1 rows.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2048
+            }
           }
         }
       }
     },
     "diskPanel": {
+      "description": "Planar disk or ellipse emitted as one center vertex plus deterministic concentric rings.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "shape", "canvasRect", "physicalSize", "tessellation"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "shape": { "const": "disk" },
-        "canvasRect": { "$ref": "#/$defs/rect" },
-        "physicalSize": { "$ref": "#/$defs/positiveVec2" },
+        "id": {
+          "description": "Unique panel identifier referenced by seams and operations.",
+          "$ref": "#/$defs/id"
+        },
+        "shape": {
+          "description": "Selects disk semantics; unequal physical dimensions create an ellipse.",
+          "const": "disk"
+        },
+        "canvasRect": {
+          "description": "Region of the appearance canvas mapped across this disk or ellipse.",
+          "$ref": "#/$defs/rect"
+        },
+        "physicalSize": {
+          "description": "Physical [diameterX, diameterY] in document units; unequal values create an ellipse.",
+          "$ref": "#/$defs/positiveVec2"
+        },
         "tessellation": {
+          "description": "Deterministic radial sampling counts.",
           "type": "object",
           "additionalProperties": false,
           "required": ["radialSegments", "radialRings"],
           "properties": {
-            "radialSegments": { "type": "integer", "minimum": 3, "maximum": 4096 },
-            "radialRings": { "type": "integer", "minimum": 1, "maximum": 2048 }
+            "radialSegments": {
+              "description": "Samples around each ring, starting at +X and advancing counter-clockwise when viewed from +Z.",
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 4096
+            },
+            "radialRings": {
+              "description": "Number of concentric rings outside the center vertex.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2048
+            }
           }
         }
       }
     },
     "boundaryRef": {
+      "description": "Reference to one ordered named boundary generated by a panel.",
       "type": "object",
       "additionalProperties": false,
       "required": ["panel", "boundary"],
       "properties": {
-        "panel": { "$ref": "#/$defs/id" },
-        "boundary": { "$ref": "#/$defs/id" }
+        "panel": {
+          "description": "ID of the panel that owns the boundary.",
+          "$ref": "#/$defs/id"
+        },
+        "boundary": {
+          "description": "Generated boundary ID, such as uMin, uMax, vMin, vMax, or perimeter.",
+          "$ref": "#/$defs/id"
+        }
       }
     },
     "seam": {
+      "description": "Topology intent between two ordered panel boundaries; resolved only when selected by a stitch operation.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "a", "b", "mode", "reverseB", "sampleCount"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "a": { "$ref": "#/$defs/boundaryRef" },
-        "b": { "$ref": "#/$defs/boundaryRef" },
-        "mode": { "enum": ["weld", "hinge", "keepOpen"] },
-        "reverseB": { "type": "boolean" },
-        "sampleCount": { "type": "integer", "minimum": 0, "maximum": 8192 }
+        "id": {
+          "description": "Unique seam identifier referenced by operations and diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "a": {
+          "description": "First ordered boundary.",
+          "$ref": "#/$defs/boundaryRef"
+        },
+        "b": {
+          "description": "Second ordered boundary.",
+          "$ref": "#/$defs/boundaryRef"
+        },
+        "mode": {
+          "description": "weld creates one topological connection; hinge retains distinct vertices with a fold relationship; keepOpen records the relationship without closure.",
+          "enum": ["weld", "hinge", "keepOpen"]
+        },
+        "reverseB": {
+          "description": "Reverse boundary B sample order before matching it to boundary A.",
+          "type": "boolean"
+        },
+        "sampleCount": {
+          "description": "Requested common boundary sample count; zero requests deterministic automatic selection.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8192
+        }
       }
     },
     "operationBaseProperties": {
-      "id": { "$ref": "#/$defs/id" },
-      "enabled": { "type": "boolean", "default": true }
+      "id": {
+        "description": "Unique operation identifier used by diagnostics.",
+        "$ref": "#/$defs/id"
+      },
+      "enabled": {
+        "description": "Whether this serialized operation executes.",
+        "type": "boolean",
+        "default": true
+      }
     },
     "rigidTransform": {
+      "description": "Applies component scale, Euler rotation, and translation to one panel while preserving source metadata.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "translation", "rotationEuler", "scale"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "enabled": { "type": "boolean", "default": true },
-        "type": { "const": "rigidTransform" },
-        "panel": { "$ref": "#/$defs/id" },
-        "translation": { "$ref": "#/$defs/vec3" },
-        "rotationEuler": { "$ref": "#/$defs/vec3" },
-        "scale": { "$ref": "#/$defs/vec3" }
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects rigid-transform semantics.",
+          "const": "rigidTransform"
+        },
+        "panel": {
+          "description": "ID of the panel to transform.",
+          "$ref": "#/$defs/id"
+        },
+        "translation": {
+          "description": "Translation [x, y, z] in document units.",
+          "$ref": "#/$defs/vec3"
+        },
+        "rotationEuler": {
+          "description": "Unity-compatible Euler rotation [x, y, z] in degrees.",
+          "$ref": "#/$defs/vec3"
+        },
+        "scale": {
+          "description": "Component-wise local scale [x, y, z] applied before rotation and translation.",
+          "$ref": "#/$defs/vec3"
+        }
       }
     },
     "fold": {
+      "description": "Planned operation that rotates samples on one selected side of a directed line embedded in a panel.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "line", "side", "angleDegrees", "falloff"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "enabled": { "type": "boolean", "default": true },
-        "type": { "const": "fold" },
-        "panel": { "$ref": "#/$defs/id" },
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects fold semantics.",
+          "const": "fold"
+        },
+        "panel": {
+          "description": "ID of the panel containing the fold line.",
+          "$ref": "#/$defs/id"
+        },
         "line": {
+          "description": "Directed hinge line [A, B] in panel-normalized [0,1] coordinates; A and B must differ.",
           "type": "array",
           "prefixItems": [
             { "$ref": "#/$defs/vec2" },
@@ -251,37 +394,124 @@
           "minItems": 2,
           "maxItems": 2
         },
-        "side": { "enum": ["positive", "negative"] },
-        "angleDegrees": { "type": "number", "minimum": -3600, "maximum": 3600 },
-        "falloff": { "type": "number", "minimum": 0, "maximum": 1 }
+        "side": {
+          "description": "positive selects points left of directed line A to B; negative selects points right of it.",
+          "enum": ["positive", "negative"]
+        },
+        "angleDegrees": {
+          "description": "Signed rotation about the directed A-to-B hinge axis, matching Unity Quaternion.AngleAxis.",
+          "type": "number",
+          "minimum": -3600,
+          "maximum": 3600
+        },
+        "falloff": {
+          "description": "Normalized smooth-bend influence width; zero is a rigid crease.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
       }
     },
     "roll": {
+      "description": "Planned continuous mapping of one panel dimension onto a circular arc; this is not a rigid rotation.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "direction", "angleDegrees", "radiusMode", "startAngleDegrees"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "enabled": { "type": "boolean", "default": true },
-        "type": { "const": "roll" },
-        "panel": { "$ref": "#/$defs/id" },
-        "direction": { "enum": ["u", "v"] },
-        "angleDegrees": { "type": "number", "minimum": -3600, "maximum": 3600 },
-        "radiusMode": { "enum": ["preserveArcLength", "explicit", "fitTargetBoundary"] },
-        "radius": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000000 },
-        "targetSeam": { "$ref": "#/$defs/id" },
-        "startAngleDegrees": { "type": "number", "minimum": -3600, "maximum": 3600 }
-      }
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects continuous roll semantics.",
+          "const": "roll"
+        },
+        "panel": {
+          "description": "ID of the panel to wrap.",
+          "$ref": "#/$defs/id"
+        },
+        "direction": {
+          "description": "u wraps panel X around an axis parallel to +Y; v wraps panel Y around an axis parallel to +X.",
+          "enum": ["u", "v"]
+        },
+        "angleDegrees": {
+          "description": "Signed total angular sweep from the minimum source edge to the maximum edge; 360 makes edge positions coincide but does not weld them.",
+          "type": "number",
+          "minimum": -3600,
+          "maximum": 3600
+        },
+        "radiusMode": {
+          "description": "preserveArcLength derives radius from source span and sweep; explicit uses radius; fitTargetBoundary is reserved for a seam solver.",
+          "enum": ["preserveArcLength", "explicit", "fitTargetBoundary"]
+        },
+        "radius": {
+          "description": "Positive roll radius in document units, required only for explicit mode.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000
+        },
+        "targetSeam": {
+          "description": "Seam constraint to fit, required only for fitTargetBoundary mode.",
+          "$ref": "#/$defs/id"
+        },
+        "startAngleDegrees": {
+          "description": "Angular placement of the minimum source edge before applying the signed sweep.",
+          "type": "number",
+          "minimum": -3600,
+          "maximum": 3600
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "radiusMode": { "const": "explicit" }
+            },
+            "required": ["radiusMode"]
+          },
+          "then": {
+            "required": ["radius"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "radiusMode": { "const": "fitTargetBoundary" }
+            },
+            "required": ["radiusMode"]
+          },
+          "then": {
+            "required": ["targetSeam"]
+          }
+        }
+      ]
     },
     "stitch": {
+      "description": "Planned topology operation that resolves named seams in the listed order.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "seams"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "enabled": { "type": "boolean", "default": true },
-        "type": { "const": "stitch" },
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects seam-resolution semantics.",
+          "const": "stitch"
+        },
         "seams": {
+          "description": "One or more seam IDs resolved in the listed order.",
           "type": "array",
           "minItems": 1,
           "maxItems": 8192,
@@ -290,38 +520,74 @@
       }
     },
     "solidify": {
+      "description": "Planned operation that creates shell thickness and side walls from zero-thickness panels.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "targets", "thickness", "direction"],
       "properties": {
-        "id": { "$ref": "#/$defs/id" },
-        "enabled": { "type": "boolean", "default": true },
-        "type": { "const": "solidify" },
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects shell-thickness semantics.",
+          "const": "solidify"
+        },
         "targets": {
+          "description": "Panel IDs to thicken.",
           "type": "array",
           "minItems": 1,
           "maxItems": 4096,
           "items": { "$ref": "#/$defs/id" }
         },
-        "thickness": { "$ref": "#/$defs/positiveNumber" },
-        "direction": { "enum": ["inward", "outward", "centered"] }
+        "thickness": {
+          "description": "Total shell thickness in document units.",
+          "$ref": "#/$defs/positiveNumber"
+        },
+        "direction": {
+          "description": "inward keeps the current surface outside; outward keeps it inside; centered offsets half the thickness in both directions.",
+          "enum": ["inward", "outward", "centered"]
+        }
       }
     },
     "compileSettings": {
+      "description": "Compiler tolerances, output-normal policy, validation level, and cumulative allocation limits.",
       "type": "object",
       "additionalProperties": false,
       "required": ["weldEpsilon", "recalculateNormals", "validationLevel"],
       "properties": {
         "weldEpsilon": {
+          "description": "Positive physical-distance tolerance used by later weld and coincidence checks after unit conversion; it never welds implicitly.",
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 1
         },
         "recalculateNormals": {
+          "description": "Whether the Unity mesh adapter derives normals after geometry compilation.",
           "type": "boolean"
         },
         "validationLevel": {
+          "description": "Requested validation cost: basic, standard, or strict.",
           "enum": ["basic", "standard", "strict"]
+        },
+        "maxGeneratedVertices": {
+          "description": "Cumulative vertex limit checked before allocation; exceeding it is an error, not a simplification request.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 1000000
+        },
+        "maxGeneratedTriangles": {
+          "description": "Cumulative triangle limit checked before allocation; exceeding it is an error, not a simplification request.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647,
+          "default": 2000000
         }
       }
     }

@@ -13,6 +13,10 @@ namespace FoldCanvas
     [Serializable]
     public sealed class FoldCanvasCompileSettings
     {
+        public const int DefaultMaxGeneratedVertices = 1000000;
+
+        public const int DefaultMaxGeneratedTriangles = 2000000;
+
         [SerializeField, Min(0.0000001f)]
         private float weldEpsilon = 0.00001f;
 
@@ -21,6 +25,12 @@ namespace FoldCanvas
 
         [SerializeField]
         private FoldCanvasValidationLevel validationLevel = FoldCanvasValidationLevel.Basic;
+
+        [SerializeField, Min(1)]
+        private int maxGeneratedVertices = DefaultMaxGeneratedVertices;
+
+        [SerializeField, Min(1)]
+        private int maxGeneratedTriangles = DefaultMaxGeneratedTriangles;
 
         public float WeldEpsilon
         {
@@ -38,6 +48,18 @@ namespace FoldCanvas
         {
             get => validationLevel;
             set => validationLevel = value;
+        }
+
+        public int MaxGeneratedVertices
+        {
+            get => maxGeneratedVertices;
+            set => maxGeneratedVertices = value;
+        }
+
+        public int MaxGeneratedTriangles
+        {
+            get => maxGeneratedTriangles;
+            set => maxGeneratedTriangles = value;
         }
     }
 }
