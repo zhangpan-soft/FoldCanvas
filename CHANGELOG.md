@@ -8,6 +8,47 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.6] - 2026-07-27
+
+### Added
+
+- An explicit M03 equal-sample `Weld` execution gate for ordered
+  `StitchOperationDefinition` seam lists
+- Deterministic logical topology identity through `TopologyVertexId`, while
+  retaining render-vertex splits required by source UVs and provenance
+- Stable Stitch diagnostics for missing or duplicate seams, missing
+  boundaries, unsupported seam modes, sample-count mismatch, excessive
+  boundary distance, empty Stitch lists, invalid weld tolerance, and
+  non-manifold welded topology
+- Cup acceptance checks proving the wall-side seam and bottom perimeter are
+  welded and that only the 64-edge top rim remains open
+
+### Changed
+
+- The M03 cup source now executes `close-wall` and `attach-bottom` Weld seams
+  after Roll and bottom placement
+- Circular Roll uses the documented exterior-readable angular mapping and
+  reverses target triangle winding deterministically for positive outward
+  faces
+- The package, schema, pipeline, field reference, sample guide, roadmap, and
+  active plan now distinguish logical topology welding from UV/provenance
+  render-vertex splits
+
+### Fixed
+
+- The cup base and wall are snapped to identical welded topology instead of
+  remaining merely close in space
+- Exterior wall artwork reads left-to-right; the two-sided proof shader also
+  mirrors only back-face sampling so orbiting the zero-thickness preview does
+  not show reversed text
+
+### Verified
+
+- Unity `6000.3.20f1` compiled the package and passed all 103 Edit Mode tests
+- The welded cup compiles to 1,358 render vertices, 1,281 logical topology
+  vertices, and 2,496 triangles, with exactly 64 open top-rim edges
+- JSON parsing, repository validation, and `git diff --check` passed
+
 ## [0.1.0-preview.5] - 2026-07-27
 
 ### Added

@@ -275,6 +275,32 @@ namespace FoldCanvas.Tests
         }
 
         [Test]
+        public void InvalidWeldEpsilon_ReturnsStableDiagnostic()
+        {
+            FoldCanvasAsset asset =
+                ScriptableObject.CreateInstance<FoldCanvasAsset>();
+            asset.CompileSettings.WeldEpsilon = 0f;
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "panel",
+                new Rect(0f, 0f, 1f, 1f),
+                Vector2.one,
+                1,
+                1));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.CompiledData, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(FoldCanvasDiagnosticCodes.InvalidWeldEpsilon));
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
         public void ExtremeTessellation_ReturnsDiagnosticWithoutOverflow()
         {
             FoldCanvasAsset asset = ScriptableObject.CreateInstance<FoldCanvasAsset>();
@@ -298,7 +324,6 @@ namespace FoldCanvas.Tests
             Object.DestroyImmediate(asset);
         }
 
-        [TestCase(FoldOperationType.Stitch)]
         [TestCase(FoldOperationType.Solidify)]
         public void UnsupportedOperation_IsNeverSilentlyIgnored(FoldOperationType operationType)
         {
@@ -364,7 +389,7 @@ namespace FoldCanvas.Tests
                 Id = "declared",
                 A = new BoundaryReference("panel", "uMin"),
                 B = new BoundaryReference("panel", "uMax"),
-                Mode = SeamMode.Weld
+                Mode = SeamMode.KeepOpen
             });
             StitchOperationDefinition stitch =
                 new StitchOperationDefinition { Id = "stitch" };
@@ -379,7 +404,8 @@ namespace FoldCanvas.Tests
             Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
             Assert.That(
                 result.Diagnostics[0].Code,
-                Is.EqualTo(FoldCanvasDiagnosticCodes.UnsupportedOperation));
+                Is.EqualTo(
+                    FoldCanvasDiagnosticCodes.UnsupportedStitchSeamMode));
             Assert.That(result.Diagnostics[0].OperationId, Is.EqualTo("stitch"));
             Object.DestroyImmediate(asset);
         }

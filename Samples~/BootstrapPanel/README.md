@@ -32,13 +32,15 @@ canvas, and one untagged preview camera. Re-running the command reuses those
 objects, including when inactive, and never modifies an existing MainCamera.
 Read the positive Roll from outside the cup: source U runs left-to-right around
 the wall and generated normals point radially outward. The command validates
-all 64 wall-bottom/perimeter samples before showing the proof. The wall seam
-and bottom remain spatially aligned but topologically separate.
+all 64 wall-bottom/perimeter samples before showing the proof. It then proves
+that the wall-side seam and bottom perimeter share logical topology and that
+only the 64-edge top rim remains open.
 
 The proof material is an opaque two-sided Unlit visualization so the
 zero-thickness M03 wall and disk stay visible while orbiting the selected
 object. This does not duplicate triangles, add an inner wall, or weaken the
-compiler's outward-winding tests; physical thickness and closed cup topology
-remain M04 work.
+compiler's outward-winding tests; physical thickness and the closed thick-shell
+construction remain M04 work.
 
-Stitch and Solidify intentionally remain unsupported until M04.
+M03 supports only explicit equal-sample Weld seams. Deterministic resampling,
+Bridge, Solidify, inner walls, and thickness intentionally remain M04 work.

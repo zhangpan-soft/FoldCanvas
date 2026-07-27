@@ -30,7 +30,7 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 ## Status
 
-The repository currently contains the **M02 fold compiler**:
+The repository currently contains the **M03 Roll and minimum Weld compiler**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -43,7 +43,13 @@ The repository currently contains the **M02 fold compiler**:
 - Deterministic source-line embedding into the panel's current 3D surface
 - Stable diagnostics for invalid lines, missing targets, nonzero falloff, and
   non-linear current hinges
+- Circular Roll in the target's current congruent planar frame, with
+  documented signed handedness and outward winding
+- Explicit equal-sample Weld seams with deterministic logical topology IDs;
+  source UV/provenance splits remain valid render-vertex splits
 - An editor-generated six-region canvas that compiles into a textured box
+- An editor-generated cup whose wall seam and bottom perimeter are welded
+  while its 64-edge top rim remains open
 - Deterministic diagnostics and validation
 - Mesh baking tools for the Unity Editor
 - Edit-mode tests
@@ -54,8 +60,9 @@ The first public proof target is a cup whose base and wall artwork live on one 2
 On the M03 audit branch, Circular Roll is intentionally narrower than that
 future closed-shell target: it supports at most one signed turn, requires at
 least three source segments for a complete turn, and accepts only congruent
-planar current embeddings. The cup wall and base are numerically aligned but
-remain separate zero-thickness surfaces until M04.
+planar current embeddings. The cup wall and base are explicitly welded in
+logical topology, but the object remains a zero-thickness open cup until M04
+adds the inner shell, rim walls, and general seam resampling.
 
 ## Design principles
 
@@ -136,7 +143,7 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M01 | Robust planar panels and preserved UVs |
 | M02 | Fold six decorated rectangle panels into a box — complete |
 | M03 | Roll a decorated wall into a cylindrical cup |
-| M04 | Resample seams, weld boundaries, and add thickness |
+| M04 | General seam resampling/bridging and shell thickness |
 | M05 | Compile sphere gores into a closed sphere |
 | M06 | Split 2D canvas / 3D preview editor |
 | M07 | Manifold, inversion, seam, and intersection validators |

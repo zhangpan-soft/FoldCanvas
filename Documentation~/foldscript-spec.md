@@ -122,7 +122,7 @@ triangles.
   "direction": "u",
   "angleDegrees": 360.0,
   "radiusMode": "preserveArcLength",
-  "startAngleDegrees": 0.0
+  "startAngleDegrees": 180.0
 }
 ```
 
@@ -160,7 +160,8 @@ turn also requires at least three source segments in the selected direction.
 }
 ```
 
-A zero sample count means the compiler selects a stable common count.
+A zero sample count means the M03 compiler accepts the two boundaries' existing
+common count. It does not resample either boundary.
 
 Cup-bottom seam:
 
@@ -170,12 +171,18 @@ Cup-bottom seam:
   "a": { "panel": "wall", "boundary": "vMin" },
   "b": { "panel": "bottom", "boundary": "perimeter" },
   "mode": "weld",
-  "reverseB": true,
+  "reverseB": false,
   "sampleCount": 64
 }
 ```
 
 ## 6. Complete cup sketch
+
+This sketch includes the future M04 `solidify` step to show the intended
+end-state source document. The current M03 compiler executes through
+`stitch-all` and then returns `UnsupportedOperation` for `solidify`; the live
+M03 sample omits that final operation and produces a welded, zero-thickness cup
+whose top rim remains open.
 
 ```json
 {
@@ -218,7 +225,7 @@ Cup-bottom seam:
       "a": { "panel": "wall", "boundary": "vMin" },
       "b": { "panel": "bottom", "boundary": "perimeter" },
       "mode": "weld",
-      "reverseB": true,
+      "reverseB": false,
       "sampleCount": 64
     }
   ],
@@ -230,7 +237,7 @@ Cup-bottom seam:
       "direction": "u",
       "angleDegrees": 360.0,
       "radiusMode": "preserveArcLength",
-      "startAngleDegrees": 0.0
+      "startAngleDegrees": 180.0
     },
     {
       "id": "place-bottom",

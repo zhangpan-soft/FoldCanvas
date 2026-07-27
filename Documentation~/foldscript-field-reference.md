@@ -153,17 +153,19 @@ A seam declares topology intent between two ordered boundaries:
 | `seams[].b` | boundary ref | yes | Second ordered boundary. |
 | `seams[].mode` | enum | yes | `"weld"`, `"hinge"`, or `"keepOpen"`. |
 | `seams[].reverseB` | boolean | yes | Reverse B's sample order before matching it to A. |
-| `seams[].sampleCount` | integer ≥ 0 | yes | `0` requests deterministic automatic resampling; a positive value requests that common sample count. |
+| `seams[].sampleCount` | integer ≥ 0 | yes | In M03, `0` accepts the existing common count; a positive value must equal that count. General resampling is deferred. |
 
 Seam modes:
 
-- `weld`: resample as needed and create one topological connection.
+- `weld`: when selected by M03 Stitch, require existing equal sample counts,
+  snap paired positions, and create one logical topological connection.
 - `hinge`: retain distinct boundary vertices while recording a shared fold
   relationship.
 - `keepOpen`: retain an explicit relationship without closing the boundary.
 
 Declaring a seam does not execute it. A later `stitch` operation selects which
-seams to resolve and when.
+seams to resolve and when. Selecting `hinge` or `keepOpen` for execution is
+still unsupported in M03; the declaration itself remains valid and inert.
 
 ## 6. Operations
 
@@ -265,14 +267,14 @@ rigid rotation of the whole panel.
 |---|---:|:---:|---|
 | `panel` | ID | yes | Target panel. |
 | `direction` | enum | yes | `"u"` wraps panel X around an axis parallel to +Y; `"v"` wraps panel Y around an axis parallel to +X. |
-| `angleDegrees` | number | yes | Signed Circular Roll sweep from the minimum edge to the maximum edge, in `[-360, 360]`. `+/-360` makes the two edge positions coincide but does not weld them. Larger multi-turn sweeps are unsupported in M03. |
+| `angleDegrees` | number | yes | Signed Circular Roll sweep from the minimum edge to the maximum edge, in `[-360, 360]`. `+/-360` makes the two edge positions coincide; Roll itself does not weld them, but a later explicit Stitch may. Larger multi-turn sweeps are unsupported in M03. |
 | `radiusMode` | enum | yes | How the roll radius is selected. |
 | `radius` | positive number | conditional | Required when `radiusMode` is `"explicit"`. In document units. |
 | `targetSeam` | ID | conditional | Required when `radiusMode` is `"fitTargetBoundary"`; identifies the seam constraint the future solver must fit. |
 | `startAngleDegrees` | number | yes | Angular placement of the minimum edge before applying the signed sweep. |
 
 Let `t` be the normalized coordinate along the chosen roll direction and
-`theta = radians(startAngleDegrees + t * angleDegrees)`.
+`theta = radians(startAngleDegrees - t * angleDegrees)`.
 
 Before mapping, the compiler resolves the target's current frame:
 
@@ -312,10 +314,11 @@ currentPosition =
 
 At `startAngleDegrees = 0`, the minimum boundary begins on the negative
 selected-axis radial direction. Positive angles advance toward
-`+CurrentNormal`. A positive sweep preserves source triangle order and produces
-radially outward normals. A negative sweep also preserves source triangle
-order; its circulation is reversed and its generated normals therefore point
-radially inward. UV and boundary order remain source-authored in both cases.
+`-CurrentNormal`. Roll reverses each target triangle's winding without changing
+connectivity. A positive sweep therefore produces radially outward normals;
+a negative sweep uses the opposite circulation and produces the documented
+radially inward orientation. UV and boundary order remain source-authored in
+both cases.
 
 Radius modes:
 
@@ -339,7 +342,14 @@ does not merge coincident minimum/maximum edges; seam resolution belongs to
 the selected direction; otherwise it returns
 `FC3022 InsufficientRollTessellation`. Two segments sample only 0, 180, and 360
 degrees, so their two nonzero-area panels overlap in one plane. Coincident
-full-turn endpoints retain different vertex indices.
+full-turn endpoints retain different render vertex indices until explicitly
+stitched.
+
+The selected angular coordinate is
+`theta = startAngleDegrees - t * angleDegrees`. Roll reverses triangle winding
+without changing connectivity, so positive full turns keep radial outward
+front faces while increasing source U reads left-to-right at the canonical
+exterior view.
 
 M03 Circular Roll accepts at most one signed turn. A magnitude above 360
 degrees returns `FC3023 UnsupportedMultiTurnRoll` instead of producing
@@ -352,15 +362,26 @@ contracts.
 读取执行前的最终几何，只接受与源矩形全等的平面嵌入；平移、旋转和单位镜像
 可以通过，改变平面内度量的缩放、剪切、轴塌缩和非平面结果会返回稳定诊断。
 
-### 6.4 `stitch` — planned for M04
+### 6.4 `stitch`
 
 | Field | Type | Meaning |
 |---|---:|---|
 | `seams` | ID array | One or more seam IDs resolved in listed order. |
 
 The seam's mode, orientation, and sample count control the topology operation.
-Boundary-count equality must not be assumed; deterministic resampling is part
-of stitch processing.
+Seam declarations remain inert until selected here.
+
+The M03 cup gate supports `weld` when both effective boundary counts already
+match. `sampleCount = 0` accepts that existing common count; a positive value
+must equal it. A boundary whose terminal render vertex already shares the
+first vertex's topology ID contributes that closed-loop point once. Paired
+positions must be within `compile.weldEpsilon`.
+
+Weld assigns one deterministic `TopologyVertexId`. Separate render vertices
+remain legal when source UVs, provenance, or hard normals differ; this is an
+attribute seam, not an open topological edge. General resampling, `bridge`,
+`hinge`, and `keepOpen` execution remain future work and return stable
+diagnostics when selected.
 
 ### 6.5 `solidify` — planned for M04
 
@@ -388,7 +409,7 @@ receive duplicate walls.
 
 | Field | Type | Required | Meaning |
 |---|---:|:---:|---|
-| `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for later welding and coincidence checks. It does not implicitly weld geometry. |
+| `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for explicit Weld and coincidence checks. It does not implicitly weld geometry. |
 | `recalculateNormals` | boolean | yes | Derive Unity mesh normals after geometry compilation. |
 | `validationLevel` | enum | yes | `"basic"`, `"standard"`, or `"strict"`; higher levels add more expensive validation when implemented. |
 | `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative pre-allocation safety limit. C# default: `1,000,000`. |

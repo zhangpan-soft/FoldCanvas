@@ -51,9 +51,17 @@ Shader "FoldCanvas/Two-Sided Unlit Texture"
                 return output;
             }
 
-            fixed4 Frag(Varyings input) : SV_Target
+            fixed4 Frag(
+                Varyings input,
+                fixed facing : VFACE) : SV_Target
             {
-                return tex2D(_MainTex, input.uv) * _Color;
+                float2 readableUv = input.uv;
+                if (facing < 0)
+                {
+                    readableUv.x = 1.0 - readableUv.x;
+                }
+
+                return tex2D(_MainTex, readableUv) * _Color;
             }
             ENDCG
         }

@@ -27,6 +27,13 @@ namespace FoldCanvas
         public const string ExcessiveTessellation = "FC1007";
         public const string MissingPanelReference = "FC2001";
         public const string UnsupportedSeam = "FC2002";
+        public const string StitchSeamMissing = "FC2003";
+        public const string StitchBoundaryMissing = "FC2004";
+        public const string StitchSampleCountMismatch = "FC2005";
+        public const string StitchPositionMismatch = "FC2006";
+        public const string UnsupportedStitchSeamMode = "FC2007";
+        public const string DuplicateSeamId = "FC2008";
+        public const string EmptyStitchSeamList = "FC2009";
         public const string UnsupportedOperation = "FC3001";
         public const string NonFiniteOperationParameter = "FC3002";
         public const string FoldTargetMissing = "FC3003";
@@ -52,6 +59,8 @@ namespace FoldCanvas
         public const string UnsupportedMultiTurnRoll = "FC3023";
         public const string NonFiniteVertex = "FC5001";
         public const string ZeroAreaTriangle = "FC5002";
+        public const string NonManifoldTopology = "FC5003";
+        public const string InvalidWeldEpsilon = "FC5004";
     }
 
     public sealed class FoldCanvasDiagnosticValue

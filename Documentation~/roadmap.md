@@ -43,7 +43,7 @@ multiple viewing orientations. The six panels remain unwelded by design.
 
 ## M03: Roll and cup
 
-**Status:** implemented in `0.1.0-preview.5` on the audit branch; acceptance
+**Status:** implemented in `0.1.0-preview.6` on the audit branch; acceptance
 remains pending until the PR is reviewed and merged.
 
 **Proof:** a rectangular wall region bearing text and a logo rolls into a cylindrical wall; a disk becomes the base.
@@ -52,7 +52,9 @@ remains pending until the PR is reviewed and merged.
 - preserve arc length mode
 - explicit radius mode
 - full and partial roll
-- seam coincidence metric
+- explicit equal-sample wall closure and bottom Weld
+- logical topology identity across UV/provenance attribute seams
+- seam coincidence metric and exact representative snapping
 - cup sample canvas
 - current-frame composition after rigid translation/rotation
 - documented positive/negative handedness and radial normal convention
@@ -62,7 +64,9 @@ remains pending until the PR is reviewed and merged.
 - congruent current-frame composition, including unit reflection
 - package-owned, idempotent EditorOnly proof camera hierarchy
 
-This milestone may display separate coincident surfaces. Topological welding belongs to M04.
+M03 does not perform general boundary resampling, Bridge, Solidify, thickness,
+or inner-shell generation. Its narrow Weld gate requires existing equal sample
+counts and leaves only the cup's top rim open.
 
 ### Future Roll tasks: SpiralRoll and LayeredRoll
 
@@ -86,14 +90,14 @@ Until that task is active, any crease that is not already a continuous existing
 edge chain returns `FC3011 FoldCreaseRequiresTopologySplit` and produces no
 Mesh.
 
-## M04: Stitch and solidify
+## M04: General Stitch and solidify
 
 **Proof:** the cup becomes a closed manifold shell with configurable wall and base thickness.
 
-- boundary extraction
+- general boundary extraction
 - normalized arc-length parameterization
 - deterministic resampling
-- weld/bridge modes
+- resampled weld and bridge modes
 - open-boundary classification
 - inner shell and rim generation
 - manifold tests

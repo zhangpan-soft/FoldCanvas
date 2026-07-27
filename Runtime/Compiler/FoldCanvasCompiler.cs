@@ -101,19 +101,48 @@ namespace FoldCanvas
 
                 if (operation is RigidTransformOperationDefinition rigidTransform)
                 {
-                    RigidTransformExecutor.TryExecute(rigidTransform, buffer, result);
+                    if (!RigidTransformExecutor.TryExecute(
+                        rigidTransform,
+                        buffer,
+                        result))
+                    {
+                        return;
+                    }
+
                     continue;
                 }
 
                 if (operation is FoldLineOperationDefinition fold)
                 {
-                    FoldLineExecutor.TryExecute(fold, buffer, result);
+                    if (!FoldLineExecutor.TryExecute(fold, buffer, result))
+                    {
+                        return;
+                    }
+
                     continue;
                 }
 
                 if (operation is RollOperationDefinition roll)
                 {
-                    RollExecutor.TryExecute(roll, buffer, result);
+                    if (!RollExecutor.TryExecute(roll, buffer, result))
+                    {
+                        return;
+                    }
+
+                    continue;
+                }
+
+                if (operation is StitchOperationDefinition stitch)
+                {
+                    if (!StitchExecutor.TryExecute(
+                        stitch,
+                        asset,
+                        buffer,
+                        result))
+                    {
+                        return;
+                    }
+
                     continue;
                 }
 
@@ -122,6 +151,7 @@ namespace FoldCanvas
                     FoldCanvasDiagnosticSeverity.Error,
                     $"Operation type '{operation.Type}' is not implemented in the bootstrap compiler. Follow the active milestone instead of silently ignoring it.",
                     operationId: operation.Id));
+                return;
             }
         }
 
@@ -137,6 +167,15 @@ namespace FoldCanvas
                         FoldCanvasDiagnosticCodes.NonFiniteVertex,
                         FoldCanvasDiagnosticSeverity.Error,
                         $"Generated vertex {i} contains NaN or infinity."));
+                    return;
+                }
+            }
+
+            if (buffer.HasTopologyWelds)
+            {
+                ValidateWeldedTopology(buffer, result);
+                if (result.HasErrors())
+                {
                     return;
                 }
             }
@@ -157,6 +196,91 @@ namespace FoldCanvas
                     return;
                 }
             }
+        }
+
+        private static void ValidateWeldedTopology(
+            MeshBuildBuffer buffer,
+            FoldCanvasCompileResult result)
+        {
+            Dictionary<ulong, TopologyEdgeUse> edges =
+                new Dictionary<ulong, TopologyEdgeUse>();
+            for (int i = 0; i < buffer.Triangles.Count; i += 3)
+            {
+                int a = buffer.GetTopologyId(buffer.Triangles[i]);
+                int b = buffer.GetTopologyId(buffer.Triangles[i + 1]);
+                int c = buffer.GetTopologyId(buffer.Triangles[i + 2]);
+                if (a == b || b == c || c == a)
+                {
+                    result.Add(new FoldCanvasDiagnostic(
+                        FoldCanvasDiagnosticCodes.NonManifoldTopology,
+                        FoldCanvasDiagnosticSeverity.Error,
+                        $"Welded topology collapses generated triangle {i / 3}."));
+                    return;
+                }
+
+                if (!TryAddTopologyEdge(a, b, i / 3, edges, result) ||
+                    !TryAddTopologyEdge(b, c, i / 3, edges, result) ||
+                    !TryAddTopologyEdge(c, a, i / 3, edges, result))
+                {
+                    return;
+                }
+            }
+        }
+
+        private static bool TryAddTopologyEdge(
+            int from,
+            int to,
+            int triangleIndex,
+            Dictionary<ulong, TopologyEdgeUse> edges,
+            FoldCanvasCompileResult result)
+        {
+            int minimum = Math.Min(from, to);
+            int maximum = Math.Max(from, to);
+            ulong key =
+                ((ulong)(uint)minimum << 32) |
+                (uint)maximum;
+            int direction = from == minimum ? 1 : -1;
+            if (!edges.TryGetValue(key, out TopologyEdgeUse edgeUse))
+            {
+                edges.Add(key, new TopologyEdgeUse(1, direction));
+                return true;
+            }
+
+            if (edgeUse.Count >= 2)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.NonManifoldTopology,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    $"Welded topology edge ({minimum}, {maximum}) has more than two incident triangles; the first excess occurs at triangle {triangleIndex}."));
+                return false;
+            }
+
+            if (edgeUse.FirstDirection == direction)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.NonManifoldTopology,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    $"Welded topology edge ({minimum}, {maximum}) has inconsistent triangle orientation at triangle {triangleIndex}."));
+                return false;
+            }
+
+            edges[key] = new TopologyEdgeUse(
+                edgeUse.Count + 1,
+                edgeUse.FirstDirection);
+            return true;
+        }
+
+        private readonly struct TopologyEdgeUse
+        {
+            public TopologyEdgeUse(int count, int firstDirection)
+            {
+                Count = count;
+                FirstDirection = firstDirection;
+            }
+
+            public int Count { get; }
+
+            public int FirstDirection { get; }
         }
     }
 }

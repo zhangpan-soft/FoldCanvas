@@ -208,7 +208,7 @@ namespace FoldCanvas
                     ? vertex.SourcePosition.x / sourceSpan + 0.5d
                     : vertex.SourcePosition.y / sourceSpan + 0.5d;
                 double theta =
-                    (operation.StartAngleDegrees +
+                    (operation.StartAngleDegrees -
                         normalized * operation.AngleDegrees) *
                     Math.PI / 180d;
                 float radialAxis = (float)(-radius * Math.Cos(theta));
@@ -254,6 +254,8 @@ namespace FoldCanvas
                 buffer.Vertices[vertexIndex] = vertex;
             }
 
+            ReversePanelTriangleWinding(panel, buffer);
+
             if (reportStretch)
             {
                 double arcLength = radius * Math.Abs(angleRadians);
@@ -292,6 +294,20 @@ namespace FoldCanvas
             }
 
             return true;
+        }
+
+        private static void ReversePanelTriangleWinding(
+            PanelBuildRecord panel,
+            MeshBuildBuffer buffer)
+        {
+            int triangleEnd =
+                panel.TriangleIndexStart + panel.TriangleIndexCount;
+            for (int i = panel.TriangleIndexStart; i < triangleEnd; i += 3)
+            {
+                int second = buffer.Triangles[i + 1];
+                buffer.Triangles[i + 1] = buffer.Triangles[i + 2];
+                buffer.Triangles[i + 2] = second;
+            }
         }
 
         private static bool IsClosedFullTurn(float angleDegrees)

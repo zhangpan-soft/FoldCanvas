@@ -12,9 +12,13 @@ After compilation:
 - the wall is rolled into a cylindrical or tapered shell
 - the artwork follows the wall continuously
 - the disk is placed at the bottom plane
-- the two source surfaces visually align
+- the wall side seam is explicitly welded
+- the disk perimeter is explicitly welded to the wall bottom
+- the only remaining open topological boundary is the cup rim
 
-Topological welding and thickness are intentionally deferred to M04.
+The user authorized equal-sample `Weld` execution for the M03 cup after the
+distance-only proof was found insufficient. General boundary resampling,
+`Bridge`, `Solidify`, and thickness remain deferred.
 
 ## Roll semantics
 
@@ -45,7 +49,12 @@ Use the provided radius and report stretch/compression ratio.
 - compiler may evaluate the deterministic roll mapping internally
 - the non-roll source direction remains linear
 - UV0 remains exactly source canvas UV
-- full 360-degree first/last boundaries coincide spatially within tolerance, while remaining topologically separate until M04
+- positive source progression uses
+  `theta = startAngleDegrees - t * angleDegrees`
+- Roll reverses target triangle winding without changing connectivity, keeping
+  a positive sweep radially outward and source U readable from the exterior
+- full 360-degree first/last boundaries coincide spatially within tolerance;
+  only an explicit Stitch operation welds their topology
 - a full turn requires at least three source segments; two segments form two
   overlapping planar panels despite having nonzero triangle area
 - Circular Roll is limited to one signed turn; larger sweeps return
@@ -62,15 +71,30 @@ Add an importable or editor-generated sample with fixed physical dimensions. Inc
 
 The interactive cup proof uses an opaque two-sided Unlit preview shader because
 M03 deliberately emits zero-thickness surfaces. This prevents the wall and
-bottom from disappearing while the user orbits the object. It does not add
-inner-wall geometry, change triangle winding, or replace the one-sided normal
-and handedness tests.
+bottom from disappearing while the user orbits the object. Back faces mirror
+their preview U lookup so readable artwork is not reversed when viewed through
+the zero-thickness surface. This does not add inner-wall geometry or replace
+the one-sided normal and handedness tests.
 
 The proof owns an `EditorOnly` root containing the cup, source canvas, and one
 untagged preview camera. It must reuse inactive owned objects, record Undo for
 existing objects, and never read or modify `Camera.main`. The 64-sample wall
 bottom boundary and disk perimeter must pass a numerical fit check before the
 proof is shown.
+
+## Minimum Stitch/Weld semantics
+
+- Seam declarations remain inert until selected by a Stitch operation.
+- M03 executes `Weld` only when effective boundary sample counts already
+  match; it does not resample.
+- A terminal render sample already welded to the first sample is counted once
+  when a later closed-loop seam is matched.
+- Paired positions must be within `weldEpsilon` and are snapped to one
+  deterministic representative.
+- UV/provenance/hard-normal attribute splits may retain separate render
+  vertices, but all copies share one `TopologyVertexId`.
+- Manifold validation operates on topology IDs. The cup must have no edge
+  incidence above two and exactly its 64-edge top rim open.
 
 ## Tests
 
@@ -87,6 +111,10 @@ proof is shown.
 - multi-turn Circular Roll returns `FC3023`
 - the owned preview is idempotent and leaves an existing MainCamera unchanged
 - every wall-bottom sample coincides with the disk perimeter within tolerance
+- equal-sample Stitch gives paired boundaries shared topology IDs
+- the stitched cup has 1,281 topology vertices and only its top rim open
+- source UVs remain distinct and unchanged across attribute seams
+- the canonical exterior tangent carries increasing source U left-to-right
 
 ## Diagnostics
 
@@ -96,10 +124,15 @@ proof is shown.
 - unsupported source panel shape
 - unsupported multi-turn Circular Roll
 - excessive radial compression/stretch warning
+- missing seam or boundary
+- unsupported seam mode or required resampling
+- seam gap above `weldEpsilon`
+- non-manifold welded topology
 
 ## Non-goals
 
-- no weld
+- no general resampling or Bridge
+- no automatic proximity weld
 - no inner wall
 - no rim
 - no real glass shader

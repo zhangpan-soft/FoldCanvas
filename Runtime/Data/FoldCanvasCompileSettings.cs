@@ -17,8 +17,10 @@ namespace FoldCanvas
 
         public const int DefaultMaxGeneratedTriangles = 2000000;
 
+        public const float DefaultWeldEpsilon = 0.00001f;
+
         [SerializeField, Min(0.0000001f)]
-        private float weldEpsilon = 0.00001f;
+        private float weldEpsilon = DefaultWeldEpsilon;
 
         [SerializeField]
         private bool recalculateNormals = true;

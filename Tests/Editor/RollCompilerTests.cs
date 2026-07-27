@@ -55,7 +55,7 @@ namespace FoldCanvas.Tests
                 new Vector3(-expectedRadius, -0.5f, 0f));
             AssertPosition(
                 result.CompiledData.Vertices[1].Position,
-                new Vector3(0f, -0.5f, expectedRadius));
+                new Vector3(0f, -0.5f, -expectedRadius));
             AssertPosition(
                 result.CompiledData.Vertices[2].Position,
                 new Vector3(expectedRadius, -0.5f, 0f));
@@ -168,7 +168,7 @@ namespace FoldCanvas.Tests
                 new Vector3(-0.3f, 0f, expectedRadius));
             AssertPosition(
                 result.CompiledData.Vertices[2].Position,
-                new Vector3(-0.3f, -expectedRadius, 0f));
+                new Vector3(-0.3f, expectedRadius, 0f));
             AssertPosition(
                 result.CompiledData.Vertices[4].Position,
                 new Vector3(-0.3f, 0f, -expectedRadius));
@@ -211,10 +211,10 @@ namespace FoldCanvas.Tests
             Assert.That(negative.Success, Is.True, JoinDiagnostics(negative));
             Assert.That(
                 positive.CompiledData.Vertices[1].Position.z,
-                Is.GreaterThan(0f));
+                Is.LessThan(0f));
             Assert.That(
                 negative.CompiledData.Vertices[1].Position.z,
-                Is.LessThan(0f));
+                Is.GreaterThan(0f));
             Assert.That(
                 Mathf.Abs(positive.CompiledData.Vertices[1].Position.z),
                 Is.EqualTo(
@@ -305,15 +305,53 @@ namespace FoldCanvas.Tests
                 new Vector3(-radius, -0.5f, 0f));
             AssertPosition(
                 uResult.CompiledData.Vertices[1].Position,
-                new Vector3(0f, -0.5f, radius));
+                new Vector3(0f, -0.5f, -radius));
             AssertPosition(
                 vResult.CompiledData.Vertices[0].Position,
                 new Vector3(-0.5f, -radius, 0f));
             AssertPosition(
                 vResult.CompiledData.Vertices[2].Position,
-                new Vector3(-0.5f, 0f, radius));
+                new Vector3(-0.5f, 0f, -radius));
             Destroy(uResult, uAsset);
             Destroy(vResult, vAsset);
+        }
+
+        [Test]
+        public void PositiveRoll_CanonicalExteriorReadsSourceUFromLeftToRight()
+        {
+            const float radius = 0.25f;
+            FoldCanvasAsset asset = CreateRectangleAsset(
+                new Vector2(2f * Mathf.PI * radius, 1f),
+                8,
+                1);
+            RollOperationDefinition roll = CreateRoll(
+                "readable-exterior",
+                "panel",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength);
+            roll.StartAngleDegrees = 180f;
+            asset.Operations.Add(roll);
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Quaternion proofRotation = Quaternion.Euler(0f, -90f, 0f);
+            FoldCanvasCompiledVertex authoredLeft =
+                result.CompiledData.Vertices[3];
+            FoldCanvasCompiledVertex authoredRight =
+                result.CompiledData.Vertices[5];
+            Vector3 previewLeft = proofRotation * authoredLeft.Position;
+            Vector3 previewRight = proofRotation * authoredRight.Position;
+            Assert.That(
+                authoredRight.SourceUv.x,
+                Is.GreaterThan(authoredLeft.SourceUv.x));
+            Assert.That(previewLeft.z, Is.LessThan(0f));
+            Assert.That(previewRight.z, Is.LessThan(0f));
+            Assert.That(
+                previewRight.x,
+                Is.GreaterThan(previewLeft.x));
+            Destroy(result, asset);
         }
 
         [Test]
@@ -348,11 +386,25 @@ namespace FoldCanvas.Tests
                 Assert.That(after.SourceUv, Is.EqualTo(before.SourceUv));
                 Assert.That(after.PanelIndex, Is.EqualTo(before.PanelIndex));
                 Assert.That(after.ProvenanceId, Is.EqualTo(before.ProvenanceId));
+                Assert.That(
+                    after.TopologyVertexId,
+                    Is.EqualTo(before.TopologyVertexId));
             }
 
-            CollectionAssert.AreEqual(
-                planar.CompiledData.TriangleIndices,
-                rolled.CompiledData.TriangleIndices);
+            for (int i = 0;
+                i < planar.CompiledData.TriangleIndices.Count;
+                i += 3)
+            {
+                Assert.That(
+                    rolled.CompiledData.TriangleIndices[i],
+                    Is.EqualTo(planar.CompiledData.TriangleIndices[i]));
+                Assert.That(
+                    rolled.CompiledData.TriangleIndices[i + 1],
+                    Is.EqualTo(planar.CompiledData.TriangleIndices[i + 2]));
+                Assert.That(
+                    rolled.CompiledData.TriangleIndices[i + 2],
+                    Is.EqualTo(planar.CompiledData.TriangleIndices[i + 1]));
+            }
             for (int boundaryIndex = 0;
                 boundaryIndex < planar.CompiledData.Panels[0].Boundaries.Count;
                 boundaryIndex++)
@@ -520,11 +572,11 @@ namespace FoldCanvas.Tests
                 new Vector3(radius, -height * 0.5f, 0f));
             AssertPosition(
                 result.Mesh.vertices[6],
-                new Vector3(0f, 0f, -radius));
+                new Vector3(0f, 0f, radius));
             Assert.That(
                 Vector3.Dot(
                     result.Mesh.normals[6].normalized,
-                    Vector3.back),
+                    Vector3.forward),
                 Is.GreaterThan(0.99f));
             Destroy(result, asset);
         }
@@ -1163,7 +1215,7 @@ namespace FoldCanvas.Tests
                 Vector3 wallPosition =
                     result.CompiledData.Vertices[wall.VertexStart + u].Position;
                 int diskSegment =
-                    (diskSegments / 2 - u + diskSegments) % diskSegments;
+                    (diskSegments / 2 + u) % diskSegments;
                 Vector3 diskPosition =
                     result.CompiledData.Vertices[
                         diskPerimeterStart + diskSegment].Position;
@@ -1206,6 +1258,116 @@ namespace FoldCanvas.Tests
                 0f,
                 (p0.z + p1.z + p2.z) / 3f).normalized;
             Assert.That(Vector3.Dot(normal, radial), Is.GreaterThan(0.99f));
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void DecoratedCupGeometry_WeldsWallAndBottomTopology()
+        {
+            const float radius = 0.05f;
+            const float height = 0.12f;
+            const int wallSegments = 64;
+            const int wallRows = 12;
+            const int diskRings = 8;
+            FoldCanvasAsset asset =
+                ScriptableObject.CreateInstance<FoldCanvasAsset>();
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "wall",
+                new Rect(0.06f, 0.46f, 0.88f, 0.44f),
+                new Vector2(2f * Mathf.PI * radius, height),
+                wallSegments,
+                wallRows));
+            asset.Panels.Add(PanelDefinition.CreateDisk(
+                "bottom",
+                new Rect(0.32f, 0.02f, 0.36f, 0.36f),
+                Vector2.one * (2f * radius),
+                wallSegments,
+                diskRings));
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "close-wall",
+                A = new BoundaryReference("wall", "uMin"),
+                B = new BoundaryReference("wall", "uMax"),
+                Mode = SeamMode.Weld,
+                SampleCount = wallRows + 1
+            });
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "attach-bottom",
+                A = new BoundaryReference("wall", "vMin"),
+                B = new BoundaryReference("bottom", "perimeter"),
+                Mode = SeamMode.Weld,
+                SampleCount = wallSegments
+            });
+            RollOperationDefinition roll = CreateRoll(
+                "roll-wall",
+                "wall",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength);
+            roll.StartAngleDegrees = 180f;
+            asset.Operations.Add(roll);
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "place-bottom",
+                PanelId = "bottom",
+                Translation = new Vector3(0f, -height * 0.5f, 0f),
+                RotationEuler = new Vector3(90f, 0f, 0f),
+                Scale = Vector3.one
+            });
+            StitchOperationDefinition stitch =
+                new StitchOperationDefinition { Id = "stitch-cup" };
+            stitch.SeamIds.Add("close-wall");
+            stitch.SeamIds.Add("attach-bottom");
+            asset.Operations.Add(stitch);
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.CompiledData.Vertices.Count, Is.EqualTo(1358));
+            Assert.That(result.CompiledData.TopologyVertexCount, Is.EqualTo(1281));
+            Assert.That(
+                result.CompiledData.TriangleIndices.Count / 3,
+                Is.EqualTo(2496));
+
+            FoldCanvasCompiledPanel wall =
+                result.CompiledData.GetPanel("wall");
+            FoldCanvasCompiledPanel bottom =
+                result.CompiledData.GetPanel("bottom");
+            FoldCanvasCompiledBoundary uMin = wall.GetBoundary("uMin");
+            FoldCanvasCompiledBoundary uMax = wall.GetBoundary("uMax");
+            for (int i = 0; i < uMin.VertexIndices.Count; i++)
+            {
+                Assert.That(
+                    TopologyId(result, uMin.VertexIndices[i]),
+                    Is.EqualTo(TopologyId(result, uMax.VertexIndices[i])));
+            }
+
+            FoldCanvasCompiledBoundary wallBottom =
+                wall.GetBoundary("vMin");
+            FoldCanvasCompiledBoundary diskPerimeter =
+                bottom.GetBoundary("perimeter");
+            for (int i = 0; i < diskPerimeter.VertexIndices.Count; i++)
+            {
+                int wallIndex = wallBottom.VertexIndices[i];
+                int diskIndex = diskPerimeter.VertexIndices[i];
+                Assert.That(
+                    TopologyId(result, wallIndex),
+                    Is.EqualTo(TopologyId(result, diskIndex)));
+                Assert.That(
+                    result.CompiledData.Vertices[wallIndex].Position,
+                    Is.EqualTo(result.CompiledData.Vertices[diskIndex].Position));
+            }
+
+            Assert.That(
+                result.CompiledData.Vertices[
+                    wallBottom.VertexIndices[0]].SourceUv,
+                Is.Not.EqualTo(
+                    result.CompiledData.Vertices[
+                        diskPerimeter.VertexIndices[0]].SourceUv));
+            Assert.That(
+                CountOpenTopologyEdges(result),
+                Is.EqualTo(wallSegments));
             Destroy(result, asset);
         }
 
@@ -1319,6 +1481,57 @@ namespace FoldCanvas.Tests
             Assert.That(actual.x, Is.EqualTo(expected.x).Within(PositionTolerance));
             Assert.That(actual.y, Is.EqualTo(expected.y).Within(PositionTolerance));
             Assert.That(actual.z, Is.EqualTo(expected.z).Within(PositionTolerance));
+        }
+
+        private static int CountOpenTopologyEdges(
+            FoldCanvasCompileResult result)
+        {
+            Dictionary<ulong, int> edgeIncidence =
+                new Dictionary<ulong, int>();
+            IReadOnlyList<int> triangles =
+                result.CompiledData.TriangleIndices;
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                int a = TopologyId(result, triangles[i]);
+                int b = TopologyId(result, triangles[i + 1]);
+                int c = TopologyId(result, triangles[i + 2]);
+                AddTopologyEdge(edgeIncidence, a, b);
+                AddTopologyEdge(edgeIncidence, b, c);
+                AddTopologyEdge(edgeIncidence, c, a);
+            }
+
+            int openEdges = 0;
+            foreach (KeyValuePair<ulong, int> pair in edgeIncidence)
+            {
+                Assert.That(pair.Value, Is.LessThanOrEqualTo(2));
+                if (pair.Value == 1)
+                {
+                    openEdges++;
+                }
+            }
+
+            return openEdges;
+        }
+
+        private static void AddTopologyEdge(
+            Dictionary<ulong, int> edgeIncidence,
+            int a,
+            int b)
+        {
+            int minimum = Mathf.Min(a, b);
+            int maximum = Mathf.Max(a, b);
+            ulong key =
+                ((ulong)(uint)minimum << 32) |
+                (uint)maximum;
+            edgeIncidence.TryGetValue(key, out int count);
+            edgeIncidence[key] = count + 1;
+        }
+
+        private static int TopologyId(
+            FoldCanvasCompileResult result,
+            int vertexIndex)
+        {
+            return result.CompiledData.Vertices[vertexIndex].TopologyVertexId;
         }
 
         private static void AssertRadialMeshNormal(

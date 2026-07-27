@@ -308,7 +308,7 @@
           "$ref": "#/$defs/boundaryRef"
         },
         "mode": {
-          "description": "weld creates one topological connection; hinge retains distinct vertices with a fold relationship; keepOpen records the relationship without closure.",
+          "description": "weld requests one topological connection; M03 Stitch executes only existing equal-sample welds. hinge and keepOpen remain declarative and return a stable unsupported-mode diagnostic if selected for execution.",
           "enum": ["weld", "hinge", "keepOpen"]
         },
         "reverseB": {
@@ -316,7 +316,7 @@
           "type": "boolean"
         },
         "sampleCount": {
-          "description": "Requested common boundary sample count; zero requests deterministic automatic selection.",
+          "description": "Requested common boundary sample count. In M03, zero accepts the existing common count and a positive value must equal it; resampling is deferred.",
           "type": "integer",
           "minimum": 0,
           "maximum": 8192
@@ -503,7 +503,7 @@
       ]
     },
     "stitch": {
-      "description": "Planned topology operation that resolves named seams in the listed order.",
+      "description": "Resolves named seams in listed order. M03 implements existing equal-sample welds only; general resampling and other seam modes are deferred.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "seams"],
@@ -573,7 +573,7 @@
       "required": ["weldEpsilon", "recalculateNormals", "validationLevel"],
       "properties": {
         "weldEpsilon": {
-          "description": "Positive physical-distance tolerance used by later weld and coincidence checks after unit conversion; it never welds implicitly.",
+          "description": "Positive physical-distance tolerance used by explicit weld and coincidence checks after unit conversion; it never welds implicitly.",
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 1

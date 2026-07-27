@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -246,6 +247,8 @@ namespace FoldCanvas.Editor
                 true);
             float maximumBottomGap =
                 MeasureM03WallBottomFit(result.CompiledData);
+            int openTopologyEdges =
+                ValidateM03CupTopology(result.CompiledData);
             if (maximumBottomGap >
                 FoldCanvasGeometryTolerances.RollSeamProofTolerance)
             {
@@ -300,7 +303,9 @@ namespace FoldCanvas.Editor
             Debug.Log(
                 $"FoldCanvas M03 cup proof compiled from {M03AssetPath}: " +
                 $"{mesh.vertexCount} vertices, {mesh.triangles.Length / 3} triangles; " +
-                $"maximum wall/bottom boundary gap {maximumBottomGap:R} m.",
+                $"{result.CompiledData.TopologyVertexCount} topology vertices, " +
+                $"{openTopologyEdges} open top-rim edges; maximum wall/bottom " +
+                $"boundary gap {maximumBottomGap:R} m.",
                 proof);
         }
 
@@ -394,6 +399,9 @@ namespace FoldCanvas.Editor
         {
             const float radius = 0.05f;
             const float height = 0.12f;
+            const int wallSegments = 64;
+            const int wallRows = 12;
+            const int bottomSegments = 64;
             asset.Appearance = appearance;
             asset.Panels.Clear();
             asset.Operations.Clear();
@@ -403,14 +411,32 @@ namespace FoldCanvas.Editor
                 "wall",
                 new Rect(0.06f, 0.46f, 0.88f, 0.44f),
                 new Vector2(2f * Mathf.PI * radius, height),
-                64,
-                12));
+                wallSegments,
+                wallRows));
             asset.Panels.Add(PanelDefinition.CreateDisk(
                 "bottom",
                 new Rect(0.32f, 0.02f, 0.36f, 0.36f),
                 Vector2.one * (2f * radius),
-                64,
+                bottomSegments,
                 8));
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "close-wall",
+                A = new BoundaryReference("wall", "uMin"),
+                B = new BoundaryReference("wall", "uMax"),
+                Mode = SeamMode.Weld,
+                ReverseB = false,
+                SampleCount = wallRows + 1
+            });
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "attach-bottom",
+                A = new BoundaryReference("wall", "vMin"),
+                B = new BoundaryReference("bottom", "perimeter"),
+                Mode = SeamMode.Weld,
+                ReverseB = false,
+                SampleCount = bottomSegments
+            });
 
             asset.Operations.Add(new RollOperationDefinition
             {
@@ -420,7 +446,7 @@ namespace FoldCanvas.Editor
                 AngleDegrees = 360f,
                 RadiusMode = RollRadiusMode.PreserveArcLength,
                 ExplicitRadius = radius,
-                StartAngleDegrees = 0f
+                StartAngleDegrees = 180f
             });
             asset.Operations.Add(new RigidTransformOperationDefinition
             {
@@ -430,6 +456,14 @@ namespace FoldCanvas.Editor
                 RotationEuler = new Vector3(90f, 0f, 0f),
                 Scale = Vector3.one
             });
+            StitchOperationDefinition stitch =
+                new StitchOperationDefinition
+                {
+                    Id = "stitch-cup"
+                };
+            stitch.SeamIds.Add("close-wall");
+            stitch.SeamIds.Add("attach-bottom");
+            asset.Operations.Add(stitch);
         }
 
         private static PanelDefinition CreateBoxFace(string id, Rect canvasRect)
@@ -1172,6 +1206,129 @@ namespace FoldCanvas.Editor
             }
 
             return maximumGap;
+        }
+
+        private static int ValidateM03CupTopology(
+            FoldCanvasCompiledData compiledData)
+        {
+            const int expectedTopologyVertices = 1281;
+            const int expectedOpenRimEdges = 64;
+            if (compiledData.TopologyVertexCount != expectedTopologyVertices)
+            {
+                throw new InvalidDataException(
+                    "The M03 cup proof does not have the expected welded topology vertex count.");
+            }
+
+            FoldCanvasCompiledPanel wall = compiledData.GetPanel("wall");
+            FoldCanvasCompiledPanel bottom = compiledData.GetPanel("bottom");
+            FoldCanvasCompiledBoundary uMin = wall.GetBoundary("uMin");
+            FoldCanvasCompiledBoundary uMax = wall.GetBoundary("uMax");
+            for (int i = 0; i < uMin.VertexIndices.Count; i++)
+            {
+                if (TopologyId(compiledData, uMin.VertexIndices[i]) !=
+                    TopologyId(compiledData, uMax.VertexIndices[i]))
+                {
+                    throw new InvalidDataException(
+                        "The M03 cup wall side seam is not topologically welded.");
+                }
+            }
+
+            FoldCanvasCompiledBoundary wallBottom =
+                wall.GetBoundary("vMin");
+            FoldCanvasCompiledBoundary diskPerimeter =
+                bottom.GetBoundary("perimeter");
+            if (wallBottom.VertexIndices.Count !=
+                    diskPerimeter.VertexIndices.Count + 1 ||
+                TopologyId(compiledData, wallBottom.VertexIndices[0]) !=
+                    TopologyId(
+                        compiledData,
+                        wallBottom.VertexIndices[
+                            wallBottom.VertexIndices.Count - 1]))
+            {
+                throw new InvalidDataException(
+                    "The M03 cup bottom loop is not closed before disk attachment.");
+            }
+
+            for (int i = 0; i < diskPerimeter.VertexIndices.Count; i++)
+            {
+                if (TopologyId(compiledData, wallBottom.VertexIndices[i]) !=
+                    TopologyId(compiledData, diskPerimeter.VertexIndices[i]))
+                {
+                    throw new InvalidDataException(
+                        "The M03 cup bottom is not topologically welded to the wall.");
+                }
+            }
+
+            Dictionary<ulong, int> edgeIncidence =
+                new Dictionary<ulong, int>();
+            IReadOnlyList<int> triangles = compiledData.TriangleIndices;
+            for (int i = 0; i < triangles.Count; i += 3)
+            {
+                int a = TopologyId(compiledData, triangles[i]);
+                int b = TopologyId(compiledData, triangles[i + 1]);
+                int c = TopologyId(compiledData, triangles[i + 2]);
+                AddTopologyEdge(edgeIncidence, a, b);
+                AddTopologyEdge(edgeIncidence, b, c);
+                AddTopologyEdge(edgeIncidence, c, a);
+            }
+
+            HashSet<ulong> expectedOpenRim = new HashSet<ulong>();
+            IReadOnlyList<int> top = wall.GetBoundary("vMax").VertexIndices;
+            for (int i = 0; i < top.Count - 1; i++)
+            {
+                expectedOpenRim.Add(TopologyEdgeKey(
+                    TopologyId(compiledData, top[i]),
+                    TopologyId(compiledData, top[i + 1])));
+            }
+
+            int openEdges = 0;
+            foreach (KeyValuePair<ulong, int> edge in edgeIncidence)
+            {
+                if (edge.Value > 2 ||
+                    (edge.Value == 1 && !expectedOpenRim.Contains(edge.Key)))
+                {
+                    throw new InvalidDataException(
+                        "The M03 cup contains an unexpected open or non-manifold topology edge.");
+                }
+
+                if (edge.Value == 1)
+                {
+                    openEdges++;
+                }
+            }
+
+            if (openEdges != expectedOpenRimEdges ||
+                openEdges != expectedOpenRim.Count)
+            {
+                throw new InvalidDataException(
+                    "The M03 cup must leave only its 64-edge top rim open.");
+            }
+
+            return openEdges;
+        }
+
+        private static int TopologyId(
+            FoldCanvasCompiledData compiledData,
+            int vertexIndex)
+        {
+            return compiledData.Vertices[vertexIndex].TopologyVertexId;
+        }
+
+        private static void AddTopologyEdge(
+            Dictionary<ulong, int> edgeIncidence,
+            int first,
+            int second)
+        {
+            ulong key = TopologyEdgeKey(first, second);
+            edgeIncidence.TryGetValue(key, out int count);
+            edgeIncidence[key] = count + 1;
+        }
+
+        private static ulong TopologyEdgeKey(int first, int second)
+        {
+            int minimum = Mathf.Min(first, second);
+            int maximum = Mathf.Max(first, second);
+            return ((ulong)(uint)minimum << 32) | (uint)maximum;
         }
 
         private static Mesh CreateOrUpdateM03CanvasMesh()

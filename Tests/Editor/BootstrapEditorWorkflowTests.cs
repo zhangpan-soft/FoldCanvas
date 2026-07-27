@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -220,13 +221,24 @@ namespace FoldCanvas.Tests
                 Assert.That(firstTexture.width, Is.EqualTo(1024));
                 Assert.That(firstTexture.height, Is.EqualTo(1024));
                 Assert.That(firstAsset.Panels.Count, Is.EqualTo(2));
-                Assert.That(firstAsset.Operations.Count, Is.EqualTo(2));
-                Assert.That(firstAsset.Seams, Is.Empty);
+                Assert.That(firstAsset.Operations.Count, Is.EqualTo(3));
+                Assert.That(firstAsset.Seams.Count, Is.EqualTo(2));
                 Assert.That(firstAsset.Panels[0].Id, Is.EqualTo("wall"));
                 Assert.That(firstAsset.Panels[1].Id, Is.EqualTo("bottom"));
                 Assert.That(
                     firstAsset.Operations[0],
                     Is.TypeOf<RollOperationDefinition>());
+                Assert.That(
+                    ((RollOperationDefinition)firstAsset.Operations[0])
+                        .StartAngleDegrees,
+                    Is.EqualTo(180f));
+                Assert.That(
+                    firstAsset.Operations[2],
+                    Is.TypeOf<StitchOperationDefinition>());
+                Assert.That(firstAsset.Seams[0].Id, Is.EqualTo("close-wall"));
+                Assert.That(
+                    firstAsset.Seams[1].Id,
+                    Is.EqualTo("attach-bottom"));
 
                 FoldCanvasCompileResult firstCompile =
                     FoldCanvasCompiler.Compile(firstAsset);
@@ -238,6 +250,9 @@ namespace FoldCanvas.Tests
                 Assert.That(
                     firstCompile.Mesh.triangles.Length / 3,
                     Is.EqualTo(2496));
+                Assert.That(
+                    firstCompile.CompiledData.TopologyVertexCount,
+                    Is.EqualTo(1281));
                 UnityEngine.Object.DestroyImmediate(firstCompile.Mesh);
 
                 FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupSample();
@@ -282,6 +297,12 @@ namespace FoldCanvas.Tests
                 Assert.That(
                     material.FindPass("Unlit"),
                     Is.GreaterThanOrEqualTo(0));
+                string shaderPath = AssetDatabase.GetAssetPath(shader);
+                string shaderSource = File.ReadAllText(shaderPath);
+                Assert.That(shaderSource, Does.Contain("VFACE"));
+                Assert.That(
+                    shaderSource,
+                    Does.Contain("1.0 - readableUv.x"));
             }
             finally
             {

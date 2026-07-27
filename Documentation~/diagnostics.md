@@ -52,7 +52,13 @@ compiler stage and source order.
 - `FC1007 ExcessiveTessellation`
 - `FC2001 MissingPanelReference`
 - `FC2002 UnsupportedSeam` (reserved; seam declarations alone do not emit it)
-- `FC2104 SeamLengthMismatch`
+- `FC2003 StitchSeamMissing`
+- `FC2004 StitchBoundaryMissing`
+- `FC2005 StitchSampleCountMismatch`
+- `FC2006 StitchPositionMismatch`
+- `FC2007 UnsupportedStitchSeamMode`
+- `FC2008 DuplicateSeamId`
+- `FC2009 EmptyStitchSeamList`
 - `FC3001 UnsupportedOperation`
 - `FC3002 NonFiniteOperationParameter`
 - `FC3003 FoldTargetMissing`
@@ -79,10 +85,8 @@ compiler stage and source order.
 - `FC4001 InvalidThickness`
 - `FC5001 NonFiniteVertex`
 - `FC5002 ZeroAreaTriangle`
-- `FC5003 NonManifoldEdge`
-- `FC5004 OpenBoundary`
-- `FC5005 InvertedTriangle`
-- `FC5006 SelfIntersection`
+- `FC5003 NonManifoldTopology`
+- `FC5004 InvalidWeldEpsilon`
 
 ## Validation levels
 

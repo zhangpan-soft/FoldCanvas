@@ -96,14 +96,17 @@ non-planar Fold returns `FC3021 UnsupportedRollEmbedding`. This is a
 final-geometry contract and does not inspect which operation types occurred.
 
 The selected source coordinate maps to a circular arc in this current frame;
-the other coordinate remains linear. Positive sweeps preserve source triangle
-order and face radially outward. Negative sweeps preserve topology and reverse
-the resulting radial orientation predictably. Full turns require at least
-three source segments in the selected direction. With two segments the
+the other coordinate remains linear. Its angle is
+`startAngleDegrees - t * angleDegrees`. Roll reverses each target triangle's
+winding once without changing connectivity, so a positive sweep faces
+radially outward and authored source U reads left-to-right at the canonical
+exterior view. Negative sweeps reverse the resulting radial orientation
+predictably. Full turns require at least three source segments in the selected
+direction. With two segments the
 0/180/360-degree samples form two coincident planar panels, so
 `FC3022 InsufficientRollTessellation` is emitted directly rather than relying
 on zero-area-triangle validation. Coincident minimum/maximum boundaries remain
-topologically separate.
+separate until an explicit Stitch operation selects their seam.
 
 M03 Circular Roll is limited to one signed turn. A sweep magnitude above 360
 degrees returns `FC3023 UnsupportedMultiTurnRoll`; it is never clamped and
@@ -115,24 +118,29 @@ Explicit-radius Roll emits an ordered structured
 `stretchRatio`. Diagnostic value and repair-suggestion lists are copied,
 read-only, and deterministic.
 
-## Stage 4: seam resolution (planned for M04)
+## Stage 4: explicit seam resolution
 
 Seam definitions are declarative source records. Their presence alone does not
-execute or reject geometry. Only a future Stitch operation starts the following
-pipeline; before M04, Stitch returns one `FC3001 UnsupportedOperation`.
-`FitTargetBoundary` returns one dedicated
+execute or reject geometry. A Stitch operation resolves only its ordered seam
+ID list. The M03 cup gate supports existing equal-sample `Weld` seams:
+
+1. resolve both ordered boundaries
+2. collapse a terminal sample already topology-welded to the first sample
+3. apply the declared B orientation
+4. require the effective counts and requested positive `sampleCount` to match
+5. require every pair within `compile.weldEpsilon`
+6. union each pair's deterministic topology identity
+7. snap render copies to the lowest-index representative
+8. retain render splits needed by source UV, provenance, or hard normals
+
+Topology and manifold validation use `TopologyVertexId`; raw render indices are
+not a reliable topological oracle at attribute seams. General normalized
+arc-length resampling, `Bridge`, and other Stitch modes remain planned for
+M04. `FitTargetBoundary` returns one dedicated
 `FC3016 UnsupportedFitTargetBoundary`.
 
-For each requested seam:
-
-1. extract ordered boundary curves
-2. evaluate current 3D arc lengths
-3. determine orientation
-4. resample to common parameters when necessary
-5. weld, bridge, or retain as requested
-6. update ownership and boundary maps
-
-Seams must be processed in a deterministic order, normally source array order after validation.
+Seams are processed in the Stitch operation's listed order. A later seam may
+therefore consume the closed-loop topology created by an earlier seam.
 
 ## Stage 5: thickness
 
