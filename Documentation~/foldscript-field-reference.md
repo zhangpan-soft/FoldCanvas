@@ -12,12 +12,12 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M01 implements planar `rectangle` and `disk`/ellipse compilation through the
-> Unity `FoldCanvasAsset` representation. `rigidTransform` is implemented.
-> `fold`, `roll`, `stitch`, `solidify`, seam compilation, and JSON import/export
-> are specified for later milestones and currently return diagnostics or are
-> unavailable. A schema-valid JSON file is not a claim that every requested
-> operation is implemented.
+> M02 implements planar `rectangle` and `disk`/ellipse compilation,
+> `rigidTransform`, and rigid-crease `fold` through the Unity
+> `FoldCanvasAsset` representation. `roll`, `stitch`, `solidify`, seam
+> compilation, and JSON import/export are specified for later milestones and
+> currently return diagnostics or are unavailable. A schema-valid JSON file is
+> not a claim that every requested operation is implemented.
 
 ## 1. Global conventions
 
@@ -196,7 +196,7 @@ nextPosition = Euler(rotationEuler) * (currentPosition ⊙ scale)
 Because operations run in array order, repeated rigid transforms compose. The
 stored `sourcePosition` and `sourceUv` remain unchanged.
 
-### 6.2 `fold` — planned for M02
+### 6.2 `fold` — implemented in M02
 
 Rotates samples on one selected side of a line embedded in the target panel.
 The line itself is the hinge axis.
@@ -220,6 +220,31 @@ negative: sideValue < 0
 Positive angle semantics must match Unity
 `Quaternion.AngleAxis(angleDegrees, axisFromAtoB)`. Samples on the hinge remain
 stationary. Degenerate lines or ambiguous samples produce diagnostics.
+
+M02 executes a rigid crease as follows:
+
+1. Validate the target, finite line, normalized range, nonzero line length,
+   side, finite angle, and `falloff`.
+2. Map the complete source line through the target panel's deterministic source
+   triangles into the panel's **current** 3D embedding.
+3. Check every line/triangle-edge crossing and each interval midpoint. The
+   mapped samples must form one non-collapsed, order-preserving straight axis.
+4. Classify every vertex using its immutable normalized source position.
+5. Rotate only the selected side's current position about the directed current
+   axis. Source position, UV, ownership, provenance, indices, and boundaries
+   remain unchanged.
+
+The first source-order triangle is used when a mapped point lies on a shared
+triangle edge. This is deterministic and produces the same position because
+the edge vertices are shared. A line that crosses an earlier crease and is no
+longer straight in current 3D returns `FC3007 AmbiguousFoldHinge`; the compiler
+does not choose one segment or flatten the hinge.
+
+M02 requires `falloff` to be exactly `0`. Values above zero are reserved for a
+future smooth-bend operation and return `FC3009 UnsupportedFoldFalloff`.
+Line endpoints must be inside `[0,1]²` and the complete line must lie inside the
+panel's source triangulation. This latter condition matters for non-rectangular
+domains such as disks.
 
 ### 6.3 `roll` — planned for M03
 

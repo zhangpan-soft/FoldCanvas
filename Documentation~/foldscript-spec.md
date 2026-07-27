@@ -103,7 +103,11 @@ Operations are executed in array order in schema version `0.1`.
 ```
 
 The line is expressed in panel-normalized coordinates. Schema version `0.1`
-does not define an alternative `coordinateSpace`.
+does not define an alternative `coordinateSpace`. M02 implements this operation
+as a rigid crease when `falloff` is exactly zero. Positive angles match
+`Quaternion.AngleAxis(angleDegrees, currentAxisFromAtoB)`. If an earlier
+operation bends the authored line so it no longer maps to one straight current
+3D axis, compilation fails instead of guessing.
 
 ### Roll
 

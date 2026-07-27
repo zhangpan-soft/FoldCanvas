@@ -24,7 +24,11 @@ The roadmap is proof-driven. A milestone is complete only when its visible objec
 
 ## M02: Fold and box
 
-**Proof:** one cross-shaped 2D box net folds into a six-sided box while artwork remains on the correct faces.
+**Status:** complete in `0.1.0-preview.4`.
+
+**Proof:** six rectangle regions from one generated 2D appearance canvas
+compile through ordered rigid-crease operations into a six-sided box while
+artwork remains on the correct faces.
 
 - fold line selection
 - positive/negative side classification
@@ -32,6 +36,10 @@ The roadmap is proof-driven. A milestone is complete only when its visible objec
 - operation order
 - shared-edge behavior
 - 90-degree acceptance tests
+
+Acceptance evidence: Unity `6000.3.20f1`, 43/43 Edit Mode tests, and the saved
+local `M02BoxPreview` scene showing all six distinct artwork regions over
+multiple viewing orientations. The six panels remain unwelded by design.
 
 ## M03: Roll and cup
 

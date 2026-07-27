@@ -52,6 +52,14 @@ Diagnostics are sorted by compiler stage, source order, and code.
 - `FC2104 SeamLengthMismatch`
 - `FC3001 UnsupportedOperation`
 - `FC3002 NonFiniteOperationParameter`
+- `FC3003 FoldTargetMissing`
+- `FC3004 NonFiniteFoldLine`
+- `FC3005 FoldLineOutOfRange`
+- `FC3006 DegenerateFoldLine`
+- `FC3007 AmbiguousFoldHinge`
+- `FC3008 NonFiniteFoldAngle`
+- `FC3009 UnsupportedFoldFalloff`
+- `FC3010 InvalidFoldSide`
 - `FC4001 InvalidThickness`
 - `FC5001 NonFiniteVertex`
 - `FC5002 ZeroAreaTriangle`

@@ -298,7 +298,6 @@ namespace FoldCanvas.Tests
             Object.DestroyImmediate(asset);
         }
 
-        [TestCase(FoldOperationType.Fold)]
         [TestCase(FoldOperationType.Roll)]
         [TestCase(FoldOperationType.Stitch)]
         [TestCase(FoldOperationType.Solidify)]

@@ -33,14 +33,14 @@ namespace FoldCanvas.Editor
             root.style.paddingTop = 10f;
             root.style.paddingBottom = 10f;
 
-            Label title = new Label("FoldCanvas Bootstrap Compiler");
+            Label title = new Label("FoldCanvas Compiler");
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             title.style.fontSize = 16f;
             title.style.marginBottom = 6f;
             root.Add(title);
 
             HelpBox help = new HelpBox(
-                "This bootstrap window compiles planar panels and rigid transforms. Fold, Roll, Stitch, and Solidify are milestone work and intentionally fail with diagnostics until implemented.",
+                "This M02 compiler supports planar panels, rigid transforms, and rigid-crease Fold operations. Roll, Stitch, and Solidify remain later milestones and fail with diagnostics.",
                 HelpBoxMessageType.Info);
             help.style.marginBottom = 8f;
             root.Add(help);

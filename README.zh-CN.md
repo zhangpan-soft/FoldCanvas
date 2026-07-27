@@ -42,6 +42,10 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 - 不可变的编译结果、面板归属、来源编号和有序边界
 - 顶点/三角形生成上限，危险细分会在分配内存前报错
 - 按顺序执行的刚体变换操作
+- 按顺序执行的刚性折线 `Fold`，正负角度方向已有明确合同
+- 折线会从二维源确定性映射到面板当前的三维表面
+- 缺失目标、非法折线、非零 falloff、弯曲/含糊铰链都有稳定诊断码
+- 一张含六个不同区域的二维画布可以编译成带图案盒体
 - 稳定的编译诊断与确定性验证
 - Unity Editor Mesh 烘焙工具
 - Edit Mode 测试
@@ -77,7 +81,9 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 3. Unity 会通过 `file:../../` 引用仓库根目录的本地包。
 4. 在 Test Runner 中运行 Edit Mode 测试。
 5. 打开 `Window > FoldCanvas > FoldCanvas`。
-6. 执行 `Tools > FoldCanvas > Create Bootstrap Sample`。
+6. 执行 `Tools > FoldCanvas > Create Bootstrap Sample` 查看 M01 平面样例；
+   执行 `Tools > FoldCanvas > Create M02 Box Proof` 可直接创建、烘焙并显示
+   六面折叠盒体。
 
 ## 交给 Codex
 

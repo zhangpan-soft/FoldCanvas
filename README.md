@@ -30,7 +30,7 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 ## Status
 
-The repository currently contains the **M01 planar compiler**:
+The repository currently contains the **M02 fold compiler**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -39,6 +39,11 @@ The repository currently contains the **M01 planar compiler**:
 - Immutable compiled data with panel ownership, provenance, and ordered boundaries
 - Pre-allocation vertex/triangle safety limits
 - Ordered rigid-transform operations
+- Ordered rigid-crease Fold operations with documented signed handedness
+- Deterministic source-line embedding into the panel's current 3D surface
+- Stable diagnostics for invalid lines, missing targets, nonzero falloff, and
+  non-linear current hinges
+- An editor-generated six-region canvas that compiles into a textured box
 - Deterministic diagnostics and validation
 - Mesh baking tools for the Unity Editor
 - Edit-mode tests
@@ -73,7 +78,9 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
 3. Unity resolves the package through a local `file:../../` dependency.
 4. Open `Window > General > Test Runner` and run Edit Mode tests.
 5. Open `Window > FoldCanvas > FoldCanvas`.
-6. Use `Tools > FoldCanvas > Create Bootstrap Sample` to create a planar source asset.
+6. Use `Tools > FoldCanvas > Create Bootstrap Sample` to create the planar
+   M01 source, or `Tools > FoldCanvas > Create M02 Box Proof` to create, bake,
+   and display the six-face fold proof.
 
 ## Install in another Unity project
 
@@ -119,7 +126,7 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 |---|---|
 | M00 | Repository opens and bootstrap tests pass |
 | M01 | Robust planar panels and preserved UVs |
-| M02 | Fold a cross-shaped net into a box |
+| M02 | Fold six decorated rectangle panels into a box — complete |
 | M03 | Roll a decorated wall into a cylindrical cup |
 | M04 | Resample seams, weld boundaries, and add thickness |
 | M05 | Compile sphere gores into a closed sphere |

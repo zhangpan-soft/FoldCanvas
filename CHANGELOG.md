@@ -8,8 +8,58 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ### Planned
 
-- M02 fold operator and box proof
 - M03 roll operator and decorated cup proof
+
+## [0.1.0-preview.4] - 2026-07-27
+
+### Added
+
+- Deterministic rigid-crease `Fold` execution in serialized operation order
+- Source-line embedding through each panel's deterministic triangulation into
+  its current 3D surface
+- Positive/negative source-side selection with Unity
+  `Quaternion.AngleAxis` handedness
+- Stable M02 diagnostics for missing targets, non-finite/out-of-range/
+  degenerate lines, ambiguous current hinges, non-finite angles, nonzero
+  falloff, and invalid sides
+- A six-region generated appearance canvas, six-panel source asset, bake
+  command, and real-editor box proof
+- Numerical coverage for zero-degree identity, signed 90-degree rotation,
+  hinge fixation, axis-distance preservation, ordered current-hinge
+  resolution, source/UV/provenance preservation, determinism, box bounds,
+  artwork mapping, and outward face normals
+
+### Changed
+
+- Internal panel build records retain deterministic triangle spans for
+  source-to-current interpolation
+- The compiler window now describes Fold as implemented while keeping Roll,
+  Stitch, and Solidify explicit later milestones
+- FoldScript field, pipeline, editor-workflow, diagnostics, schema, roadmap,
+  and bilingual README documentation now describe the implemented M02
+  semantics
+- FoldScript schema line endpoints are constrained to normalized `[0,1]`
+  coordinates
+
+### Fixed
+
+- M02's 384×256 generated proof canvas now disables Unity's default NPOT
+  resizing so its six source regions import at exact pixel dimensions
+- A fold line crossing a prior non-linear crease now stops with `FC3007`
+  instead of selecting an arbitrary current axis
+- The GUID-stable rebake test no longer assumes Unity preserves one managed
+  object wrapper across `AssetDatabase.Refresh`; path, GUID, and updated mesh
+  data remain the acceptance contract
+
+### Verified
+
+- Repository validation, JSON parsing, assembly-reference inspection, and diff
+  checks passed
+- Unity `6000.3.20f1` compiled the package and passed all 43 Edit Mode tests
+- The real Unity Editor generated a 24-vertex, 12-triangle box and displayed
+  all six distinct artwork regions from multiple viewing orientations
+- The local proof scene was saved as
+  `Assets/FoldCanvasGenerated/M02BoxPreview.unity`
 
 ## [0.1.0-preview.3] - 2026-07-27
 

@@ -112,6 +112,17 @@
       "minItems": 2,
       "maxItems": 2
     },
+    "normalizedVec2": {
+      "description": "Two-component panel-normalized coordinate ordered as [u, v], with both components inside [0,1].",
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "minimum": 0, "maximum": 1 },
+        { "type": "number", "minimum": 0, "maximum": 1 }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
     "positiveVec2": {
       "description": "Strictly positive two-component vector ordered as [x, y].",
       "type": "array",
@@ -361,7 +372,7 @@
       }
     },
     "fold": {
-      "description": "Planned operation that rotates samples on one selected side of a directed line embedded in a panel.",
+      "description": "Rotates samples on one selected side of a directed source line around that line's stable current 3D embedding. M02 implements rigid creases with zero falloff.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "line", "side", "angleDegrees", "falloff"],
@@ -387,8 +398,8 @@
           "description": "Directed hinge line [A, B] in panel-normalized [0,1] coordinates; A and B must differ.",
           "type": "array",
           "prefixItems": [
-            { "$ref": "#/$defs/vec2" },
-            { "$ref": "#/$defs/vec2" }
+            { "$ref": "#/$defs/normalizedVec2" },
+            { "$ref": "#/$defs/normalizedVec2" }
           ],
           "items": false,
           "minItems": 2,
@@ -405,7 +416,7 @@
           "maximum": 3600
         },
         "falloff": {
-          "description": "Normalized smooth-bend influence width; zero is a rigid crease.",
+          "description": "Normalized smooth-bend influence width. Zero is the M02 rigid crease; nonzero values are reserved and currently return FC3009.",
           "type": "number",
           "minimum": 0,
           "maximum": 1

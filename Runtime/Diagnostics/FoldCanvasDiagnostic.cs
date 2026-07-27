@@ -27,6 +27,14 @@ namespace FoldCanvas
         public const string UnsupportedSeam = "FC2002";
         public const string UnsupportedOperation = "FC3001";
         public const string NonFiniteOperationParameter = "FC3002";
+        public const string FoldTargetMissing = "FC3003";
+        public const string NonFiniteFoldLine = "FC3004";
+        public const string FoldLineOutOfRange = "FC3005";
+        public const string DegenerateFoldLine = "FC3006";
+        public const string AmbiguousFoldHinge = "FC3007";
+        public const string NonFiniteFoldAngle = "FC3008";
+        public const string UnsupportedFoldFalloff = "FC3009";
+        public const string InvalidFoldSide = "FC3010";
         public const string NonFiniteVertex = "FC5001";
         public const string ZeroAreaTriangle = "FC5002";
     }

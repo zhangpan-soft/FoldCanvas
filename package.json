@@ -1,8 +1,8 @@
 {
   "name": "com.foldcanvas.core",
-  "version": "0.1.0-preview.3",
+  "version": "0.1.0-preview.4",
   "displayName": "FoldCanvas",
-  "description": "A deterministic 2D-first surface compiler for Unity. Canvas, panels, seams, fold operations, and thickness compile into game-ready mesh artifacts.",
+  "description": "A deterministic 2D-first surface compiler for Unity with planar panels, preserved artwork, and ordered rigid-crease folds.",
   "unity": "6000.3",
   "documentationUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/Documentation~/index.md",
   "changelogUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/CHANGELOG.md",

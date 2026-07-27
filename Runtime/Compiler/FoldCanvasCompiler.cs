@@ -118,6 +118,12 @@ namespace FoldCanvas
                     continue;
                 }
 
+                if (operation is FoldLineOperationDefinition fold)
+                {
+                    FoldLineExecutor.TryExecute(fold, buffer, result);
+                    continue;
+                }
+
                 result.Add(new FoldCanvasDiagnostic(
                     FoldCanvasDiagnosticCodes.UnsupportedOperation,
                     FoldCanvasDiagnosticSeverity.Error,

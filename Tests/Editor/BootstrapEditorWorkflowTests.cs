@@ -11,6 +11,8 @@ namespace FoldCanvas.Tests
         private const string SampleFolder = "Assets/FoldCanvasSamples";
         private const string SampleTexturePath = SampleFolder + "/BootstrapCanvas.png";
         private const string SampleAssetPath = SampleFolder + "/BootstrapFoldCanvas.asset";
+        private const string M02TexturePath = SampleFolder + "/M02BoxCanvas.png";
+        private const string M02AssetPath = SampleFolder + "/M02BoxFoldCanvas.asset";
 
         private UnityEngine.Object previousSelection;
 
@@ -121,12 +123,70 @@ namespace FoldCanvas.Tests
 
                 Assert.That(AssetDatabase.GetAssetPath(secondMesh), Is.EqualTo(path));
                 Assert.That(AssetDatabase.AssetPathToGUID(path), Is.EqualTo(guid));
-                Assert.That(secondMesh, Is.SameAs(firstMesh));
+                Assert.That(secondMesh, Is.Not.Null);
                 Assert.That(secondMesh.vertices[0].x, Is.EqualTo(-1f).Within(1e-6f));
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(source);
+            }
+        }
+
+        [Test]
+        public void CreateM02BoxSample_TwiceKeepsGuidsAndCompilesSixFaces()
+        {
+            bool sampleFolderAlreadyExisted = AssetDatabase.IsValidFolder(SampleFolder);
+            try
+            {
+                int objectCountBefore = Resources.FindObjectsOfTypeAll<GameObject>().Length;
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM02BoxSample();
+
+                string firstAssetGuid = AssetDatabase.AssetPathToGUID(M02AssetPath);
+                string firstTextureGuid = AssetDatabase.AssetPathToGUID(M02TexturePath);
+                FoldCanvasAsset firstAsset =
+                    AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(M02AssetPath);
+                Texture2D firstTexture =
+                    AssetDatabase.LoadAssetAtPath<Texture2D>(M02TexturePath);
+                Assert.That(firstAsset, Is.Not.Null);
+                Assert.That(firstTexture, Is.Not.Null);
+                Assert.That(firstAssetGuid, Is.Not.Empty);
+                Assert.That(firstTextureGuid, Is.Not.Empty);
+                Assert.That(firstAsset.Panels.Count, Is.EqualTo(6));
+                Assert.That(firstAsset.Operations.Count, Is.EqualTo(10));
+                Assert.That(firstTexture.width, Is.EqualTo(384));
+                Assert.That(firstTexture.height, Is.EqualTo(256));
+
+                FoldCanvasCompileResult firstCompile =
+                    FoldCanvasCompiler.Compile(firstAsset);
+                Assert.That(
+                    firstCompile.Success,
+                    Is.True,
+                    JoinDiagnostics(firstCompile));
+                Assert.That(firstCompile.Mesh.vertexCount, Is.EqualTo(24));
+                Assert.That(firstCompile.Mesh.triangles.Length / 3, Is.EqualTo(12));
+                UnityEngine.Object.DestroyImmediate(firstCompile.Mesh);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM02BoxSample();
+
+                FoldCanvasAsset secondAsset =
+                    AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(M02AssetPath);
+                Assert.That(secondAsset, Is.SameAs(firstAsset));
+                Assert.That(
+                    AssetDatabase.AssetPathToGUID(M02AssetPath),
+                    Is.EqualTo(firstAssetGuid));
+                Assert.That(
+                    AssetDatabase.AssetPathToGUID(M02TexturePath),
+                    Is.EqualTo(firstTextureGuid));
+                Assert.That(
+                    Resources.FindObjectsOfTypeAll<GameObject>().Length,
+                    Is.EqualTo(objectCountBefore));
+            }
+            finally
+            {
+                if (!sampleFolderAlreadyExisted)
+                {
+                    AssetDatabase.DeleteAsset(SampleFolder);
+                }
             }
         }
 

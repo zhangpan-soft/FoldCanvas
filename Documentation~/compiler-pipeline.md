@@ -44,6 +44,10 @@ read-only snapshots. A rigid transform changes only `currentPosition3D`;
 source position, UV, ownership, provenance, topology, and boundary order remain
 unchanged.
 
+Each internal panel record also retains its deterministic triangle-index span.
+This lets later operations map source points through one panel's triangulation
+without global searches or dictionary enumeration.
+
 ## Stage 3: operation execution
 
 Operations modify explicit geometry buffers. The MVP uses a stable ordered list.
@@ -56,6 +60,21 @@ For every operation:
 4. update 3D positions and any local frames
 5. preserve UV0
 6. record operation-specific diagnostics
+
+### M02 rigid-crease Fold
+
+A Fold line is authored in normalized panel coordinates. The compiler maps its
+endpoints, every source-triangle-edge crossing, and every interval midpoint
+through barycentric coordinates into the panel's current 3D embedding. Since
+the mapping inside each source triangle is affine, these samples determine
+whether the full hinge is one stable straight axis.
+
+If the mapped samples are non-linear, reversed, collapsed, non-finite, or
+outside the panel triangulation, compilation stops with
+`FC3007 AmbiguousFoldHinge`. Otherwise the selected positive or negative source
+side is rotated using `Quaternion.AngleAxis` around the directed current axis.
+Hinge samples stay fixed, and all source/provenance/topology data is preserved.
+Only zero falloff is supported in M02.
 
 ## Stage 4: seam resolution
 

@@ -17,7 +17,19 @@ The FoldCanvas editor evolves toward a split workspace:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-The bootstrap window intentionally starts smaller: choose an asset, compile it, view diagnostics, and bake a mesh.
+The current window intentionally starts smaller: choose an asset, compile it,
+view diagnostics, and bake a mesh.
+
+M02 also provides two proof commands:
+
+- `Tools > FoldCanvas > Create M02 Box Sample` creates or updates the
+  GUID-stable six-region appearance canvas and six-panel source asset.
+- `Tools > FoldCanvas > Create M02 Box Proof` compiles and bakes that source,
+  creates an unlit preview material, and selects a scene object using the
+  generated mesh. It never creates a Unity cube primitive.
+
+The proof mesh is a closed-looking but deliberately unwelded six-panel shell.
+Explicit seam topology remains M04 work.
 
 ## Authoring actions
 

@@ -20,6 +20,7 @@ namespace FoldCanvas
         private static PanelBuildRecord AppendRectangle(PanelDefinition panel, MeshBuildBuffer buffer)
         {
             int start = buffer.Vertices.Count;
+            int triangleIndexStart = buffer.Triangles.Count;
             int panelIndex = buffer.PanelCount;
             int uSegments = panel.USegments;
             int vSegments = panel.VSegments;
@@ -71,7 +72,9 @@ namespace FoldCanvas
                 panel,
                 panelIndex,
                 start,
-                (uSegments + 1) * (vSegments + 1));
+                (uSegments + 1) * (vSegments + 1),
+                triangleIndexStart,
+                buffer.Triangles.Count - triangleIndexStart);
 
             int[] uMin = new int[vSegments + 1];
             int[] uMax = new int[vSegments + 1];
@@ -100,6 +103,7 @@ namespace FoldCanvas
         private static PanelBuildRecord AppendDisk(PanelDefinition panel, MeshBuildBuffer buffer)
         {
             int start = buffer.Vertices.Count;
+            int triangleIndexStart = buffer.Triangles.Count;
             int panelIndex = buffer.PanelCount;
             int segments = panel.RadialSegments;
             int rings = panel.RadialRings;
@@ -170,7 +174,9 @@ namespace FoldCanvas
                 panel,
                 panelIndex,
                 start,
-                1 + rings * segments);
+                1 + rings * segments,
+                triangleIndexStart,
+                buffer.Triangles.Count - triangleIndexStart);
 
             int perimeterStart = start + 1 + (rings - 1) * segments;
             int[] perimeter = new int[segments];

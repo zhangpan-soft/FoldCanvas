@@ -111,7 +111,9 @@ namespace FoldCanvas
             PanelDefinition panel,
             int panelIndex,
             int vertexStart,
-            int vertexCount)
+            int vertexCount,
+            int triangleIndexStart,
+            int triangleIndexCount)
         {
             PanelId = panel.Id;
             PanelIndex = panelIndex;
@@ -120,6 +122,8 @@ namespace FoldCanvas
             PhysicalSize = panel.PhysicalSize;
             VertexStart = vertexStart;
             VertexCount = vertexCount;
+            TriangleIndexStart = triangleIndexStart;
+            TriangleIndexCount = triangleIndexCount;
         }
 
         public string PanelId { get; }
@@ -135,6 +139,10 @@ namespace FoldCanvas
         public int VertexStart { get; }
 
         public int VertexCount { get; }
+
+        public int TriangleIndexStart { get; }
+
+        public int TriangleIndexCount { get; }
 
         public void AddBoundary(string boundaryId, int[] vertexIndices)
         {
