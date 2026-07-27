@@ -49,6 +49,7 @@ namespace FoldCanvas
         public const string InvalidRollRadiusMode = "FC3020";
         public const string UnsupportedRollEmbedding = "FC3021";
         public const string InsufficientRollTessellation = "FC3022";
+        public const string UnsupportedMultiTurnRoll = "FC3023";
         public const string NonFiniteVertex = "FC5001";
         public const string ZeroAreaTriangle = "FC5002";
     }

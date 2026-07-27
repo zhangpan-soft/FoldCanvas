@@ -131,6 +131,9 @@ does **not** mean applying one rigid rotation to the panel. The compiler may use
 trigonometric evaluation internally, but no user-authored vertices or UV unwrap
 are required. Exact direction, radius, angle, and seam semantics are defined in
 the [field reference](foldscript-field-reference.md#63-roll--implemented-in-m03).
+M03 Circular Roll accepts only `-360 <= angleDegrees <= 360`; larger
+multi-turn, spiral, or layered requests require a future operation. A complete
+turn also requires at least three source segments in the selected direction.
 
 ### Solidify
 

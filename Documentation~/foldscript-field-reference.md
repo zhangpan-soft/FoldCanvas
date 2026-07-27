@@ -265,7 +265,7 @@ rigid rotation of the whole panel.
 |---|---:|:---:|---|
 | `panel` | ID | yes | Target panel. |
 | `direction` | enum | yes | `"u"` wraps panel X around an axis parallel to +Y; `"v"` wraps panel Y around an axis parallel to +X. |
-| `angleDegrees` | number | yes | Signed total angular sweep from the minimum edge to the maximum edge. `360` makes the two edge positions coincide but does not weld them. |
+| `angleDegrees` | number | yes | Signed Circular Roll sweep from the minimum edge to the maximum edge, in `[-360, 360]`. `+/-360` makes the two edge positions coincide but does not weld them. Larger multi-turn sweeps are unsupported in M03. |
 | `radiusMode` | enum | yes | How the roll radius is selected. |
 | `radius` | positive number | conditional | Required when `radiusMode` is `"explicit"`. In document units. |
 | `targetSeam` | ID | conditional | Required when `radiusMode` is `"fitTargetBoundary"`; identifies the seam constraint the future solver must fit. |
@@ -283,10 +283,12 @@ Before mapping, the compiler resolves the target's current frame:
 
 Every target vertex must still equal
 `CurrentOrigin + sourceX*CurrentU + sourceY*CurrentV` within centralized
-tolerances. M03 accepts translation and rotation before Roll. Scale, shear,
-non-planarity, and a prior non-planar Fold return
-`FC3021 UnsupportedRollEmbedding`; the compiler does not reconstruct a frame
-from one convenient triangle.
+tolerances. M03 accepts any congruent planar embedding, including translation,
+rotation, and an orientation-reversing planar isometry. In-plane
+metric-changing scale, shear, a collapsed axis, non-planarity, and a prior
+non-planar Fold return `FC3021 UnsupportedRollEmbedding`; compatibility is
+determined from the final geometry rather than remembered operation history,
+and the compiler does not reconstruct a frame from one convenient triangle.
 
 For `direction: "u"`:
 
@@ -333,10 +335,22 @@ Radius modes:
 
 A zero angular sweep is invalid for `preserveArcLength`. Roll preserves UV and
 does not merge coincident minimum/maximum edges; seam resolution belongs to
-`stitch`. A closed full-turn Roll requires at least two source segments in the
-selected direction; otherwise it returns
-`FC3022 InsufficientRollTessellation`. Coincident full-turn endpoints retain
-different vertex indices.
+`stitch`. A closed full-turn Roll requires at least three source segments in
+the selected direction; otherwise it returns
+`FC3022 InsufficientRollTessellation`. Two segments sample only 0, 180, and 360
+degrees, so their two nonzero-area panels overlap in one plane. Coincident
+full-turn endpoints retain different vertex indices.
+
+M03 Circular Roll accepts at most one signed turn. A magnitude above 360
+degrees returns `FC3023 UnsupportedMultiTurnRoll` instead of producing
+overlapping cylindrical layers. Future `SpiralRoll` or `LayeredRoll`
+operations require separate pitch, layer-spacing, thickness, and collision
+contracts.
+
+中文摘要：M03 的圆形 `roll` 只接受 `-360` 到 `+360` 度；完整一圈至少需要
+三个源分段，因为两个分段只会采样 0/180/360 度并生成两张重叠平面。Roll
+读取执行前的最终几何，只接受与源矩形全等的平面嵌入；平移、旋转和单位镜像
+可以通过，改变平面内度量的缩放、剪切、轴塌缩和非平面结果会返回稳定诊断。
 
 ### 6.4 `stitch` — planned for M04
 

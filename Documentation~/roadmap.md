@@ -57,9 +57,22 @@ remains pending until the PR is reviewed and merged.
 - current-frame composition after rigid translation/rotation
 - documented positive/negative handedness and radial normal convention
 - structured explicit-radius stretch diagnostics
-- full-turn tessellation guard
+- full-turn minimum of three source segments
+- one-turn Circular Roll limit with stable multi-turn rejection
+- congruent current-frame composition, including unit reflection
+- package-owned, idempotent EditorOnly proof camera hierarchy
 
 This milestone may display separate coincident surfaces. Topological welding belongs to M04.
+
+### Future Roll tasks: SpiralRoll and LayeredRoll
+
+**Status:** explicitly deferred; not part of M03 or M04.
+
+**Proof:** multi-turn source strips use an explicit pitch or layer-spacing
+contract, account for thickness and collision between turns, and avoid mapping
+several source intervals onto the same cylindrical surface. Until such an
+operation is active, Circular Roll angles outside `[-360, 360]` return
+`FC3023 UnsupportedMultiTurnRoll`.
 
 ### Future Fold task: deterministic crease topology split
 

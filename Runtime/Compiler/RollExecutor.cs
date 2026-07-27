@@ -57,6 +57,20 @@ namespace FoldCanvas
                 return false;
             }
 
+            double angleMagnitude = Math.Abs((double)operation.AngleDegrees);
+            if (angleMagnitude >
+                FoldCanvasGeometryTolerances.MaximumCircularRollAngleDegrees +
+                FoldCanvasGeometryTolerances.FullRollAngleToleranceDegrees)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.UnsupportedMultiTurnRoll,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "M03 Circular Roll supports a signed angular sweep of at most 360 degrees. Multi-turn SpiralRoll and LayeredRoll are not implemented.",
+                    panel.PanelId,
+                    operation.Id));
+                return false;
+            }
+
             if (operation.Direction != RollDirection.U &&
                 operation.Direction != RollDirection.V)
             {
@@ -96,18 +110,6 @@ namespace FoldCanvas
             int rollSegments = operation.Direction == RollDirection.U
                 ? panel.USegments
                 : panel.VSegments;
-            if (IsClosedFullTurn(operation.AngleDegrees) &&
-                rollSegments < 2)
-            {
-                result.Add(new FoldCanvasDiagnostic(
-                    FoldCanvasDiagnosticCodes.InsufficientRollTessellation,
-                    FoldCanvasDiagnosticSeverity.Error,
-                    "A closed full-turn Roll requires at least two source segments in the selected direction.",
-                    panel.PanelId,
-                    operation.Id));
-                return false;
-            }
-
             double sourceSpan = operation.Direction == RollDirection.U
                 ? panel.PhysicalSize.x
                 : panel.PhysicalSize.y;
@@ -179,7 +181,19 @@ namespace FoldCanvas
                 result.Add(new FoldCanvasDiagnostic(
                     FoldCanvasDiagnosticCodes.UnsupportedRollEmbedding,
                     FoldCanvasDiagnosticSeverity.Error,
-                    "M03 Roll requires the current rectangle to remain one rigidly transformed planar copy of its source.",
+                    "M03 Roll requires the current rectangle to remain a congruent, non-degenerate planar embedding of its source.",
+                    panel.PanelId,
+                    operation.Id));
+                return false;
+            }
+
+            if (IsClosedFullTurn(operation.AngleDegrees) &&
+                rollSegments < 3)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.InsufficientRollTessellation,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "A closed full-turn Roll requires at least three source segments in the selected direction.",
                     panel.PanelId,
                     operation.Id));
                 return false;
@@ -283,16 +297,9 @@ namespace FoldCanvas
         private static bool IsClosedFullTurn(float angleDegrees)
         {
             double magnitude = Math.Abs((double)angleDegrees);
-            if (magnitude <
-                360d -
-                FoldCanvasGeometryTolerances.FullRollAngleToleranceDegrees)
-            {
-                return false;
-            }
-
-            double turns = Math.Round(magnitude / 360d);
-            return turns >= 1d &&
-                Math.Abs(magnitude - turns * 360d) <=
+            return Math.Abs(
+                    magnitude -
+                    FoldCanvasGeometryTolerances.MaximumCircularRollAngleDegrees) <=
                 FoldCanvasGeometryTolerances.FullRollAngleToleranceDegrees;
         }
 

@@ -27,10 +27,13 @@ Tools > FoldCanvas > Create M03 Cup Proof
 The editor copies the source canvas into the host project, creates a
 `FoldCanvasAsset`, rolls the `GPT 5.6` wall through `360` degrees, rigidly
 places the `CODEX` disk at the bottom, bakes the derived mesh, and creates a
-preview object beside the unchanged 2D source canvas. Read the positive Roll
-from outside the cup: source U runs left-to-right around the wall and generated
-normals point radially outward. The wall seam and bottom remain spatially
-aligned but topologically separate.
+package-owned `EditorOnly` preview root containing the cup, unchanged 2D source
+canvas, and one untagged preview camera. Re-running the command reuses those
+objects, including when inactive, and never modifies an existing MainCamera.
+Read the positive Roll from outside the cup: source U runs left-to-right around
+the wall and generated normals point radially outward. The command validates
+all 64 wall-bottom/perimeter samples before showing the proof. The wall seam
+and bottom remain spatially aligned but topologically separate.
 
 The proof material is an opaque two-sided Unlit visualization so the
 zero-thickness M03 wall and disk stay visible while orbiting the selected

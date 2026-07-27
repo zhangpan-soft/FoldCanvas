@@ -451,10 +451,10 @@
           "enum": ["u", "v"]
         },
         "angleDegrees": {
-          "description": "Signed total angular sweep from the minimum source edge to the maximum edge; 360 makes edge positions coincide but does not weld them.",
+          "description": "Signed Circular Roll sweep from the minimum source edge to the maximum edge. M03 supports at most one turn; +/-360 makes edge positions coincide but does not weld them.",
           "type": "number",
-          "minimum": -3600,
-          "maximum": 3600
+          "minimum": -360,
+          "maximum": 360
         },
         "radiusMode": {
           "description": "preserveArcLength derives radius from source span and sweep; explicit uses radius; fitTargetBoundary is reserved for a seam solver.",

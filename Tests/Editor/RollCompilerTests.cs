@@ -489,6 +489,107 @@ namespace FoldCanvas.Tests
         }
 
         [Test]
+        public void Roll_AfterUnitReflection_UsesReflectedCurrentFrame()
+        {
+            const float radius = 0.25f;
+            const float height = 0.5f;
+            FoldCanvasAsset asset = CreateRectangleAsset(
+                new Vector2(2f * Mathf.PI * radius, height),
+                4,
+                2);
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "reflect-u",
+                PanelId = "panel",
+                Translation = Vector3.zero,
+                RotationEuler = Vector3.zero,
+                Scale = new Vector3(-1f, 1f, 1f)
+            });
+            asset.Operations.Add(CreateRoll(
+                "roll-reflected",
+                "panel",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            AssertPosition(
+                result.Mesh.vertices[0],
+                new Vector3(radius, -height * 0.5f, 0f));
+            AssertPosition(
+                result.Mesh.vertices[6],
+                new Vector3(0f, 0f, -radius));
+            Assert.That(
+                Vector3.Dot(
+                    result.Mesh.normals[6].normalized,
+                    Vector3.back),
+                Is.GreaterThan(0.99f));
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Roll_AfterInPlaneNonUniformScale_ReturnsUnsupportedEmbedding()
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 4, 2);
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "non-uniform-scale",
+                PanelId = "panel",
+                Translation = Vector3.zero,
+                RotationEuler = Vector3.zero,
+                Scale = new Vector3(2f, 0.5f, 1f)
+            });
+            asset.Operations.Add(CreateRoll(
+                "roll-scaled",
+                "panel",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(FoldCanvasDiagnosticCodes.UnsupportedRollEmbedding));
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Roll_AfterCollapsedAxis_ReturnsUnsupportedEmbedding()
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 4, 2);
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "collapse-u",
+                PanelId = "panel",
+                Translation = Vector3.zero,
+                RotationEuler = Vector3.zero,
+                Scale = new Vector3(0f, 1f, 1f)
+            });
+            asset.Operations.Add(CreateRoll(
+                "roll-collapsed",
+                "panel",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(FoldCanvasDiagnosticCodes.UnsupportedRollEmbedding));
+            Destroy(result, asset);
+        }
+
+        [Test]
         public void Roll_AfterNonPlanarFold_ReturnsStableDiagnostic()
         {
             FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 2, 2);
@@ -771,6 +872,53 @@ namespace FoldCanvas.Tests
         }
 
         [Test]
+        public void FullRoll_WithTwoSegments_ReturnsInsufficientTessellation()
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 2, 1);
+            asset.Operations.Add(CreateRoll(
+                "roll-two-u-segments",
+                "panel",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(FoldCanvasDiagnosticCodes.InsufficientRollTessellation));
+            Assert.That(
+                result.Diagnostics[0].Message,
+                Does.Contain("at least three source segments"));
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void FullRollV_WithTwoSegments_ReturnsInsufficientTessellation()
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 1, 2);
+            asset.Operations.Add(CreateRoll(
+                "roll-two-v-segments",
+                "panel",
+                RollDirection.V,
+                -360f,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(FoldCanvasDiagnosticCodes.InsufficientRollTessellation));
+            Destroy(result, asset);
+        }
+
+        [Test]
         public void FullRoll_WithThreeSegments_DoesNotGenerateZeroAreaTriangles()
         {
             FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 3, 1);
@@ -800,6 +948,113 @@ namespace FoldCanvas.Tests
             }
 
             Destroy(result, asset);
+        }
+
+        [Test]
+        public void FullRoll_WithThreeSegments_ProducesNonOverlappingTriangularSurface()
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(
+                new Vector2(3f, 1f),
+                3,
+                1);
+            asset.Operations.Add(CreateRoll(
+                "roll-three-segments",
+                "panel",
+                RollDirection.U,
+                360f,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.Mesh.triangles.Length / 3, Is.EqualTo(6));
+            Vector3[] vertices = result.Mesh.vertices;
+            Vector3[] panelNormals = new Vector3[3];
+            Vector3[] panelPoints = new Vector3[3];
+            const int rowLength = 4;
+            for (int segment = 0; segment < 3; segment++)
+            {
+                Vector3 lowerLeft = vertices[segment];
+                Vector3 lowerRight = vertices[segment + 1];
+                Vector3 upperLeft = vertices[rowLength + segment];
+                Vector3 upperRight = vertices[rowLength + segment + 1];
+                Vector3 doubleArea = Vector3.Cross(
+                    lowerRight - lowerLeft,
+                    upperLeft - lowerLeft);
+                Assert.That(
+                    doubleArea.sqrMagnitude,
+                    Is.GreaterThan(
+                        FoldCanvasGeometryTolerances.MinimumTriangleDoubleAreaSquared));
+                panelNormals[segment] = doubleArea.normalized;
+                panelPoints[segment] =
+                    (lowerLeft + lowerRight + upperLeft + upperRight) * 0.25f;
+            }
+
+            for (int first = 0; first < panelNormals.Length; first++)
+            {
+                for (int second = first + 1;
+                    second < panelNormals.Length;
+                    second++)
+                {
+                    Assert.That(
+                        Mathf.Abs(Vector3.Dot(
+                            panelNormals[first],
+                            panelNormals[second])),
+                        Is.LessThan(0.999f),
+                        $"Angular panels {first} and {second} must not occupy the same plane.");
+                }
+            }
+
+            int[] triangles = result.Mesh.triangles;
+            for (int triangle = 0; triangle < triangles.Length; triangle += 3)
+            {
+                Vector3 centroid =
+                    (vertices[triangles[triangle]] +
+                        vertices[triangles[triangle + 1]] +
+                        vertices[triangles[triangle + 2]]) / 3f;
+                int containingPlanes = 0;
+                for (int panel = 0; panel < panelNormals.Length; panel++)
+                {
+                    float distance = Mathf.Abs(Vector3.Dot(
+                        centroid - panelPoints[panel],
+                        panelNormals[panel]));
+                    if (distance <= PositionTolerance)
+                    {
+                        containingPlanes++;
+                    }
+                }
+
+                Assert.That(
+                    containingPlanes,
+                    Is.EqualTo(1),
+                    $"Triangle {triangle / 3} must belong to exactly one angular panel.");
+            }
+
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Roll_AbovePositiveFullTurn_ReturnsStableDiagnostic()
+        {
+            AssertUnsupportedMultiTurnRoll(360.01f);
+        }
+
+        [Test]
+        public void Roll_BelowNegativeFullTurn_ReturnsStableDiagnostic()
+        {
+            AssertUnsupportedMultiTurnRoll(-360.01f);
+        }
+
+        [Test]
+        public void Roll_ExactlyPositiveFullTurn_Succeeds()
+        {
+            AssertExactFullTurnSucceeds(360f);
+        }
+
+        [Test]
+        public void Roll_ExactlyNegativeFullTurn_Succeeds()
+        {
+            AssertExactFullTurnSucceeds(-360f);
         }
 
         [Test]
@@ -988,6 +1243,57 @@ namespace FoldCanvas.Tests
                 ExplicitRadius = 0.05f,
                 StartAngleDegrees = 0f
             };
+        }
+
+        private static void AssertUnsupportedMultiTurnRoll(float angleDegrees)
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 8, 1);
+            asset.Operations.Add(CreateRoll(
+                "multi-turn",
+                "panel",
+                RollDirection.U,
+                angleDegrees,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult first = FoldCanvasCompiler.Compile(asset);
+            FoldCanvasCompileResult second = FoldCanvasCompiler.Compile(asset);
+
+            AssertOnlyError(
+                first,
+                FoldCanvasDiagnosticCodes.UnsupportedMultiTurnRoll,
+                "panel",
+                "multi-turn");
+            AssertOnlyError(
+                second,
+                FoldCanvasDiagnosticCodes.UnsupportedMultiTurnRoll,
+                "panel",
+                "multi-turn");
+            AssertDiagnosticsEqual(
+                first.Diagnostics[0],
+                second.Diagnostics[0]);
+            Destroy(first, asset);
+        }
+
+        private static void AssertExactFullTurnSucceeds(float angleDegrees)
+        {
+            FoldCanvasAsset asset = CreateRectangleAsset(Vector2.one, 3, 1);
+            asset.Operations.Add(CreateRoll(
+                "exact-full-turn",
+                "panel",
+                RollDirection.U,
+                angleDegrees,
+                RollRadiusMode.PreserveArcLength));
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.Mesh, Is.Not.Null);
+            Assert.That(
+                Vector3.Distance(
+                    result.Mesh.vertices[0],
+                    result.Mesh.vertices[3]),
+                Is.LessThan(PositionTolerance));
+            Destroy(result, asset);
         }
 
         private static void AssertOnlyError(

@@ -46,8 +46,15 @@ Use the provided radius and report stretch/compression ratio.
 - the non-roll source direction remains linear
 - UV0 remains exactly source canvas UV
 - full 360-degree first/last boundaries coincide spatially within tolerance, while remaining topologically separate until M04
+- a full turn requires at least three source segments; two segments form two
+  overlapping planar panels despite having nonzero triangle area
+- Circular Roll is limited to one signed turn; larger sweeps return
+  `FC3023 UnsupportedMultiTurnRoll`
 - partial rolls remain open
 - sign and start-angle conventions must be documented and tested
+- the current target must be a congruent planar embedding; unit reflection may
+  be accepted, while metric-changing scale, shear, collapse, and non-planarity
+  fail with `FC3021 UnsupportedRollEmbedding`
 
 ## Cup sample
 
@@ -58,6 +65,12 @@ M03 deliberately emits zero-thickness surfaces. This prevents the wall and
 bottom from disappearing while the user orbits the object. It does not add
 inner-wall geometry, change triangle winding, or replace the one-sided normal
 and handedness tests.
+
+The proof owns an `EditorOnly` root containing the cup, source canvas, and one
+untagged preview camera. It must reuse inactive owned objects, record Undo for
+existing objects, and never read or modify `Camera.main`. The 64-sample wall
+bottom boundary and disk perimeter must pass a numerical fit check before the
+proof is shown.
 
 ## Tests
 
@@ -70,6 +83,10 @@ and handedness tests.
 - reversed roll angle reverses orientation predictably
 - disk rigid placement matches intended cup bottom center and radius
 - interactive preview material renders both sides without transparent gaps
+- two-segment U/V full turns return `FC3022`
+- multi-turn Circular Roll returns `FC3023`
+- the owned preview is idempotent and leaves an existing MainCamera unchanged
+- every wall-bottom sample coincides with the disk perimeter within tolerance
 
 ## Diagnostics
 
@@ -77,6 +94,7 @@ and handedness tests.
 - explicit radius not positive
 - unsupported FitTargetBoundary
 - unsupported source panel shape
+- unsupported multi-turn Circular Roll
 - excessive radial compression/stretch warning
 
 ## Non-goals

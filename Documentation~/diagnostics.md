@@ -75,6 +75,7 @@ compiler stage and source order.
 - `FC3020 InvalidRollRadiusMode`
 - `FC3021 UnsupportedRollEmbedding`
 - `FC3022 InsufficientRollTessellation`
+- `FC3023 UnsupportedMultiTurnRoll`
 - `FC4001 InvalidThickness`
 - `FC5001 NonFiniteVertex`
 - `FC5002 ZeroAreaTriangle`
@@ -115,6 +116,7 @@ Adds expensive checks:
 Do not silently:
 
 - clamp a 720-degree operation to 360 degrees
+- emit a 720-degree Circular Roll as overlapping zero-thickness layers
 - weld boundaries with incompatible intent
 - reverse a seam without recording it
 - drop triangles

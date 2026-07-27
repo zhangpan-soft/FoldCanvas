@@ -51,6 +51,12 @@ The repository currently contains the **M02 fold compiler**:
 
 The first public proof target is a cup whose base and wall artwork live on one 2D canvas and compile into a closed, thickened 3D object.
 
+On the M03 audit branch, Circular Roll is intentionally narrower than that
+future closed-shell target: it supports at most one signed turn, requires at
+least three source segments for a complete turn, and accepts only congruent
+planar current embeddings. The cup wall and base are numerically aligned but
+remain separate zero-thickness surfaces until M04.
+
 ## Design principles
 
 1. **The 2D source is authoritative.** Generated meshes are disposable build artifacts.
@@ -80,7 +86,9 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
 5. Open `Window > FoldCanvas > FoldCanvas`.
 6. Use `Tools > FoldCanvas > Create Bootstrap Sample` to create the planar
    M01 source, or `Tools > FoldCanvas > Create M02 Box Proof` to create, bake,
-   and display the six-face fold proof.
+   and display the six-face fold proof. On the M03 audit branch, use
+   `Tools > FoldCanvas > Create M03 Cup Proof` for the owned cup/source/camera
+   proof.
 
 ## Install in another Unity project
 

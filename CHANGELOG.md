@@ -15,11 +15,13 @@ No unreleased changes.
 - Deterministic rectangle `Roll` along U or V in the target panel's current
   rigid frame, with preserve-arc-length and explicit-radius modes
 - Stable Roll diagnostics for invalid parameters, unsupported embeddings,
-  unsupported boundary fitting, and insufficient closed-turn tessellation
+  unsupported boundary fitting, insufficient closed-turn tessellation, and
+  unsupported multi-turn Circular Roll
 - Ordered structured diagnostic values and repair-suggestion storage, including
   explicit-radius `sourceSpan`, `arcLength`, and `stretchRatio`
 - A generated `GPT 5.6` / `CODEX` cup source canvas, cup asset, bake command,
-  editor proof, and package-owned opaque two-sided Unlit preview shader
+  editor proof, package-owned opaque two-sided Unlit preview shader, and one
+  inactive-aware `EditorOnly` preview hierarchy with its own untagged camera
 - Edit Mode coverage for current-frame composition, signed handedness and
   normals, open/closed rolls, seam declaration behavior, structured
   diagnostics, tessellation, cup alignment, and preview culling
@@ -30,6 +32,11 @@ No unreleased changes.
   Stitch and `FitTargetBoundary` each return one stable root-cause diagnostic
 - Roll, Fold, Seam, diagnostic, pipeline, field-reference, schema, roadmap, and
   sample documentation now state the audited M03 contracts
+- Full-turn Circular Roll now requires at least three source segments, and the
+  Roll schema limits signed sweeps to one turn (`-360` through `+360`)
+- Roll embedding compatibility is defined from final congruent planar geometry:
+  unit reflection may pass, while metric-changing scale, shear, collapsed axes,
+  and non-planarity fail
 - Package metadata now describes planar, rigid-fold, and circular-roll support
 
 ### Fixed
@@ -39,10 +46,13 @@ No unreleased changes.
 - The M03 interactive cup proof no longer loses half of its wall or bottom
   while orbiting; double-sided rendering is preview-only and does not add M04
   inner-wall, thickness, Stitch, or welding topology
+- The M03 proof no longer reads or modifies `Camera.main`, does not duplicate
+  owned objects on repeated runs, and numerically rejects a wall/bottom fit
+  outside the seam-proof tolerance before showing the scene
 
 ### Verified
 
-- Unity `6000.3.20f1` compiled the package and passed all 76 Edit Mode tests
+- Unity `6000.3.20f1` compiled the package and passed all 90 Edit Mode tests
 - The real Unity Editor regenerated the 1,358-vertex, 2,496-triangle cup and
   displayed the complete wall plus both sides of the bottom across side,
   underside, and reverse viewing orientations

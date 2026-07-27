@@ -1,8 +1,10 @@
 using System;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 namespace FoldCanvas.Tests
 {
@@ -285,6 +287,277 @@ namespace FoldCanvas.Tests
             {
                 UnityEngine.Object.DestroyImmediate(material);
             }
+        }
+
+        [Test]
+        public void CreateM03CupProof_TwiceKeepsOneOwnedPreviewCamera()
+        {
+            InTemporaryScene(scene =>
+            {
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+                GameObject firstRoot =
+                    FindM03PreviewRoot(scene);
+                Camera[] firstCameras =
+                    firstRoot.GetComponentsInChildren<Camera>(true);
+                Assert.That(firstCameras.Length, Is.EqualTo(1));
+                int firstRootId = firstRoot.GetInstanceID();
+                int firstCameraId = firstCameras[0].GetInstanceID();
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+
+                GameObject secondRoot =
+                    FindM03PreviewRoot(scene);
+                Camera[] secondCameras =
+                    secondRoot.GetComponentsInChildren<Camera>(true);
+                Assert.That(secondRoot.GetInstanceID(), Is.EqualTo(firstRootId));
+                Assert.That(secondRoot.tag, Is.EqualTo("EditorOnly"));
+                Assert.That(secondCameras.Length, Is.EqualTo(1));
+                Assert.That(
+                    secondCameras[0].GetInstanceID(),
+                    Is.EqualTo(firstCameraId));
+                Assert.That(
+                    secondCameras[0].gameObject.name,
+                    Is.EqualTo("FoldCanvas M03 Preview Camera"));
+                Assert.That(
+                    secondCameras[0].CompareTag("MainCamera"),
+                    Is.False);
+            });
+        }
+
+        [Test]
+        public void CreateM03CupProof_TwiceKeepsStableObjectCount()
+        {
+            InTemporaryScene(scene =>
+            {
+                int countBefore = CountSceneObjects(scene);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+                int countAfterFirst = CountSceneObjects(scene);
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+                int countAfterSecond = CountSceneObjects(scene);
+
+                Assert.That(countAfterFirst, Is.EqualTo(countBefore + 4));
+                Assert.That(countAfterSecond, Is.EqualTo(countAfterFirst));
+                GameObject root =
+                    FindM03PreviewRoot(scene);
+                Assert.That(
+                    root.transform.Find("FoldCanvas M03 Cup Proof"),
+                    Is.Not.Null);
+                Assert.That(
+                    root.transform.Find("FoldCanvas M03 Source Canvas"),
+                    Is.Not.Null);
+                Assert.That(
+                    root.transform.Find("FoldCanvas M03 Preview Camera"),
+                    Is.Not.Null);
+            });
+        }
+
+        [Test]
+        public void CreateM03CupProof_DoesNotModifyExistingMainCamera()
+        {
+            InTemporaryScene(scene =>
+            {
+                GameObject userCameraObject = new GameObject(
+                    "User Main Camera",
+                    typeof(Camera));
+                userCameraObject.tag = "MainCamera";
+                userCameraObject.transform.SetPositionAndRotation(
+                    new Vector3(7f, 8f, 9f),
+                    Quaternion.Euler(12f, 34f, 56f));
+                userCameraObject.transform.localScale =
+                    new Vector3(1.2f, 1.3f, 1.4f);
+                Camera userCamera = userCameraObject.GetComponent<Camera>();
+                userCamera.orthographic = false;
+                userCamera.fieldOfView = 47f;
+                userCamera.nearClipPlane = 0.33f;
+                userCamera.farClipPlane = 777f;
+                userCamera.clearFlags = CameraClearFlags.Depth;
+                userCamera.backgroundColor =
+                    new Color(0.2f, 0.3f, 0.4f, 0.5f);
+                userCamera.depth = -7f;
+                Vector3 position = userCameraObject.transform.position;
+                Quaternion rotation = userCameraObject.transform.rotation;
+                Vector3 scale = userCameraObject.transform.localScale;
+                bool orthographic = userCamera.orthographic;
+                float fieldOfView = userCamera.fieldOfView;
+                float near = userCamera.nearClipPlane;
+                float far = userCamera.farClipPlane;
+                CameraClearFlags clearFlags = userCamera.clearFlags;
+                Color background = userCamera.backgroundColor;
+                float depth = userCamera.depth;
+                string serializedCamera =
+                    EditorJsonUtility.ToJson(userCamera);
+                string serializedTransform =
+                    EditorJsonUtility.ToJson(userCameraObject.transform);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+
+                Assert.That(userCameraObject.transform.position, Is.EqualTo(position));
+                Assert.That(userCameraObject.transform.rotation, Is.EqualTo(rotation));
+                Assert.That(userCameraObject.transform.localScale, Is.EqualTo(scale));
+                Assert.That(userCamera.orthographic, Is.EqualTo(orthographic));
+                Assert.That(userCamera.fieldOfView, Is.EqualTo(fieldOfView));
+                Assert.That(userCamera.nearClipPlane, Is.EqualTo(near));
+                Assert.That(userCamera.farClipPlane, Is.EqualTo(far));
+                Assert.That(userCamera.clearFlags, Is.EqualTo(clearFlags));
+                Assert.That(userCamera.backgroundColor, Is.EqualTo(background));
+                Assert.That(userCamera.depth, Is.EqualTo(depth));
+                Assert.That(userCameraObject.CompareTag("MainCamera"), Is.True);
+                Assert.That(
+                    EditorJsonUtility.ToJson(userCamera),
+                    Is.EqualTo(serializedCamera));
+                Assert.That(
+                    EditorJsonUtility.ToJson(userCameraObject.transform),
+                    Is.EqualTo(serializedTransform));
+            });
+        }
+
+        [Test]
+        public void CreateM03CupProof_ReusesInactiveOwnedObjects()
+        {
+            InTemporaryScene(scene =>
+            {
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+                GameObject firstRoot =
+                    FindM03PreviewRoot(scene);
+                GameObject firstCup =
+                    firstRoot.transform.Find("FoldCanvas M03 Cup Proof").gameObject;
+                GameObject firstCanvas =
+                    firstRoot.transform.Find("FoldCanvas M03 Source Canvas").gameObject;
+                GameObject firstCamera =
+                    firstRoot.transform.Find("FoldCanvas M03 Preview Camera").gameObject;
+                int rootId = firstRoot.GetInstanceID();
+                int cupId = firstCup.GetInstanceID();
+                int canvasId = firstCanvas.GetInstanceID();
+                int cameraId = firstCamera.GetInstanceID();
+                firstCup.SetActive(false);
+                firstCanvas.SetActive(false);
+                firstCamera.SetActive(false);
+                firstRoot.SetActive(false);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator.CreateM03CupProof();
+
+                GameObject secondRoot =
+                    FindM03PreviewRoot(scene);
+                GameObject secondCup =
+                    secondRoot.transform.Find("FoldCanvas M03 Cup Proof").gameObject;
+                GameObject secondCanvas =
+                    secondRoot.transform.Find("FoldCanvas M03 Source Canvas").gameObject;
+                GameObject secondCamera =
+                    secondRoot.transform.Find("FoldCanvas M03 Preview Camera").gameObject;
+                Assert.That(secondRoot.GetInstanceID(), Is.EqualTo(rootId));
+                Assert.That(secondCup.GetInstanceID(), Is.EqualTo(cupId));
+                Assert.That(secondCanvas.GetInstanceID(), Is.EqualTo(canvasId));
+                Assert.That(secondCamera.GetInstanceID(), Is.EqualTo(cameraId));
+                Assert.That(secondRoot.activeSelf, Is.True);
+                Assert.That(secondCup.activeSelf, Is.True);
+                Assert.That(secondCanvas.activeSelf, Is.True);
+                Assert.That(secondCamera.activeSelf, Is.True);
+            });
+        }
+
+        private static void InTemporaryScene(Action<Scene> assertion)
+        {
+            Scene previousScene = SceneManager.GetActiveScene();
+            bool createdTemporaryHost = false;
+            if (string.IsNullOrEmpty(previousScene.path))
+            {
+                if (!Application.isBatchMode)
+                {
+                    Assert.That(
+                        previousScene.isDirty ||
+                        previousScene.GetRootGameObjects().Length > 0,
+                        Is.False,
+                        "Preview ownership tests will not replace an unsaved scene with content.");
+                }
+
+                if (!AssetDatabase.IsValidFolder(TestOutputFolder))
+                {
+                    AssetDatabase.CreateFolder("Assets", "FoldCanvasM00Tests");
+                }
+
+                Assert.That(
+                    EditorSceneManager.SaveScene(
+                        previousScene,
+                        TestOutputFolder + "/M03PreviewRunnerHost.unity"),
+                    Is.True);
+                createdTemporaryHost = true;
+            }
+
+            Scene testScene = default;
+            try
+            {
+                testScene = EditorSceneManager.NewScene(
+                    NewSceneSetup.EmptyScene,
+                    NewSceneMode.Additive);
+                if (SceneManager.GetActiveScene() != testScene)
+                {
+                    Assert.That(SceneManager.SetActiveScene(testScene), Is.True);
+                }
+
+                Assert.That(SceneManager.GetActiveScene(), Is.EqualTo(testScene));
+                assertion(testScene);
+            }
+            finally
+            {
+                if (previousScene.IsValid() && previousScene.isLoaded)
+                {
+                    SceneManager.SetActiveScene(previousScene);
+                }
+
+                if (testScene.IsValid() && testScene.isLoaded)
+                {
+                    EditorSceneManager.CloseScene(testScene, true);
+                }
+
+                if (createdTemporaryHost)
+                {
+                    EditorSceneManager.NewScene(
+                        NewSceneSetup.EmptyScene,
+                        NewSceneMode.Single);
+                }
+            }
+        }
+
+        private static GameObject FindM03PreviewRoot(Scene scene)
+        {
+            GameObject[] objects =
+                Resources.FindObjectsOfTypeAll<GameObject>();
+            GameObject match = null;
+            int matches = 0;
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] != null &&
+                    !EditorUtility.IsPersistent(objects[i]) &&
+                    objects[i].scene == scene &&
+                    objects[i].name == "FoldCanvas M03 Preview Root" &&
+                    objects[i].CompareTag("EditorOnly"))
+                {
+                    match = objects[i];
+                    matches++;
+                }
+            }
+
+            Assert.That(matches, Is.EqualTo(1));
+            return match;
+        }
+
+        private static int CountSceneObjects(Scene scene)
+        {
+            GameObject[] objects = Resources.FindObjectsOfTypeAll<GameObject>();
+            int count = 0;
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] != null &&
+                    !EditorUtility.IsPersistent(objects[i]) &&
+                    objects[i].scene == scene)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static string[] FindSortedAssetGuids(string folder)

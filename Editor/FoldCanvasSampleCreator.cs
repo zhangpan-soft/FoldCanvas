@@ -2,6 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace FoldCanvas.Editor
 {
@@ -24,6 +25,10 @@ namespace FoldCanvas.Editor
         private const string M03ProofObjectName = "FoldCanvas M03 Cup Proof";
         private const string M03CanvasProofObjectName =
             "FoldCanvas M03 Source Canvas";
+        private const string M03PreviewRootObjectName =
+            "FoldCanvas M03 Preview Root";
+        private const string M03PreviewCameraObjectName =
+            "FoldCanvas M03 Preview Camera";
         private const string M03TwoSidedShaderName =
             "FoldCanvas/Two-Sided Unlit Texture";
 
@@ -239,64 +244,49 @@ namespace FoldCanvas.Editor
                 "M03CupProof_Material",
                 source.Appearance,
                 true);
-            GameObject proof = GameObject.Find(M03ProofObjectName);
-            if (proof == null)
+            float maximumBottomGap =
+                MeasureM03WallBottomFit(result.CompiledData);
+            if (maximumBottomGap >
+                FoldCanvasGeometryTolerances.RollSeamProofTolerance)
             {
-                proof = new GameObject(M03ProofObjectName);
-                Undo.RegisterCreatedObjectUndo(proof, "Create FoldCanvas M03 Cup Proof");
+                Debug.LogError(
+                    "FoldCanvas M03 cup proof was not created because the wall " +
+                    $"and bottom differ by {maximumBottomGap:R} m, exceeding " +
+                    $"{FoldCanvasGeometryTolerances.RollSeamProofTolerance:R} m.",
+                    source);
+                return;
             }
 
-            MeshFilter filter = proof.GetComponent<MeshFilter>();
-            if (filter == null)
-            {
-                filter = Undo.AddComponent<MeshFilter>(proof);
-            }
-
-            MeshRenderer renderer = proof.GetComponent<MeshRenderer>();
-            if (renderer == null)
-            {
-                renderer = Undo.AddComponent<MeshRenderer>(proof);
-            }
-
-            filter.sharedMesh = mesh;
-            renderer.sharedMaterial = material;
-            proof.transform.SetPositionAndRotation(
+            GameObject previewRoot = GetOrCreateM03PreviewRoot();
+            GameObject proof = GetOrCreateM03OwnedMeshObject(
+                previewRoot,
+                M03ProofObjectName,
+                mesh,
+                material);
+            ConfigureM03OwnedMeshObject(
+                proof,
+                mesh,
+                material,
                 new Vector3(0.09f, 0f, 0f),
-                Quaternion.Euler(0f, -90f, 0f));
-            proof.transform.localScale = Vector3.one;
+                Quaternion.Euler(0f, -90f, 0f),
+                Vector3.one);
 
-            GameObject canvasProof = GameObject.Find(M03CanvasProofObjectName);
-            if (canvasProof == null)
-            {
-                canvasProof = new GameObject(M03CanvasProofObjectName);
-                Undo.RegisterCreatedObjectUndo(
-                    canvasProof,
-                    "Create FoldCanvas M03 Source Canvas");
-            }
-
-            MeshFilter canvasFilter = canvasProof.GetComponent<MeshFilter>();
-            if (canvasFilter == null)
-            {
-                canvasFilter = Undo.AddComponent<MeshFilter>(canvasProof);
-            }
-
-            MeshRenderer canvasRenderer =
-                canvasProof.GetComponent<MeshRenderer>();
-            if (canvasRenderer == null)
-            {
-                canvasRenderer = Undo.AddComponent<MeshRenderer>(canvasProof);
-            }
-
-            canvasFilter.sharedMesh = CreateOrUpdateM03CanvasMesh();
-            canvasRenderer.sharedMaterial = material;
-            canvasProof.transform.SetPositionAndRotation(
+            Mesh canvasMesh = CreateOrUpdateM03CanvasMesh();
+            GameObject canvasProof = GetOrCreateM03OwnedMeshObject(
+                previewRoot,
+                M03CanvasProofObjectName,
+                canvasMesh,
+                material);
+            ConfigureM03OwnedMeshObject(
+                canvasProof,
+                canvasMesh,
+                material,
                 new Vector3(-0.085f, 0f, 0f),
-                Quaternion.identity);
-            canvasProof.transform.localScale =
-                new Vector3(0.14f, 0.14f, 0.14f);
-            Camera proofCamera = ConfigureM03ProofCamera();
+                Quaternion.identity,
+                new Vector3(0.14f, 0.14f, 0.14f));
+            Camera proofCamera = ConfigureM03ProofCamera(previewRoot);
             Selection.activeGameObject = proof;
-            EditorSceneManager.MarkSceneDirty(proof.scene);
+            EditorSceneManager.MarkSceneDirty(previewRoot.scene);
 
             SceneView sceneView = SceneView.lastActiveSceneView;
             if (sceneView != null)
@@ -309,7 +299,8 @@ namespace FoldCanvas.Editor
 
             Debug.Log(
                 $"FoldCanvas M03 cup proof compiled from {M03AssetPath}: " +
-                $"{mesh.vertexCount} vertices, {mesh.triangles.Length / 3} triangles.",
+                $"{mesh.vertexCount} vertices, {mesh.triangles.Length / 3} triangles; " +
+                $"maximum wall/bottom boundary gap {maximumBottomGap:R} m.",
                 proof);
         }
 
@@ -827,29 +818,360 @@ namespace FoldCanvas.Editor
             return material;
         }
 
-        private static Camera ConfigureM03ProofCamera()
+        private static GameObject GetOrCreateM03PreviewRoot()
         {
-            Camera camera = Camera.main;
+            Scene activeScene = SceneManager.GetActiveScene();
+            GameObject[] candidates =
+                Resources.FindObjectsOfTypeAll<GameObject>();
+            GameObject root = null;
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                GameObject candidate = candidates[i];
+                if (candidate == null ||
+                    EditorUtility.IsPersistent(candidate) ||
+                    candidate.scene != activeScene ||
+                    candidate.name != M03PreviewRootObjectName ||
+                    !candidate.CompareTag("EditorOnly"))
+                {
+                    continue;
+                }
+
+                if (root == null ||
+                    candidate.GetInstanceID() < root.GetInstanceID())
+                {
+                    root = candidate;
+                }
+            }
+
+            if (root == null)
+            {
+                root = new GameObject(M03PreviewRootObjectName);
+                Undo.RegisterCreatedObjectUndo(
+                    root,
+                    "Create FoldCanvas M03 Preview Root");
+            }
+
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                GameObject duplicate = candidates[i];
+                if (duplicate == null ||
+                    duplicate == root ||
+                    EditorUtility.IsPersistent(duplicate) ||
+                    duplicate.scene != activeScene ||
+                    duplicate.name != M03PreviewRootObjectName ||
+                    !duplicate.CompareTag("EditorOnly"))
+                {
+                    continue;
+                }
+
+                Undo.DestroyObjectImmediate(duplicate);
+            }
+
+            Undo.RecordObject(root, "Update FoldCanvas M03 Preview Root");
+            root.name = M03PreviewRootObjectName;
+            root.tag = "EditorOnly";
+            if (!root.activeSelf)
+            {
+                root.SetActive(true);
+            }
+
+            Undo.RecordObject(root.transform, "Reset FoldCanvas M03 Preview Root");
+            root.transform.SetPositionAndRotation(
+                Vector3.zero,
+                Quaternion.identity);
+            root.transform.localScale = Vector3.one;
+            return root;
+        }
+
+        private static GameObject GetOrCreateM03OwnedMeshObject(
+            GameObject previewRoot,
+            string objectName,
+            Mesh expectedMesh,
+            Material expectedMaterial)
+        {
+            Transform ownedTransform = previewRoot.transform.Find(objectName);
+            GameObject ownedObject = ownedTransform != null
+                ? ownedTransform.gameObject
+                : FindLegacyM03ProofObject(
+                    previewRoot.scene,
+                    objectName,
+                    expectedMesh,
+                    expectedMaterial);
+            if (ownedObject == null)
+            {
+                ownedObject = new GameObject(objectName);
+                Undo.RegisterCreatedObjectUndo(
+                    ownedObject,
+                    $"Create {objectName}");
+            }
+
+            if (ownedObject.transform.parent != previewRoot.transform)
+            {
+                Undo.SetTransformParent(
+                    ownedObject.transform,
+                    previewRoot.transform,
+                    $"Own {objectName}");
+            }
+
+            Undo.RecordObject(ownedObject, $"Update {objectName}");
+            ownedObject.name = objectName;
+            if (!ownedObject.activeSelf)
+            {
+                ownedObject.SetActive(true);
+            }
+
+            return ownedObject;
+        }
+
+        private static GameObject FindLegacyM03ProofObject(
+            Scene scene,
+            string objectName,
+            Mesh expectedMesh,
+            Material expectedMaterial)
+        {
+            MeshFilter[] filters = Resources.FindObjectsOfTypeAll<MeshFilter>();
+            GameObject best = null;
+            for (int i = 0; i < filters.Length; i++)
+            {
+                MeshFilter filter = filters[i];
+                if (filter == null ||
+                    EditorUtility.IsPersistent(filter) ||
+                    filter.gameObject.scene != scene ||
+                    filter.gameObject.name != objectName ||
+                    filter.sharedMesh != expectedMesh ||
+                    IsUnderM03PreviewRoot(filter.transform))
+                {
+                    continue;
+                }
+
+                MeshRenderer renderer = filter.GetComponent<MeshRenderer>();
+                if (renderer == null ||
+                    renderer.sharedMaterial != expectedMaterial)
+                {
+                    continue;
+                }
+
+                if (best == null ||
+                    filter.gameObject.GetInstanceID() < best.GetInstanceID())
+                {
+                    best = filter.gameObject;
+                }
+            }
+
+            return best;
+        }
+
+        private static bool IsUnderM03PreviewRoot(Transform transform)
+        {
+            Transform current = transform.parent;
+            while (current != null)
+            {
+                if (current.gameObject.name == M03PreviewRootObjectName &&
+                    current.gameObject.CompareTag("EditorOnly"))
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
+        private static void ConfigureM03OwnedMeshObject(
+            GameObject ownedObject,
+            Mesh mesh,
+            Material material,
+            Vector3 localPosition,
+            Quaternion localRotation,
+            Vector3 localScale)
+        {
+            MeshFilter filter = ownedObject.GetComponent<MeshFilter>();
+            if (filter == null)
+            {
+                filter = Undo.AddComponent<MeshFilter>(ownedObject);
+            }
+
+            MeshRenderer renderer = ownedObject.GetComponent<MeshRenderer>();
+            if (renderer == null)
+            {
+                renderer = Undo.AddComponent<MeshRenderer>(ownedObject);
+            }
+
+            Undo.RecordObject(filter, $"Update {ownedObject.name} Mesh");
+            filter.sharedMesh = mesh;
+            Undo.RecordObject(renderer, $"Update {ownedObject.name} Material");
+            renderer.sharedMaterial = material;
+            Undo.RecordObject(
+                ownedObject.transform,
+                $"Reset {ownedObject.name} Transform");
+            ownedObject.transform.localPosition = localPosition;
+            ownedObject.transform.localRotation = localRotation;
+            ownedObject.transform.localScale = localScale;
+        }
+
+        private static Camera ConfigureM03ProofCamera(GameObject previewRoot)
+        {
+            Camera[] ownedCameras =
+                previewRoot.GetComponentsInChildren<Camera>(true);
+            Camera camera = null;
+            for (int i = 0; i < ownedCameras.Length; i++)
+            {
+                Camera candidate = ownedCameras[i];
+                if (camera == null ||
+                    (candidate.gameObject.name ==
+                        M03PreviewCameraObjectName &&
+                        camera.gameObject.name !=
+                            M03PreviewCameraObjectName) ||
+                    (candidate.gameObject.name ==
+                        camera.gameObject.name &&
+                        candidate.GetInstanceID() < camera.GetInstanceID()))
+                {
+                    camera = candidate;
+                }
+            }
+
             if (camera == null)
             {
                 GameObject cameraObject = new GameObject(
-                    "M03 Proof Camera",
-                    typeof(Camera));
+                    M03PreviewCameraObjectName);
                 Undo.RegisterCreatedObjectUndo(
                     cameraObject,
-                    "Create FoldCanvas M03 Proof Camera");
-                camera = cameraObject.GetComponent<Camera>();
+                    "Create FoldCanvas M03 Preview Camera");
+                Undo.SetTransformParent(
+                    cameraObject.transform,
+                    previewRoot.transform,
+                    "Own FoldCanvas M03 Preview Camera");
+                camera = Undo.AddComponent<Camera>(cameraObject);
             }
 
-            camera.transform.position = new Vector3(0f, -0.035f, -0.6f);
-            camera.transform.LookAt(new Vector3(0f, -0.005f, 0f));
+            for (int i = 0; i < ownedCameras.Length; i++)
+            {
+                if (ownedCameras[i] != camera)
+                {
+                    Undo.DestroyObjectImmediate(ownedCameras[i].gameObject);
+                }
+            }
+
+            GameObject cameraObjectOwner = camera.gameObject;
+            if (cameraObjectOwner.transform.parent != previewRoot.transform)
+            {
+                Undo.SetTransformParent(
+                    cameraObjectOwner.transform,
+                    previewRoot.transform,
+                    "Own FoldCanvas M03 Preview Camera");
+            }
+
+            Undo.RecordObject(
+                cameraObjectOwner,
+                "Update FoldCanvas M03 Preview Camera");
+            cameraObjectOwner.name = M03PreviewCameraObjectName;
+            cameraObjectOwner.tag = "Untagged";
+            if (!cameraObjectOwner.activeSelf)
+            {
+                cameraObjectOwner.SetActive(true);
+            }
+
+            Vector3 cameraPosition = new Vector3(0f, -0.14f, -0.6f);
+            Vector3 cameraTarget = new Vector3(0.015f, -0.015f, 0f);
+            Undo.RecordObject(
+                camera.transform,
+                "Reset FoldCanvas M03 Preview Camera Transform");
+            camera.transform.localPosition = cameraPosition;
+            camera.transform.localRotation = Quaternion.LookRotation(
+                cameraTarget - cameraPosition,
+                Vector3.up);
+            camera.transform.localScale = Vector3.one;
+            Undo.RecordObject(camera, "Update FoldCanvas M03 Preview Camera");
+            camera.enabled = true;
             camera.orthographic = true;
             camera.orthographicSize = 0.13f;
             camera.nearClipPlane = 0.01f;
             camera.farClipPlane = 2f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.025f, 0.03f, 0.045f, 1f);
+            camera.depth = 100f;
+            camera.rect = new Rect(0f, 0f, 1f, 1f);
             return camera;
+        }
+
+        private static float MeasureM03WallBottomFit(
+            FoldCanvasCompiledData compiledData)
+        {
+            if (compiledData == null)
+            {
+                throw new InvalidDataException(
+                    "The M03 cup proof has no compiled data for fit validation.");
+            }
+
+            FoldCanvasCompiledPanel wall = compiledData.GetPanel("wall");
+            FoldCanvasCompiledPanel bottom = compiledData.GetPanel("bottom");
+            if (wall == null || bottom == null)
+            {
+                throw new InvalidDataException(
+                    "The M03 cup proof requires wall and bottom panels.");
+            }
+
+            FoldCanvasCompiledBoundary wallBottom = wall.GetBoundary("vMin");
+            FoldCanvasCompiledBoundary bottomPerimeter =
+                bottom.GetBoundary("perimeter");
+            if (wallBottom == null ||
+                bottomPerimeter == null ||
+                wallBottom.VertexIndices.Count !=
+                    bottomPerimeter.VertexIndices.Count + 1)
+            {
+                throw new InvalidDataException(
+                    "The M03 cup proof requires matching wall and bottom perimeter sampling.");
+            }
+
+            float maximumGap = 0f;
+            for (int wallOffset = 0;
+                wallOffset < wallBottom.VertexIndices.Count;
+                wallOffset++)
+            {
+                Vector3 wallPosition =
+                    compiledData.Vertices[
+                        wallBottom.VertexIndices[wallOffset]].Position;
+                float nearestGap = float.PositiveInfinity;
+                for (int bottomOffset = 0;
+                    bottomOffset < bottomPerimeter.VertexIndices.Count;
+                    bottomOffset++)
+                {
+                    Vector3 bottomPosition =
+                        compiledData.Vertices[
+                            bottomPerimeter.VertexIndices[bottomOffset]].Position;
+                    nearestGap = Mathf.Min(
+                        nearestGap,
+                        Vector3.Distance(wallPosition, bottomPosition));
+                }
+
+                maximumGap = Mathf.Max(maximumGap, nearestGap);
+            }
+
+            for (int bottomOffset = 0;
+                bottomOffset < bottomPerimeter.VertexIndices.Count;
+                bottomOffset++)
+            {
+                Vector3 bottomPosition =
+                    compiledData.Vertices[
+                        bottomPerimeter.VertexIndices[bottomOffset]].Position;
+                float nearestGap = float.PositiveInfinity;
+                for (int wallOffset = 0;
+                    wallOffset < wallBottom.VertexIndices.Count;
+                    wallOffset++)
+                {
+                    Vector3 wallPosition =
+                        compiledData.Vertices[
+                            wallBottom.VertexIndices[wallOffset]].Position;
+                    nearestGap = Mathf.Min(
+                        nearestGap,
+                        Vector3.Distance(bottomPosition, wallPosition));
+                }
+
+                maximumGap = Mathf.Max(maximumGap, nearestGap);
+            }
+
+            return maximumGap;
         }
 
         private static Mesh CreateOrUpdateM03CanvasMesh()

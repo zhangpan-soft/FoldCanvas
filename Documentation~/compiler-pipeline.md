@@ -86,19 +86,29 @@ Only zero falloff is supported in M02.
 ### M03 current-frame Roll
 
 Roll accepts a rectangle only when its complete current vertex set is a finite,
-non-degenerate, rigid planar embedding of its immutable source grid. The
+non-degenerate, congruent planar embedding of its immutable source grid. The
 compiler deterministically resolves `CurrentOrigin`, unit `CurrentU`, unit
 `CurrentV`, and `CurrentNormal = cross(CurrentU, CurrentV)` from ordered
 rectangle corners, then validates every target vertex against that frame.
-Translation and rotation composed before Roll are retained. Scale, shear, or a
-prior non-planar Fold returns `FC3021 UnsupportedRollEmbedding`.
+Translation, rotation, and orientation-reversing planar isometries are
+retained. In-plane metric-changing scale, shear, collapsed axes, or a prior
+non-planar Fold returns `FC3021 UnsupportedRollEmbedding`. This is a
+final-geometry contract and does not inspect which operation types occurred.
 
 The selected source coordinate maps to a circular arc in this current frame;
 the other coordinate remains linear. Positive sweeps preserve source triangle
 order and face radially outward. Negative sweeps preserve topology and reverse
-the resulting radial orientation predictably. Full turns require at least two
-samples in the selected direction, and coincident minimum/maximum boundaries
-remain topologically separate.
+the resulting radial orientation predictably. Full turns require at least
+three source segments in the selected direction. With two segments the
+0/180/360-degree samples form two coincident planar panels, so
+`FC3022 InsufficientRollTessellation` is emitted directly rather than relying
+on zero-area-triangle validation. Coincident minimum/maximum boundaries remain
+topologically separate.
+
+M03 Circular Roll is limited to one signed turn. A sweep magnitude above 360
+degrees returns `FC3023 UnsupportedMultiTurnRoll`; it is never clamped and
+never emitted as overlapping cylindrical layers. Spiral and layered roll
+geometry are separate future operations.
 
 Explicit-radius Roll emits an ordered structured
 `FC3018 RollStretchReport` containing `sourceSpan`, `arcLength`, and

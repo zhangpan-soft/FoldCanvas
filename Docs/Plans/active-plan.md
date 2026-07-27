@@ -67,11 +67,14 @@ that topology split.
 
 - The target must be a rectangle whose complete current vertex set is one
   finite, non-degenerate affine plane embedding of its authored source grid.
-- M03's compatible affine subset is distance-preserving: translation and
-  rotation are supported; scale, shear, prior partial Fold, non-planarity, and
-  piecewise affine embeddings return `FC3021 UnsupportedRollEmbedding`.
+- M03's compatible affine subset is a congruent planar embedding. Translation,
+  rotation, and orientation-reversing planar isometries may be accepted.
+- In-plane metric-changing scale, shear, collapsed axes, prior non-planar
+  Fold, non-planarity, and piecewise affine embeddings return
+  `FC3021 UnsupportedRollEmbedding`.
 - This deliberately preserves all required pre-Roll rigid placement while
-  deferring ambiguous normal-scale and Fold-after-Roll semantics.
+  defining compatibility from the current geometry rather than operation
+  history. Fold-after-Roll semantics remain deferred.
 
 ## Resolved frame
 
@@ -121,6 +124,9 @@ ownership, provenance, and boundary vertex identities remain unchanged.
 
 - `Roll_AfterRigidTransform_PreservesCurrentFrame`
 - `Roll_AfterNonPlanarFold_ReturnsStableDiagnostic`
+- `Roll_AfterUnitReflection_UsesReflectedCurrentFrame`
+- `Roll_AfterInPlaneNonUniformScale_ReturnsUnsupportedEmbedding`
+- `Roll_AfterCollapsedAxis_ReturnsUnsupportedEmbedding`
 
 # C. Roll handedness, winding, and normals
 
@@ -180,13 +186,15 @@ ownership, provenance, and boundary vertex identities remain unchanged.
 
 # F. Roll sampling validation
 
-- A closed full-turn request is a nonzero sweep whose magnitude is an integer
-  multiple of 360 degrees within the centralized full-turn tolerance.
-- A closed full turn requires at least two source segments in the selected
-  roll direction. One segment collapses the minimum and maximum samples and
-  fails with `FC3022 InsufficientRollTessellation`.
-- Three segments for a 360-degree sweep must compile without zero-area
-  triangles.
+- A closed full-turn request is a nonzero sweep whose magnitude is 360 degrees
+  within the centralized full-turn tolerance.
+- A closed full turn requires at least three source segments in the selected
+  roll direction. One segment collapses the minimum and maximum samples. Two
+  segments sample 0, 180, and 360 degrees and produce two coincident planar
+  panels even though their individual triangles have nonzero area. Both cases
+  fail directly with `FC3022 InsufficientRollTessellation`.
+- Three segments for a 360-degree sweep must compile into three distinct
+  angular panels without zero-area or overlapping triangular surfaces.
 - Partial rolls remain open.
 - Full-turn minimum/maximum boundary positions coincide within the seam-proof
   tolerance, while their vertex indices remain distinct.
@@ -194,9 +202,66 @@ ownership, provenance, and boundary vertex identities remain unchanged.
 ## Required tests
 
 - `FullRoll_WithOneSegment_ReturnsInsufficientTessellation`
+- `FullRoll_WithTwoSegments_ReturnsInsufficientTessellation`
+- `FullRollV_WithTwoSegments_ReturnsInsufficientTessellation`
 - `FullRoll_WithThreeSegments_DoesNotGenerateZeroAreaTriangles`
+- `FullRoll_WithThreeSegments_ProducesNonOverlappingTriangularSurface`
 - `PartialRoll_RemainsOpen`
 - `FullRoll_MinAndMaxBoundariesCoincideButRemainTopologicallySeparate`
+
+# G. Circular Roll turn limit
+
+- M03 Circular Roll accepts signed sweeps only within
+  `[-360 degrees, +360 degrees]`, using the centralized full-turn tolerance at
+  the boundary.
+- A larger magnitude would map multiple source intervals onto the same
+  zero-thickness cylindrical surface. M03 has no pitch, layer spacing,
+  thickness accumulation, or collision contract with which to make that
+  geometry meaningful.
+- Requests above the supported magnitude fail with exactly one
+  `FC3023 UnsupportedMultiTurnRoll` diagnostic. The compiler does not clamp,
+  truncate, or silently generate overlapping layers.
+- `SpiralRoll` and `LayeredRoll` are future independent operations with their
+  own geometry and validation contracts.
+
+## Required tests
+
+- `Roll_AbovePositiveFullTurn_ReturnsStableDiagnostic`
+- `Roll_BelowNegativeFullTurn_ReturnsStableDiagnostic`
+- `Roll_ExactlyPositiveFullTurn_Succeeds`
+- `Roll_ExactlyNegativeFullTurn_Succeeds`
+
+# H. Owned M03 proof
+
+- `Create M03 Cup Proof` owns one `FoldCanvas M03 Preview Root`, tagged
+  `EditorOnly`, in the active scene.
+- The root owns exactly one `Cup Proof`, `Source Canvas`, and `Preview Camera`.
+  It is found with an inactive-aware editor lookup and never inferred from
+  `Camera.main` or a global object name alone.
+- Re-running the command reuses the owned objects, including inactive ones.
+  Existing objects and components are recorded with Undo before mutation.
+- The owned camera is untagged and the command never reads or changes a user's
+  MainCamera.
+
+## Required tests
+
+- `CreateM03CupProof_TwiceKeepsOneOwnedPreviewCamera`
+- `CreateM03CupProof_TwiceKeepsStableObjectCount`
+- `CreateM03CupProof_DoesNotModifyExistingMainCamera`
+- `CreateM03CupProof_ReusesInactiveOwnedObjects`
+
+# I. Cup wall/bottom fit proof
+
+- The M03 wall bottom boundary and disk perimeter must coincide at all 64
+  corresponding samples in the same bottom plane, within the centralized
+  seam-proof tolerance.
+- They deliberately remain separate vertex loops; enlarging the disk,
+  overlapping surfaces, welding, or adding thickness is not an acceptable M03
+  repair.
+- The owned preview resets to a canonical transform and camera framing so a
+  stale user rotation cannot be mistaken for generated geometry drift.
+- Acceptance includes a sample-driven boundary-pair test and a real Unity
+  oblique/bottom-view inspection.
 
 # Diagnostic allocation
 
@@ -213,7 +278,8 @@ ownership, provenance, and boundary vertex identities remain unchanged.
 | `FC3019` | `InvalidRollDirection` | error: unknown direction enum |
 | `FC3020` | `InvalidRollRadiusMode` | error: unknown radius-mode enum |
 | `FC3021` | `UnsupportedRollEmbedding` | error: current target has no compatible single frame |
-| `FC3022` | `InsufficientRollTessellation` | error: closed full turn has fewer than two roll segments |
+| `FC3022` | `InsufficientRollTessellation` | error: closed full turn has fewer than three roll segments |
+| `FC3023` | `UnsupportedMultiTurnRoll` | error: circular sweep exceeds one signed turn |
 
 # Radius and stretch
 
@@ -261,13 +327,19 @@ ownership, provenance, and boundary vertex identities remain unchanged.
 4. Lock positive/negative winding using generated Unity normals.
 5. Make Seam declarations inert and enforce single-root diagnostics.
 6. Add structured diagnostic values and explicit-radius reports.
-7. Add closed-turn sampling validation.
-8. Update field reference, compiler pipeline, diagnostics, and roadmap.
-9. Run JSON/asmdef/repository/diff checks and the complete Edit Mode suite.
-10. Build a clean Unity proof scene with the 2D source board and 3D cup, then
+7. Add closed-turn sampling validation and reject unsupported multi-turn
+   circular rolls.
+8. Lock the congruent-planar embedding contract with reflection, scale, and
+   collapsed-axis tests.
+9. Replace ambient-camera preview mutation with one inactive-aware,
+   package-owned EditorOnly preview hierarchy.
+10. Update field reference, compiler pipeline, diagnostics, and roadmap.
+11. Run JSON/asmdef/repository/diff checks and the complete Edit Mode suite,
+    then export `TestResults.xml`.
+12. Build a clean Unity proof scene with the 2D source board and 3D cup, then
     verify the wall and bottom remain visible from multiple orbit directions.
-11. Update the package version and newest-first changelog entry.
-12. Commit and push the branch, create an audit PR into `main`, and stop before
+13. Update the newest-first changelog entry.
+14. Commit and push the branch, update audit PR #1 into `main`, and stop before
     approval, merge, or task-pointer advancement.
 
 # Progress log
@@ -301,12 +373,22 @@ ownership, provenance, and boundary vertex identities remain unchanged.
   The wall and bottom remained opaque and complete.
 - 2026-07-27: JSON parsing, assembly-definition inspection, `git diff --check`,
   package-version consistency, and the final source diff passed.
+- 2026-07-27: Second review gate reopened M03 for the two-segment full-turn
+  degeneracy, explicit one-turn limit, owned preview hierarchy, final-geometry
+  embedding contract, and wall/bottom visual-fit audit. PR #1 remains open and
+  unmerged; `CURRENT_TASK.md` remains unchanged.
+- 2026-07-27: Second-review implementation passed all 90/90 Edit Mode tests in
+  Unity `6000.3.20f1`; the exported result is
+  `Project~/TestResults/M03SecondReview-TestResults.xml`.
+- 2026-07-27: Regenerated the owned `EditorOnly` preview twice in the live
+  editor. It retained one root, cup, source canvas, and untagged preview camera.
+  The underside-oblique proof showed the wall meeting the disk, and the
+  measured bidirectional boundary gap was `2.20391154E-08 m`.
 
 # Final verification
 
-JSON/asmdef parsing, diff checks, Unity compilation, 76/76 Edit Mode tests, and
-the regenerated multi-angle cup proof are complete. The local host scene remains
-a derived Unity verification artifact; the package source regenerates its mesh,
-material, and source asset. Commit and push the audited package changes, create
-the PR into `main`, and leave it unapproved/unmerged with `CURRENT_TASK.md`
-unchanged.
+Unity compilation, the 90/90 Edit Mode suite, exported XML, owned-preview
+idempotency, and live wall/bottom fit proof are complete. JSON/asmdef parsing,
+repository static checks, and `git diff --check` remain before the final branch
+commit. Then push only to `feat/m03-roll-cup`, update PR #1, and leave it
+unapproved/unmerged with `CURRENT_TASK.md` unchanged.

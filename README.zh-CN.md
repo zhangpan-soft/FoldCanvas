@@ -53,6 +53,11 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 
 首个公开证明目标是：一张二维图片同时包含杯底、杯壁、文字与 Logo，经过 FoldScript 编译后得到闭合、有厚度、图案正确的三维杯子。
 
+M03 审计分支目前只实现这个目标的圆形卷曲阶段：Circular Roll 最多允许正负
+一整圈，完整一圈至少需要三个源分段，并且只接受与源矩形全等的当前平面嵌入。
+杯壁底边与杯底圆周会逐点数值校验并保持空间重合，但在 M04 之前仍是两个独立
+的零厚度表面，不会偷偷焊接、加厚或叠层。
+
 ## 七条项目宪法
 
 1. **二维源文件拥有最高权威。** Mesh 可以删除并重新生成。
@@ -83,7 +88,9 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 5. 打开 `Window > FoldCanvas > FoldCanvas`。
 6. 执行 `Tools > FoldCanvas > Create Bootstrap Sample` 查看 M01 平面样例；
    执行 `Tools > FoldCanvas > Create M02 Box Proof` 可直接创建、烘焙并显示
-   六面折叠盒体。
+   六面折叠盒体；在 M03 审计分支执行
+   `Tools > FoldCanvas > Create M03 Cup Proof`，可创建由 FoldCanvas 自己拥有
+   的杯子、二维原画板和预览相机，且不会修改项目已有的 MainCamera。
 
 ## 交给 Codex
 

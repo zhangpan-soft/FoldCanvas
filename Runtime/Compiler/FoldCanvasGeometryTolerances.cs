@@ -13,6 +13,7 @@ namespace FoldCanvas
         public const float RollFrameRelativeTolerance = 1e-5f;
         public const float RollFrameOrthogonalityTolerance = 1e-5f;
         public const float RollSeamProofTolerance = 1e-5f;
+        public const double MaximumCircularRollAngleDegrees = 360d;
         public const double FullRollAngleToleranceDegrees = 1e-4d;
         public const double MinimumRollDistortionRatio = 0.5d;
         public const double MaximumRollDistortionRatio = 2d;
