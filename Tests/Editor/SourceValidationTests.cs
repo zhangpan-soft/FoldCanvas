@@ -298,7 +298,6 @@ namespace FoldCanvas.Tests
             Object.DestroyImmediate(asset);
         }
 
-        [TestCase(FoldOperationType.Roll)]
         [TestCase(FoldOperationType.Stitch)]
         [TestCase(FoldOperationType.Solidify)]
         public void UnsupportedOperation_IsNeverSilentlyIgnored(FoldOperationType operationType)
@@ -319,6 +318,69 @@ namespace FoldCanvas.Tests
             Assert.That(result.Mesh, Is.Null);
             Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
             Assert.That(result.Diagnostics[0].OperationId, Is.EqualTo(operationType.ToString()));
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void DeclaredSeam_WithoutStitch_DoesNotFail()
+        {
+            FoldCanvasAsset asset =
+                ScriptableObject.CreateInstance<FoldCanvasAsset>();
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "panel",
+                new Rect(0f, 0f, 1f, 1f),
+                Vector2.one,
+                2,
+                2));
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "declared-only",
+                A = new BoundaryReference("panel", "uMin"),
+                B = new BoundaryReference("panel", "uMax"),
+                Mode = SeamMode.KeepOpen
+            });
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, DiagnosticSignature(result));
+            Assert.That(result.Diagnostics, Is.Empty);
+            Object.DestroyImmediate(result.Mesh);
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void UnsupportedStitch_ReturnsStableDiagnostic()
+        {
+            FoldCanvasAsset asset =
+                ScriptableObject.CreateInstance<FoldCanvasAsset>();
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "panel",
+                new Rect(0f, 0f, 1f, 1f),
+                Vector2.one,
+                2,
+                2));
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "declared",
+                A = new BoundaryReference("panel", "uMin"),
+                B = new BoundaryReference("panel", "uMax"),
+                Mode = SeamMode.Weld
+            });
+            StitchOperationDefinition stitch =
+                new StitchOperationDefinition { Id = "stitch" };
+            stitch.SeamIds.Add("declared");
+            asset.Operations.Add(stitch);
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.CompiledData, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(FoldCanvasDiagnosticCodes.UnsupportedOperation));
+            Assert.That(result.Diagnostics[0].OperationId, Is.EqualTo("stitch"));
             Object.DestroyImmediate(asset);
         }
 

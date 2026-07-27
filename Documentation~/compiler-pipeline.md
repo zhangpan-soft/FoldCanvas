@@ -63,11 +63,18 @@ For every operation:
 
 ### M02 rigid-crease Fold
 
-A Fold line is authored in normalized panel coordinates. The compiler maps its
-endpoints, every source-triangle-edge crossing, and every interval midpoint
-through barycentric coordinates into the panel's current 3D embedding. Since
-the mapping inside each source triangle is affine, these samples determine
-whether the full hinge is one stable straight axis.
+A Fold line is authored in normalized panel coordinates. Before moving any
+vertex, the compiler verifies that both endpoints are existing source vertices
+and that the full parameter interval is covered without gaps by collinear
+existing triangle edges. A crease that crosses triangle interiors returns
+`FC3011 FoldCreaseRequiresTopologySplit`; M03 does not insert vertices or
+silently approximate the fold.
+
+For an existing edge chain, the compiler maps its endpoints, every
+source-triangle-edge crossing, and every interval midpoint through barycentric
+coordinates into the panel's current 3D embedding. Since the mapping inside
+each source triangle is affine, these samples determine whether the full hinge
+is one stable straight axis.
 
 If the mapped samples are non-linear, reversed, collapsed, non-finite, or
 outside the panel triangulation, compilation stops with
@@ -76,7 +83,35 @@ side is rotated using `Quaternion.AngleAxis` around the directed current axis.
 Hinge samples stay fixed, and all source/provenance/topology data is preserved.
 Only zero falloff is supported in M02.
 
-## Stage 4: seam resolution
+### M03 current-frame Roll
+
+Roll accepts a rectangle only when its complete current vertex set is a finite,
+non-degenerate, rigid planar embedding of its immutable source grid. The
+compiler deterministically resolves `CurrentOrigin`, unit `CurrentU`, unit
+`CurrentV`, and `CurrentNormal = cross(CurrentU, CurrentV)` from ordered
+rectangle corners, then validates every target vertex against that frame.
+Translation and rotation composed before Roll are retained. Scale, shear, or a
+prior non-planar Fold returns `FC3021 UnsupportedRollEmbedding`.
+
+The selected source coordinate maps to a circular arc in this current frame;
+the other coordinate remains linear. Positive sweeps preserve source triangle
+order and face radially outward. Negative sweeps preserve topology and reverse
+the resulting radial orientation predictably. Full turns require at least two
+samples in the selected direction, and coincident minimum/maximum boundaries
+remain topologically separate.
+
+Explicit-radius Roll emits an ordered structured
+`FC3018 RollStretchReport` containing `sourceSpan`, `arcLength`, and
+`stretchRatio`. Diagnostic value and repair-suggestion lists are copied,
+read-only, and deterministic.
+
+## Stage 4: seam resolution (planned for M04)
+
+Seam definitions are declarative source records. Their presence alone does not
+execute or reject geometry. Only a future Stitch operation starts the following
+pipeline; before M04, Stitch returns one `FC3001 UnsupportedOperation`.
+`FitTargetBoundary` returns one dedicated
+`FC3016 UnsupportedFitTargetBoundary`.
 
 For each requested seam:
 

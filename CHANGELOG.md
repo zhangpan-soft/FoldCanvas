@@ -6,9 +6,47 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
-### Planned
+No unreleased changes.
 
-- M03 roll operator and decorated cup proof
+## [0.1.0-preview.5] - 2026-07-27
+
+### Added
+
+- Deterministic rectangle `Roll` along U or V in the target panel's current
+  rigid frame, with preserve-arc-length and explicit-radius modes
+- Stable Roll diagnostics for invalid parameters, unsupported embeddings,
+  unsupported boundary fitting, and insufficient closed-turn tessellation
+- Ordered structured diagnostic values and repair-suggestion storage, including
+  explicit-radius `sourceSpan`, `arcLength`, and `stretchRatio`
+- A generated `GPT 5.6` / `CODEX` cup source canvas, cup asset, bake command,
+  editor proof, and package-owned opaque two-sided Unlit preview shader
+- Edit Mode coverage for current-frame composition, signed handedness and
+  normals, open/closed rolls, seam declaration behavior, structured
+  diagnostics, tessellation, cup alignment, and preview culling
+
+### Changed
+
+- Declared seams remain inert source data until an explicit Stitch operation;
+  Stitch and `FitTargetBoundary` each return one stable root-cause diagnostic
+- Roll, Fold, Seam, diagnostic, pipeline, field-reference, schema, roadmap, and
+  sample documentation now state the audited M03 contracts
+- Package metadata now describes planar, rigid-fold, and circular-roll support
+
+### Fixed
+
+- Off-grid Fold creases now stop with
+  `FC3011 FoldCreaseRequiresTopologySplit` instead of stretching triangles
+- The M03 interactive cup proof no longer loses half of its wall or bottom
+  while orbiting; double-sided rendering is preview-only and does not add M04
+  inner-wall, thickness, Stitch, or welding topology
+
+### Verified
+
+- Unity `6000.3.20f1` compiled the package and passed all 76 Edit Mode tests
+- The real Unity Editor regenerated the 1,358-vertex, 2,496-triangle cup and
+  displayed the complete wall plus both sides of the bottom across side,
+  underside, and reverse viewing orientations
+- JSON, assembly-reference, repository, and diff checks passed
 
 ## [0.1.0-preview.4] - 2026-07-27
 

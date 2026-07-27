@@ -53,6 +53,12 @@ Use the provided radius and report stretch/compression ratio.
 
 Add an importable or editor-generated sample with fixed physical dimensions. Include an Unlit-compatible preview material or clear instructions for one without adding a render-pipeline dependency.
 
+The interactive cup proof uses an opaque two-sided Unlit preview shader because
+M03 deliberately emits zero-thickness surfaces. This prevents the wall and
+bottom from disappearing while the user orbits the object. It does not add
+inner-wall geometry, change triangle winding, or replace the one-sided normal
+and handedness tests.
+
 ## Tests
 
 - zero angle fails with a useful diagnostic rather than divide-by-zero
@@ -63,6 +69,7 @@ Add an importable or editor-generated sample with fixed physical dimensions. Inc
 - UV values are unchanged
 - reversed roll angle reverses orientation predictably
 - disk rigid placement matches intended cup bottom center and radius
+- interactive preview material renders both sides without transparent gaps
 
 ## Diagnostics
 

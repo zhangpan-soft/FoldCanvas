@@ -43,6 +43,9 @@ multiple viewing orientations. The six panels remain unwelded by design.
 
 ## M03: Roll and cup
 
+**Status:** implemented in `0.1.0-preview.5` on the audit branch; acceptance
+remains pending until the PR is reviewed and merged.
+
 **Proof:** a rectangular wall region bearing text and a logo rolls into a cylindrical wall; a disk becomes the base.
 
 - roll along U/V
@@ -51,8 +54,24 @@ multiple viewing orientations. The six panels remain unwelded by design.
 - full and partial roll
 - seam coincidence metric
 - cup sample canvas
+- current-frame composition after rigid translation/rotation
+- documented positive/negative handedness and radial normal convention
+- structured explicit-radius stretch diagnostics
+- full-turn tessellation guard
 
 This milestone may display separate coincident surfaces. Topological welding belongs to M04.
+
+### Future Fold task: deterministic crease topology split
+
+**Status:** explicitly deferred; not part of M03 or M04.
+
+**Proof:** an off-grid crease inserts deterministic source vertices and edges,
+splits every crossed triangle without changing UV correspondence, and then
+executes the exact rigid fold with stable provenance and triangle ordering.
+
+Until that task is active, any crease that is not already a continuous existing
+edge chain returns `FC3011 FoldCreaseRequiresTopologySplit` and produces no
+Mesh.
 
 ## M04: Stitch and solidify
 

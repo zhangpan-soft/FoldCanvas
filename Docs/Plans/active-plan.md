@@ -1,216 +1,312 @@
 # Goal
 
-Complete M02 by implementing a deterministic rigid-crease `Fold` operation
-and an editor-generated six-face box proof, without implementing Roll, Stitch,
-Solidify, smooth bending, seam welding, or thickness.
+Complete the M03 pre-merge architecture audit and the deterministic `Roll`
+operator on branch `feat/m03-roll-cup`. After reviewing the real Unity proof,
+the user authorized a commit, push, and audit PR once the reported orbit-view
+visibility defect is fixed. The PR must remain unapproved and unmerged, and
+`CURRENT_TASK.md` must remain on M03 for the external audit.
 
-# User-visible proof
+This milestone also closes one M02 silent-approximation hole: a Fold crease
+that requires triangle splitting must fail explicitly. M03 does not implement
+that topology split.
 
-- One generated appearance canvas contains six clearly different face regions.
-- Six rectangle panels select those regions and compile into one closed box.
-- The box is produced from the FoldCanvas source and ordered 90-degree fold
-  operations, not Unity cube primitives.
-- Every face retains its source artwork and orientation after folding.
-- The real Unity Editor displays the generated box with its six distinct
-  textured faces.
+# Delivery constraints
 
-# Scope
+- Do not implement Stitch geometry, Solidify, welding, seam resampling,
+  thickness, inner walls, rims, handles, or any M04 behavior.
+- Do not silently approximate a Fold or Roll request.
+- Commit and push only after the visibility regression, complete Edit Mode
+  suite, and multi-angle Unity preview pass.
+- Create an audit PR into `main`, but do not approve or merge it.
+- Do not advance `CURRENT_TASK.md`.
+- Keep all work on `feat/m03-roll-cup`; `main` remains the accepted M02 state.
 
-- Execute enabled `FoldLineOperationDefinition` entries in source-list order.
-- Resolve a normalized panel-space line through the panel's deterministic
-  source triangulation into its current 3D embedding.
-- Classify source vertices on the positive or negative side of the directed
-  line and rotate only the selected side about the current hinge axis.
-- Keep hinge vertices fixed and preserve source position, source UV, panel
-  ownership, provenance IDs, triangle order, and boundary order.
-- Reject non-finite, degenerate, out-of-range, unsupported-falloff, missing
-  target, invalid-side, and non-linear/ambiguous hinge requests with stable
-  diagnostics.
-- Add a GUID-stable editor-generated M02 box source, canvas, bake, and preview
-  workflow.
-- Add focused Edit Mode tests for every M02 numerical and diagnostic
-  acceptance criterion.
-- Update M02 documentation, package version, changelog, and task pointer only
-  after automated and real-editor acceptance pass.
+# User-visible M03 proof
 
-# Non-goals
+- One 2D appearance canvas displays a normal, readable `GPT 5.6` wall region,
+  an emblem, and a `CODEX` bottom region.
+- A separate derived cup mesh rolls the wall through a positive 360-degree
+  sweep and rigidly places the disk on the bottom plane.
+- The 2D source board and 3D result are visible together in a clean Unity
+  scene so UV handedness cannot be hidden by a mirrored source image.
+- The wall's minimum/maximum boundaries and the wall/bottom perimeter align
+  spatially but remain topologically separate.
+- The interactive proof uses an opaque, two-sided Unlit material so M03's
+  intentionally zero-thickness wall and bottom remain visible while orbiting.
+- The two-sided visualization is not a winding oracle: acceptance still checks
+  generated mesh normals, triangle order, and a canonical outside view. It
+  does not add an inner wall or any M04 topology.
 
-- Roll, Stitch, Solidify, thickness, seam welding, or topology changes.
-- Smooth Bend fields or any nonzero fold falloff.
-- Collision, self-intersection correction, or automatic fold planning.
-- JSON import/export or AI-provider integration.
-- A general-purpose modeling workspace; that remains M06.
-- Any direct text-to-mesh, image-to-mesh, voxel, NeRF, Gaussian splat, or
-  opaque model-generation path.
+# A. M02 Fold topology-split guard
+
+## Contract
+
+- A Fold crease is executable only when both authored endpoints are existing
+  source vertices and the complete crease is covered, without gaps, by a
+  deterministic chain of existing source-mesh edges.
+- Triangle edges are collected from the target panel's retained triangle span,
+  projected onto the directed crease, sorted by interval start/end, and merged
+  in deterministic source order.
+- If either endpoint needs insertion, or any positive-length interval crosses
+  a triangle interior instead of an existing edge, compilation stops with
+  `FC3011 FoldCreaseRequiresTopologySplit`.
+- No vertex moves and no `Mesh` or compiled data is returned for that source.
+- Existing grid-edge, diagonal-edge, and panel-boundary folds continue to use
+  the accepted M02 executor.
+
+## Required tests
+
+- `Fold_OffGridCrease_ReturnsRequiresTopologySplitDiagnostic`
+- All accepted M02 grid-edge and boundary tests remain enabled and green.
+- Roadmap records deterministic crease topology splitting as an explicit
+  future task rather than implied M03 behavior.
+
+# B. Roll current-frame semantics
+
+## Compatible current embedding
+
+- The target must be a rectangle whose complete current vertex set is one
+  finite, non-degenerate affine plane embedding of its authored source grid.
+- M03's compatible affine subset is distance-preserving: translation and
+  rotation are supported; scale, shear, prior partial Fold, non-planarity, and
+  piecewise affine embeddings return `FC3021 UnsupportedRollEmbedding`.
+- This deliberately preserves all required pre-Roll rigid placement while
+  deferring ambiguous normal-scale and Fold-after-Roll semantics.
+
+## Resolved frame
+
+- `CurrentOrigin`: current position of the source rectangle center.
+- `CurrentU`: unit current direction of increasing source U.
+- `CurrentV`: unit current direction of increasing source V.
+- `CurrentNormal`: normalized
+  `Cross(CurrentU, CurrentV)`.
+- Every current vertex must equal
+  `CurrentOrigin + sourceX*CurrentU + sourceY*CurrentV` within centralized
+  absolute/relative tolerances.
+- Frame resolution is performed from ordered rectangle corners and validated
+  against every target vertex. No local triangle frame is guessed.
+
+## Mapping
+
+Let `t` be normalized position along the selected direction and:
+
+```text
+theta = radians(startAngleDegrees + t * angleDegrees)
+```
+
+For U:
+
+```text
+position =
+    CurrentOrigin
+    + sourceY * CurrentV
+    - R * cos(theta) * CurrentU
+    + R * sin(theta) * CurrentNormal
+```
+
+For V:
+
+```text
+position =
+    CurrentOrigin
+    + sourceX * CurrentU
+    - R * cos(theta) * CurrentV
+    + R * sin(theta) * CurrentNormal
+```
+
+The non-roll source coordinate remains linear. UV0, source position, panel
+ownership, provenance, and boundary vertex identities remain unchanged.
+
+## Required tests
+
+- `Roll_AfterRigidTransform_PreservesCurrentFrame`
+- `Roll_AfterNonPlanarFold_ReturnsStableDiagnostic`
+
+# C. Roll handedness, winding, and normals
+
+- At start angle zero, the minimum roll boundary begins on the negative
+  `CurrentU` radial axis for U or negative `CurrentV` radial axis for V.
+- A positive angle advances from that radial axis toward
+  `+CurrentNormal`.
+- A positive sweep preserves source triangle order. Its generated Unity mesh
+  normals face radially outward and its artwork reads in authored
+  left-to-right order when viewed from outside.
+- A negative sweep also preserves source triangle order. Its angular/artwork
+  circulation is the predictable opposite of a positive sweep, so its
+  generated geometric normals point radially inward.
+- Connectivity, vertex IDs, boundary ordering, and UV values never change.
+- Acceptance checks `result.Mesh.normals`, not only a hand-computed triangle
+  cross product, and uses a one-sided preview material.
+
+## Required tests
+
+- `PositiveFullRoll_HasOutwardWinding`
+- `NegativeFullRoll_ReversesOrientationPredictably`
+- `RollU_And_RollV_HaveDocumentedHandedness`
+
+# D. Seam declaration semantics
+
+- `SeamDefinition` is inert declarative source data.
+- Merely populating `asset.Seams` does not execute topology and does not add an
+  error.
+- `StitchOperationDefinition` remains unimplemented and returns exactly one
+  `FC3001 UnsupportedOperation` root-cause diagnostic before M04.
+- `FitTargetBoundary` returns exactly one dedicated
+  `FC3016 UnsupportedFitTargetBoundary` diagnostic. A declared target seam
+  does not add `UnsupportedSeam`.
+
+## Required tests
+
+- `DeclaredSeam_WithoutStitch_DoesNotFail`
+- `FitTargetBoundary_ReturnsSingleStableDiagnostic`
+- `UnsupportedStitch_ReturnsStableDiagnostic`
+
+# E. Structured diagnostics
+
+- `FoldCanvasDiagnostic` carries an ordered, copied, read-only list of
+  `FoldCanvasDiagnosticValue` entries.
+- Each value has a stable English key, finite `double` value, and optional
+  unit. No dictionary enumeration contributes to order.
+- Diagnostics also expose an ordered, copied, read-only
+  `RepairSuggestions` string list for future repair guidance.
+- Explicit-radius Roll always emits one `FC3018 RollStretchReport` diagnostic:
+  `Info` inside guidance and `Warning` outside `[0.5, 2.0]`.
+- Its values appear in this exact order:
+  `sourceSpan`, `arcLength`, `stretchRatio`.
+- Human-readable text may summarize the ratio, but structured values are the
+  contract.
+- Repeated compilation must produce identical diagnostic count, ordering,
+  codes, severities, contexts, structured values, and suggestion ordering.
+
+# F. Roll sampling validation
+
+- A closed full-turn request is a nonzero sweep whose magnitude is an integer
+  multiple of 360 degrees within the centralized full-turn tolerance.
+- A closed full turn requires at least two source segments in the selected
+  roll direction. One segment collapses the minimum and maximum samples and
+  fails with `FC3022 InsufficientRollTessellation`.
+- Three segments for a 360-degree sweep must compile without zero-area
+  triangles.
+- Partial rolls remain open.
+- Full-turn minimum/maximum boundary positions coincide within the seam-proof
+  tolerance, while their vertex indices remain distinct.
+
+## Required tests
+
+- `FullRoll_WithOneSegment_ReturnsInsufficientTessellation`
+- `FullRoll_WithThreeSegments_DoesNotGenerateZeroAreaTriangles`
+- `PartialRoll_RemainsOpen`
+- `FullRoll_MinAndMaxBoundariesCoincideButRemainTopologicallySeparate`
+
+# Diagnostic allocation
+
+| Code | Name | Severity/condition |
+| --- | --- | --- |
+| `FC3011` | `FoldCreaseRequiresTopologySplit` | error: crease is not an existing continuous edge chain |
+| `FC3012` | `RollTargetMissing` | error: target panel does not exist |
+| `FC3013` | `NonFiniteRollParameter` | error: angle/start/radius or derived radius is invalid |
+| `FC3014` | `NearZeroRollAngle` | error: angle magnitude is at/below minimum |
+| `FC3015` | `InvalidExplicitRollRadius` | error: explicit radius is not positive |
+| `FC3016` | `UnsupportedFitTargetBoundary` | error: depends on future seam solving |
+| `FC3017` | `UnsupportedRollPanelShape` | error: target is not a rectangle |
+| `FC3018` | `RollStretchReport` | info/warning: structured explicit-radius deformation report |
+| `FC3019` | `InvalidRollDirection` | error: unknown direction enum |
+| `FC3020` | `InvalidRollRadiusMode` | error: unknown radius-mode enum |
+| `FC3021` | `UnsupportedRollEmbedding` | error: current target has no compatible single frame |
+| `FC3022` | `InsufficientRollTessellation` | error: closed full turn has fewer than two roll segments |
+
+# Radius and stretch
+
+- `PreserveArcLength`:
+  `R = sourceSpan / abs(radians(angleDegrees))`.
+- `Explicit`: `R = explicitRadius`.
+- Explicit `arcLength = R * abs(radians(angleDegrees))`.
+- Explicit `stretchRatio = arcLength / sourceSpan`.
+- No mode clamps, silently changes radius, or substitutes another mode.
+
+# Proof dimensions
+
+- Wall source: `2*pi*0.05 m` by `0.12 m`, `64 x 12` segments.
+- Wall Roll: U, positive 360 degrees, preserve arc length, start angle zero.
+- Bottom source: `0.10 m` disk, 64 radial segments, 8 rings.
+- Bottom placement: rotate positive 90 degrees about X and translate to
+  `y = -0.06 m`.
+- Expected cup mesh: 1,358 vertices and 2,496 triangles.
 
 # Files expected to change
 
 - `Docs/Plans/active-plan.md`
 - `Runtime/Compiler/FoldLineExecutor.cs`
+- `Runtime/Compiler/RollExecutor.cs`
 - `Runtime/Compiler/FoldCanvasCompiler.cs`
 - `Runtime/Compiler/FoldCanvasGeometryTolerances.cs`
 - `Runtime/Compiler/MeshBuildBuffer.cs`
-- `Runtime/Compiler/PanelTessellator.cs`
 - `Runtime/Diagnostics/FoldCanvasDiagnostic.cs`
 - `Editor/FoldCanvasSampleCreator.cs`
+- `Editor/Shaders/FoldCanvasTwoSidedUnlit.shader`
 - `Editor/FoldCanvasWindow.cs`
 - `Tests/Editor/FoldLineCompilerTests.cs`
+- `Tests/Editor/RollCompilerTests.cs`
+- `Tests/Editor/SourceValidationTests.cs`
 - `Tests/Editor/BootstrapEditorWorkflowTests.cs`
-- M02-relevant files under `Documentation~` and `Schema`
-- package/version, changelog, and current-task files only after acceptance
+- M02/M03-relevant files under `Documentation~`, `Schema`, and `Samples~`
+- `CHANGELOG.md`
+- `package.json`
 
-# Geometry invariants
+# Execution order
 
-- Panel source space remains local XY in meters with normalized coordinates
-  `u = sourceX / width + 0.5` and `v = sourceY / height + 0.5`.
-- Directed-line side classification is
-  `cross2(lineEnd - lineStart, point - lineStart)`.
-- `FoldSide.Positive` selects values greater than the normalized hinge
-  tolerance; `FoldSide.Negative` selects values less than its negative.
-- Values within the hinge tolerance are hinge samples and remain byte-for-byte
-  stationary.
-- Positive angle handedness is exactly
-  `Quaternion.AngleAxis(angleDegrees, currentLineEnd - currentLineStart)`.
-- A normalized fold line must be finite, remain inside `[0,1]^2`, and have
-  length greater than the centralized normalized-line tolerance.
-- Line embedding is evaluated through deterministic barycentric interpolation
-  over the target panel's source triangles. First source-order triangle wins
-  on shared edges.
-- Every crossing between the line and a source triangle edge, plus interval
-  midpoints, is checked. All mapped samples must lie on one non-collapsed,
-  order-preserving current 3D axis within centralized absolute and relative
-  tolerances.
-- Rotation changes only current 3D position. UV, source position, ownership,
-  provenance, topology, winding, and named-boundary order remain unchanged.
-- Operations execute strictly in serialized list order. No dictionary
-  enumeration contributes to geometry or diagnostics.
-- The M02 proof box occupies `x,y ∈ [-0.5,0.5]` and `z ∈ [-1,0]`. Expected
-  outward normals are top `+Z`, bottom `-Z`, front `-Y`, back `+Y`, left
-  `-X`, and right `+X`.
-
-# Implementation steps
-
-1. Record M02 semantics, tolerances, diagnostics, and proof geometry in this
-   plan before implementation.
-2. Retain each panel's deterministic triangle span in the internal build
-   record so source-to-current interpolation never relies on global searches
-   or dictionary order.
-3. Implement fold validation, source-line embedding, linearity checks, side
-   classification, and rigid axis rotation.
-4. Route `Fold` through the compiler while leaving all later operations as
-   explicit unsupported diagnostics.
-5. Generate a six-region appearance canvas and six-panel box source with four
-   planar layout transforms and six ordered 90-degree folds.
-6. Add numerical, preservation, determinism, box-normal, operation-order, and
-   diagnostic Edit Mode tests.
-7. Run JSON parsing, asmdef inspection, repository validation, diff checks,
-   and the complete Unity Edit Mode suite.
-8. Create, bake, and inspect the textured proof in the real Unity Editor,
-   including multiple visible faces and no compile diagnostics.
-9. Only after M02 acceptance passes, update docs, changelog, package version,
-   advance `CURRENT_TASK.md` to M03, commit, push, and confirm GitHub CI.
-
-# Test matrix
-
-| Acceptance area | Automated evidence |
-| --- | --- |
-| 0-degree identity | every current position remains exactly unchanged |
-| Signed handedness | `+90` and `-90` match `Quaternion.AngleAxis` around A→B |
-| Hinge stability | all on-line samples retain their exact current positions |
-| Rigid rotation | every selected vertex preserves distance to the hinge axis |
-| Side isolation | only the requested positive or negative source side moves |
-| Source preservation | UV, source position, panel index, provenance, indices, and boundaries remain unchanged |
-| Operation order | a later fold resolves its hinge from the already-deformed current embedding |
-| Ambiguous hinge | a line crossing a prior crease returns the stable non-linear-hinge diagnostic |
-| Determinism | repeated compiles produce equal diagnostics and ordered compiled/Unity geometry |
-| Box proof | bounds close at one unit and all six first-triangle normals point outward |
-| Artwork mapping | each panel retains the exact corners of its distinct canvas region |
-| Invalid source | stable codes cover missing target, non-finite/out-of-range/degenerate line, non-finite angle, invalid side, and nonzero falloff |
-| Editor sample | repeated creation preserves source/canvas GUIDs and compiles successfully |
-
-# Risks and rollback
-
-- A hinge may cross many triangles after earlier folds. Checking all
-  line/triangle-edge breakpoints makes the straight-axis decision explicit and
-  deterministic; ambiguous embeddings fail instead of choosing an arbitrary
-  local segment.
-- Floating-point comparisons can make hinge ownership unstable. All normalized
-  and current-space thresholds are centralized and covered on both sides of
-  the boundary.
-- Public source fields already exist, so M02 adds behavior without deleting or
-  renaming public API. Internal triangle-span metadata is not exposed.
-- The box proof uses disconnected panels because seam topology is M04. Spatial
-  coincidence closes the visible shell but does not weld vertices.
-- If a dependency, topology change, or architecture exception becomes
-  necessary, stop M02 and require an ADR plus explicit authorization.
-- Rollback is limited to the new executor, compiler route, internal triangle
-  span, M02 sample workflow, tests, and documentation; M01 planar compilation
-  remains independently usable.
+1. Record this audit contract before further implementation.
+2. Add the M02 edge-chain guard and tests.
+3. Implement/verify the current Roll frame and the non-planar rejection.
+4. Lock positive/negative winding using generated Unity normals.
+5. Make Seam declarations inert and enforce single-root diagnostics.
+6. Add structured diagnostic values and explicit-radius reports.
+7. Add closed-turn sampling validation.
+8. Update field reference, compiler pipeline, diagnostics, and roadmap.
+9. Run JSON/asmdef/repository/diff checks and the complete Edit Mode suite.
+10. Build a clean Unity proof scene with the 2D source board and 3D cup, then
+    verify the wall and bottom remain visible from multiple orbit directions.
+11. Update the package version and newest-first changelog entry.
+12. Commit and push the branch, create an audit PR into `main`, and stop before
+    approval, merge, or task-pointer advancement.
 
 # Progress log
 
-- 2026-07-27: Re-read `CURRENT_TASK.md`, `PLANS.md`,
-  `Documentation~/architecture.md`, `Codex/M02_FOLD_BOX.md`, and ADRs
-  0001-0006.
-- 2026-07-27: Audited the M01 compiler, build buffer, tessellators,
-  diagnostics, Fold data fields, editor sample workflow, tests, schema, and
-  documentation.
-- 2026-07-27: Confirmed the worktree was clean at M02 start and that Fold was
-  still routed to `FC3001 UnsupportedOperation`.
-- 2026-07-27: Recorded the M02 source-to-current hinge resolution, tolerance,
-  diagnostic, and proof-box decisions before implementation.
-- 2026-07-27: Added internal panel triangle spans and the deterministic
-  source-to-current `FoldLineExecutor`, then routed Fold while keeping M03+
-  operations explicitly unsupported.
-- 2026-07-27: Added all required fold diagnostics and centralized normalized,
-  barycentric, minimum-axis, absolute, and relative hinge tolerances.
-- 2026-07-27: Added the six-region box canvas/source/proof commands and 16
-  focused Fold Edit Mode tests, bringing the complete suite to 43 tests.
-- 2026-07-27: Fixed exact NPOT texture import after the first real Unity run
-  exposed 512-pixel resizing of the intended 384-pixel canvas.
-- 2026-07-27: Replaced a brittle M00 rebake assertion that assumed
-  `AssetDatabase.Refresh` preserves one managed object wrapper; stable path,
-  GUID, and updated data remain verified.
-- 2026-07-27: Completed static checks, Unity compilation, final 43/43 tests,
-  multi-orientation artwork inspection, and saved the local M02 proof scene.
-
-# Decisions made
-
-- Hinge embedding uses the existing deterministic source triangulation rather
-  than rectangle-only grid assumptions. This keeps the algorithm inspectable
-  and permits any panel whose complete authored line lies inside its source
-  triangulation.
-- Current hinge validation samples exact line/triangle-edge crossings and the
-  midpoint of every resulting interval. Because the mapping is affine inside
-  each source triangle, these samples are sufficient to detect a piecewise
-  line that is no longer one straight 3D axis.
-- The proof is a closed but unwelded shell. Five source panels fold once; the
-  bottom panel folds twice around opposite source edges, while the top remains
-  the reference face. Seam welding remains exclusively M04.
-- The editor-generated proof may dynamically choose an available unlit shader
-  for visualization, but Runtime remains render-pipeline independent.
+- 2026-07-27: M02 accepted on `main` at commit `fd7eeda`.
+- 2026-07-27: Preliminary M03 Roll implementation reached 65/65 Edit Mode
+  tests, but real preview exposed mirrored wall artwork.
+- 2026-07-27: User paused final M03 delivery and supplied architecture audit
+  requirements A-G.
+- 2026-07-27: Moved all uncommitted M03 work from `main` to
+  `feat/m03-roll-cup`.
+- 2026-07-27: Replaced the preliminary plan with this audited Fold, Roll,
+  Seam, diagnostic, sampling, and pre-merge stop contract.
+- 2026-07-27: Implemented the audit guards and semantics without M04 topology;
+  all 75 Edit Mode tests passed in Unity `6000.3.20f1`.
+- 2026-07-27: Saved the clean host preview as
+  `Project~/Assets/M03CupPreview.unity`. Its unchanged source image and
+  positive-roll cup both display `GPT 5.6` left-to-right with a one-sided
+  Back-Cull cup material.
+- 2026-07-27: Human preview review found that arbitrary object rotation exposed
+  the expected backface-culling holes of M03's zero-thickness wall and bottom.
+- 2026-07-27: User authorized commit, push, and an unapproved/unmerged audit PR
+  after that visibility defect is repaired; `CURRENT_TASK.md` remains on M03.
+- 2026-07-27: Added a package-owned opaque two-sided Unlit preview shader and
+  an Edit Mode regression check. Compiler winding, topology, normals, vertex
+  counts, and M04 boundaries remain unchanged.
+- 2026-07-27: Unity `6000.3.20f1` recompiled the package and passed 76/76 Edit
+  Mode tests, including the new preview-culling regression.
+- 2026-07-27: Regenerated the 1,358-vertex, 2,496-triangle proof and inspected
+  the standard side view plus bottom-facing and reverse-bottom orientations.
+  The wall and bottom remained opaque and complete.
+- 2026-07-27: JSON parsing, assembly-definition inspection, `git diff --check`,
+  package-version consistency, and the final source diff passed.
 
 # Final verification
 
-- `package.json`, the FoldScript schema, and all three changed/inspected asmdef
-  JSON files parsed successfully.
-- `python3 Scripts/validate_repository.py`: passed.
-- `git diff --check`: passed.
-- Assembly inspection confirmed Runtime still has no assembly references and no
-  `UnityEditor` usage; editor-only APIs remain under `Editor`.
-- Unity `6000.3.20f1` imported and compiled the final package without C# errors.
-- The final complete Edit Mode run passed 43/43 tests, 0 failed, 0 skipped, in
-  0.233 seconds.
-- The real Unity Editor generated the M02 source, baked a 24-vertex /
-  12-triangle mesh, and displayed a closed box with six distinct colored,
-  lettered, direction-marked artwork regions.
-- Multiple preview orientations exposed all six regions and retained readable
-  direction arrows; automated checks independently verified exact UV corners,
-  one-unit bounds, and all six outward local face normals.
-- The proof scene is saved locally at
-  `Assets/FoldCanvasGenerated/M02BoxPreview.unity`; source, texture, mesh,
-  material, and scene remain ignored local/generated artifacts.
-- Roll, Stitch, Solidify, seam welding, smooth falloff, thickness, collision,
-  and all later-milestone behavior were not implemented.
-- Git commit, push, and GitHub CI result are recorded in the release handoff
-  after this plan is finalized.
+JSON/asmdef parsing, diff checks, Unity compilation, 76/76 Edit Mode tests, and
+the regenerated multi-angle cup proof are complete. The local host scene remains
+a derived Unity verification artifact; the package source regenerates its mesh,
+material, and source asset. Commit and push the audited package changes, create
+the PR into `main`, and leave it unapproved/unmerged with `CURRENT_TASK.md`
+unchanged.

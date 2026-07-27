@@ -372,7 +372,7 @@
       }
     },
     "fold": {
-      "description": "Rotates samples on one selected side of a directed source line around that line's stable current 3D embedding. M02 implements rigid creases with zero falloff.",
+      "description": "Rotates samples on one selected side of a directed source line around that line's stable current 3D embedding. The crease must already be a continuous mesh-edge chain; topology splitting is deferred.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "line", "side", "angleDegrees", "falloff"],
@@ -424,7 +424,7 @@
       }
     },
     "roll": {
-      "description": "Planned continuous mapping of one panel dimension onto a circular arc; this is not a rigid rotation.",
+      "description": "M03 maps one rectangle dimension onto a circular arc in the target's current rigid planar frame; this is not a rigid rotation and does not weld coincident boundaries.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "direction", "angleDegrees", "radiusMode", "startAngleDegrees"],

@@ -33,19 +33,6 @@ namespace FoldCanvas
                 ExecuteOperations(asset, buffer, result);
             }
 
-            if (asset.Seams.Count > 0)
-            {
-                for (int i = 0; i < asset.Seams.Count; i++)
-                {
-                    SeamDefinition seam = asset.Seams[i];
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.UnsupportedSeam,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "Seam compilation is intentionally deferred to milestone M04.",
-                        seamId: seam != null ? seam.Id : null));
-                }
-            }
-
             if (!result.HasErrors())
             {
                 ValidateGeneratedGeometry(buffer, result);
@@ -121,6 +108,12 @@ namespace FoldCanvas
                 if (operation is FoldLineOperationDefinition fold)
                 {
                     FoldLineExecutor.TryExecute(fold, buffer, result);
+                    continue;
+                }
+
+                if (operation is RollOperationDefinition roll)
+                {
+                    RollExecutor.TryExecute(roll, buffer, result);
                     continue;
                 }
 

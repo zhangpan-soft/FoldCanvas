@@ -107,7 +107,10 @@ does not define an alternative `coordinateSpace`. M02 implements this operation
 as a rigid crease when `falloff` is exactly zero. Positive angles match
 `Quaternion.AngleAxis(angleDegrees, currentAxisFromAtoB)`. If an earlier
 operation bends the authored line so it no longer maps to one straight current
-3D axis, compilation fails instead of guessing.
+3D axis, compilation fails instead of guessing. The complete authored crease
+must also be an existing continuous mesh-edge chain; otherwise M03 returns
+`FC3011 FoldCreaseRequiresTopologySplit` instead of stretching crossed
+triangles.
 
 ### Roll
 
@@ -127,7 +130,7 @@ operation bends the authored line so it no longer maps to one straight current
 does **not** mean applying one rigid rotation to the panel. The compiler may use
 trigonometric evaluation internally, but no user-authored vertices or UV unwrap
 are required. Exact direction, radius, angle, and seam semantics are defined in
-the [field reference](foldscript-field-reference.md#63-roll--planned-for-m03).
+the [field reference](foldscript-field-reference.md#63-roll--implemented-in-m03).
 
 ### Solidify
 

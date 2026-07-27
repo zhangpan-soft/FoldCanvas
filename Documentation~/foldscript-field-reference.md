@@ -4,7 +4,7 @@
 公式和失败方式。最容易混淆的 `roll` 在这里不是欧拉角里的“横滚旋转”，而是
 把一个面板的 U 或 V 方向**连续卷到圆弧上**；例如把带图案的矩形侧壁卷成
 圆柱杯壁。它不会自动把空间重合的两条边焊接起来。完整定义见
-[`roll` 一节](#63-roll--planned-for-m03)。
+[`roll` 一节](#63-roll--implemented-in-m03)。
 
 This document defines the intended meaning of every FoldScript `0.1` field so a
 human, procedural tool, or AI system can author the same asset consistently.
@@ -12,12 +12,13 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M02 implements planar `rectangle` and `disk`/ellipse compilation,
-> `rigidTransform`, and rigid-crease `fold` through the Unity
-> `FoldCanvasAsset` representation. `roll`, `stitch`, `solidify`, seam
-> compilation, and JSON import/export are specified for later milestones and
-> currently return diagnostics or are unavailable. A schema-valid JSON file is
-> not a claim that every requested operation is implemented.
+> M03 implements planar `rectangle` and `disk`/ellipse compilation,
+> `rigidTransform`, edge-aligned rigid-crease `fold`, and rectangle `roll`
+> through the Unity `FoldCanvasAsset` representation. Seam declarations are
+> inert source data. `stitch`, `solidify`, seam execution, and JSON
+> import/export are specified for later milestones and currently return
+> diagnostics or are unavailable. A schema-valid JSON file is not a claim that
+> every requested operation is implemented.
 
 ## 1. Global conventions
 
@@ -225,12 +226,15 @@ M02 executes a rigid crease as follows:
 
 1. Validate the target, finite line, normalized range, nonzero line length,
    side, finite angle, and `falloff`.
-2. Map the complete source line through the target panel's deterministic source
+2. Verify both line endpoints are existing source vertices and the complete
+   line is covered without gaps by a continuous chain of existing triangle
+   edges.
+3. Map the complete source line through the target panel's deterministic source
    triangles into the panel's **current** 3D embedding.
-3. Check every line/triangle-edge crossing and each interval midpoint. The
+4. Check every line/triangle-edge crossing and each interval midpoint. The
    mapped samples must form one non-collapsed, order-preserving straight axis.
-4. Classify every vertex using its immutable normalized source position.
-5. Rotate only the selected side's current position about the directed current
+5. Classify every vertex using its immutable normalized source position.
+6. Rotate only the selected side's current position about the directed current
    axis. Source position, UV, ownership, provenance, indices, and boundaries
    remain unchanged.
 
@@ -246,7 +250,13 @@ Line endpoints must be inside `[0,1]²` and the complete line must lie inside th
 panel's source triangulation. This latter condition matters for non-rectangular
 domains such as disks.
 
-### 6.3 `roll` — planned for M03
+M03 adds a safety contract without adding topology: if the authored crease is
+not already an edge chain, compilation returns
+`FC3011 FoldCreaseRequiresTopologySplit`, produces no Mesh, and does not rotate
+an approximate set of existing vertices. Deterministic crease splitting is a
+separate future roadmap task.
+
+### 6.3 `roll` — implemented in M03
 
 `roll` continuously maps one panel dimension onto a circular arc. It is not a
 rigid rotation of the whole panel.
@@ -264,24 +274,58 @@ rigid rotation of the whole panel.
 Let `t` be the normalized coordinate along the chosen roll direction and
 `theta = radians(startAngleDegrees + t * angleDegrees)`.
 
+Before mapping, the compiler resolves the target's current frame:
+
+- `CurrentOrigin`: current position of the source rectangle center;
+- `CurrentU`: unit current direction of increasing source U;
+- `CurrentV`: unit current direction of increasing source V;
+- `CurrentNormal = normalize(cross(CurrentU, CurrentV))`.
+
+Every target vertex must still equal
+`CurrentOrigin + sourceX*CurrentU + sourceY*CurrentV` within centralized
+tolerances. M03 accepts translation and rotation before Roll. Scale, shear,
+non-planarity, and a prior non-planar Fold return
+`FC3021 UnsupportedRollEmbedding`; the compiler does not reconstruct a frame
+from one convenient triangle.
+
 For `direction: "u"`:
 
 ```text
-currentPosition = [R * cos(theta), sourceY, R * sin(theta)]
+currentPosition =
+    CurrentOrigin
+    + sourceY * CurrentV
+    - R * cos(theta) * CurrentU
+    + R * sin(theta) * CurrentNormal
 ```
 
 For `direction: "v"`:
 
 ```text
-currentPosition = [sourceX, R * cos(theta), R * sin(theta)]
+currentPosition =
+    CurrentOrigin
+    + sourceX * CurrentU
+    - R * cos(theta) * CurrentV
+    + R * sin(theta) * CurrentNormal
 ```
+
+At `startAngleDegrees = 0`, the minimum boundary begins on the negative
+selected-axis radial direction. Positive angles advance toward
+`+CurrentNormal`. A positive sweep preserves source triangle order and produces
+radially outward normals. A negative sweep also preserves source triangle
+order; its circulation is reversed and its generated normals therefore point
+radially inward. UV and boundary order remain source-authored in both cases.
 
 Radius modes:
 
 - `preserveArcLength`: `R = sourceSpan / abs(radians(angleDegrees))`. This
   preserves physical length along the rolled direction.
 - `explicit`: use `radius`; the requested angle is authoritative, so the arc
-  may stretch or compress relative to source length.
+  may stretch or compress relative to source length. A successful compile
+  emits `FC3018 RollStretchReport` with ordered structured values
+  `sourceSpan`, `arcLength`, and `stretchRatio`, where
+  `arcLength = radius * abs(radians(angleDegrees))` and
+  `stretchRatio = arcLength / sourceSpan`. The report is `Info` inside
+  `[0.5,2]` and `Warning` outside it; the geometry is never silently clamped.
 - `fitTargetBoundary`: reserved for deriving a radius from `targetSeam` so the
   rolled boundary can match its target. M03 deliberately reports this mode as
   unsupported until seam solving exists; it must never silently fall back to a
@@ -289,7 +333,10 @@ Radius modes:
 
 A zero angular sweep is invalid for `preserveArcLength`. Roll preserves UV and
 does not merge coincident minimum/maximum edges; seam resolution belongs to
-`stitch`.
+`stitch`. A closed full-turn Roll requires at least two source segments in the
+selected direction; otherwise it returns
+`FC3022 InsufficientRollTessellation`. Coincident full-turn endpoints retain
+different vertex indices.
 
 ### 6.4 `stitch` — planned for M04
 

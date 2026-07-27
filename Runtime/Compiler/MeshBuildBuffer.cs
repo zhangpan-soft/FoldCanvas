@@ -120,6 +120,8 @@ namespace FoldCanvas
             Shape = panel.Shape;
             CanvasRect = panel.CanvasRect;
             PhysicalSize = panel.PhysicalSize;
+            USegments = panel.USegments;
+            VSegments = panel.VSegments;
             VertexStart = vertexStart;
             VertexCount = vertexCount;
             TriangleIndexStart = triangleIndexStart;
@@ -135,6 +137,10 @@ namespace FoldCanvas
         public Rect CanvasRect { get; }
 
         public Vector2 PhysicalSize { get; }
+
+        public int USegments { get; }
+
+        public int VSegments { get; }
 
         public int VertexStart { get; }
 

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace FoldCanvas
 {
@@ -35,8 +37,53 @@ namespace FoldCanvas
         public const string NonFiniteFoldAngle = "FC3008";
         public const string UnsupportedFoldFalloff = "FC3009";
         public const string InvalidFoldSide = "FC3010";
+        public const string FoldCreaseRequiresTopologySplit = "FC3011";
+        public const string RollTargetMissing = "FC3012";
+        public const string NonFiniteRollParameter = "FC3013";
+        public const string NearZeroRollAngle = "FC3014";
+        public const string InvalidExplicitRollRadius = "FC3015";
+        public const string UnsupportedFitTargetBoundary = "FC3016";
+        public const string UnsupportedRollPanelShape = "FC3017";
+        public const string RollStretchReport = "FC3018";
+        public const string InvalidRollDirection = "FC3019";
+        public const string InvalidRollRadiusMode = "FC3020";
+        public const string UnsupportedRollEmbedding = "FC3021";
+        public const string InsufficientRollTessellation = "FC3022";
         public const string NonFiniteVertex = "FC5001";
         public const string ZeroAreaTriangle = "FC5002";
+    }
+
+    public sealed class FoldCanvasDiagnosticValue
+    {
+        public FoldCanvasDiagnosticValue(
+            string key,
+            double value,
+            string unit = null)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException(
+                    "Diagnostic value keys must be non-empty.",
+                    nameof(key));
+            }
+
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    "Diagnostic values must be finite.");
+            }
+
+            Key = key;
+            Value = value;
+            Unit = unit;
+        }
+
+        public string Key { get; }
+
+        public double Value { get; }
+
+        public string Unit { get; }
     }
 
     public sealed class FoldCanvasDiagnostic
@@ -47,7 +94,9 @@ namespace FoldCanvas
             string message,
             string panelId = null,
             string operationId = null,
-            string seamId = null)
+            string seamId = null,
+            IEnumerable<FoldCanvasDiagnosticValue> values = null,
+            IEnumerable<string> repairSuggestions = null)
         {
             Code = code ?? throw new ArgumentNullException(nameof(code));
             Severity = severity;
@@ -55,6 +104,8 @@ namespace FoldCanvas
             PanelId = panelId;
             OperationId = operationId;
             SeamId = seamId;
+            Values = CopyValues(values);
+            RepairSuggestions = CopyRepairSuggestions(repairSuggestions);
         }
 
         public string Code { get; }
@@ -68,6 +119,10 @@ namespace FoldCanvas
         public string OperationId { get; }
 
         public string SeamId { get; }
+
+        public IReadOnlyList<FoldCanvasDiagnosticValue> Values { get; }
+
+        public IReadOnlyList<string> RepairSuggestions { get; }
 
         public override string ToString()
         {
@@ -88,6 +143,56 @@ namespace FoldCanvas
             }
 
             return $"[{Severity}] {Code}{context}: {Message}";
+        }
+
+        private static IReadOnlyList<FoldCanvasDiagnosticValue> CopyValues(
+            IEnumerable<FoldCanvasDiagnosticValue> values)
+        {
+            if (values == null)
+            {
+                return Array.AsReadOnly(
+                    Array.Empty<FoldCanvasDiagnosticValue>());
+            }
+
+            List<FoldCanvasDiagnosticValue> copy =
+                new List<FoldCanvasDiagnosticValue>();
+            foreach (FoldCanvasDiagnosticValue value in values)
+            {
+                if (value == null)
+                {
+                    throw new ArgumentException(
+                        "Diagnostic values cannot contain null entries.",
+                        nameof(values));
+                }
+
+                copy.Add(value);
+            }
+
+            return new ReadOnlyCollection<FoldCanvasDiagnosticValue>(copy);
+        }
+
+        private static IReadOnlyList<string> CopyRepairSuggestions(
+            IEnumerable<string> repairSuggestions)
+        {
+            if (repairSuggestions == null)
+            {
+                return Array.AsReadOnly(Array.Empty<string>());
+            }
+
+            List<string> copy = new List<string>();
+            foreach (string repairSuggestion in repairSuggestions)
+            {
+                if (repairSuggestion == null)
+                {
+                    throw new ArgumentException(
+                        "Repair suggestions cannot contain null entries.",
+                        nameof(repairSuggestions));
+                }
+
+                copy.Add(repairSuggestion);
+            }
+
+            return new ReadOnlyCollection<string>(copy);
         }
     }
 }

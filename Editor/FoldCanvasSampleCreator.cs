@@ -15,6 +15,17 @@ namespace FoldCanvas.Editor
         private const string M02MaterialPath =
             FoldCanvasBaker.DefaultOutputFolder + "/M02BoxProof_Material.mat";
         private const string M02ProofObjectName = "FoldCanvas M02 Box Proof";
+        private const string M03TexturePath = SampleFolder + "/M03CupCanvas.png";
+        private const string M03AssetPath = SampleFolder + "/M03CupFoldCanvas.asset";
+        private const string M03MaterialPath =
+            FoldCanvasBaker.DefaultOutputFolder + "/M03CupProof_Material.mat";
+        private const string M03CanvasMeshPath =
+            FoldCanvasBaker.DefaultOutputFolder + "/M03SourceCanvas_Quad.asset";
+        private const string M03ProofObjectName = "FoldCanvas M03 Cup Proof";
+        private const string M03CanvasProofObjectName =
+            "FoldCanvas M03 Source Canvas";
+        private const string M03TwoSidedShaderName =
+            "FoldCanvas/Two-Sided Unlit Texture";
 
         [MenuItem("Tools/FoldCanvas/Create Bootstrap Sample")]
         public static void CreateBootstrapSample()
@@ -172,6 +183,136 @@ namespace FoldCanvas.Editor
                 proof);
         }
 
+        [MenuItem("Tools/FoldCanvas/Create M03 Cup Sample")]
+        public static void CreateM03CupSample()
+        {
+            EnsureSampleFolder();
+            Texture2D appearance = CreateOrUpdateM03CupAppearance();
+            FoldCanvasAsset asset =
+                AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(M03AssetPath);
+            bool created = asset == null;
+            if (created)
+            {
+                asset = ScriptableObject.CreateInstance<FoldCanvasAsset>();
+                asset.name = "M03CupFoldCanvas";
+            }
+
+            ConfigureM03CupAsset(asset, appearance);
+            if (created)
+            {
+                AssetDatabase.CreateAsset(asset, M03AssetPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(asset);
+            }
+
+            AssetDatabase.SaveAssets();
+            Selection.activeObject = asset;
+            EditorGUIUtility.PingObject(asset);
+            Debug.Log(
+                $"FoldCanvas M03 cup sample {(created ? "created" : "updated")} at {M03AssetPath}.",
+                asset);
+        }
+
+        [MenuItem("Tools/FoldCanvas/Create M03 Cup Proof")]
+        public static void CreateM03CupProof()
+        {
+            CreateM03CupSample();
+            FoldCanvasAsset source =
+                AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(M03AssetPath);
+            if (!FoldCanvasBaker.BakeMesh(
+                    source,
+                    FoldCanvasBaker.DefaultOutputFolder,
+                    out Mesh mesh,
+                    out FoldCanvasCompileResult result))
+            {
+                Debug.LogError(
+                    "FoldCanvas M03 cup proof failed to compile:\n" +
+                    JoinDiagnostics(result),
+                    source);
+                return;
+            }
+
+            Material material = CreateOrUpdateProofMaterial(
+                M03MaterialPath,
+                "M03CupProof_Material",
+                source.Appearance,
+                true);
+            GameObject proof = GameObject.Find(M03ProofObjectName);
+            if (proof == null)
+            {
+                proof = new GameObject(M03ProofObjectName);
+                Undo.RegisterCreatedObjectUndo(proof, "Create FoldCanvas M03 Cup Proof");
+            }
+
+            MeshFilter filter = proof.GetComponent<MeshFilter>();
+            if (filter == null)
+            {
+                filter = Undo.AddComponent<MeshFilter>(proof);
+            }
+
+            MeshRenderer renderer = proof.GetComponent<MeshRenderer>();
+            if (renderer == null)
+            {
+                renderer = Undo.AddComponent<MeshRenderer>(proof);
+            }
+
+            filter.sharedMesh = mesh;
+            renderer.sharedMaterial = material;
+            proof.transform.SetPositionAndRotation(
+                new Vector3(0.09f, 0f, 0f),
+                Quaternion.Euler(0f, -90f, 0f));
+            proof.transform.localScale = Vector3.one;
+
+            GameObject canvasProof = GameObject.Find(M03CanvasProofObjectName);
+            if (canvasProof == null)
+            {
+                canvasProof = new GameObject(M03CanvasProofObjectName);
+                Undo.RegisterCreatedObjectUndo(
+                    canvasProof,
+                    "Create FoldCanvas M03 Source Canvas");
+            }
+
+            MeshFilter canvasFilter = canvasProof.GetComponent<MeshFilter>();
+            if (canvasFilter == null)
+            {
+                canvasFilter = Undo.AddComponent<MeshFilter>(canvasProof);
+            }
+
+            MeshRenderer canvasRenderer =
+                canvasProof.GetComponent<MeshRenderer>();
+            if (canvasRenderer == null)
+            {
+                canvasRenderer = Undo.AddComponent<MeshRenderer>(canvasProof);
+            }
+
+            canvasFilter.sharedMesh = CreateOrUpdateM03CanvasMesh();
+            canvasRenderer.sharedMaterial = material;
+            canvasProof.transform.SetPositionAndRotation(
+                new Vector3(-0.085f, 0f, 0f),
+                Quaternion.identity);
+            canvasProof.transform.localScale =
+                new Vector3(0.14f, 0.14f, 0.14f);
+            Camera proofCamera = ConfigureM03ProofCamera();
+            Selection.activeGameObject = proof;
+            EditorSceneManager.MarkSceneDirty(proof.scene);
+
+            SceneView sceneView = SceneView.lastActiveSceneView;
+            if (sceneView != null)
+            {
+                sceneView.pivot = new Vector3(0.015f, 0f, 0f);
+                sceneView.rotation = proofCamera.transform.rotation;
+                sceneView.size = 0.18f;
+                sceneView.Repaint();
+            }
+
+            Debug.Log(
+                $"FoldCanvas M03 cup proof compiled from {M03AssetPath}: " +
+                $"{mesh.vertexCount} vertices, {mesh.triangles.Length / 3} triangles.",
+                proof);
+        }
+
         private static void ConfigureM02BoxAsset(
             FoldCanvasAsset asset,
             Texture2D appearance)
@@ -254,6 +395,50 @@ namespace FoldCanvas.Editor
                 new Vector2(1f, 1f),
                 FoldSide.Negative,
                 -90f);
+        }
+
+        private static void ConfigureM03CupAsset(
+            FoldCanvasAsset asset,
+            Texture2D appearance)
+        {
+            const float radius = 0.05f;
+            const float height = 0.12f;
+            asset.Appearance = appearance;
+            asset.Panels.Clear();
+            asset.Operations.Clear();
+            asset.Seams.Clear();
+
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "wall",
+                new Rect(0.06f, 0.46f, 0.88f, 0.44f),
+                new Vector2(2f * Mathf.PI * radius, height),
+                64,
+                12));
+            asset.Panels.Add(PanelDefinition.CreateDisk(
+                "bottom",
+                new Rect(0.32f, 0.02f, 0.36f, 0.36f),
+                Vector2.one * (2f * radius),
+                64,
+                8));
+
+            asset.Operations.Add(new RollOperationDefinition
+            {
+                Id = "roll-wall",
+                PanelId = "wall",
+                Direction = RollDirection.U,
+                AngleDegrees = 360f,
+                RadiusMode = RollRadiusMode.PreserveArcLength,
+                ExplicitRadius = radius,
+                StartAngleDegrees = 0f
+            });
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "place-bottom",
+                PanelId = "bottom",
+                Translation = new Vector3(0f, -height * 0.5f, 0f),
+                RotationEuler = new Vector3(90f, 0f, 0f),
+                Scale = Vector3.one
+            });
         }
 
         private static PanelDefinition CreateBoxFace(string id, Rect canvasRect)
@@ -444,6 +629,51 @@ namespace FoldCanvas.Editor
             return AssetDatabase.LoadAssetAtPath<Texture2D>(M02TexturePath);
         }
 
+        private static Texture2D CreateOrUpdateM03CupAppearance()
+        {
+            UnityEditor.PackageManager.PackageInfo package =
+                UnityEditor.PackageManager.PackageInfo.FindForAssembly(
+                    typeof(FoldCanvasSampleCreator).Assembly);
+            if (package == null)
+            {
+                throw new FileNotFoundException(
+                    "Could not resolve the FoldCanvas package path for the M03 cup canvas.");
+            }
+
+            string sourcePath = Path.Combine(
+                package.resolvedPath,
+                "Samples~",
+                "BootstrapPanel",
+                "gpt-cup-canvas.png");
+            if (!File.Exists(sourcePath))
+            {
+                throw new FileNotFoundException(
+                    "The packaged M03 cup canvas is missing.",
+                    sourcePath);
+            }
+
+            string destinationPath = Path.GetFullPath(M03TexturePath);
+            File.Copy(sourcePath, destinationPath, true);
+            AssetDatabase.ImportAsset(
+                M03TexturePath,
+                ImportAssetOptions.ForceSynchronousImport);
+
+            TextureImporter importer =
+                AssetImporter.GetAtPath(M03TexturePath) as TextureImporter;
+            if (importer != null)
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.sRGBTexture = true;
+                importer.mipmapEnabled = false;
+                importer.npotScale = TextureImporterNPOTScale.None;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.SaveAndReimport();
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(M03TexturePath);
+        }
+
         private static void DrawFaceTile(
             Texture2D texture,
             int tileX,
@@ -511,26 +741,51 @@ namespace FoldCanvas.Editor
 
         private static Material CreateOrUpdateM02Material(Texture2D appearance)
         {
-            Material material =
-                AssetDatabase.LoadAssetAtPath<Material>(M02MaterialPath);
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null)
-            {
-                shader = Shader.Find("Unlit/Texture");
-            }
+            return CreateOrUpdateProofMaterial(
+                M02MaterialPath,
+                "M02BoxProof_Material",
+                appearance);
+        }
 
-            if (shader == null)
+        private static Material CreateOrUpdateProofMaterial(
+            string materialPath,
+            string materialName,
+            Texture2D appearance,
+            bool twoSided = false)
+        {
+            Material material =
+                AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            Shader shader;
+            if (twoSided)
             {
-                shader = Shader.Find("Standard");
+                shader = Shader.Find(M03TwoSidedShaderName);
+                if (shader == null)
+                {
+                    throw new InvalidDataException(
+                        $"Required M03 preview shader '{M03TwoSidedShaderName}' was not imported.");
+                }
+            }
+            else
+            {
+                shader = Shader.Find("Universal Render Pipeline/Unlit");
+                if (shader == null)
+                {
+                    shader = Shader.Find("Unlit/Texture");
+                }
+
+                if (shader == null)
+                {
+                    shader = Shader.Find("Standard");
+                }
             }
 
             if (material == null)
             {
                 material = new Material(shader)
                 {
-                    name = "M02BoxProof_Material"
+                    name = materialName
                 };
-                AssetDatabase.CreateAsset(material, M02MaterialPath);
+                AssetDatabase.CreateAsset(material, materialPath);
             }
             else if (shader != null && material.shader != shader)
             {
@@ -557,9 +812,96 @@ namespace FoldCanvas.Editor
                 material.SetColor("_Color", Color.white);
             }
 
+            if (material.HasProperty("_Cull"))
+            {
+                material.SetFloat(
+                    "_Cull",
+                    (float)(twoSided
+                        ? UnityEngine.Rendering.CullMode.Off
+                        : UnityEngine.Rendering.CullMode.Back));
+            }
+
+            material.doubleSidedGI = twoSided;
             EditorUtility.SetDirty(material);
             AssetDatabase.SaveAssets();
             return material;
+        }
+
+        private static Camera ConfigureM03ProofCamera()
+        {
+            Camera camera = Camera.main;
+            if (camera == null)
+            {
+                GameObject cameraObject = new GameObject(
+                    "M03 Proof Camera",
+                    typeof(Camera));
+                Undo.RegisterCreatedObjectUndo(
+                    cameraObject,
+                    "Create FoldCanvas M03 Proof Camera");
+                camera = cameraObject.GetComponent<Camera>();
+            }
+
+            camera.transform.position = new Vector3(0f, -0.035f, -0.6f);
+            camera.transform.LookAt(new Vector3(0f, -0.005f, 0f));
+            camera.orthographic = true;
+            camera.orthographicSize = 0.13f;
+            camera.nearClipPlane = 0.01f;
+            camera.farClipPlane = 2f;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.025f, 0.03f, 0.045f, 1f);
+            return camera;
+        }
+
+        private static Mesh CreateOrUpdateM03CanvasMesh()
+        {
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(M03CanvasMeshPath);
+            bool created = mesh == null;
+            if (created)
+            {
+                mesh = new Mesh
+                {
+                    name = "M03SourceCanvas_Quad"
+                };
+            }
+            else
+            {
+                mesh.Clear();
+            }
+
+            mesh.vertices = new[]
+            {
+                new Vector3(-0.5f, -0.5f, 0f),
+                new Vector3(0.5f, -0.5f, 0f),
+                new Vector3(0.5f, 0.5f, 0f),
+                new Vector3(-0.5f, 0.5f, 0f)
+            };
+            mesh.uv = new[]
+            {
+                new Vector2(0f, 0f),
+                new Vector2(1f, 0f),
+                new Vector2(1f, 1f),
+                new Vector2(0f, 1f)
+            };
+            mesh.triangles = new[]
+            {
+                // The reference board faces the proof camera at -Z. The Roll
+                // mesh keeps its compiled winding and unit transform.
+                0, 2, 1,
+                0, 3, 2
+            };
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            if (created)
+            {
+                AssetDatabase.CreateAsset(mesh, M03CanvasMeshPath);
+            }
+            else
+            {
+                EditorUtility.SetDirty(mesh);
+            }
+
+            return mesh;
         }
 
         private static string JoinDiagnostics(FoldCanvasCompileResult result)

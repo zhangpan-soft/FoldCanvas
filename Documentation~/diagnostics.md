@@ -10,10 +10,13 @@ Every diagnostic contains:
 - optional panel ID
 - optional seam ID
 - optional operation ID/index
-- optional numeric context
-- optional repair suggestions
+- ordered, copied, read-only structured numeric values
+- ordered, copied, read-only repair suggestions
 
-Diagnostics are sorted by compiler stage, source order, and code.
+Each structured numeric value has a stable key, finite `double` value, and
+optional unit. Dictionaries are not used for this contract, so repeated
+compiles preserve value and suggestion order. Diagnostics are emitted in
+compiler stage and source order.
 
 ## Severity
 
@@ -48,7 +51,7 @@ Diagnostics are sorted by compiler stage, source order, and code.
 - `FC1006 NonPositivePanelSize`
 - `FC1007 ExcessiveTessellation`
 - `FC2001 MissingPanelReference`
-- `FC2002 UnsupportedSeam`
+- `FC2002 UnsupportedSeam` (reserved; seam declarations alone do not emit it)
 - `FC2104 SeamLengthMismatch`
 - `FC3001 UnsupportedOperation`
 - `FC3002 NonFiniteOperationParameter`
@@ -60,6 +63,18 @@ Diagnostics are sorted by compiler stage, source order, and code.
 - `FC3008 NonFiniteFoldAngle`
 - `FC3009 UnsupportedFoldFalloff`
 - `FC3010 InvalidFoldSide`
+- `FC3011 FoldCreaseRequiresTopologySplit`
+- `FC3012 RollTargetMissing`
+- `FC3013 NonFiniteRollParameter`
+- `FC3014 NearZeroRollAngle`
+- `FC3015 InvalidExplicitRollRadius`
+- `FC3016 UnsupportedFitTargetBoundary`
+- `FC3017 UnsupportedRollPanelShape`
+- `FC3018 RollStretchReport`
+- `FC3019 InvalidRollDirection`
+- `FC3020 InvalidRollRadiusMode`
+- `FC3021 UnsupportedRollEmbedding`
+- `FC3022 InsufficientRollTessellation`
 - `FC4001 InvalidThickness`
 - `FC5001 NonFiniteVertex`
 - `FC5002 ZeroAreaTriangle`
