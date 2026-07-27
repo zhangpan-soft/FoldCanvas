@@ -82,6 +82,14 @@ A surface is conceptually zero-thickness. `Solidify` creates a shell:
 
 The first implementation may use vertex-normal offsets. Later versions may need collision-aware offsets and corner treatment.
 
+For M04, render copies that share one logical topology identity must also share
+one solved offset position. Smooth groups may use a deterministic
+area-weighted normal. A welded hard corner such as the cup wall-to-bottom join
+requires an incident face-offset-plane solution so the inner wall and inner
+bottom meet without a crack and retain the requested perpendicular thickness.
+If that corner has no stable bounded solution, compilation fails rather than
+guessing an averaged direction.
+
 ## 7. UV preservation invariant
 
 For each generated vertex originating from panel sample `(u,v)`:
@@ -104,11 +112,15 @@ Each boundary is sampled and ordered. For stitching:
 1. compute cumulative physical arc length
 2. normalize both boundaries to `[0,1]`
 3. select a common sample count
-4. resample both curves at matching parameters
-5. respect or reverse orientation as declared
-6. weld or bridge according to seam mode
+4. retain both boundaries' existing normalized breakpoints
+5. add any requested minimum-density parameter grid
+6. split boundary-adjacent surface triangles at missing parameters
+7. respect or reverse orientation as declared
+8. weld or bridge according to seam mode
 
-Boundary count equality must never be assumed.
+Boundary count equality must never be assumed. Existing boundary breakpoints
+must not be discarded merely to force an exact count, because their source UV
+and provenance remain part of the authored surface.
 
 ## 9. Numerical tolerances
 

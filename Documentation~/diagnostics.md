@@ -88,6 +88,16 @@ compiler stage and source order.
 - `FC5003 NonManifoldTopology`
 - `FC5004 InvalidWeldEpsilon`
 
+## Planned M04 allocation
+
+- `FC2010 StitchMustBeTerminalForSelectedPanels`: until topology-group
+  deformation propagation exists, a later RigidTransform, Fold, or Roll may
+  not target a panel selected by an earlier Stitch. The implementation must
+  emit one stable error and no Mesh.
+
+Additional Solidify and resampling codes remain unallocated until their
+geometry contracts and tests are implemented.
+
 ## Validation levels
 
 ### Basic

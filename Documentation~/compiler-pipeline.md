@@ -142,6 +142,19 @@ M04. `FitTargetBoundary` returns one dedicated
 Seams are processed in the Stitch operation's listed order. A later seam may
 therefore consume the closed-loop topology created by an earlier seam.
 
+### M04 terminal-Stitch ordering
+
+Until shared topology groups participate in deformation propagation, the
+compiler treats every panel selected by a Stitch as position-final. A later
+`RigidTransform`, `Fold`, or `Roll` targeting any such panel fails with
+`FC2010 StitchMustBeTerminalForSelectedPanels` and returns no Mesh. Operations
+on unrelated panels remain legal.
+
+`Solidify` is not a post-Stitch per-panel deformation. It consumes the complete
+final stitched topology in Stage 5 and must construct both shell sides and
+their rims without separating render copies that share one logical topology
+identity.
+
 ## Stage 5: thickness
 
 - classify closed versus open boundaries

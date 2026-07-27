@@ -43,8 +43,7 @@ multiple viewing orientations. The six panels remain unwelded by design.
 
 ## M03: Roll and cup
 
-**Status:** implemented in `0.1.0-preview.6` on the audit branch; acceptance
-remains pending until the PR is reviewed and merged.
+**Status:** accepted and merged in `0.1.0-preview.6`.
 
 **Proof:** a rectangular wall region bearing text and a logo rolls into a cylindrical wall; a disk becomes the base.
 
@@ -63,6 +62,12 @@ remains pending until the PR is reviewed and merged.
 - one-turn Circular Roll limit with stable multi-turn rejection
 - congruent current-frame composition, including unit reflection
 - package-owned, idempotent EditorOnly proof camera hierarchy
+
+Acceptance evidence: PR #1 was human-approved and merged into `main` at
+`c7b1e61`, retaining reviewed head `96d1688`. Unity `6000.3.20f1` passed
+103/103 Edit Mode tests. The live proof showed readable exterior artwork,
+explicit wall and bottom Welds, 1,281 logical topology vertices, exactly 64
+open top-rim edges, and zero measured wall/bottom seam gap.
 
 M03 does not perform general boundary resampling, Bridge, Solidify, thickness,
 or inner-shell generation. Its narrow Weld gate requires existing equal sample
@@ -92,12 +97,16 @@ Mesh.
 
 ## M04: General Stitch and solidify
 
+**Status:** active planning on `feat/m04-stitch-solidify`.
+
 **Proof:** the cup becomes a closed manifold shell with configurable wall and base thickness.
 
 - general boundary extraction
 - normalized arc-length parameterization
 - deterministic resampling
 - resampled weld and bridge modes
+- Stitch is terminal for every selected panel until topology-group deformation
+  propagation exists; later per-panel RigidTransform/Fold/Roll fails
 - open-boundary classification
 - inner shell and rim generation
 - manifold tests
