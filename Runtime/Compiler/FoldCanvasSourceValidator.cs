@@ -17,6 +17,9 @@ namespace FoldCanvas
             int maxTriangles = settings != null
                 ? settings.MaxGeneratedTriangles
                 : FoldCanvasCompileSettings.DefaultMaxGeneratedTriangles;
+            float weldEpsilon = settings != null
+                ? settings.WeldEpsilon
+                : FoldCanvasCompileSettings.DefaultWeldEpsilon;
 
             bool limitsValid = maxVertices > 0 && maxTriangles > 0;
             if (!limitsValid)
@@ -25,6 +28,14 @@ namespace FoldCanvas
                     FoldCanvasDiagnosticCodes.InvalidCompileLimits,
                     FoldCanvasDiagnosticSeverity.Error,
                     "Generated vertex and triangle safety limits must be greater than zero."));
+            }
+
+            if (!FiniteMath.IsFinite(weldEpsilon) || weldEpsilon <= 0f)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.InvalidWeldEpsilon,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "The weld epsilon must be finite and greater than zero."));
             }
 
             long cumulativeVertices = 0;

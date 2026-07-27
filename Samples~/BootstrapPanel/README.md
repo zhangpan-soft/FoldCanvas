@@ -1,6 +1,6 @@
 # Bootstrap Panel sample
 
-This sample accompanies the pre-alpha planar compiler.
+This sample accompanies the pre-alpha planar, Fold, and Roll compiler.
 
 After importing the sample, use:
 
@@ -17,4 +17,30 @@ The command creates a checker-pattern appearance canvas and a `FoldCanvasAsset` 
 
 Bake it from the Inspector or `Window > FoldCanvas > FoldCanvas`.
 
-Fold, Roll, Stitch, and Solidify intentionally remain unsupported until their roadmap milestones.
+For the M03 decorated cup proof, keep the packaged
+`gpt-cup-canvas.png` available and use:
+
+```text
+Tools > FoldCanvas > Create M03 Cup Proof
+```
+
+The editor copies the source canvas into the host project, creates a
+`FoldCanvasAsset`, rolls the `GPT 5.6` wall through `360` degrees, rigidly
+places the `CODEX` disk at the bottom, bakes the derived mesh, and creates a
+package-owned `EditorOnly` preview root containing the cup, unchanged 2D source
+canvas, and one untagged preview camera. Re-running the command reuses those
+objects, including when inactive, and never modifies an existing MainCamera.
+Read the positive Roll from outside the cup: source U runs left-to-right around
+the wall and generated normals point radially outward. The command validates
+all 64 wall-bottom/perimeter samples before showing the proof. It then proves
+that the wall-side seam and bottom perimeter share logical topology and that
+only the 64-edge top rim remains open.
+
+The proof material is an opaque two-sided Unlit visualization so the
+zero-thickness M03 wall and disk stay visible while orbiting the selected
+object. This does not duplicate triangles, add an inner wall, or weaken the
+compiler's outward-winding tests; physical thickness and the closed thick-shell
+construction remain M04 work.
+
+M03 supports only explicit equal-sample Weld seams. Deterministic resampling,
+Bridge, Solidify, inner walls, and thickness intentionally remain M04 work.

@@ -107,7 +107,10 @@ does not define an alternative `coordinateSpace`. M02 implements this operation
 as a rigid crease when `falloff` is exactly zero. Positive angles match
 `Quaternion.AngleAxis(angleDegrees, currentAxisFromAtoB)`. If an earlier
 operation bends the authored line so it no longer maps to one straight current
-3D axis, compilation fails instead of guessing.
+3D axis, compilation fails instead of guessing. The complete authored crease
+must also be an existing continuous mesh-edge chain; otherwise M03 returns
+`FC3011 FoldCreaseRequiresTopologySplit` instead of stretching crossed
+triangles.
 
 ### Roll
 
@@ -119,7 +122,7 @@ operation bends the authored line so it no longer maps to one straight current
   "direction": "u",
   "angleDegrees": 360.0,
   "radiusMode": "preserveArcLength",
-  "startAngleDegrees": 0.0
+  "startAngleDegrees": 180.0
 }
 ```
 
@@ -127,7 +130,10 @@ operation bends the authored line so it no longer maps to one straight current
 does **not** mean applying one rigid rotation to the panel. The compiler may use
 trigonometric evaluation internally, but no user-authored vertices or UV unwrap
 are required. Exact direction, radius, angle, and seam semantics are defined in
-the [field reference](foldscript-field-reference.md#63-roll--planned-for-m03).
+the [field reference](foldscript-field-reference.md#63-roll--implemented-in-m03).
+M03 Circular Roll accepts only `-360 <= angleDegrees <= 360`; larger
+multi-turn, spiral, or layered requests require a future operation. A complete
+turn also requires at least three source segments in the selected direction.
 
 ### Solidify
 
@@ -154,7 +160,8 @@ the [field reference](foldscript-field-reference.md#63-roll--planned-for-m03).
 }
 ```
 
-A zero sample count means the compiler selects a stable common count.
+A zero sample count means the M03 compiler accepts the two boundaries' existing
+common count. It does not resample either boundary.
 
 Cup-bottom seam:
 
@@ -164,12 +171,18 @@ Cup-bottom seam:
   "a": { "panel": "wall", "boundary": "vMin" },
   "b": { "panel": "bottom", "boundary": "perimeter" },
   "mode": "weld",
-  "reverseB": true,
+  "reverseB": false,
   "sampleCount": 64
 }
 ```
 
 ## 6. Complete cup sketch
+
+This sketch includes the future M04 `solidify` step to show the intended
+end-state source document. The current M03 compiler executes through
+`stitch-all` and then returns `UnsupportedOperation` for `solidify`; the live
+M03 sample omits that final operation and produces a welded, zero-thickness cup
+whose top rim remains open.
 
 ```json
 {
@@ -212,7 +225,7 @@ Cup-bottom seam:
       "a": { "panel": "wall", "boundary": "vMin" },
       "b": { "panel": "bottom", "boundary": "perimeter" },
       "mode": "weld",
-      "reverseB": true,
+      "reverseB": false,
       "sampleCount": 64
     }
   ],
@@ -224,7 +237,7 @@ Cup-bottom seam:
       "direction": "u",
       "angleDegrees": 360.0,
       "radiusMode": "preserveArcLength",
-      "startAngleDegrees": 0.0
+      "startAngleDegrees": 180.0
     },
     {
       "id": "place-bottom",

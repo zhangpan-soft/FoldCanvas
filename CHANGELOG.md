@@ -6,9 +6,98 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
-### Planned
+No unreleased changes.
 
-- M03 roll operator and decorated cup proof
+## [0.1.0-preview.6] - 2026-07-27
+
+### Added
+
+- An explicit M03 equal-sample `Weld` execution gate for ordered
+  `StitchOperationDefinition` seam lists
+- Deterministic logical topology identity through `TopologyVertexId`, while
+  retaining render-vertex splits required by source UVs and provenance
+- Stable Stitch diagnostics for missing or duplicate seams, missing
+  boundaries, unsupported seam modes, sample-count mismatch, excessive
+  boundary distance, empty Stitch lists, invalid weld tolerance, and
+  non-manifold welded topology
+- Cup acceptance checks proving the wall-side seam and bottom perimeter are
+  welded and that only the 64-edge top rim remains open
+
+### Changed
+
+- The M03 cup source now executes `close-wall` and `attach-bottom` Weld seams
+  after Roll and bottom placement
+- Circular Roll uses the documented exterior-readable angular mapping and
+  reverses target triangle winding deterministically for positive outward
+  faces
+- The package, schema, pipeline, field reference, sample guide, roadmap, and
+  active plan now distinguish logical topology welding from UV/provenance
+  render-vertex splits
+
+### Fixed
+
+- The cup base and wall are snapped to identical welded topology instead of
+  remaining merely close in space
+- Exterior wall artwork reads left-to-right; the two-sided proof shader also
+  mirrors only back-face sampling so orbiting the zero-thickness preview does
+  not show reversed text
+
+### Verified
+
+- Unity `6000.3.20f1` compiled the package and passed all 103 Edit Mode tests
+- The welded cup compiles to 1,358 render vertices, 1,281 logical topology
+  vertices, and 2,496 triangles, with exactly 64 open top-rim edges
+- JSON parsing, repository validation, and `git diff --check` passed
+
+## [0.1.0-preview.5] - 2026-07-27
+
+### Added
+
+- Deterministic rectangle `Roll` along U or V in the target panel's current
+  rigid frame, with preserve-arc-length and explicit-radius modes
+- Stable Roll diagnostics for invalid parameters, unsupported embeddings,
+  unsupported boundary fitting, insufficient closed-turn tessellation, and
+  unsupported multi-turn Circular Roll
+- Ordered structured diagnostic values and repair-suggestion storage, including
+  explicit-radius `sourceSpan`, `arcLength`, and `stretchRatio`
+- A generated `GPT 5.6` / `CODEX` cup source canvas, cup asset, bake command,
+  editor proof, package-owned opaque two-sided Unlit preview shader, and one
+  inactive-aware `EditorOnly` preview hierarchy with its own untagged camera
+- Edit Mode coverage for current-frame composition, signed handedness and
+  normals, open/closed rolls, seam declaration behavior, structured
+  diagnostics, tessellation, cup alignment, and preview culling
+
+### Changed
+
+- Declared seams remain inert source data until an explicit Stitch operation;
+  Stitch and `FitTargetBoundary` each return one stable root-cause diagnostic
+- Roll, Fold, Seam, diagnostic, pipeline, field-reference, schema, roadmap, and
+  sample documentation now state the audited M03 contracts
+- Full-turn Circular Roll now requires at least three source segments, and the
+  Roll schema limits signed sweeps to one turn (`-360` through `+360`)
+- Roll embedding compatibility is defined from final congruent planar geometry:
+  unit reflection may pass, while metric-changing scale, shear, collapsed axes,
+  and non-planarity fail
+- Package metadata now describes planar, rigid-fold, and circular-roll support
+
+### Fixed
+
+- Off-grid Fold creases now stop with
+  `FC3011 FoldCreaseRequiresTopologySplit` instead of stretching triangles
+- The M03 interactive cup proof no longer loses half of its wall or bottom
+  while orbiting; double-sided rendering is preview-only and does not add M04
+  inner-wall, thickness, Stitch, or welding topology
+- The M03 proof no longer reads or modifies `Camera.main`, does not duplicate
+  owned objects on repeated runs, and numerically rejects a wall/bottom fit
+  outside the seam-proof tolerance before showing the scene
+
+### Verified
+
+- Unity `6000.3.20f1` compiled the package and passed all 90 Edit Mode tests
+- The real Unity Editor regenerated the 1,358-vertex, 2,496-triangle cup and
+  displayed the complete wall plus both sides of the bottom across side,
+  underside, and reverse viewing orientations
+- JSON, assembly-reference, repository, and diff checks passed
 
 ## [0.1.0-preview.4] - 2026-07-27
 

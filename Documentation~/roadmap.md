@@ -43,25 +43,61 @@ multiple viewing orientations. The six panels remain unwelded by design.
 
 ## M03: Roll and cup
 
+**Status:** implemented in `0.1.0-preview.6` on the audit branch; acceptance
+remains pending until the PR is reviewed and merged.
+
 **Proof:** a rectangular wall region bearing text and a logo rolls into a cylindrical wall; a disk becomes the base.
 
 - roll along U/V
 - preserve arc length mode
 - explicit radius mode
 - full and partial roll
-- seam coincidence metric
+- explicit equal-sample wall closure and bottom Weld
+- logical topology identity across UV/provenance attribute seams
+- seam coincidence metric and exact representative snapping
 - cup sample canvas
+- current-frame composition after rigid translation/rotation
+- documented positive/negative handedness and radial normal convention
+- structured explicit-radius stretch diagnostics
+- full-turn minimum of three source segments
+- one-turn Circular Roll limit with stable multi-turn rejection
+- congruent current-frame composition, including unit reflection
+- package-owned, idempotent EditorOnly proof camera hierarchy
 
-This milestone may display separate coincident surfaces. Topological welding belongs to M04.
+M03 does not perform general boundary resampling, Bridge, Solidify, thickness,
+or inner-shell generation. Its narrow Weld gate requires existing equal sample
+counts and leaves only the cup's top rim open.
 
-## M04: Stitch and solidify
+### Future Roll tasks: SpiralRoll and LayeredRoll
+
+**Status:** explicitly deferred; not part of M03 or M04.
+
+**Proof:** multi-turn source strips use an explicit pitch or layer-spacing
+contract, account for thickness and collision between turns, and avoid mapping
+several source intervals onto the same cylindrical surface. Until such an
+operation is active, Circular Roll angles outside `[-360, 360]` return
+`FC3023 UnsupportedMultiTurnRoll`.
+
+### Future Fold task: deterministic crease topology split
+
+**Status:** explicitly deferred; not part of M03 or M04.
+
+**Proof:** an off-grid crease inserts deterministic source vertices and edges,
+splits every crossed triangle without changing UV correspondence, and then
+executes the exact rigid fold with stable provenance and triangle ordering.
+
+Until that task is active, any crease that is not already a continuous existing
+edge chain returns `FC3011 FoldCreaseRequiresTopologySplit` and produces no
+Mesh.
+
+## M04: General Stitch and solidify
 
 **Proof:** the cup becomes a closed manifold shell with configurable wall and base thickness.
 
-- boundary extraction
+- general boundary extraction
 - normalized arc-length parameterization
 - deterministic resampling
-- weld/bridge modes
+- resampled weld and bridge modes
 - open-boundary classification
 - inner shell and rim generation
 - manifold tests

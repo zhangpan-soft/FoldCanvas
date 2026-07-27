@@ -97,6 +97,21 @@ namespace FoldCanvas
                 return false;
             }
 
+            if (!IsExistingContinuousEdgeChain(
+                    panel,
+                    buffer,
+                    lineStart,
+                    lineEnd))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.FoldCreaseRequiresTopologySplit,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "The fold crease is not a continuous chain of existing mesh edges; deterministic topology splitting is required before this crease can execute.",
+                    operation.PanelId,
+                    operation.Id));
+                return false;
+            }
+
             if (!TryResolveCurrentHinge(
                     panel,
                     buffer,
@@ -147,6 +162,149 @@ namespace FoldCanvas
             }
 
             return true;
+        }
+
+        private static bool IsExistingContinuousEdgeChain(
+            PanelBuildRecord panel,
+            MeshBuildBuffer buffer,
+            Vector2 lineStart,
+            Vector2 lineEnd)
+        {
+            float tolerance =
+                FoldCanvasGeometryTolerances.NormalizedFoldLineTolerance;
+            bool hasStartVertex = false;
+            bool hasEndVertex = false;
+            int vertexEnd = panel.VertexStart + panel.VertexCount;
+            for (int i = panel.VertexStart; i < vertexEnd; i++)
+            {
+                Vector2 normalized = ToNormalized(
+                    panel,
+                    buffer.Vertices[i].SourcePosition);
+                hasStartVertex |=
+                    (normalized - lineStart).sqrMagnitude <=
+                    tolerance * tolerance;
+                hasEndVertex |=
+                    (normalized - lineEnd).sqrMagnitude <=
+                    tolerance * tolerance;
+            }
+
+            if (!hasStartVertex || !hasEndVertex)
+            {
+                return false;
+            }
+
+            List<CreaseInterval> intervals = new List<CreaseInterval>();
+            int triangleEnd =
+                panel.TriangleIndexStart + panel.TriangleIndexCount;
+            for (int i = panel.TriangleIndexStart;
+                i < triangleEnd;
+                i += 3)
+            {
+                int a = buffer.Triangles[i];
+                int b = buffer.Triangles[i + 1];
+                int c = buffer.Triangles[i + 2];
+                AddCollinearEdgeInterval(
+                    panel,
+                    buffer,
+                    lineStart,
+                    lineEnd,
+                    a,
+                    b,
+                    intervals);
+                AddCollinearEdgeInterval(
+                    panel,
+                    buffer,
+                    lineStart,
+                    lineEnd,
+                    b,
+                    c,
+                    intervals);
+                AddCollinearEdgeInterval(
+                    panel,
+                    buffer,
+                    lineStart,
+                    lineEnd,
+                    c,
+                    a,
+                    intervals);
+            }
+
+            intervals.Sort(CompareIntervals);
+            float coveredUntil = 0f;
+            for (int i = 0; i < intervals.Count; i++)
+            {
+                CreaseInterval interval = intervals[i];
+                if (interval.Start > coveredUntil + tolerance)
+                {
+                    return false;
+                }
+
+                coveredUntil = Mathf.Max(coveredUntil, interval.End);
+                if (coveredUntil >= 1f - tolerance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void AddCollinearEdgeInterval(
+            PanelBuildRecord panel,
+            MeshBuildBuffer buffer,
+            Vector2 lineStart,
+            Vector2 lineEnd,
+            int edgeStartIndex,
+            int edgeEndIndex,
+            List<CreaseInterval> intervals)
+        {
+            Vector2 edgeStart = ToNormalized(
+                panel,
+                buffer.Vertices[edgeStartIndex].SourcePosition);
+            Vector2 edgeEnd = ToNormalized(
+                panel,
+                buffer.Vertices[edgeEndIndex].SourcePosition);
+            Vector2 lineDelta = lineEnd - lineStart;
+            float lineLength = lineDelta.magnitude;
+            float tolerance =
+                FoldCanvasGeometryTolerances.NormalizedFoldLineTolerance;
+            if (Mathf.Abs(Cross2(edgeStart - lineStart, lineDelta)) >
+                    tolerance * lineLength ||
+                Mathf.Abs(Cross2(edgeEnd - lineStart, lineDelta)) >
+                    tolerance * lineLength)
+            {
+                return;
+            }
+
+            float lineLengthSquared = lineDelta.sqrMagnitude;
+            float edgeStartParameter =
+                Vector2.Dot(edgeStart - lineStart, lineDelta) /
+                lineLengthSquared;
+            float edgeEndParameter =
+                Vector2.Dot(edgeEnd - lineStart, lineDelta) /
+                lineLengthSquared;
+            float intervalStart = Mathf.Max(
+                0f,
+                Mathf.Min(edgeStartParameter, edgeEndParameter));
+            float intervalEnd = Mathf.Min(
+                1f,
+                Mathf.Max(edgeStartParameter, edgeEndParameter));
+            if (intervalEnd - intervalStart <= tolerance)
+            {
+                return;
+            }
+
+            intervals.Add(new CreaseInterval(intervalStart, intervalEnd));
+        }
+
+        private static int CompareIntervals(
+            CreaseInterval left,
+            CreaseInterval right)
+        {
+            int startComparison = left.Start.CompareTo(right.Start);
+            return startComparison != 0
+                ? startComparison
+                : left.End.CompareTo(right.End);
         }
 
         private static bool TryResolveCurrentHinge(
@@ -439,6 +597,19 @@ namespace FoldCanvas
         private static float Cross2(Vector2 a, Vector2 b)
         {
             return a.x * b.y - a.y * b.x;
+        }
+
+        private readonly struct CreaseInterval
+        {
+            public CreaseInterval(float start, float end)
+            {
+                Start = start;
+                End = end;
+            }
+
+            public float Start { get; }
+
+            public float End { get; }
         }
     }
 }

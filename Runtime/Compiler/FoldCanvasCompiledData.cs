@@ -13,13 +13,15 @@ namespace FoldCanvas
             Vector2 sourcePosition,
             Vector2 sourceUv,
             int panelIndex,
-            int provenanceId)
+            int provenanceId,
+            int topologyVertexId)
         {
             Position = position;
             SourcePosition = sourcePosition;
             SourceUv = sourceUv;
             PanelIndex = panelIndex;
             ProvenanceId = provenanceId;
+            TopologyVertexId = topologyVertexId;
         }
 
         public Vector3 Position { get; }
@@ -32,13 +34,16 @@ namespace FoldCanvas
 
         public int ProvenanceId { get; }
 
+        public int TopologyVertexId { get; }
+
         public bool Equals(FoldCanvasCompiledVertex other)
         {
             return Position.Equals(other.Position) &&
                 SourcePosition.Equals(other.SourcePosition) &&
                 SourceUv.Equals(other.SourceUv) &&
                 PanelIndex == other.PanelIndex &&
-                ProvenanceId == other.ProvenanceId;
+                ProvenanceId == other.ProvenanceId &&
+                TopologyVertexId == other.TopologyVertexId;
         }
 
         public override bool Equals(object obj)
@@ -55,6 +60,7 @@ namespace FoldCanvas
                 hash = (hash * 397) ^ SourceUv.GetHashCode();
                 hash = (hash * 397) ^ PanelIndex;
                 hash = (hash * 397) ^ ProvenanceId;
+                hash = (hash * 397) ^ TopologyVertexId;
                 return hash;
             }
         }
@@ -177,6 +183,8 @@ namespace FoldCanvas
         private readonly ReadOnlyCollection<int> triangleIndices;
         private readonly ReadOnlyCollection<FoldCanvasCompiledPanel> panels;
 
+        private readonly int topologyVertexCount;
+
         internal FoldCanvasCompiledData(
             IReadOnlyList<FoldCanvasCompiledVertex> sourceVertices,
             IReadOnlyList<int> sourceTriangleIndices,
@@ -220,6 +228,28 @@ namespace FoldCanvas
             vertices = Array.AsReadOnly(copiedVertices);
             triangleIndices = Array.AsReadOnly(copiedTriangleIndices);
             panels = Array.AsReadOnly(copiedPanels);
+
+            bool[] seenTopologyVertices = new bool[copiedVertices.Length];
+            int uniqueTopologyVertices = 0;
+            for (int i = 0; i < copiedVertices.Length; i++)
+            {
+                int topologyVertexId = copiedVertices[i].TopologyVertexId;
+                if (topologyVertexId < 0 ||
+                    topologyVertexId >= copiedVertices.Length)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(sourceVertices),
+                        "Topology vertex IDs must reference a source vertex.");
+                }
+
+                if (!seenTopologyVertices[topologyVertexId])
+                {
+                    seenTopologyVertices[topologyVertexId] = true;
+                    uniqueTopologyVertices++;
+                }
+            }
+
+            topologyVertexCount = uniqueTopologyVertices;
         }
 
         public IReadOnlyList<FoldCanvasCompiledVertex> Vertices => vertices;
@@ -227,6 +257,8 @@ namespace FoldCanvas
         public IReadOnlyList<int> TriangleIndices => triangleIndices;
 
         public IReadOnlyList<FoldCanvasCompiledPanel> Panels => panels;
+
+        public int TopologyVertexCount => topologyVertexCount;
 
         public bool TryGetPanel(string panelId, out FoldCanvasCompiledPanel panel)
         {

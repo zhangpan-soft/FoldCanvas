@@ -308,7 +308,7 @@
           "$ref": "#/$defs/boundaryRef"
         },
         "mode": {
-          "description": "weld creates one topological connection; hinge retains distinct vertices with a fold relationship; keepOpen records the relationship without closure.",
+          "description": "weld requests one topological connection; M03 Stitch executes only existing equal-sample welds. hinge and keepOpen remain declarative and return a stable unsupported-mode diagnostic if selected for execution.",
           "enum": ["weld", "hinge", "keepOpen"]
         },
         "reverseB": {
@@ -316,7 +316,7 @@
           "type": "boolean"
         },
         "sampleCount": {
-          "description": "Requested common boundary sample count; zero requests deterministic automatic selection.",
+          "description": "Requested common boundary sample count. In M03, zero accepts the existing common count and a positive value must equal it; resampling is deferred.",
           "type": "integer",
           "minimum": 0,
           "maximum": 8192
@@ -372,7 +372,7 @@
       }
     },
     "fold": {
-      "description": "Rotates samples on one selected side of a directed source line around that line's stable current 3D embedding. M02 implements rigid creases with zero falloff.",
+      "description": "Rotates samples on one selected side of a directed source line around that line's stable current 3D embedding. The crease must already be a continuous mesh-edge chain; topology splitting is deferred.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "line", "side", "angleDegrees", "falloff"],
@@ -424,7 +424,7 @@
       }
     },
     "roll": {
-      "description": "Planned continuous mapping of one panel dimension onto a circular arc; this is not a rigid rotation.",
+      "description": "M03 maps one rectangle dimension onto a circular arc in the target's current rigid planar frame; this is not a rigid rotation and does not weld coincident boundaries.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "panel", "direction", "angleDegrees", "radiusMode", "startAngleDegrees"],
@@ -451,10 +451,10 @@
           "enum": ["u", "v"]
         },
         "angleDegrees": {
-          "description": "Signed total angular sweep from the minimum source edge to the maximum edge; 360 makes edge positions coincide but does not weld them.",
+          "description": "Signed Circular Roll sweep from the minimum source edge to the maximum edge. M03 supports at most one turn; +/-360 makes edge positions coincide but does not weld them.",
           "type": "number",
-          "minimum": -3600,
-          "maximum": 3600
+          "minimum": -360,
+          "maximum": 360
         },
         "radiusMode": {
           "description": "preserveArcLength derives radius from source span and sweep; explicit uses radius; fitTargetBoundary is reserved for a seam solver.",
@@ -503,7 +503,7 @@
       ]
     },
     "stitch": {
-      "description": "Planned topology operation that resolves named seams in the listed order.",
+      "description": "Resolves named seams in listed order. M03 implements existing equal-sample welds only; general resampling and other seam modes are deferred.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "seams"],
@@ -573,7 +573,7 @@
       "required": ["weldEpsilon", "recalculateNormals", "validationLevel"],
       "properties": {
         "weldEpsilon": {
-          "description": "Positive physical-distance tolerance used by later weld and coincidence checks after unit conversion; it never welds implicitly.",
+          "description": "Positive physical-distance tolerance used by explicit weld and coincidence checks after unit conversion; it never welds implicitly.",
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 1

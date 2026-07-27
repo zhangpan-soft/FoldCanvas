@@ -40,7 +40,7 @@ namespace FoldCanvas.Editor
             root.Add(title);
 
             HelpBox help = new HelpBox(
-                "This M02 compiler supports planar panels, rigid transforms, and rigid-crease Fold operations. Roll, Stitch, and Solidify remain later milestones and fail with diagnostics.",
+                "This M03 compiler supports planar panels, rigid transforms, rigid-crease Fold, and circular Roll operations. Stitch and Solidify remain later milestones and fail with diagnostics.",
                 HelpBoxMessageType.Info);
             help.style.marginBottom = 8f;
             root.Add(help);

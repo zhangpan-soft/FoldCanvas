@@ -39,12 +39,16 @@ namespace FoldCanvas
         private readonly Dictionary<string, PanelBuildRecord> panelsById =
             new Dictionary<string, PanelBuildRecord>(StringComparer.Ordinal);
 
+        private readonly List<int> topologyParents = new List<int>();
+
         public readonly List<MeshBuildVertex> Vertices =
             new List<MeshBuildVertex>();
 
         public readonly List<int> Triangles = new List<int>();
 
         public int PanelCount => orderedPanels.Count;
+
+        public bool HasTopologyWelds { get; private set; }
 
         public int AddVertex(
             Vector3 position,
@@ -59,6 +63,7 @@ namespace FoldCanvas
                 sourceUv,
                 panelIndex,
                 vertexIndex));
+            topologyParents.Add(vertexIndex);
             return vertexIndex;
         }
 
@@ -73,6 +78,47 @@ namespace FoldCanvas
             return panelsById.TryGetValue(panelId, out panel);
         }
 
+        public int GetTopologyId(int vertexIndex)
+        {
+            return FindTopologyRoot(vertexIndex);
+        }
+
+        public void UnionTopology(int firstVertexIndex, int secondVertexIndex)
+        {
+            int firstRoot = FindTopologyRoot(firstVertexIndex);
+            int secondRoot = FindTopologyRoot(secondVertexIndex);
+            if (firstRoot == secondRoot)
+            {
+                return;
+            }
+
+            int representative = Math.Min(firstRoot, secondRoot);
+            int merged = Math.Max(firstRoot, secondRoot);
+            topologyParents[merged] = representative;
+            HasTopologyWelds = true;
+        }
+
+        public void SnapWeldedTopologyPositions()
+        {
+            if (!HasTopologyWelds)
+            {
+                return;
+            }
+
+            for (int i = 0; i < Vertices.Count; i++)
+            {
+                int representative = FindTopologyRoot(i);
+                if (representative == i)
+                {
+                    continue;
+                }
+
+                MeshBuildVertex vertex = Vertices[i];
+                vertex.Position = Vertices[representative].Position;
+                Vertices[i] = vertex;
+            }
+        }
+
         public FoldCanvasCompiledData Freeze()
         {
             FoldCanvasCompiledVertex[] compiledVertices =
@@ -85,7 +131,8 @@ namespace FoldCanvas
                     vertex.SourcePosition,
                     vertex.SourceUv,
                     vertex.PanelIndex,
-                    vertex.ProvenanceId);
+                    vertex.ProvenanceId,
+                    FindTopologyRoot(i));
             }
 
             FoldCanvasCompiledPanel[] compiledPanels =
@@ -99,6 +146,25 @@ namespace FoldCanvas
                 compiledVertices,
                 Triangles,
                 compiledPanels);
+        }
+
+        private int FindTopologyRoot(int vertexIndex)
+        {
+            int root = vertexIndex;
+            while (topologyParents[root] != root)
+            {
+                root = topologyParents[root];
+            }
+
+            int current = vertexIndex;
+            while (topologyParents[current] != current)
+            {
+                int next = topologyParents[current];
+                topologyParents[current] = root;
+                current = next;
+            }
+
+            return root;
         }
     }
 
@@ -120,6 +186,8 @@ namespace FoldCanvas
             Shape = panel.Shape;
             CanvasRect = panel.CanvasRect;
             PhysicalSize = panel.PhysicalSize;
+            USegments = panel.USegments;
+            VSegments = panel.VSegments;
             VertexStart = vertexStart;
             VertexCount = vertexCount;
             TriangleIndexStart = triangleIndexStart;
@@ -136,6 +204,10 @@ namespace FoldCanvas
 
         public Vector2 PhysicalSize { get; }
 
+        public int USegments { get; }
+
+        public int VSegments { get; }
+
         public int VertexStart { get; }
 
         public int VertexCount { get; }
@@ -149,6 +221,27 @@ namespace FoldCanvas
             orderedBoundaries.Add(new BoundaryBuildRecord(
                 boundaryId,
                 vertexIndices));
+        }
+
+        public bool TryGetBoundary(
+            string boundaryId,
+            out BoundaryBuildRecord boundary)
+        {
+            for (int i = 0; i < orderedBoundaries.Count; i++)
+            {
+                BoundaryBuildRecord candidate = orderedBoundaries[i];
+                if (string.Equals(
+                    candidate.Id,
+                    boundaryId,
+                    StringComparison.Ordinal))
+                {
+                    boundary = candidate;
+                    return true;
+                }
+            }
+
+            boundary = null;
+            return false;
         }
 
         public FoldCanvasCompiledPanel Freeze()

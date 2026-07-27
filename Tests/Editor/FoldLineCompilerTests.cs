@@ -462,6 +462,24 @@ namespace FoldCanvas.Tests
                 "invalid-side");
         }
 
+        [Test]
+        public void Fold_OffGridCrease_ReturnsRequiresTopologySplitDiagnostic()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(CreateFold(
+                "off-grid",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            AssertSingleDiagnostic(
+                asset,
+                FoldCanvasDiagnosticCodes.FoldCreaseRequiresTopologySplit,
+                "off-grid");
+        }
+
         private static FoldCanvasAsset CreatePanelAsset(int uSegments, int vSegments)
         {
             FoldCanvasAsset asset = ScriptableObject.CreateInstance<FoldCanvasAsset>();

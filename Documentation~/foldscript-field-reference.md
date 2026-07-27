@@ -4,7 +4,7 @@
 公式和失败方式。最容易混淆的 `roll` 在这里不是欧拉角里的“横滚旋转”，而是
 把一个面板的 U 或 V 方向**连续卷到圆弧上**；例如把带图案的矩形侧壁卷成
 圆柱杯壁。它不会自动把空间重合的两条边焊接起来。完整定义见
-[`roll` 一节](#63-roll--planned-for-m03)。
+[`roll` 一节](#63-roll--implemented-in-m03)。
 
 This document defines the intended meaning of every FoldScript `0.1` field so a
 human, procedural tool, or AI system can author the same asset consistently.
@@ -12,12 +12,13 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M02 implements planar `rectangle` and `disk`/ellipse compilation,
-> `rigidTransform`, and rigid-crease `fold` through the Unity
-> `FoldCanvasAsset` representation. `roll`, `stitch`, `solidify`, seam
-> compilation, and JSON import/export are specified for later milestones and
-> currently return diagnostics or are unavailable. A schema-valid JSON file is
-> not a claim that every requested operation is implemented.
+> M03 implements planar `rectangle` and `disk`/ellipse compilation,
+> `rigidTransform`, edge-aligned rigid-crease `fold`, and rectangle `roll`
+> through the Unity `FoldCanvasAsset` representation. Seam declarations are
+> inert source data. `stitch`, `solidify`, seam execution, and JSON
+> import/export are specified for later milestones and currently return
+> diagnostics or are unavailable. A schema-valid JSON file is not a claim that
+> every requested operation is implemented.
 
 ## 1. Global conventions
 
@@ -152,17 +153,19 @@ A seam declares topology intent between two ordered boundaries:
 | `seams[].b` | boundary ref | yes | Second ordered boundary. |
 | `seams[].mode` | enum | yes | `"weld"`, `"hinge"`, or `"keepOpen"`. |
 | `seams[].reverseB` | boolean | yes | Reverse B's sample order before matching it to A. |
-| `seams[].sampleCount` | integer ≥ 0 | yes | `0` requests deterministic automatic resampling; a positive value requests that common sample count. |
+| `seams[].sampleCount` | integer ≥ 0 | yes | In M03, `0` accepts the existing common count; a positive value must equal that count. General resampling is deferred. |
 
 Seam modes:
 
-- `weld`: resample as needed and create one topological connection.
+- `weld`: when selected by M03 Stitch, require existing equal sample counts,
+  snap paired positions, and create one logical topological connection.
 - `hinge`: retain distinct boundary vertices while recording a shared fold
   relationship.
 - `keepOpen`: retain an explicit relationship without closing the boundary.
 
 Declaring a seam does not execute it. A later `stitch` operation selects which
-seams to resolve and when.
+seams to resolve and when. Selecting `hinge` or `keepOpen` for execution is
+still unsupported in M03; the declaration itself remains valid and inert.
 
 ## 6. Operations
 
@@ -225,12 +228,15 @@ M02 executes a rigid crease as follows:
 
 1. Validate the target, finite line, normalized range, nonzero line length,
    side, finite angle, and `falloff`.
-2. Map the complete source line through the target panel's deterministic source
+2. Verify both line endpoints are existing source vertices and the complete
+   line is covered without gaps by a continuous chain of existing triangle
+   edges.
+3. Map the complete source line through the target panel's deterministic source
    triangles into the panel's **current** 3D embedding.
-3. Check every line/triangle-edge crossing and each interval midpoint. The
+4. Check every line/triangle-edge crossing and each interval midpoint. The
    mapped samples must form one non-collapsed, order-preserving straight axis.
-4. Classify every vertex using its immutable normalized source position.
-5. Rotate only the selected side's current position about the directed current
+5. Classify every vertex using its immutable normalized source position.
+6. Rotate only the selected side's current position about the directed current
    axis. Source position, UV, ownership, provenance, indices, and boundaries
    remain unchanged.
 
@@ -246,7 +252,13 @@ Line endpoints must be inside `[0,1]²` and the complete line must lie inside th
 panel's source triangulation. This latter condition matters for non-rectangular
 domains such as disks.
 
-### 6.3 `roll` — planned for M03
+M03 adds a safety contract without adding topology: if the authored crease is
+not already an edge chain, compilation returns
+`FC3011 FoldCreaseRequiresTopologySplit`, produces no Mesh, and does not rotate
+an approximate set of existing vertices. Deterministic crease splitting is a
+separate future roadmap task.
+
+### 6.3 `roll` — implemented in M03
 
 `roll` continuously maps one panel dimension onto a circular arc. It is not a
 rigid rotation of the whole panel.
@@ -255,33 +267,70 @@ rigid rotation of the whole panel.
 |---|---:|:---:|---|
 | `panel` | ID | yes | Target panel. |
 | `direction` | enum | yes | `"u"` wraps panel X around an axis parallel to +Y; `"v"` wraps panel Y around an axis parallel to +X. |
-| `angleDegrees` | number | yes | Signed total angular sweep from the minimum edge to the maximum edge. `360` makes the two edge positions coincide but does not weld them. |
+| `angleDegrees` | number | yes | Signed Circular Roll sweep from the minimum edge to the maximum edge, in `[-360, 360]`. `+/-360` makes the two edge positions coincide; Roll itself does not weld them, but a later explicit Stitch may. Larger multi-turn sweeps are unsupported in M03. |
 | `radiusMode` | enum | yes | How the roll radius is selected. |
 | `radius` | positive number | conditional | Required when `radiusMode` is `"explicit"`. In document units. |
 | `targetSeam` | ID | conditional | Required when `radiusMode` is `"fitTargetBoundary"`; identifies the seam constraint the future solver must fit. |
 | `startAngleDegrees` | number | yes | Angular placement of the minimum edge before applying the signed sweep. |
 
 Let `t` be the normalized coordinate along the chosen roll direction and
-`theta = radians(startAngleDegrees + t * angleDegrees)`.
+`theta = radians(startAngleDegrees - t * angleDegrees)`.
+
+Before mapping, the compiler resolves the target's current frame:
+
+- `CurrentOrigin`: current position of the source rectangle center;
+- `CurrentU`: unit current direction of increasing source U;
+- `CurrentV`: unit current direction of increasing source V;
+- `CurrentNormal = normalize(cross(CurrentU, CurrentV))`.
+
+Every target vertex must still equal
+`CurrentOrigin + sourceX*CurrentU + sourceY*CurrentV` within centralized
+tolerances. M03 accepts any congruent planar embedding, including translation,
+rotation, and an orientation-reversing planar isometry. In-plane
+metric-changing scale, shear, a collapsed axis, non-planarity, and a prior
+non-planar Fold return `FC3021 UnsupportedRollEmbedding`; compatibility is
+determined from the final geometry rather than remembered operation history,
+and the compiler does not reconstruct a frame from one convenient triangle.
 
 For `direction: "u"`:
 
 ```text
-currentPosition = [R * cos(theta), sourceY, R * sin(theta)]
+currentPosition =
+    CurrentOrigin
+    + sourceY * CurrentV
+    - R * cos(theta) * CurrentU
+    + R * sin(theta) * CurrentNormal
 ```
 
 For `direction: "v"`:
 
 ```text
-currentPosition = [sourceX, R * cos(theta), R * sin(theta)]
+currentPosition =
+    CurrentOrigin
+    + sourceX * CurrentU
+    - R * cos(theta) * CurrentV
+    + R * sin(theta) * CurrentNormal
 ```
+
+At `startAngleDegrees = 0`, the minimum boundary begins on the negative
+selected-axis radial direction. Positive angles advance toward
+`-CurrentNormal`. Roll reverses each target triangle's winding without changing
+connectivity. A positive sweep therefore produces radially outward normals;
+a negative sweep uses the opposite circulation and produces the documented
+radially inward orientation. UV and boundary order remain source-authored in
+both cases.
 
 Radius modes:
 
 - `preserveArcLength`: `R = sourceSpan / abs(radians(angleDegrees))`. This
   preserves physical length along the rolled direction.
 - `explicit`: use `radius`; the requested angle is authoritative, so the arc
-  may stretch or compress relative to source length.
+  may stretch or compress relative to source length. A successful compile
+  emits `FC3018 RollStretchReport` with ordered structured values
+  `sourceSpan`, `arcLength`, and `stretchRatio`, where
+  `arcLength = radius * abs(radians(angleDegrees))` and
+  `stretchRatio = arcLength / sourceSpan`. The report is `Info` inside
+  `[0.5,2]` and `Warning` outside it; the geometry is never silently clamped.
 - `fitTargetBoundary`: reserved for deriving a radius from `targetSeam` so the
   rolled boundary can match its target. M03 deliberately reports this mode as
   unsupported until seam solving exists; it must never silently fall back to a
@@ -289,17 +338,50 @@ Radius modes:
 
 A zero angular sweep is invalid for `preserveArcLength`. Roll preserves UV and
 does not merge coincident minimum/maximum edges; seam resolution belongs to
-`stitch`.
+`stitch`. A closed full-turn Roll requires at least three source segments in
+the selected direction; otherwise it returns
+`FC3022 InsufficientRollTessellation`. Two segments sample only 0, 180, and 360
+degrees, so their two nonzero-area panels overlap in one plane. Coincident
+full-turn endpoints retain different render vertex indices until explicitly
+stitched.
 
-### 6.4 `stitch` — planned for M04
+The selected angular coordinate is
+`theta = startAngleDegrees - t * angleDegrees`. Roll reverses triangle winding
+without changing connectivity, so positive full turns keep radial outward
+front faces while increasing source U reads left-to-right at the canonical
+exterior view.
+
+M03 Circular Roll accepts at most one signed turn. A magnitude above 360
+degrees returns `FC3023 UnsupportedMultiTurnRoll` instead of producing
+overlapping cylindrical layers. Future `SpiralRoll` or `LayeredRoll`
+operations require separate pitch, layer-spacing, thickness, and collision
+contracts.
+
+中文摘要：M03 的圆形 `roll` 只接受 `-360` 到 `+360` 度；完整一圈至少需要
+三个源分段，因为两个分段只会采样 0/180/360 度并生成两张重叠平面。Roll
+读取执行前的最终几何，只接受与源矩形全等的平面嵌入；平移、旋转和单位镜像
+可以通过，改变平面内度量的缩放、剪切、轴塌缩和非平面结果会返回稳定诊断。
+
+### 6.4 `stitch`
 
 | Field | Type | Meaning |
 |---|---:|---|
 | `seams` | ID array | One or more seam IDs resolved in listed order. |
 
 The seam's mode, orientation, and sample count control the topology operation.
-Boundary-count equality must not be assumed; deterministic resampling is part
-of stitch processing.
+Seam declarations remain inert until selected here.
+
+The M03 cup gate supports `weld` when both effective boundary counts already
+match. `sampleCount = 0` accepts that existing common count; a positive value
+must equal it. A boundary whose terminal render vertex already shares the
+first vertex's topology ID contributes that closed-loop point once. Paired
+positions must be within `compile.weldEpsilon`.
+
+Weld assigns one deterministic `TopologyVertexId`. Separate render vertices
+remain legal when source UVs, provenance, or hard normals differ; this is an
+attribute seam, not an open topological edge. General resampling, `bridge`,
+`hinge`, and `keepOpen` execution remain future work and return stable
+diagnostics when selected.
 
 ### 6.5 `solidify` — planned for M04
 
@@ -327,7 +409,7 @@ receive duplicate walls.
 
 | Field | Type | Required | Meaning |
 |---|---:|:---:|---|
-| `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for later welding and coincidence checks. It does not implicitly weld geometry. |
+| `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for explicit Weld and coincidence checks. It does not implicitly weld geometry. |
 | `recalculateNormals` | boolean | yes | Derive Unity mesh normals after geometry compilation. |
 | `validationLevel` | enum | yes | `"basic"`, `"standard"`, or `"strict"`; higher levels add more expensive validation when implemented. |
 | `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative pre-allocation safety limit. C# default: `1,000,000`. |
