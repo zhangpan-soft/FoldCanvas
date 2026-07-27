@@ -384,11 +384,17 @@ ownership, provenance, and boundary vertex identities remain unchanged.
   editor. It retained one root, cup, source canvas, and untagged preview camera.
   The underside-oblique proof showed the wall meeting the disk, and the
   measured bidirectional boundary gap was `2.20391154E-08 m`.
+- 2026-07-27: Repository validation, JSON/schema and asmdef parsing, runtime
+  `UnityEditor` exclusion, and `git diff --check` passed. Commit `f857106`
+  was pushed to `feat/m03-roll-cup`.
+- 2026-07-27: Updated PR #1 with the 90-test result, full-turn and one-turn
+  contracts, owned-preview behavior, final embedding contract, and measured
+  wall/bottom fit. The PR remains open, unapproved, and unmerged.
 
 # Final verification
 
 Unity compilation, the 90/90 Edit Mode suite, exported XML, owned-preview
-idempotency, and live wall/bottom fit proof are complete. JSON/asmdef parsing,
-repository static checks, and `git diff --check` remain before the final branch
-commit. Then push only to `feat/m03-roll-cup`, update PR #1, and leave it
-unapproved/unmerged with `CURRENT_TASK.md` unchanged.
+idempotency, live wall/bottom fit proof, JSON/schema and asmdef parsing,
+repository static checks, and `git diff --check` are complete. The reviewed
+changes are pushed only to `feat/m03-roll-cup`, and PR #1 remains open,
+unapproved, and unmerged with `CURRENT_TASK.md` unchanged.
