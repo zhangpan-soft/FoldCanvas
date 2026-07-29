@@ -10,8 +10,10 @@ namespace FoldCanvas
             StitchOperationDefinition operation,
             FoldCanvasAsset asset,
             MeshBuildBuffer buffer,
-            FoldCanvasCompileResult result)
+            FoldCanvasCompileResult result,
+            out List<string> selectedPanelIds)
         {
+            selectedPanelIds = new List<string>();
             if (operation.SeamIds == null || operation.SeamIds.Count == 0)
             {
                 result.Add(new FoldCanvasDiagnostic(
@@ -39,79 +41,47 @@ namespace FoldCanvas
                     return false;
                 }
 
-                if (seam.Mode != SeamMode.Weld)
+                AddPanelId(selectedPanelIds, seam.A.PanelId);
+                AddPanelId(selectedPanelIds, seam.B.PanelId);
+
+                if (seam.Mode != SeamMode.Weld &&
+                    seam.Mode != SeamMode.Bridge)
                 {
                     result.Add(new FoldCanvasDiagnostic(
                         FoldCanvasDiagnosticCodes.UnsupportedStitchSeamMode,
                         FoldCanvasDiagnosticSeverity.Error,
-                        "The M03 Stitch gate supports Weld seams only. Hinge, KeepOpen, and Bridge execution remain deferred.",
+                        "M04 Stitch executes Weld and Bridge seams. Hinge and KeepOpen remain declarative.",
                         operationId: operation.Id,
                         seamId: seam.Id));
                     return false;
                 }
 
-                if (!TryResolveBoundary(
-                        seam.A,
-                        seam.Id,
-                        operation.Id,
-                        buffer,
-                        result,
-                        out List<int> boundaryA) ||
-                    !TryResolveBoundary(
-                        seam.B,
-                        seam.Id,
-                        operation.Id,
-                        buffer,
-                        result,
-                        out List<int> boundaryB))
+                if (!BoundaryCorrespondenceSolver.TryCreate(
+                    seam,
+                    operation.Id,
+                    buffer,
+                    result,
+                    out SeamCorrespondence correspondence))
                 {
                     return false;
                 }
 
-                RemoveRepeatedTerminalTopologySample(boundaryA, buffer);
-                RemoveRepeatedTerminalTopologySample(boundaryB, buffer);
-                if (seam.ReverseB)
+                if (seam.Mode == SeamMode.Bridge)
                 {
-                    boundaryB.Reverse();
+                    AppendBridge(correspondence, buffer);
+                    continue;
                 }
 
-                int commonCount = boundaryA.Count;
-                bool requestedCountMatches =
-                    seam.SampleCount == 0 ||
-                    seam.SampleCount == commonCount;
-                if (commonCount == 0 ||
-                    boundaryB.Count != commonCount ||
-                    seam.SampleCount < 0 ||
-                    !requestedCountMatches)
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.StitchSampleCountMismatch,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "The M03 Stitch gate requires equal existing boundary sample counts; deterministic resampling is not implemented.",
-                        operationId: operation.Id,
-                        seamId: seam.Id,
-                        values: new[]
-                        {
-                            new FoldCanvasDiagnosticValue(
-                                "boundaryACount",
-                                boundaryA.Count),
-                            new FoldCanvasDiagnosticValue(
-                                "boundaryBCount",
-                                boundaryB.Count),
-                            new FoldCanvasDiagnosticValue(
-                                "requestedSampleCount",
-                                seam.SampleCount)
-                        }));
-                    return false;
-                }
-
+                int commonCount = correspondence.BoundaryA.Count;
                 float maximumGap = 0f;
                 for (int sample = 0; sample < commonCount; sample++)
                 {
                     Vector3 positionA =
-                        buffer.Vertices[boundaryA[sample]].Position;
+                        buffer.Vertices[
+                            correspondence.BoundaryA[sample]].Position;
                     Vector3 positionB =
-                        buffer.Vertices[boundaryB[sample]].Position;
+                        buffer.Vertices[
+                            correspondence.BoundaryB[sample]].Position;
                     maximumGap = Mathf.Max(
                         maximumGap,
                         Vector3.Distance(positionA, positionB));
@@ -145,14 +115,56 @@ namespace FoldCanvas
                 for (int sample = 0; sample < commonCount; sample++)
                 {
                     buffer.UnionTopology(
-                        boundaryA[sample],
-                        boundaryB[sample]);
+                        correspondence.BoundaryA[sample],
+                        correspondence.BoundaryB[sample]);
                 }
 
                 buffer.SnapWeldedTopologyPositions();
             }
 
             return true;
+        }
+
+        private static void AppendBridge(
+            SeamCorrespondence correspondence,
+            MeshBuildBuffer buffer)
+        {
+            int segmentCount = correspondence.IsClosed
+                ? correspondence.BoundaryA.Count
+                : correspondence.BoundaryA.Count - 1;
+            for (int segment = 0; segment < segmentCount; segment++)
+            {
+                int next = (segment + 1) %
+                    correspondence.BoundaryA.Count;
+                int a = correspondence.BoundaryA[segment];
+                int aNext = correspondence.BoundaryA[next];
+                int b = correspondence.BoundaryB[segment];
+                int bNext = correspondence.BoundaryB[next];
+
+                buffer.Triangles.Add(a);
+                buffer.Triangles.Add(b);
+                buffer.Triangles.Add(bNext);
+
+                buffer.Triangles.Add(a);
+                buffer.Triangles.Add(bNext);
+                buffer.Triangles.Add(aNext);
+            }
+        }
+
+        private static void AddPanelId(List<string> panelIds, string panelId)
+        {
+            for (int i = 0; i < panelIds.Count; i++)
+            {
+                if (string.Equals(
+                    panelIds[i],
+                    panelId,
+                    StringComparison.Ordinal))
+                {
+                    return;
+                }
+            }
+
+            panelIds.Add(panelId);
         }
 
         private static bool TryResolveUniqueSeam(
@@ -214,46 +226,5 @@ namespace FoldCanvas
             return true;
         }
 
-        private static bool TryResolveBoundary(
-            BoundaryReference reference,
-            string seamId,
-            string operationId,
-            MeshBuildBuffer buffer,
-            FoldCanvasCompileResult result,
-            out List<int> boundary)
-        {
-            boundary = null;
-            if (!buffer.TryGetPanel(
-                    reference.PanelId,
-                    out PanelBuildRecord panel) ||
-                !panel.TryGetBoundary(
-                    reference.BoundaryId,
-                    out BoundaryBuildRecord sourceBoundary))
-            {
-                result.Add(new FoldCanvasDiagnostic(
-                    FoldCanvasDiagnosticCodes.StitchBoundaryMissing,
-                    FoldCanvasDiagnosticSeverity.Error,
-                    "A Stitch seam references a panel boundary that does not exist.",
-                    reference.PanelId,
-                    operationId,
-                    seamId));
-                return false;
-            }
-
-            boundary = new List<int>(sourceBoundary.VertexIndices);
-            return true;
-        }
-
-        private static void RemoveRepeatedTerminalTopologySample(
-            List<int> boundary,
-            MeshBuildBuffer buffer)
-        {
-            if (boundary.Count > 1 &&
-                buffer.GetTopologyId(boundary[0]) ==
-                buffer.GetTopologyId(boundary[boundary.Count - 1]))
-            {
-                boundary.RemoveAt(boundary.Count - 1);
-            }
-        }
     }
 }

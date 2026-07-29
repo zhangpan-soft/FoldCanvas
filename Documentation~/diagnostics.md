@@ -59,6 +59,10 @@ compiler stage and source order.
 - `FC2007 UnsupportedStitchSeamMode`
 - `FC2008 DuplicateSeamId`
 - `FC2009 EmptyStitchSeamList`
+- `FC2010 StitchMustBeTerminalForSelectedPanels`
+- `FC2011 ZeroLengthStitchBoundary`
+- `FC2012 StitchBoundaryClosureMismatch`
+- `FC2013 StitchBoundarySubdivisionFailed`
 - `FC3001 UnsupportedOperation`
 - `FC3002 NonFiniteOperationParameter`
 - `FC3003 FoldTargetMissing`
@@ -82,21 +86,26 @@ compiler stage and source order.
 - `FC3021 UnsupportedRollEmbedding`
 - `FC3022 InsufficientRollTessellation`
 - `FC3023 UnsupportedMultiTurnRoll`
-- `FC4001 InvalidThickness`
+- `FC4001 InvalidSolidifyThickness`
+- `FC4002 SolidifyTargetMissing`
+- `FC4003 IncompleteSolidifyTopologySelection`
+- `FC4004 UnsupportedSolidifyCorner`
+- `FC4005 NonManifoldSolidifyInput`
+- `FC4006 InvalidSolidifyDirection`
 - `FC5001 NonFiniteVertex`
 - `FC5002 ZeroAreaTriangle`
 - `FC5003 NonManifoldTopology`
 - `FC5004 InvalidWeldEpsilon`
 
-## Planned M04 allocation
+`FC2010` enforces the temporary terminal-Stitch contract: until topology-group
+deformation propagation exists, a later RigidTransform, Fold, or Roll may not
+target a panel selected by an earlier Stitch. Solidify may follow because it
+consumes complete welded topology groups.
 
-- `FC2010 StitchMustBeTerminalForSelectedPanels`: until topology-group
-  deformation propagation exists, a later RigidTransform, Fold, or Roll may
-  not target a panel selected by an earlier Stitch. The implementation must
-  emit one stable error and no Mesh.
-
-Additional Solidify and resampling codes remain unallocated until their
-geometry contracts and tests are implemented.
+`FC2011`–`FC2013` stop collapsed, closure-incompatible, or non-subdividable
+seams without creating unattached samples. `FC4001`–`FC4006` stop invalid
+thickness, missing/partial targets, unbounded hard-corner offsets,
+non-manifold input, and invalid direction values without returning a Mesh.
 
 ## Validation levels
 

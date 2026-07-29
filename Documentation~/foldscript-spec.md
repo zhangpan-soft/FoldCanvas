@@ -142,7 +142,7 @@ turn also requires at least three source segments in the selected direction.
   "id": "thicken-cup",
   "type": "solidify",
   "targets": ["wall", "bottom"],
-  "thickness": 0.002,
+  "thickness": 0.004,
   "direction": "inward"
 }
 ```
@@ -160,8 +160,10 @@ turn also requires at least three source segments in the selected direction.
 }
 ```
 
-A zero sample count means the M03 compiler accepts the two boundaries' existing
-common count. It does not resample either boundary.
+A zero sample count asks M04 to use the sorted union of both boundaries'
+existing normalized arc-length breakpoints. A positive value additionally adds
+a uniform minimum-density grid. Missing samples are inserted into the actual
+source surfaces; authored breakpoints are never discarded.
 
 Cup-bottom seam:
 
@@ -178,11 +180,11 @@ Cup-bottom seam:
 
 ## 6. Complete cup sketch
 
-This sketch includes the future M04 `solidify` step to show the intended
-end-state source document. The current M03 compiler executes through
-`stitch-all` and then returns `UnsupportedOperation` for `solidify`; the live
-M03 sample omits that final operation and produces a welded, zero-thickness cup
-whose top rim remains open.
+This sketch is executable M04 intent: `stitch-all` resolves the wall closure
+and bottom attachment, then `solidify` consumes the complete welded component
+to produce outer and inner shells plus one top rim. The retained M03 live
+sample omits the final operation and remains a zero-thickness presentation
+example.
 
 ```json
 {
@@ -199,14 +201,14 @@ whose top rim remains open.
     {
       "id": "wall",
       "shape": "rectangle",
-      "canvasRect": [0.05, 0.10, 0.90, 0.50],
+      "canvasRect": [0.06, 0.46, 0.88, 0.44],
       "physicalSize": [0.31415927, 0.12],
       "tessellation": { "uSegments": 64, "vSegments": 12 }
     },
     {
       "id": "bottom",
       "shape": "disk",
-      "canvasRect": [0.10, 0.68, 0.22, 0.22],
+      "canvasRect": [0.32, 0.02, 0.36, 0.36],
       "physicalSize": [0.10, 0.10],
       "tessellation": { "radialSegments": 64, "radialRings": 8 }
     }
@@ -256,7 +258,7 @@ whose top rim remains open.
       "id": "solidify",
       "type": "solidify",
       "targets": ["wall", "bottom"],
-      "thickness": 0.002,
+      "thickness": 0.004,
       "direction": "inward"
     }
   ],

@@ -2,7 +2,8 @@
 
 ## Milestone state
 
-M04 is active after M03 human approval and PR #1 merge. Work occurs on
+M04 is active after M03 human approval, PR #1 merge, and the human-approved
+planning PR #2 merge at `1644090`. Geometry implementation occurs on
 `feat/m04-stitch-solidify`. The executable plan is
 [`Docs/Plans/active-plan.md`](../Docs/Plans/active-plan.md).
 
@@ -17,6 +18,25 @@ The proof must be inspected in Unity from exterior, interior, rim, and underside
 views with a one-sided material. A collider may be generated after Unity
 convexity limitations are acknowledged, but collider convenience cannot hide
 open, overlapping, inverted, or non-manifold topology.
+
+The seam proof is performed in two passes:
+
+1. a texture-free, solid-color, one-sided material proves geometry
+2. `M04ProductionCupCanvas.png` proves bilinear-filtered appearance without
+   atlas-background contamination
+
+The production wall fills its rectangular UV region with square corners and no
+outline along welded `vMin`. The bottom color reaches its perimeter and bleeds
+8 to 16 pixels beyond the sampled circle. Wall `vMin` and bottom `perimeter`
+use matching colors. The decorated M03 canvas remains a presentation example
+only.
+
+The default camera is a normal exterior view. Exact-side, interior, and
+underside views remain separate validation views.
+
+The accepted cup placement is locked: bottom rotation `(90, 0, 0)`, bottom and
+wall `vMin` at `Y = -height / 2`, and explicit wall-to-bottom Weld. Do not
+move, enlarge, overlap, or epsilon-offset the disk to conceal a line.
 
 ## Operation-ordering constraint
 
@@ -125,6 +145,13 @@ Required named ordering tests:
 - `PostStitchDeformation_OnUnselectedPanel_RemainsAllowed`
 - `StitchThenSolidify_UsesFinalTopology`
 
+Required result tests:
+
+- `BottomPanel_AllVerticesAreCoplanar`
+- `WallBottomWeld_HasZeroBoundaryPositionGap`
+- `WallBottomWeld_HasNoOpenTopologyEdge`
+- `Solidify_WallBottomInnerCornerRemainsConnected`
+
 ## Diagnostics
 
 - `FC2010 StitchMustBeTerminalForSelectedPanels`
@@ -143,6 +170,7 @@ Required named ordering tests:
 - no topology-group deformation propagation
 - no robust global self-intersection repair
 - no bevels
+- no bottom overlap or transform adjustment used as a seam workaround
 - no variable thickness field
 - no handle
 - no SpiralRoll or LayeredRoll

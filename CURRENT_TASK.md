@@ -20,6 +20,13 @@ that Stitch: no later `RigidTransform`, `Fold`, or `Roll` may target those
 panels. `Solidify` is the downstream whole-topology shell-construction stage,
 not a per-panel deformation.
 
+PR
+[#2](https://github.com/zhangpan-soft/FoldCanvas/pull/2) passed human audit and
+was merged into `main` at merge commit `1644090` before M04 geometry
+implementation began. Implementation remains on
+`feat/m04-stitch-solidify`; this task file stays on M04 until the new geometry,
+tests, production canvas, and live four-view proof pass review.
+
 Do not reopen M03 for additional defensive parameter validation. Do not begin
 M05 or later milestones until M04 acceptance criteria pass and this file is
 deliberately advanced.

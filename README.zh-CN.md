@@ -46,10 +46,14 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 - 折线会从二维源确定性映射到面板当前的三维表面
 - 缺失目标、非法折线、非零 falloff、弯曲/含糊铰链都有稳定诊断码
 - 在目标当前全等平面框架中执行 Circular Roll，正负手性与外法线已有明确合同
-- 由显式 Stitch 选择的等采样 Weld；逻辑拓扑共享
+- Seam 声明只有被显式 Stitch 选择后才执行；Weld 后逻辑拓扑共享
   `TopologyVertexId`，UV/来源不同的渲染顶点仍可保留
+- 不等采样边界按当前空间弧长确定性重采样，缺失采样点会真实拆分相邻三角形
+- 可复用的 Weld 与 Bridge
+- `inward`、`outward`、`centered` 三种 Solidify 厚度方向，焊接硬角共享
+  miter，内壳反向绕序，并且只在真实开放边生成侧壁
 - 一张含六个不同区域的二维画布可以编译成带图案盒体
-- 杯壁侧缝和杯底圆周真实拓扑焊接，只有 64 段杯口边保持开放
+- 杯壁侧缝和杯底圆周真实拓扑焊接；加厚后内角连续，杯口 rim 完整闭合
 - 稳定的编译诊断与确定性验证
 - Unity Editor Mesh 烘焙工具
 - Edit Mode 测试
@@ -57,11 +61,11 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 
 首个公开证明目标是：一张二维图片同时包含杯底、杯壁、文字与 Logo，经过 FoldScript 编译后得到闭合、有厚度、图案正确的三维杯子。
 
-M03 审计分支实现了圆形卷曲和一组窄范围的等采样 Weld：Circular Roll 最多
-允许正负一整圈，完整一圈至少需要三个源分段，并且只接受与源矩形全等的当前
-平面嵌入。杯壁侧缝与杯底圆周由显式 Stitch 拓扑焊接并精确吸附；为了保留
-二维原画 UV，Unity 渲染顶点仍可在属性接缝处分裂，但它们共享同一个逻辑
-拓扑编号。M04 才会加入通用重采样、Bridge、内壳、杯口侧壁和厚度。
+M04 保留 M03 Circular Roll 的一圈限制与全等平面框架合同，并已实现通用
+边界重采样、Weld、Bridge、内外壳、硬角 miter 与开放边 rim。重采样不会
+生成悬空点，而会拆分相邻源三角形并插值二维坐标和 UV。Stitch 之后，在共享
+拓扑变形传播实现前，不能再单独移动其已选择面板；Solidify 可以在 Stitch
+之后消费完整焊接拓扑。
 
 ## 七条项目宪法
 
@@ -93,9 +97,11 @@ M03 审计分支实现了圆形卷曲和一组窄范围的等采样 Weld：Circu
 5. 打开 `Window > FoldCanvas > FoldCanvas`。
 6. 执行 `Tools > FoldCanvas > Create Bootstrap Sample` 查看 M01 平面样例；
    执行 `Tools > FoldCanvas > Create M02 Box Proof` 可直接创建、烘焙并显示
-   六面折叠盒体；在 M03 审计分支执行
-   `Tools > FoldCanvas > Create M03 Cup Proof`，可创建由 FoldCanvas 自己拥有
-   的杯子、二维原画板和预览相机，且不会修改项目已有的 MainCamera。
+   六面折叠盒体；执行 `Tools > FoldCanvas > Create M03 Cup Proof` 可保留
+   零厚度演示样例；执行
+   `Tools > FoldCanvas > Create M04 Production Cup Proof` 可创建纯色与
+   防渗色纹理两种厚杯证明，以及外观、精确侧面、内部、底部四个独立相机。
+   所有证明相机均由 FoldCanvas 自己拥有，不会修改项目已有 MainCamera。
 
 ## 交给 Codex
 

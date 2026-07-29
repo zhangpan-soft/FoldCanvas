@@ -109,6 +109,8 @@ A seam links two named boundaries. It describes topology, not merely spatial pro
 MVP seam modes:
 
 - `Weld`: boundaries become one manifold edge
+- `Bridge`: boundaries remain distinct and receive a deterministic connecting
+  strip
 - `Hinge`: boundaries remain distinct but share a fold relationship
 - `KeepOpen`: relationship is documented without closure
 
@@ -137,7 +139,9 @@ editor selection, locale, frame time, random state, or object discovery.
 - Bootstrap panels start in the local XY plane with front normal `+Z`.
 - UV origin is the lower-left corner of the source canvas region.
 - Triangle winding is chosen so bootstrap panel fronts face `+Z`.
-- Thickness initially offsets along generated vertex normals.
+- M04 thickness solves incident oriented face-offset planes per logical
+  topology vertex, preserving one shared position across UV/provenance render
+  splits and hard welded corners.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 

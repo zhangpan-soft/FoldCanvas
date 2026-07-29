@@ -12,13 +12,13 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M03 implements planar `rectangle` and `disk`/ellipse compilation,
-> `rigidTransform`, edge-aligned rigid-crease `fold`, and rectangle `roll`
-> through the Unity `FoldCanvasAsset` representation. Seam declarations are
-> inert source data. `stitch`, `solidify`, seam execution, and JSON
-> import/export are specified for later milestones and currently return
-> diagnostics or are unavailable. A schema-valid JSON file is not a claim that
-> every requested operation is implemented.
+> M04 implements planar `rectangle` and `disk`/ellipse compilation,
+> `rigidTransform`, edge-aligned rigid-crease `fold`, rectangle `roll`,
+> deterministic `weld`/`bridge` Stitch, and `solidify` through the Unity
+> `FoldCanvasAsset` representation. Seam declarations remain inert until
+> selected by Stitch. JSON import/export, `hinge`, `keepOpen`, and later
+> operations remain unavailable. A schema-valid JSON file is not a claim that
+> every future operation is implemented.
 
 ## 1. Global conventions
 
@@ -151,21 +151,25 @@ A seam declares topology intent between two ordered boundaries:
 | `seams[].id` | ID | yes | Unique seam identifier. |
 | `seams[].a` | boundary ref | yes | First ordered boundary. |
 | `seams[].b` | boundary ref | yes | Second ordered boundary. |
-| `seams[].mode` | enum | yes | `"weld"`, `"hinge"`, or `"keepOpen"`. |
+| `seams[].mode` | enum | yes | `"weld"`, `"bridge"`, `"hinge"`, or `"keepOpen"`. |
 | `seams[].reverseB` | boolean | yes | Reverse B's sample order before matching it to A. |
-| `seams[].sampleCount` | integer ≥ 0 | yes | In M03, `0` accepts the existing common count; a positive value must equal that count. General resampling is deferred. |
+| `seams[].sampleCount` | integer ≥ 0 | yes | Minimum correspondence density. `0` uses the union of existing normalized breakpoints; a positive value also adds a uniform parameter grid. Existing samples are never discarded, so the final count may be larger. |
 
 Seam modes:
 
-- `weld`: when selected by M03 Stitch, require existing equal sample counts,
-  snap paired positions, and create one logical topological connection.
+- `weld`: resample both source surfaces to one deterministic correspondence,
+  require paired positions within `weldEpsilon`, and create one logical
+  topological connection.
+- `bridge`: use the same correspondence to create a deterministic connecting
+  strip without unioning the two boundary topology sets.
 - `hinge`: retain distinct boundary vertices while recording a shared fold
   relationship.
 - `keepOpen`: retain an explicit relationship without closing the boundary.
 
 Declaring a seam does not execute it. A later `stitch` operation selects which
-seams to resolve and when. Selecting `hinge` or `keepOpen` for execution is
-still unsupported in M03; the declaration itself remains valid and inert.
+seams to resolve and when. M04 executes `weld` and `bridge`; selecting `hinge`
+or `keepOpen` remains unsupported, while an unselected declaration is valid
+and inert.
 
 ## 6. Operations
 
@@ -371,19 +375,25 @@ contracts.
 The seam's mode, orientation, and sample count control the topology operation.
 Seam declarations remain inert until selected here.
 
-The M03 cup gate supports `weld` when both effective boundary counts already
-match. `sampleCount = 0` accepts that existing common count; a positive value
-must equal it. A boundary whose terminal render vertex already shares the
-first vertex's topology ID contributes that closed-loop point once. Paired
-positions must be within `compile.weldEpsilon`.
+M04 parameterizes both ordered boundaries by normalized current-space arc
+length. It retains the union of authored breakpoints and, when
+`sampleCount > 0`, adds a uniform minimum-density grid. Missing samples are
+inserted by subdividing the corresponding boundary edge and adjacent source
+triangle; current position, source position, UV0, panel ownership, and
+provenance are interpolated. No free-floating sample is permitted.
 
-Weld assigns one deterministic `TopologyVertexId`. Separate render vertices
-remain legal when source UVs, provenance, or hard normals differ; this is an
-attribute seam, not an open topological edge. General resampling, `bridge`,
-`hinge`, and `keepOpen` execution remain future work and return stable
-diagnostics when selected.
+Weld requires paired positions within `compile.weldEpsilon` and assigns one
+deterministic `TopologyVertexId`. Separate render vertices remain legal when
+source UVs, provenance, or hard normals differ; this is an attribute seam, not
+an open topological edge. Bridge emits a strip from the same paired samples
+without unioning them. `hinge` and `keepOpen` execution remain unsupported.
 
-### 6.5 `solidify` — planned for M04
+Until topology-group deformation propagation exists, a later
+`rigidTransform`, `fold`, or `roll` cannot target any panel selected by an
+earlier Stitch. It returns `FC2010` and no Mesh. Solidify is allowed after
+Stitch because it consumes complete logical topology groups.
+
+### 6.5 `solidify` — implemented in M04
 
 Creates thickness from one or more zero-thickness panels after requested seam
 operations.
@@ -404,6 +414,18 @@ Direction semantics:
 
 Open boundaries receive rim/side-wall geometry. Welded internal seams must not
 receive duplicate walls.
+
+The selected panels must include every render copy in each selected welded
+topology group; M04 never tears a partial stitched component or silently
+expands the target. Outer winding follows the source surface, inner triangles
+reverse it, and all render copies sharing one topology ID receive the same
+offset-plane solution. A hard wall-to-bottom corner therefore has one shared
+inner miter rather than two independently offset surfaces.
+
+After Stitch, logical edge incidence classifies rims: incidence one receives
+one side-wall strip, incidence two is already internal, and incidence above two
+fails. The cup top receives a rim; its wall closure and welded bottom loop do
+not receive hidden internal walls.
 
 ## 7. Compile settings
 

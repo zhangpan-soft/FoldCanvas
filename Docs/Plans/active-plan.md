@@ -20,7 +20,7 @@ M03 for additional defensive parameter validation.
 
 # User-visible proof
 
-The same decorated source canvas produces:
+Two deliberately separate appearance proofs use the same generated geometry:
 
 - a cylindrical cup wall whose exterior text remains readable
 - a bottom joined through the reusable seam solver
@@ -30,10 +30,44 @@ The same decorated source canvas produces:
 - no hidden wall across the welded wall-to-bottom seam
 - no crack at the wall closure or wall-to-bottom attachment
 
-The proof is viewed in Unity with a one-sided material from exterior, interior,
-rim-oblique, and underside angles. Two-sided preview rendering, overlapping
-surfaces, enlarged disks, or coincident but topologically separate faces are
-not acceptance substitutes.
+First, a solid-color one-sided material with no texture proves that the mesh
+contains no geometric opening. Second, `M04ProductionCupCanvas.png` proves the
+same result with bilinear filtering and atlas-safe panel edges. The old
+decorated M03 canvas remains a presentation example but is not used to judge
+geometric seam correctness.
+
+The proof is viewed in Unity from a normal exterior default view, exact side,
+interior, and underside validation views. Two-sided preview rendering,
+overlapping surfaces, enlarged disks, epsilon offsets, or coincident but
+topologically separate faces are not acceptance substitutes.
+
+## Wall-to-bottom geometry lock
+
+The M04 proof retains the accepted geometry contract exactly:
+
+- bottom disk `RotationEuler = (90, 0, 0)`
+- bottom plane at `Y = -height / 2`
+- wall `vMin` at `Y = -height / 2`
+- wall `vMin` and bottom `perimeter` are explicitly welded
+- the disk is not moved, enlarged, offset, or overlapped into the wall
+
+A visible hard edge is acceptable. Visible background through the joint is
+not.
+
+## Production proof canvas
+
+`M04ProductionCupCanvas.png` has a separate, result-focused layout:
+
+- the wall panel fills its complete `CanvasRect` with square corners
+- no dark pixel touches wall `uMin`, `uMax`, `vMin`, or `vMax`
+- no decorative outline is drawn along welded wall `vMin`
+- bottom color reaches the sampled disk perimeter
+- 8 to 16 pixels of matching bottom color bleed lie outside the sampled circle
+- no dark atlas background is directly adjacent to either panel UV boundary
+- wall `vMin` and bottom `perimeter` use matching colors
+
+The production texture uses bilinear filtering. Its bleed makes texture
+sampling evidence independent of geometry evidence.
 
 # Scope
 
@@ -129,7 +163,9 @@ Contracts:
 - Inner triangles use reversed winding.
 - Outer normals face away from the material volume.
 - Inner normals face into the cup cavity.
-- Smooth topology groups use a deterministic area-weighted normal.
+- A single incident oriented plane uses its unit face normal directly; multiple
+  incident planes use the deterministic offset-plane intersection described
+  below.
 - At a welded hard corner, including the cup wall-to-bottom join, the offset
   position is solved from the incident oriented face-offset planes. This
   produces one shared mitered topology position rather than independently
@@ -180,10 +216,21 @@ everywhere unless an explicitly supported open-shell mode says otherwise.
 - Every generated vertex records stable provenance sufficient to identify its
   source vertex or source edge endpoints plus interpolation parameter.
 
+## Result-focused proof tests
+
+These tests are required in addition to the gate-specific topology tests:
+
+- `BottomPanel_AllVerticesAreCoplanar`
+- `WallBottomWeld_HasZeroBoundaryPositionGap`
+- `WallBottomWeld_HasNoOpenTopologyEdge`
+- `Solidify_WallBottomInnerCornerRemainsConnected`
+
 # Non-goals
 
 - no additional M03 defensive parameter-validation pass
 - no change to accepted Roll handedness, radius, or one-turn contracts
+- no bottom transform, radius, position, scale, overlap, or epsilon-offset
+  change used to conceal the wall-to-bottom seam
 - no Fold crease topology split
 - no post-Stitch topology-group deformation propagation
 - no robust global self-intersection repair
@@ -393,9 +440,15 @@ Acceptance:
 
 Implement:
 
-- update the decorated cup sample to use reusable Stitch plus Solidify
+- retain the decorated M03 canvas as a presentation example
+- create `M04ProductionCupCanvas.png` with square wall coverage, matching
+  wall/bottom seam colors, and 8 to 16 pixels of bottom-perimeter bleed
+- update the M04 production cup sample to use reusable Stitch plus Solidify
+- add a solid-color, texture-free, one-sided diagnostic material
 - create or update one package-owned EditorOnly M04 proof hierarchy without
   modifying user cameras
+- make the normal exterior view the default and retain exact-side, interior,
+  and underside validation views independently
 - expose requested and measured thickness/topology evidence
 - update documentation, schema if needed, changelog, and package version
 
@@ -408,7 +461,9 @@ Required verification:
 - assembly-definition inspection
 - runtime `UnityEditor` exclusion
 - `git diff --check`
-- live exterior/interior/rim/underside review with one-sided material
+- live solid-color exterior/exact-side/interior/underside review with one-sided
+  material before any textured review
+- repeat the four views with the bilinear, bleed-safe production canvas
 - measured seam gap, thickness error, open-edge count, non-manifold count,
   zero-area count, render-vertex count, topology-vertex count, and triangle
   count
@@ -419,6 +474,8 @@ Acceptance:
 - exterior art reads correctly
 - inner wall, bottom interior, rim, and underside are all visible and correctly
   wound
+- the default camera is a normal exterior view, not an underside-only view
+- no background is visible through the wall-to-bottom joint in either material
 - final cup has no unintended open or non-manifold topology edge
 
 # Planned diagnostics
@@ -430,13 +487,15 @@ runtime registry before use.
 | Code | Name | Condition |
 | --- | --- | --- |
 | `FC2010` | `StitchMustBeTerminalForSelectedPanels` | later position deformation targets a panel selected by Stitch |
-| TBD | `ZeroLengthStitchBoundary` | selected boundary has no usable current-space length |
-| TBD | `SeamLengthMismatch` | boundary lengths exceed the documented compatibility threshold |
-| TBD | `StitchOrientationConflict` | declared correspondence cannot preserve required orientation |
-| TBD | `StitchWeldCollapse` | correspondence would collapse a triangle or edge |
-| TBD | `InvalidSolidifyThickness` | thickness is non-finite or not positive |
-| TBD | `IncompleteSolidifyTopologySelection` | selected panels do not include a complete welded topology component |
-| TBD | `UnsupportedSolidifyCorner` | incident offset planes have no stable bounded corner solution |
+| `FC2011` | `ZeroLengthStitchBoundary` | selected boundary has no usable current-space length |
+| `FC2012` | `StitchBoundaryClosureMismatch` | one selected boundary is open and the other closed |
+| `FC2013` | `StitchBoundarySubdivisionFailed` | a missing correspondence cannot split exactly one adjacent source triangle |
+| `FC4001` | `InvalidSolidifyThickness` | thickness is non-finite or not positive |
+| `FC4002` | `SolidifyTargetMissing` | no valid selected panel or source triangle exists |
+| `FC4003` | `IncompleteSolidifyTopologySelection` | selected panels do not include a complete welded topology component |
+| `FC4004` | `UnsupportedSolidifyCorner` | incident offset planes have no stable bounded corner solution |
+| `FC4005` | `NonManifoldSolidifyInput` | source shell topology is collapsed, overused, or inconsistently oriented |
+| `FC4006` | `InvalidSolidifyDirection` | serialized direction is not an implemented enum value |
 | TBD | `SolidifySelfOverlap` | requested local offset produces detected overlap |
 | existing `FC5003` or focused successor | `NonManifoldTopology` | topology edge incidence exceeds two or shell construction is non-manifold |
 
@@ -513,6 +572,12 @@ and never claim robust global repair.
 - Welded hard corners use a shared incident-plane miter solution. Solidify
   rejects partial stitched-component selection instead of cracking or silently
   changing target scope.
+- The wall-to-bottom visual line is tested as two separate questions:
+  texture-free topology first, then atlas sampling with production bleed.
+- M04 proof geometry keeps the M03 bottom rotation and exact `-height/2`
+  placement. Appearance defects are not repaired by geometry overlap.
+- The old decorated canvas remains a presentation example; only the solid
+  diagnostic material and `M04ProductionCupCanvas.png` judge seam correctness.
 - True open topology edges alone generate rim/side-wall faces.
 - Implementation proceeds gate by gate; later gates do not begin until the
   preceding gate's tests and diff are reviewed.
@@ -530,17 +595,44 @@ and never claim robust global repair.
   geometry implementation has started.
 - 2026-07-27: Repository validation and `git diff --check` passed for the
   planning transition.
+- 2026-07-29: PR #2 passed human audit and merged into `main` at merge commit
+  `1644090`.
+- 2026-07-29: Added the production-canvas and texture-free proof gate while
+  locking the accepted bottom transform, radius, position, and Weld geometry.
+- 2026-07-29: Implemented `FC2010`, deterministic ordered-boundary
+  correspondence, real adjacent-triangle subdivision, unequal-count Weld, and
+  Bridge.
+- 2026-07-29: Implemented inward/outward/centered Solidify, shared
+  incident-plane hard-corner miters, reversed inner winding, and true-open-edge
+  rim construction.
+- 2026-07-29: Compiled the M04 production cup in Unity to 2,972 render
+  vertices, 2,562 topology vertices, and 5,120 triangles with 0 m wall-bottom
+  gap, 0.004 m measured thickness, zero open edges, and zero non-manifold
+  edges.
+- 2026-07-29: Generated the 1,024 x 1,024 bleed-safe production canvas,
+  texture-free one-sided proof material, and independently selectable exterior,
+  exact-side, interior, and underside cameras.
+- 2026-07-29: Unity `6000.3.20f1` passed all 143 Edit Mode tests, including
+  the four result-focused wall/bottom tests and production-canvas bleed QA.
+- 2026-07-29: Unity rendered the same generated Mesh with the solid diagnostic
+  and production materials from exterior, exact-side, interior, and underside
+  cameras. No background is visible through the wall closure or wall-bottom
+  joint.
+- 2026-07-29: JSON parsing, assembly-reference checks, Runtime `UnityEditor`
+  isolation, repository validation, and `git diff --check` passed. Human PR
+  audit remains; `CURRENT_TASK.md` stays on M04.
 
-# Final verification for planning change
+# M04 verification
 
-Before committing this planning transition:
-
-- confirm `HEAD` contains `96d1688`
-- confirm `CURRENT_TASK.md` points to M04
-- confirm the active plan and compiler pipeline state the terminal-Stitch rule
-- run repository static validation
-- run `git diff --check`
-- leave host-project M03 proof/test artifacts untracked and untouched
-
-Unity tests are not rerun for a documentation-only planning commit. The
-starting implementation baseline remains the accepted 103/103 M03 suite.
+- Unity Editor: `6000.3.20f1`
+- Edit Mode: `143/143` passed, zero skipped or failed
+- Results: `Project~/TestResults/M04EditMode.xml`
+- Cup: 2,972 render vertices, 2,562 logical topology vertices, 5,120
+  triangles
+- Wall-bottom gap: `0 m`
+- Bottom-center thickness: `0.00400000066 m` for requested `0.004 m`
+- Final open topology edges: `0`
+- Final non-manifold topology edges: `0`
+- Four one-sided proof views rendered successfully with both the solid
+  diagnostic and production texture
+- M05 and later milestones remain unimplemented

@@ -97,7 +97,8 @@ Mesh.
 
 ## M04: General Stitch and solidify
 
-**Status:** active planning on `feat/m04-stitch-solidify`.
+**Status:** implemented on `feat/m04-stitch-solidify`; awaiting final human
+review before merge.
 
 **Proof:** the cup becomes a closed manifold shell with configurable wall and base thickness.
 
@@ -110,6 +111,8 @@ Mesh.
 - open-boundary classification
 - inner shell and rim generation
 - manifold tests
+- solid-color and bleed-safe production-canvas proof from exterior, exact-side,
+  interior, and underside views
 
 ## M05: Sphere gores
 

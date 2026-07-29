@@ -7,7 +7,8 @@ namespace FoldCanvas
     {
         Weld = 0,
         Hinge = 1,
-        KeepOpen = 2
+        KeepOpen = 2,
+        Bridge = 3
     }
 
     [Serializable]

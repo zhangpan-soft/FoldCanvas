@@ -185,7 +185,7 @@ namespace FoldCanvas
                 perimeter[segment] = perimeterStart + segment;
             }
 
-            record.AddBoundary("perimeter", perimeter);
+            record.AddBoundary("perimeter", perimeter, true);
             buffer.AddPanel(record);
             return record;
         }

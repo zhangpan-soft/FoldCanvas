@@ -28,8 +28,22 @@ M02 also provides two proof commands:
   creates an unlit preview material, and selects a scene object using the
   generated mesh. It never creates a Unity cube primitive.
 
-The proof mesh is a closed-looking but deliberately unwelded six-panel shell.
-Explicit seam topology remains M04 work.
+The M02 proof mesh is a closed-looking but deliberately unwelded six-panel
+shell.
+
+M04 adds:
+
+- `Tools > FoldCanvas > Create M04 Production Cup Sample`
+- `Tools > FoldCanvas > Create M04 Production Cup Proof`
+- `Tools > FoldCanvas > M04 View > Exterior | Exact Side | Interior |
+  Underside`
+
+The proof builds one generated thick-cup Mesh and presents it twice: first with
+a texture-free one-sided diagnostic material, then with the bilinear
+`M04ProductionCupCanvas.png`. The owned `EditorOnly` root never reads or
+modifies `Camera.main`; exterior is the default camera and the other three
+views remain independently selectable. The retained M03 decorated canvas is
+not used as evidence of geometric closure.
 
 ## Authoring actions
 

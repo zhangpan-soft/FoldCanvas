@@ -478,6 +478,114 @@ namespace FoldCanvas.Tests
             });
         }
 
+        [Test]
+        public void CreateM04ProductionCupProof_ReusesOwnedFourViewHierarchy()
+        {
+            InTemporaryScene(scene =>
+            {
+                int countBefore = CountSceneObjects(scene);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM04ProductionCupProof();
+                GameObject firstRoot = FindM04PreviewRoot(scene);
+                int countAfterFirst = CountSceneObjects(scene);
+                Camera[] firstCameras =
+                    firstRoot.GetComponentsInChildren<Camera>(true);
+                Assert.That(countAfterFirst, Is.EqualTo(countBefore + 8));
+                Assert.That(firstCameras.Length, Is.EqualTo(4));
+
+                int rootId = firstRoot.GetInstanceID();
+                int[] cameraIds = new int[firstCameras.Length];
+                for (int i = 0; i < firstCameras.Length; i++)
+                {
+                    cameraIds[i] = firstCameras[i].GetInstanceID();
+                }
+
+                firstRoot.SetActive(false);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM04ProductionCupProof();
+
+                GameObject secondRoot = FindM04PreviewRoot(scene);
+                Camera[] secondCameras =
+                    secondRoot.GetComponentsInChildren<Camera>(true);
+                Assert.That(secondRoot.GetInstanceID(), Is.EqualTo(rootId));
+                Assert.That(secondRoot.activeSelf, Is.True);
+                Assert.That(secondRoot.tag, Is.EqualTo("EditorOnly"));
+                Assert.That(
+                    CountSceneObjects(scene),
+                    Is.EqualTo(countAfterFirst));
+                Assert.That(secondCameras.Length, Is.EqualTo(4));
+                for (int i = 0; i < secondCameras.Length; i++)
+                {
+                    Assert.That(
+                        secondCameras[i].GetInstanceID(),
+                        Is.EqualTo(cameraIds[i]));
+                }
+
+                Camera exterior =
+                    secondRoot.transform
+                        .Find("FoldCanvas M04 Exterior Camera")
+                        .GetComponent<Camera>();
+                Assert.That(exterior.enabled, Is.True);
+                Assert.That(
+                    exterior.transform.localPosition.y,
+                    Is.GreaterThan(0f));
+                Assert.That(
+                    secondRoot.transform
+                        .Find("FoldCanvas M04 Exact Side Camera")
+                        .GetComponent<Camera>().enabled,
+                    Is.False);
+                Assert.That(
+                    secondRoot.transform
+                        .Find("FoldCanvas M04 Interior Camera")
+                        .GetComponent<Camera>().enabled,
+                    Is.False);
+                Assert.That(
+                    secondRoot.transform
+                        .Find("FoldCanvas M04 Underside Camera")
+                        .GetComponent<Camera>().enabled,
+                    Is.False);
+            });
+        }
+
+        [Test]
+        public void CreateM04ProductionCupProof_DoesNotModifyMainCamera()
+        {
+            InTemporaryScene(scene =>
+            {
+                GameObject cameraObject =
+                    new GameObject("User Main Camera", typeof(Camera));
+                cameraObject.tag = "MainCamera";
+                cameraObject.transform.SetPositionAndRotation(
+                    new Vector3(7f, 8f, 9f),
+                    Quaternion.Euler(12f, 34f, 56f));
+                Camera camera = cameraObject.GetComponent<Camera>();
+                camera.fieldOfView = 47f;
+                camera.nearClipPlane = 0.33f;
+                camera.farClipPlane = 777f;
+                camera.clearFlags = CameraClearFlags.Depth;
+                camera.backgroundColor =
+                    new Color(0.2f, 0.3f, 0.4f, 0.5f);
+                camera.depth = -7f;
+                string serializedCamera =
+                    EditorJsonUtility.ToJson(camera);
+                string serializedTransform =
+                    EditorJsonUtility.ToJson(cameraObject.transform);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM04ProductionCupProof();
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM04ProductionCupProof();
+
+                Assert.That(
+                    EditorJsonUtility.ToJson(camera),
+                    Is.EqualTo(serializedCamera));
+                Assert.That(
+                    EditorJsonUtility.ToJson(cameraObject.transform),
+                    Is.EqualTo(serializedTransform));
+                Assert.That(cameraObject.CompareTag("MainCamera"), Is.True);
+            });
+        }
+
         private static void InTemporaryScene(Action<Scene> assertion)
         {
             Scene previousScene = SceneManager.GetActiveScene();
@@ -553,6 +661,30 @@ namespace FoldCanvas.Tests
                     !EditorUtility.IsPersistent(objects[i]) &&
                     objects[i].scene == scene &&
                     objects[i].name == "FoldCanvas M03 Preview Root" &&
+                    objects[i].CompareTag("EditorOnly"))
+                {
+                    match = objects[i];
+                    matches++;
+                }
+            }
+
+            Assert.That(matches, Is.EqualTo(1));
+            return match;
+        }
+
+        private static GameObject FindM04PreviewRoot(Scene scene)
+        {
+            GameObject[] objects =
+                Resources.FindObjectsOfTypeAll<GameObject>();
+            GameObject match = null;
+            int matches = 0;
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] != null &&
+                    !EditorUtility.IsPersistent(objects[i]) &&
+                    objects[i].scene == scene &&
+                    objects[i].name ==
+                        "FoldCanvas M04 Preview Root" &&
                     objects[i].CompareTag("EditorOnly"))
                 {
                     match = objects[i];

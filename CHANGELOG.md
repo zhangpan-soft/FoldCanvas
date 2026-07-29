@@ -8,6 +8,58 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.7] - 2026-07-29
+
+### Added
+
+- Deterministic normalized arc-length boundary correspondence that preserves
+  authored breakpoints, adds `sampleCount` as a minimum-density grid, inserts
+  missing samples into adjacent source triangles, and interpolates source
+  positions and UV0
+- Reusable unequal-count `Weld` and `Bridge` execution with logical topology
+  identity preserved independently from render-vertex attribute splits
+- `Solidify` support for inward, outward, and centered thickness, reversed
+  inner-shell winding, shared offset-plane miters at welded hard corners, and
+  side walls only on true open topology edges
+- Stable M04 diagnostics `FC2010`–`FC2013` and `FC4001`–`FC4006`
+- `M04ProductionCupCanvas.png`, an atlas-safe bilinear proof texture with
+  square wall coverage and 12-pixel bottom-perimeter bleed
+- A texture-free one-sided solid diagnostic material and package-owned M04
+  exterior, exact-side, interior, and underside cameras
+
+### Changed
+
+- `sampleCount` now requests minimum seam correspondence density instead of
+  requiring an already equal boundary count
+- Stitch is terminal for later `RigidTransform`, `Fold`, or `Roll` operations
+  on every panel it selected until topology-group deformation propagation is
+  implemented; `Solidify` may consume the complete stitched component
+- Topology validation now runs for all generated geometry, not only after a
+  Weld
+- Package status, JSON Schema, compiler pipeline, field reference, sample
+  guide, and roadmap now describe the implemented M04 contracts
+
+### Fixed
+
+- High-resolution disk triangles use explicit magnitude normalization during
+  Solidify, avoiding Unity's small-vector normalization cutoff
+- Wall and bottom inner offsets are solved at one shared welded miter, so the
+  thick cup cannot open at the inner corner
+- The result proof no longer mistakes dark atlas pixels for a geometric crack;
+  geometry is judged first with a solid material and then with bleed-safe art
+- M04 preview cameras do not use or modify `Camera.main`, default to a normal
+  exterior view, and isolate the retained M03 presentation preview
+
+### Verified
+
+- Unity `6000.3.20f1` compiled a thick cup with 2,972 render vertices, 2,562
+  logical topology vertices, and 5,120 triangles
+- The production cup reports `0 m` wall-to-bottom gap, `0.004 m` measured
+  bottom-center thickness, zero open topology edges, and zero non-manifold
+  edges
+- Unity `6000.3.20f1` passed all 143 Edit Mode tests; JSON,
+  assembly-reference, repository, and diff checks also passed
+
 ## [0.1.0-preview.6] - 2026-07-27
 
 ### Added

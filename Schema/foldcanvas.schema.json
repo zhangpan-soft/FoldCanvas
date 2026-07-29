@@ -308,15 +308,15 @@
           "$ref": "#/$defs/boundaryRef"
         },
         "mode": {
-          "description": "weld requests one topological connection; M03 Stitch executes only existing equal-sample welds. hinge and keepOpen remain declarative and return a stable unsupported-mode diagnostic if selected for execution.",
-          "enum": ["weld", "hinge", "keepOpen"]
+          "description": "weld unions paired logical topology; bridge emits a deterministic connecting strip without unioning the two sides. hinge and keepOpen remain declarative and return a stable unsupported-mode diagnostic if selected for execution.",
+          "enum": ["weld", "hinge", "keepOpen", "bridge"]
         },
         "reverseB": {
           "description": "Reverse boundary B sample order before matching it to boundary A.",
           "type": "boolean"
         },
         "sampleCount": {
-          "description": "Requested common boundary sample count. In M03, zero accepts the existing common count and a positive value must equal it; resampling is deferred.",
+          "description": "Minimum requested correspondence density. M04 retains both boundaries' normalized arc-length breakpoints and adds a uniform grid when positive, so the final paired count may exceed this value. Zero uses the natural breakpoint union.",
           "type": "integer",
           "minimum": 0,
           "maximum": 8192
@@ -503,7 +503,7 @@
       ]
     },
     "stitch": {
-      "description": "Resolves named seams in listed order. M03 implements existing equal-sample welds only; general resampling and other seam modes are deferred.",
+      "description": "Resolves named seams in listed order through deterministic normalized arc-length correspondence. M04 executes weld and bridge; hinge and keepOpen remain declarative.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "seams"],
@@ -531,7 +531,7 @@
       }
     },
     "solidify": {
-      "description": "Planned operation that creates shell thickness and side walls from zero-thickness panels.",
+      "description": "Creates consistently wound outer and inner shells from the final selected topology and adds side walls only on true open topology edges.",
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "type", "targets", "thickness", "direction"],
@@ -550,7 +550,7 @@
           "const": "solidify"
         },
         "targets": {
-          "description": "Panel IDs to thicken.",
+          "description": "Panel IDs to thicken. Selection must include every render copy in each selected welded topology group.",
           "type": "array",
           "minItems": 1,
           "maxItems": 4096,
