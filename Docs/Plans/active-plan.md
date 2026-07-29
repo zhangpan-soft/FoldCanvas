@@ -1,478 +1,546 @@
 # Goal
 
-Complete the M03 pre-merge architecture audit and the deterministic `Roll`
-operator on branch `feat/m03-roll-cup`. After reviewing the real Unity proof,
-the user authorized a commit, push, and audit PR once the reported orbit-view
-visibility defect is fixed. The PR must remain unapproved and unmerged, and
-`CURRENT_TASK.md` must remain on M03 for the external audit.
+Deliver M04 on `feat/m04-stitch-solidify` as a sequence of independently
+reviewable geometry gates:
 
-This milestone also closes one M02 silent-approximation hole: a Fold crease
-that requires triangle splitting must fail explicitly. M03 does not implement
-that topology split.
+1. reusable topology and ordered-boundary infrastructure
+2. deterministic unequal-count seam correspondence and surface subdivision
+3. reusable Weld and Bridge processing
+4. Solidify outer/inner shell construction
+5. true-open-boundary rim generation
+6. manifold validation and a live thick-cup proof
 
-After the second review proof, the user found two remaining acceptance defects:
-the cup wall and bottom were only spatially coincident rather than explicitly
-stitched, and the wall artwork read right-to-left from the exterior. The user
-authorized a narrow M03 scope revision in PR #1: execute equal-sample `Weld`
-seams for this cup and correct exterior Roll handedness. This authorization
-does not include general boundary resampling, `Bridge`, `Solidify`, thickness,
-or any later M04 behavior.
+M03 was human-approved and merged through PR #1 into `main` at merge commit
+`c7b1e61`, retaining reviewed head `96d1688`. Its accepted baseline is Unity
+`6000.3.20f1`, 103/103 Edit Mode tests, and the live zero-gap cup proof.
 
-# Delivery constraints
+M04 prioritizes visible and topological correctness of Solidify, thickness,
+inner walls, rim generation, and reusable seam processing. It does not reopen
+M03 for additional defensive parameter validation.
 
-- Implement only explicit equal-sample `Weld` seams selected by a
-  `StitchOperationDefinition`. Do not infer a weld from spatial coincidence.
-- Do not implement boundary resampling, `Bridge`, `Solidify`, thickness,
-  inner walls, rims, handles, or any other M04 behavior.
-- Do not silently approximate a Fold or Roll request.
-- Commit and push only after the visibility regression, complete Edit Mode
-  suite, and multi-angle Unity preview pass.
-- Create an audit PR into `main`, but do not approve or merge it.
-- Do not advance `CURRENT_TASK.md`.
-- Keep all work on `feat/m03-roll-cup`; `main` remains the accepted M02 state.
+# User-visible proof
 
-# User-visible M03 proof
+The same decorated source canvas produces:
 
-- One 2D appearance canvas displays a normal, readable `GPT 5.6` wall region,
-  an emblem, and a `CODEX` bottom region.
-- A separate derived cup mesh rolls the wall through a positive 360-degree
-  sweep and rigidly places the disk on the bottom plane.
-- The 2D source board and 3D result are visible together in a clean Unity
-  scene so UV handedness cannot be hidden by a mirrored source image.
-- The wall's minimum/maximum boundaries are explicitly welded into one
-  topological side seam. The wall bottom and disk perimeter are explicitly
-  welded into one topological edge loop.
-- Attribute splits remain legal where one logical vertex requires distinct
-  source UVs, panel provenance, or hard normals. Such render-vertex splits
-  share one deterministic topology vertex identity and do not form an open
-  geometric seam.
-- After both seams execute, the only open topological boundary is the cup rim.
-- The interactive proof uses an opaque, two-sided Unlit material so M03's
-  intentionally zero-thickness wall and bottom remain visible while orbiting.
-- The two-sided visualization is not a winding oracle: acceptance still checks
-  generated mesh normals, triangle order, and a canonical outside view. It
-  does not add an inner wall, thickness, or hidden preview-only geometry; the
-  two explicit Weld seams are compiler output validated independently.
+- a cylindrical cup wall whose exterior text remains readable
+- a bottom joined through the reusable seam solver
+- an outer shell and a correctly wound inner shell
+- measurable, configurable wall and base thickness
+- one generated top rim joining the outer and inner lip
+- no hidden wall across the welded wall-to-bottom seam
+- no crack at the wall closure or wall-to-bottom attachment
 
-# A. M02 Fold topology-split guard
+The proof is viewed in Unity with a one-sided material from exterior, interior,
+rim-oblique, and underside angles. Two-sided preview rendering, overlapping
+surfaces, enlarged disks, or coincident but topologically separate faces are
+not acceptance substitutes.
 
-## Contract
+# Scope
 
-- A Fold crease is executable only when both authored endpoints are existing
-  source vertices and the complete crease is covered, without gaps, by a
-  deterministic chain of existing source-mesh edges.
-- Triangle edges are collected from the target panel's retained triangle span,
-  projected onto the directed crease, sorted by interval start/end, and merged
-  in deterministic source order.
-- If either endpoint needs insertion, or any positive-length interval crosses
-  a triangle interior instead of an existing edge, compilation stops with
-  `FC3011 FoldCreaseRequiresTopologySplit`.
-- No vertex moves and no `Mesh` or compiled data is returned for that source.
-- Existing grid-edge, diagonal-edge, and panel-boundary folds continue to use
-  the accepted M02 executor.
+## Reusable ordered boundaries
 
-## Required tests
+- Represent every active boundary as an explicit ordered loop or chain over
+  current render vertices and logical topology identities.
+- Preserve panel ownership, source position, source UV0, and deterministic
+  provenance at every existing or inserted boundary sample.
+- Treat a repeated closed-loop endpoint as redundant only when its first and
+  last samples already share one logical topology identity.
+- Compute current-space cumulative arc length in stable boundary order.
+- Reject missing, collapsed, non-finite, or ambiguous boundaries with one
+  stable root-cause diagnostic and no Mesh.
 
-- `Fold_OffGridCrease_ReturnsRequiresTopologySplitDiagnostic`
-- All accepted M02 grid-edge and boundary tests remain enabled and green.
-- Roadmap records deterministic crease topology splitting as an explicit
-  future task rather than implied M03 behavior.
+## Deterministic seam correspondence
 
-# B. Roll current-frame semantics
+- Normalize cumulative arc length to `[0,1]`.
+- Apply `ReverseB` before pairing.
+- Create a common parameter sequence that retains the sorted union of both
+  boundaries' existing normalized breakpoints.
+- When `sampleCount > 0`, add a deterministic uniform parameter grid as a
+  minimum requested correspondence density. Existing authored breakpoints are
+  never discarded, so the final paired count may be greater than
+  `sampleCount`. When `sampleCount = 0`, use the natural breakpoint union.
+- When a parameter is absent on one side, insert a sample by subdividing its
+  boundary edge and the adjacent source-surface triangle.
+- Interpolate current position, immutable source position, source UV0, panel
+  ownership, and generated provenance deterministically.
+- Never create an unattached render vertex merely to satisfy seam counts.
+- Produce identical vertices, triangle order, topology IDs, and diagnostics
+  for identical input.
 
-## Compatible current embedding
+The required unequal-count proof pairs 32 and 64 source samples. It must not
+depend on a special cup path or equal-count fallback.
 
-- The target must be a rectangle whose complete current vertex set is one
-  finite, non-degenerate affine plane embedding of its authored source grid.
-- M03's compatible affine subset is a congruent planar embedding. Translation,
-  rotation, and orientation-reversing planar isometries may be accepted.
-- In-plane metric-changing scale, shear, collapsed axes, prior non-planar
-  Fold, non-planarity, and piecewise affine embeddings return
-  `FC3021 UnsupportedRollEmbedding`.
-- This deliberately preserves all required pre-Roll rigid placement while
-  defining compatibility from the current geometry rather than operation
-  history. Fold-after-Roll semantics remain deferred.
+This M04 meaning of `sampleCount` must be synchronized in the schema, FoldScript
+specification, and field reference before implementation. It avoids destructive
+decimation of authored boundary vertices while still providing an explicit
+minimum tessellation request.
 
-## Resolved frame
+## Reusable Stitch
 
-- `CurrentOrigin`: current position of the source rectangle center.
-- `CurrentU`: unit current direction of increasing source U.
-- `CurrentV`: unit current direction of increasing source V.
-- `CurrentNormal`: normalized
-  `Cross(CurrentU, CurrentV)`.
-- Every current vertex must equal
-  `CurrentOrigin + sourceX*CurrentU + sourceY*CurrentV` within centralized
-  absolute/relative tolerances.
-- Frame resolution is performed from ordered rectangle corners and validated
-  against every target vertex. No local triangle frame is guessed.
+- A `SeamDefinition` remains inert until selected by a
+  `StitchOperationDefinition`.
+- Stitch consumes its seam IDs in declared order.
+- Weld reuses the shared correspondence solver, verifies positional tolerance,
+  unions logical topology identities, and snaps render copies to the
+  deterministic representative.
+- Attribute splits remain legal when UV0, provenance, or hard normals differ.
+  Manifold checks use `TopologyVertexId`, not raw render index.
+- Bridge reuses the same correspondence but emits a deterministic strip when
+  direct topology identity is not intended.
+- `Hinge` and `KeepOpen` may remain declarative in M04 if documentation and
+  diagnostics make that explicit.
 
-## Mapping
+## Terminal-Stitch operation rule
 
-Let `t` be normalized position along the selected direction and:
+Until topology-group deformation propagation exists, Stitch must be the
+terminal position-deforming operation for every panel selected by that Stitch.
 
-```text
-theta = radians(startAngleDegrees - t * angleDegrees)
-```
+- For each Stitch, resolve the union of panels referenced by all selected
+  seams.
+- Any later `RigidTransform`, `Fold`, or `Roll` targeting one of those panels
+  returns exactly one
+  `FC2010 StitchMustBeTerminalForSelectedPanels` error and no Mesh.
+- A later deformation targeting only unrelated panels remains valid.
+- This check is based on ordered operation targets and selected seam
+  membership; it does not guess from spatial coincidence.
+- Solidify is allowed after Stitch because it consumes the complete final
+  topology as a shell-construction stage. It must operate on whole logical
+  topology groups and cannot move one render copy or one stitched panel side
+  independently.
+- A future topology-group deformation propagation milestone may relax this
+  rule. M04 does not implement that propagation.
 
-For U:
+## Solidify
 
-```text
-position =
-    CurrentOrigin
-    + sourceY * CurrentV
-    - R * cos(theta) * CurrentU
-    + R * sin(theta) * CurrentNormal
-```
+Solidify consumes the final stitched topology and creates two consistently
+oriented shell surfaces.
 
-For V:
+For source position `p`, resolved unit normal `n`, and positive thickness `t`:
 
-```text
-position =
-    CurrentOrigin
-    + sourceX * CurrentU
-    - R * cos(theta) * CurrentV
-    + R * sin(theta) * CurrentNormal
-```
-
-The non-roll source coordinate remains linear. UV0, source position, panel
-ownership, provenance, and boundary vertex identities remain unchanged. Roll
-reverses the target panel's triangle winding once to keep the documented
-positive sweep radially outward under the corrected exterior-readable angular
-mapping. Connectivity is unchanged.
-
-## Required tests
-
-- `Roll_AfterRigidTransform_PreservesCurrentFrame`
-- `Roll_AfterNonPlanarFold_ReturnsStableDiagnostic`
-- `Roll_AfterUnitReflection_UsesReflectedCurrentFrame`
-- `Roll_AfterInPlaneNonUniformScale_ReturnsUnsupportedEmbedding`
-- `Roll_AfterCollapsedAxis_ReturnsUnsupportedEmbedding`
-
-# C. Roll handedness, winding, and normals
-
-- At start angle zero, the minimum roll boundary begins on the negative
-  `CurrentU` radial axis for U or negative `CurrentV` radial axis for V.
-- A positive angle advances from that radial axis toward
-  `-CurrentNormal`.
-- Roll reverses each target triangle's winding deterministically without
-  changing triangle connectivity. A positive sweep therefore produces
-  radially outward normals while authored source U reads left-to-right at the
-  canonical exterior view.
-- A negative sweep uses the opposite angular circulation and produces the
-  documented radially inward orientation.
-- Connectivity, vertex IDs, boundary ordering, and UV values never change.
-- Acceptance checks `result.Mesh.normals`, not only a hand-computed triangle
-  cross product, and uses a one-sided preview material.
-
-## Required tests
-
-- `PositiveFullRoll_HasOutwardWinding`
-- `NegativeFullRoll_ReversesOrientationPredictably`
-- `RollU_And_RollV_HaveDocumentedHandedness`
-
-# D. Seam declaration and minimum Weld semantics
-
-- `SeamDefinition` is inert declarative source data.
-- Merely populating `asset.Seams` does not execute topology and does not add an
-  error.
-- A `StitchOperationDefinition` executes only its ordered seam-ID list.
-- This gate supports `SeamMode.Weld` only when both effective boundary sample
-  counts already match. `sampleCount = 0` selects that existing common count;
-  a positive `sampleCount` must equal it.
-- A boundary whose first and last render vertices already share a topology ID
-  is treated as a closed loop and exposes that terminal duplicate only once
-  for subsequent seam correspondence. This lets the stitched 65-sample wall
-  bottom pair with the 64-sample disk perimeter without resampling.
-- Each pair must be within `compile.weldEpsilon`. Successful pairs are snapped
-  to the deterministic lowest-index representative and receive one
-  `TopologyVertexId`.
-- Distinct render vertices are retained when UV, provenance, or hard-normal
-  charts differ. Manifold/open-edge validation uses `TopologyVertexId`, not
-  raw render indices.
-- Missing seams/boundaries, unsupported modes, count mismatches, and excessive
-  gaps fail with one stable root-cause diagnostic and no Mesh.
-- `FitTargetBoundary` returns exactly one dedicated
-  `FC3016 UnsupportedFitTargetBoundary` diagnostic. A declared target seam
-  does not add `UnsupportedSeam`.
-
-## Required tests
-
-- `DeclaredSeam_WithoutStitch_DoesNotFail`
-- `FitTargetBoundary_ReturnsSingleStableDiagnostic`
-- `UnsupportedStitch_ReturnsStableDiagnostic`
-- `Stitch_EqualSampleWeld_AssignsSharedTopologyIdentity`
-- `Stitch_ClosedLoopEndpoint_IsCountedOnceForNextSeam`
-- `Stitch_PositionMismatch_ReturnsStableDiagnostic`
-- `Stitch_SampleCountMismatch_ReturnsStableDiagnostic`
-- `Stitch_PreservesDistinctSourceUvsAcrossAttributeSeam`
-
-# E. Structured diagnostics
-
-- `FoldCanvasDiagnostic` carries an ordered, copied, read-only list of
-  `FoldCanvasDiagnosticValue` entries.
-- Each value has a stable English key, finite `double` value, and optional
-  unit. No dictionary enumeration contributes to order.
-- Diagnostics also expose an ordered, copied, read-only
-  `RepairSuggestions` string list for future repair guidance.
-- Explicit-radius Roll always emits one `FC3018 RollStretchReport` diagnostic:
-  `Info` inside guidance and `Warning` outside `[0.5, 2.0]`.
-- Its values appear in this exact order:
-  `sourceSpan`, `arcLength`, `stretchRatio`.
-- Human-readable text may summarize the ratio, but structured values are the
-  contract.
-- Repeated compilation must produce identical diagnostic count, ordering,
-  codes, severities, contexts, structured values, and suggestion ordering.
-
-# F. Roll sampling validation
-
-- A closed full-turn request is a nonzero sweep whose magnitude is 360 degrees
-  within the centralized full-turn tolerance.
-- A closed full turn requires at least three source segments in the selected
-  roll direction. One segment collapses the minimum and maximum samples. Two
-  segments sample 0, 180, and 360 degrees and produce two coincident planar
-  panels even though their individual triangles have nonzero area. Both cases
-  fail directly with `FC3022 InsufficientRollTessellation`.
-- Three segments for a 360-degree sweep must compile into three distinct
-  angular panels without zero-area or overlapping triangular surfaces.
-- Partial rolls remain open.
-- Before Stitch, full-turn minimum/maximum boundary positions coincide within
-  the seam-proof tolerance while their render indices remain distinct. An
-  explicit Weld seam later gives each corresponding pair one topology ID.
-
-## Required tests
-
-- `FullRoll_WithOneSegment_ReturnsInsufficientTessellation`
-- `FullRoll_WithTwoSegments_ReturnsInsufficientTessellation`
-- `FullRollV_WithTwoSegments_ReturnsInsufficientTessellation`
-- `FullRoll_WithThreeSegments_DoesNotGenerateZeroAreaTriangles`
-- `FullRoll_WithThreeSegments_ProducesNonOverlappingTriangularSurface`
-- `PartialRoll_RemainsOpen`
-- `FullRoll_MinAndMaxBoundariesCoincideButRemainTopologicallySeparate`
-
-# G. Circular Roll turn limit
-
-- M03 Circular Roll accepts signed sweeps only within
-  `[-360 degrees, +360 degrees]`, using the centralized full-turn tolerance at
-  the boundary.
-- A larger magnitude would map multiple source intervals onto the same
-  zero-thickness cylindrical surface. M03 has no pitch, layer spacing,
-  thickness accumulation, or collision contract with which to make that
-  geometry meaningful.
-- Requests above the supported magnitude fail with exactly one
-  `FC3023 UnsupportedMultiTurnRoll` diagnostic. The compiler does not clamp,
-  truncate, or silently generate overlapping layers.
-- `SpiralRoll` and `LayeredRoll` are future independent operations with their
-  own geometry and validation contracts.
-
-## Required tests
-
-- `Roll_AbovePositiveFullTurn_ReturnsStableDiagnostic`
-- `Roll_BelowNegativeFullTurn_ReturnsStableDiagnostic`
-- `Roll_ExactlyPositiveFullTurn_Succeeds`
-- `Roll_ExactlyNegativeFullTurn_Succeeds`
-
-# H. Owned M03 proof
-
-- `Create M03 Cup Proof` owns one `FoldCanvas M03 Preview Root`, tagged
-  `EditorOnly`, in the active scene.
-- The root owns exactly one `Cup Proof`, `Source Canvas`, and `Preview Camera`.
-  It is found with an inactive-aware editor lookup and never inferred from
-  `Camera.main` or a global object name alone.
-- Re-running the command reuses the owned objects, including inactive ones.
-  Existing objects and components are recorded with Undo before mutation.
-- The owned camera is untagged and the command never reads or changes a user's
-  MainCamera.
-
-## Required tests
-
-- `CreateM03CupProof_TwiceKeepsOneOwnedPreviewCamera`
-- `CreateM03CupProof_TwiceKeepsStableObjectCount`
-- `CreateM03CupProof_DoesNotModifyExistingMainCamera`
-- `CreateM03CupProof_ReusesInactiveOwnedObjects`
-
-# I. Cup wall/bottom fit proof
-
-- The M03 wall bottom boundary and disk perimeter must coincide at all 64
-  corresponding samples in the same bottom plane, within the centralized
-  seam-proof tolerance.
-- The M03 source declares `close-wall` and `attach-bottom` Weld seams, then
-  executes them in that order after Roll and bottom placement.
-- The completed render mesh retains UV/provenance attribute splits but has
-  1,281 unique topology vertices, no non-manifold edge, and exactly the
-  64-edge top rim as its only open topological boundary.
-- Enlarging the disk, overlapping surfaces, or adding thickness is not an
-  acceptable repair.
-- The owned preview resets to a canonical transform and camera framing so a
-  stale user rotation cannot be mistaken for generated geometry drift.
-- Acceptance includes a sample-driven boundary-pair test and a real Unity
-  oblique/bottom-view inspection.
-
-# Diagnostic allocation
-
-| Code | Name | Severity/condition |
+| Direction | Outer position | Inner position |
 | --- | --- | --- |
-| `FC3011` | `FoldCreaseRequiresTopologySplit` | error: crease is not an existing continuous edge chain |
-| `FC3012` | `RollTargetMissing` | error: target panel does not exist |
-| `FC3013` | `NonFiniteRollParameter` | error: angle/start/radius or derived radius is invalid |
-| `FC3014` | `NearZeroRollAngle` | error: angle magnitude is at/below minimum |
-| `FC3015` | `InvalidExplicitRollRadius` | error: explicit radius is not positive |
-| `FC3016` | `UnsupportedFitTargetBoundary` | error: depends on future seam solving |
-| `FC3017` | `UnsupportedRollPanelShape` | error: target is not a rectangle |
-| `FC3018` | `RollStretchReport` | info/warning: structured explicit-radius deformation report |
-| `FC3019` | `InvalidRollDirection` | error: unknown direction enum |
-| `FC3020` | `InvalidRollRadiusMode` | error: unknown radius-mode enum |
-| `FC3021` | `UnsupportedRollEmbedding` | error: current target has no compatible single frame |
-| `FC3022` | `InsufficientRollTessellation` | error: closed full turn has fewer than three roll segments |
-| `FC3023` | `UnsupportedMultiTurnRoll` | error: circular sweep exceeds one signed turn |
-| `FC2003` | `StitchSeamMissing` | error: Stitch references no unique declared seam |
-| `FC2004` | `StitchBoundaryMissing` | error: a referenced panel boundary does not exist |
-| `FC2005` | `StitchSampleCountMismatch` | error: minimum Weld cannot resample the requested boundaries |
-| `FC2006` | `StitchPositionMismatch` | error: paired samples exceed `weldEpsilon` |
-| `FC2007` | `UnsupportedStitchSeamMode` | error: selected seam mode is not `Weld` |
-| `FC2008` | `DuplicateSeamId` | error: a selected seam ID is ambiguous |
-| `FC2009` | `EmptyStitchSeamList` | error: Stitch selects no seam |
-| `FC5003` | `NonManifoldTopology` | error: welded topology collapses a triangle or creates edge incidence above two |
+| `Inward` | `p` | `p - t*n` |
+| `Outward` | `p + t*n` | `p` |
+| `Centered` | `p + 0.5*t*n` | `p - 0.5*t*n` |
 
-# Radius and stretch
+Contracts:
 
-- `PreserveArcLength`:
-  `R = sourceSpan / abs(radians(angleDegrees))`.
-- `Explicit`: `R = explicitRadius`.
-- Explicit `arcLength = R * abs(radians(angleDegrees))`.
-- Explicit `stretchRatio = arcLength / sourceSpan`.
-- No mode clamps, silently changes radius, or substitutes another mode.
+- The source surface winding defines the outer orientation.
+- Inner triangles use reversed winding.
+- Outer normals face away from the material volume.
+- Inner normals face into the cup cavity.
+- Smooth topology groups use a deterministic area-weighted normal.
+- At a welded hard corner, including the cup wall-to-bottom join, the offset
+  position is solved from the incident oriented face-offset planes. This
+  produces one shared mitered topology position rather than independently
+  offsetting the wall and bottom copies.
+- An unbounded, singular, or incompatible corner offset returns a stable
+  diagnostic; it is never replaced with an arbitrary averaged-normal guess.
+- Every render copy with the same topology identity uses the same solved
+  offset position so UV/provenance splits cannot crack.
+- Thickness is checked at deterministic source samples against a centralized
+  absolute/relative tolerance.
+- Solidify rejects non-finite or non-positive thickness.
+- Solidify targets must be closed under welded topology. If a selected panel
+  shares a topology group with an unselected panel, compilation fails rather
+  than separating the stitched component or silently expanding the target.
+- Local self-overlap may return a stable warning or error according to whether
+  a valid shell can still be proven. M04 does not attempt global repair.
 
-# Proof dimensions
+## Open-boundary classification and rim
 
-- Wall source: `2*pi*0.05 m` by `0.12 m`, `64 x 12` segments.
-- Wall Roll: U, positive 360 degrees, preserve arc length, start angle 180
-  degrees. The seam is placed on the back and the authored wall center faces
-  the proof camera with readable U orientation.
-- Bottom source: `0.10 m` disk, 64 radial segments, 8 rings.
-- Bottom placement: rotate positive 90 degrees about X and translate to
-  `y = -0.06 m`.
-- Stitch order: `close-wall`, then `attach-bottom`, both equal-sample Weld.
-- Expected cup render mesh: 1,358 attribute vertices and 2,496 triangles.
-- Expected welded topology: 1,281 unique topology vertices and only the
-  64-edge top rim open.
+Open boundaries are classified only after Stitch and logical-topology
+normalization:
+
+- a topology edge with incidence one is open
+- incidence two is an interior manifold edge
+- incidence greater than two is non-manifold and fails
+- degenerate topology edges fail
+
+For every true open edge, Solidify connects the corresponding outer and inner
+copies exactly once with consistently wound side-wall triangles. Therefore:
+
+- the cup top lip receives one rim strip
+- the welded wall closure receives no hidden wall
+- the welded wall-to-bottom loop receives no hidden wall
+- a closed source surface receives no side wall
+
+After rim construction, the thick cup must have manifold edge incidence two
+everywhere unless an explicitly supported open-shell mode says otherwise.
+
+## UV and provenance policy
+
+- Outer and inner shell copies retain source UV0 exactly.
+- Inserted seam vertices linearly interpolate source UV0 along their source
+  boundary edge.
+- M04 rim/side-wall copies retain the UV0 of their corresponding source
+  boundary endpoints. The texture therefore stretches through thickness
+  deterministically without inventing an un-authored atlas region.
+- A future dedicated rim atlas or UV1 policy is out of scope.
+- Every generated vertex records stable provenance sufficient to identify its
+  source vertex or source edge endpoints plus interpolation parameter.
+
+# Non-goals
+
+- no additional M03 defensive parameter-validation pass
+- no change to accepted Roll handedness, radius, or one-turn contracts
+- no Fold crease topology split
+- no post-Stitch topology-group deformation propagation
+- no robust global self-intersection repair
+- no bevels or rounded rims
+- no variable thickness field
+- no cup handle
+- no SpiralRoll or LayeredRoll
+- no M05 sphere-gores work
+- no authoring-window redesign
+- no dependency addition
+
+# Architecture changes permitted
+
+M04 may make a narrow data-structure change required by real boundary
+subdivision:
+
+- replace assumptions that a panel is represented only by immutable contiguous
+  vertex/triangle spans with mutable explicit index collections during compile
+- keep the public compiled result read-only
+- retain deterministic final ordering
+- keep runtime code free of `UnityEditor`
+- keep package core independent of render pipelines, third parties, and
+  network services
+
+This is not authorization for a broad compiler refactor.
 
 # Files expected to change
 
+- `CURRENT_TASK.md` only when the milestone is eventually completed
 - `Docs/Plans/active-plan.md`
-- `Runtime/Compiler/FoldLineExecutor.cs`
-- `Runtime/Compiler/RollExecutor.cs`
+- `Codex/M04_STITCH_SOLIDIFY.md`
+- `Runtime/Compiler/MeshBuildBuffer.cs`
 - `Runtime/Compiler/StitchExecutor.cs`
 - `Runtime/Compiler/FoldCanvasCompiler.cs`
-- `Runtime/Compiler/FoldCanvasGeometryTolerances.cs`
-- `Runtime/Compiler/MeshBuildBuffer.cs`
+- new focused runtime helpers for boundary correspondence, topology
+  subdivision, or Solidify when separation improves testability
 - `Runtime/Diagnostics/FoldCanvasDiagnostic.cs`
+- `Runtime/Data/SeamDefinition.cs` for the explicit Bridge mode
+- `Runtime/Data/FoldOperationDefinition.cs` only if the accepted Solidify data
+  contract requires a narrow change
+- `Tests/Editor/StitchCompilerTests.cs`
+- new focused Solidify/topology Edit Mode tests
 - `Editor/FoldCanvasSampleCreator.cs`
-- `Editor/Shaders/FoldCanvasTwoSidedUnlit.shader`
-- `Editor/FoldCanvasWindow.cs`
-- `Tests/Editor/FoldLineCompilerTests.cs`
-- `Tests/Editor/RollCompilerTests.cs`
-- `Tests/Editor/SourceValidationTests.cs`
-- `Tests/Editor/BootstrapEditorWorkflowTests.cs`
-- M02/M03-relevant files under `Documentation~`, `Schema`, and `Samples~`
+- M04 sample assets under `Samples~`
+- M04-relevant files under `Documentation~` and `Schema`, including the
+  precise `sampleCount` meaning
 - `CHANGELOG.md`
-- `package.json`
+- `package.json` only for the eventual package-version iteration
 
-# Execution order
+# Geometry invariants
 
-1. Record this audit contract before further implementation.
-2. Add the M02 edge-chain guard and tests.
-3. Implement/verify the current Roll frame and the non-planar rejection.
-4. Lock positive/negative winding using generated Unity normals.
-5. Keep Seam declarations inert until an explicit Stitch selects them.
-6. Add structured diagnostic values and explicit-radius reports.
-7. Add closed-turn sampling validation and reject unsupported multi-turn
-   circular rolls.
-8. Lock the congruent-planar embedding contract with reflection, scale, and
-   collapsed-axis tests.
-9. Replace ambient-camera preview mutation with one inactive-aware,
-   package-owned EditorOnly preview hierarchy.
-10. Update field reference, compiler pipeline, diagnostics, and roadmap.
-11. Run JSON/asmdef/repository/diff checks and the complete Edit Mode suite,
-    then export `TestResults.xml`.
-12. Build a clean Unity proof scene with the 2D source board and 3D cup, then
-    verify the wall and bottom remain visible from multiple orbit directions.
-13. Update the newest-first changelog entry.
-14. Implement and validate the user-authorized equal-sample Weld correction
-    plus exterior-readable Roll mapping.
-15. Commit and push the branch, update audit PR #1 into `main`, and stop before
-    approval, merge, or task-pointer advancement.
+1. Identical source and options produce byte-for-byte stable logical geometry
+   ordering and identical diagnostic order.
+2. UV0 on every retained source-derived outer/inner vertex equals its authored
+   source UV0.
+3. A resampled boundary vertex is part of its adjacent surface triangulation.
+4. Welded render copies may remain distinct but share one topology identity
+   and one current position.
+5. No output triangle contains repeated logical topology vertices.
+6. No output triangle has zero area within centralized tolerance.
+7. No undirected logical topology edge has incidence greater than two.
+8. A true open boundary edge is rimmed exactly once during Solidify.
+9. Welded internal seams are never mistaken for open boundaries.
+10. Inner-shell winding is the exact reverse of its corresponding outer
+    triangle.
+11. Measured shell separation matches the requested direction and thickness.
+12. Generated normals are validated from the emitted Unity Mesh, not inferred
+    only from preview material settings.
+13. Invalid geometry returns diagnostics and no Mesh; no stage silently emits
+    an approximation.
+
+# Implementation and acceptance gates
+
+Each gate is implemented, tested, reviewed in its own focused diff, and then
+accepted before the next gate begins.
+
+## Gate M04.1: ordering guard and mutable topology foundation
+
+Implement:
+
+- reserve `FC2010 StitchMustBeTerminalForSelectedPanels`
+- scan later deformation targets for panels selected by Stitch
+- introduce the minimum mutable index/boundary representation required for
+  boundary-edge subdivision
+- preserve the accepted equal-count M03 Weld behavior
+
+Required tests:
+
+- `PostStitchRigidTransform_OnSelectedPanel_ReturnsTerminalOperationDiagnostic`
+- `PostStitchFold_OnSelectedPanel_ReturnsTerminalOperationDiagnostic`
+- `PostStitchRoll_OnSelectedPanel_ReturnsTerminalOperationDiagnostic`
+- `PostStitchDeformation_OnUnselectedPanel_RemainsAllowed`
+- all existing 103 tests remain enabled
+
+Acceptance:
+
+- one stable ordering diagnostic and no Mesh on violation
+- no change to accepted M03 cup topology or visible proof
+- repeated compile has identical diagnostics
+
+## Gate M04.2: normalized correspondence and real surface subdivision
+
+Implement:
+
+- ordered current-space arc-length parameterization
+- deterministic normalized parameter union
+- explicit minimum-density `sampleCount` parameter grid
+- boundary-edge sample insertion
+- adjacent triangle subdivision with preserved winding
+- source-position, UV0, ownership, and provenance interpolation
+
+Required tests:
+
+- `Stitch_ThirtyTwoToSixtyFour_ResamplesDeterministically`
+- `Stitch_SampleCount_AddsMinimumDensityWithoutDroppingBreakpoints`
+- `Stitch_ResampledVertex_IsPartOfAdjacentSurface`
+- `Stitch_Resampling_PreservesInterpolatedSourceUv`
+- `Stitch_Resampling_PreservesTriangleWinding`
+- `Stitch_RepeatedCompile_ProducesIdenticalTopology`
+- `Stitch_ZeroLengthBoundary_ReturnsSingleStableDiagnostic`
+
+Acceptance:
+
+- 32↔64 correspondence is not an equal-count special case
+- no unattached seam vertices
+- no zero-area triangles or source-surface holes
+
+## Gate M04.3: reusable Weld and Bridge
+
+Implement:
+
+- migrate Weld to the shared correspondence result
+- preserve attribute seams through shared topology IDs
+- implement deterministic Bridge strip generation and winding
+- maintain declared seam order and reversal
+
+Required tests:
+
+- `Weld_ThirtyTwoToSixtyFour_ProducesSharedTopology`
+- `Weld_ReverseB_ChangesCorrespondencePredictably`
+- `Weld_LeavesNoCrackAboveEpsilon`
+- `Weld_PreservesDistinctUvRenderCopies`
+- `Bridge_ThirtyTwoToSixtyFour_ProducesDeterministicStrip`
+- `Bridge_HasConsistentWindingAndNoZeroAreaTriangles`
+- `DeclaredSeam_WithoutStitch_RemainsInert`
+
+Acceptance:
+
+- the same solver supports cup seams and a non-cup fixture
+- raw render-index splits do not appear as topological cracks
+- unsupported modes still return one stable root cause
+
+## Gate M04.4: Solidify outer and inner shells
+
+Implement:
+
+- consume final stitched topology
+- resolve deterministic smooth normals and hard-corner offset-plane miters
+- generate inward, outward, and centered shell copies
+- reverse inner winding
+- retain source UV0 and stable provenance
+
+Required tests:
+
+- `Solidify_Inward_PreservesOuterAndOffsetsInner`
+- `Solidify_Outward_PreservesInnerAndOffsetsOuter`
+- `Solidify_Centered_SplitsRequestedThickness`
+- `Solidify_InnerTrianglesReverseOuterWinding`
+- `Solidify_SharedTopologyCopies_DoNotCrack`
+- `Solidify_WallBottomCorner_MeetsAtSharedMiter`
+- `Solidify_PartialStitchedComponent_ReturnsStableDiagnostic`
+- `Solidify_InvalidThickness_ReturnsStableDiagnostic`
+- `StitchThenSolidify_UsesFinalTopology`
+
+Acceptance:
+
+- requested thickness is met at deterministic samples
+- outer and inner Unity Mesh normals point in documented directions
+- the shell cannot separate at UV/provenance attribute splits
+
+## Gate M04.5: true-open-boundary rim generation
+
+Implement:
+
+- classify topology-edge incidence after Stitch
+- order true open edges into deterministic boundary loops/chains
+- generate one rim/side wall per true open edge
+- apply deterministic rim winding, UV0, and provenance
+
+Required tests:
+
+- `Solidify_Cup_GeneratesOnlyTopRim`
+- `Solidify_WeldedBottomSeam_HasNoInternalWall`
+- `Solidify_WeldedWallClosure_HasNoInternalWall`
+- `Solidify_RimWindingFacesOutward`
+- `Solidify_RimUvPolicy_IsDeterministic`
+- `Solidify_ClosedSurface_GeneratesNoRim`
+- `Solidify_NonManifoldInput_ReturnsStableDiagnostic`
+
+Acceptance:
+
+- no internal walls across either cup Weld
+- top rim is complete from every oblique view
+- final logical topology is manifold
+
+## Gate M04.6: sample, live proof, and release evidence
+
+Implement:
+
+- update the decorated cup sample to use reusable Stitch plus Solidify
+- create or update one package-owned EditorOnly M04 proof hierarchy without
+  modifying user cameras
+- expose requested and measured thickness/topology evidence
+- update documentation, schema if needed, changelog, and package version
+
+Required verification:
+
+- full Edit Mode suite in Unity `6000.3.20f1`
+- exported `TestResults.xml`
+- repository static validation
+- changed JSON parse
+- assembly-definition inspection
+- runtime `UnityEditor` exclusion
+- `git diff --check`
+- live exterior/interior/rim/underside review with one-sided material
+- measured seam gap, thickness error, open-edge count, non-manifold count,
+  zero-area count, render-vertex count, topology-vertex count, and triangle
+  count
+
+Acceptance:
+
+- source board and finished thick cup are visible together
+- exterior art reads correctly
+- inner wall, bottom interior, rim, and underside are all visible and correctly
+  wound
+- final cup has no unintended open or non-manifold topology edge
+
+# Planned diagnostics
+
+Final codes are added only with their implementation and tests. `FC2010` is
+reserved by this plan; subsequent M04 allocations must be checked against the
+runtime registry before use.
+
+| Code | Name | Condition |
+| --- | --- | --- |
+| `FC2010` | `StitchMustBeTerminalForSelectedPanels` | later position deformation targets a panel selected by Stitch |
+| TBD | `ZeroLengthStitchBoundary` | selected boundary has no usable current-space length |
+| TBD | `SeamLengthMismatch` | boundary lengths exceed the documented compatibility threshold |
+| TBD | `StitchOrientationConflict` | declared correspondence cannot preserve required orientation |
+| TBD | `StitchWeldCollapse` | correspondence would collapse a triangle or edge |
+| TBD | `InvalidSolidifyThickness` | thickness is non-finite or not positive |
+| TBD | `IncompleteSolidifyTopologySelection` | selected panels do not include a complete welded topology component |
+| TBD | `UnsupportedSolidifyCorner` | incident offset planes have no stable bounded corner solution |
+| TBD | `SolidifySelfOverlap` | requested local offset produces detected overlap |
+| existing `FC5003` or focused successor | `NonManifoldTopology` | topology edge incidence exceeds two or shell construction is non-manifold |
+
+Diagnostics include ordered structural context such as operation ID, seam ID,
+panel ID, boundary ID, sample parameter, requested thickness, and measured
+error when applicable. Do not encode required repair data only inside the
+message string.
+
+# Risks and rollback
+
+## Boundary subdivision corrupts adjacent surfaces
+
+Risk: inserted samples are appended to a seam but not incorporated into the
+panel, or triangle replacement changes winding.
+
+Control: Gate M04.2 requires adjacency, UV, winding, and repeated-compile tests
+before reusable Stitch consumes the result.
+
+Rollback: keep the accepted M03 equal-count solver intact behind the previous
+path until M04.2 passes; do not ship a partial unequal-count approximation.
+
+## Panel contiguous-span assumptions leak
+
+Risk: mutable insertion invalidates later panel range calculations.
+
+Control: identify every range consumer before changing `MeshBuildBuffer`, move
+only required consumers to explicit lists, and lock deterministic order with
+tests.
+
+Rollback: isolate the new representation behind focused helpers rather than
+rewriting unrelated compiler stages.
+
+## Attribute seams are mistaken for cracks
+
+Risk: raw render-index validation reports false open edges or offset copies
+move apart.
+
+Control: topology incidence and Solidify offsets operate on
+`TopologyVertexId`; outer/inner render copies retain independent UV data but
+share position decisions.
+
+## Rim generation closes welded seams internally
+
+Risk: render duplicates at the wall closure or bottom loop look open.
+
+Control: classify edges after topology union and test that only the cup top lip
+is open before rim generation.
+
+## Thick offsets self-intersect
+
+Risk: large thickness or concave regions produce overlap.
+
+Control: detect deterministically where practical, report a stable diagnostic,
+and never claim robust global repair.
+
+# Decisions made
+
+- M03 remains accepted; no extra defensive Roll/Fold parameter pass is part of
+  M04.
+- `FC2010 StitchMustBeTerminalForSelectedPanels` is the planned stable guard
+  until topology-group deformation propagation exists.
+- Solidify may follow Stitch because it consumes whole final topology; it is
+  not a later isolated panel deformation.
+- Unequal-count Weld requires actual boundary-edge and adjacent-triangle
+  subdivision, not free-floating interpolated samples.
+- M04 `sampleCount` is a minimum correspondence density; existing normalized
+  boundary breakpoints remain mandatory in the final common schedule.
+- Logical manifold checks use topology identities; render splits remain valid
+  for UV, provenance, and hard normals.
+- Inward keeps the source as outer, Outward keeps it as inner, and Centered
+  splits thickness equally.
+- Outer/inner retain source UV0. Rim UV0 derives deterministically from source
+  boundary endpoints for the M04 MVP.
+- Welded hard corners use a shared incident-plane miter solution. Solidify
+  rejects partial stitched-component selection instead of cracking or silently
+  changing target scope.
+- True open topology edges alone generate rim/side-wall faces.
+- Implementation proceeds gate by gate; later gates do not begin until the
+  preceding gate's tests and diff are reviewed.
 
 # Progress log
 
-- 2026-07-27: M02 accepted on `main` at commit `fd7eeda`.
-- 2026-07-27: Preliminary M03 Roll implementation reached 65/65 Edit Mode
-  tests, but real preview exposed mirrored wall artwork.
-- 2026-07-27: User paused final M03 delivery and supplied architecture audit
-  requirements A-G.
-- 2026-07-27: Moved all uncommitted M03 work from `main` to
-  `feat/m03-roll-cup`.
-- 2026-07-27: Replaced the preliminary plan with this audited Fold, Roll,
-  Seam, diagnostic, sampling, and pre-merge stop contract.
-- 2026-07-27: Implemented the audit guards and semantics without M04 topology;
-  all 75 Edit Mode tests passed in Unity `6000.3.20f1`.
-- 2026-07-27: Saved the clean host preview as
-  `Project~/Assets/M03CupPreview.unity`. Its unchanged source image and
-  positive-roll cup both display `GPT 5.6` left-to-right with a one-sided
-  Back-Cull cup material.
-- 2026-07-27: Human preview review found that arbitrary object rotation exposed
-  the expected backface-culling holes of M03's zero-thickness wall and bottom.
-- 2026-07-27: User authorized commit, push, and an unapproved/unmerged audit PR
-  after that visibility defect is repaired; `CURRENT_TASK.md` remains on M03.
-- 2026-07-27: Added a package-owned opaque two-sided Unlit preview shader and
-  an Edit Mode regression check. Compiler winding, topology, normals, vertex
-  counts, and M04 boundaries remain unchanged.
-- 2026-07-27: Unity `6000.3.20f1` recompiled the package and passed 76/76 Edit
-  Mode tests, including the new preview-culling regression.
-- 2026-07-27: Regenerated the 1,358-vertex, 2,496-triangle proof and inspected
-  the standard side view plus bottom-facing and reverse-bottom orientations.
-  The wall and bottom remained opaque and complete.
-- 2026-07-27: JSON parsing, assembly-definition inspection, `git diff --check`,
-  package-version consistency, and the final source diff passed.
-- 2026-07-27: Second review gate reopened M03 for the two-segment full-turn
-  degeneracy, explicit one-turn limit, owned preview hierarchy, final-geometry
-  embedding contract, and wall/bottom visual-fit audit. PR #1 remains open and
-  unmerged; `CURRENT_TASK.md` remains unchanged.
-- 2026-07-27: Second-review implementation passed all 90/90 Edit Mode tests in
-  Unity `6000.3.20f1`; the exported result is
-  `Project~/TestResults/M03SecondReview-TestResults.xml`.
-- 2026-07-27: Regenerated the owned `EditorOnly` preview twice in the live
-  editor. It retained one root, cup, source canvas, and untagged preview camera.
-  The underside-oblique proof showed the wall meeting the disk, and the
-  measured bidirectional boundary gap was `2.20391154E-08 m`.
-- 2026-07-27: Repository validation, JSON/schema and asmdef parsing, runtime
-  `UnityEditor` exclusion, and `git diff --check` passed. Commit `f857106`
-  was pushed to `feat/m03-roll-cup`.
-- 2026-07-27: Updated PR #1 with the 90-test result, full-turn and one-turn
-  contracts, owned-preview behavior, final embedding contract, and measured
-  wall/bottom fit. The PR remains open, unapproved, and unmerged.
-- 2026-07-27: Live review proved that distance-only fit did not constitute
-  topological stitching and that the canonical cup wall still displayed
-  `GPT 5.6` right-to-left. The user explicitly authorized minimum equal-sample
-  Weld execution and a Roll exterior-orientation correction in PR #1, while
-  retaining the ban on resampling, Solidify, thickness, merge, and
-  `CURRENT_TASK.md` advancement.
-- 2026-07-27: Implemented explicit ordered equal-sample Weld execution,
-  deterministic `TopologyVertexId` union/snap behavior, welded-topology
-  validation, and the exterior-readable Roll mapping. UV/provenance attribute
-  seams remain separate render vertices.
-- 2026-07-27: Unity `6000.3.20f1` compiled the package and passed 103/103 Edit
-  Mode tests. The exported final result is
-  `Project~/TestResults/M03WeldCorrection-Final3-TestResults.xml`.
-- 2026-07-27: Regenerated the proof in the live editor. It reported 1,358
-  render vertices, 1,281 logical topology vertices, 2,496 triangles, exactly
-  64 open top-rim edges, and `0 m` maximum wall/bottom boundary gap. The
-  canonical exterior view displayed `GPT 5.6` left-to-right and the bottom
-  met the wall without a visible gap.
+- 2026-07-27: M03 human audit approved.
+- 2026-07-27: PR #1 merged four commits into `main` with merge commit
+  `c7b1e61`; reviewed head `96d1688` remains an ancestor of `main`.
+- 2026-07-27: Local `main` fast-forwarded to the merged result.
+- 2026-07-27: Created `feat/m04-stitch-solidify`.
+- 2026-07-27: Advanced `CURRENT_TASK.md` to M04 and recorded the
+  terminal-Stitch ordering constraint.
+- 2026-07-27: Replaced the completed M03 plan with this gated M04 plan. No M04
+  geometry implementation has started.
+- 2026-07-27: Repository validation and `git diff --check` passed for the
+  planning transition.
 
-# Final verification
+# Final verification for planning change
 
-The complete 103/103 Edit Mode suite, exported XML, logical topology/open-edge
-checks, and fresh live Unity proof are green. Repository validation, JSON
-parsing, and `git diff --check` pass. The correction is ready for the next
-branch push and PR #1 review; PR #1 must remain unapproved and unmerged, and
-`CURRENT_TASK.md` remains unchanged.
+Before committing this planning transition:
+
+- confirm `HEAD` contains `96d1688`
+- confirm `CURRENT_TASK.md` points to M04
+- confirm the active plan and compiler pipeline state the terminal-Stitch rule
+- run repository static validation
+- run `git diff --check`
+- leave host-project M03 proof/test artifacts untracked and untouched
+
+Unity tests are not rerun for a documentation-only planning commit. The
+starting implementation baseline remains the accepted 103/103 M03 suite.
