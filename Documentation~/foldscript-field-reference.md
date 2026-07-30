@@ -12,9 +12,10 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M04 implements planar `rectangle` and `disk`/ellipse compilation,
+> M05 implements planar `rectangle` and `disk`/ellipse compilation,
 > `rigidTransform`, edge-aligned rigid-crease `fold`, rectangle `roll`,
-> deterministic `weld`/`bridge` Stitch, and `solidify` through the Unity
+> explicit rectangle `sphericalWrap`, deterministic `weld`/`bridge` Stitch,
+> and `solidify` through the Unity
 > `FoldCanvasAsset` representation. Seam declarations remain inert until
 > selected by Stitch. JSON import/export, `hinge`, `keepOpen`, and later
 > operations remain unavailable. A schema-valid JSON file is not a claim that
@@ -366,7 +367,74 @@ contracts.
 读取执行前的最终几何，只接受与源矩形全等的平面嵌入；平移、旋转和单位镜像
 可以通过，改变平面内度量的缩放、剪切、轴塌缩和非平面结果会返回稳定诊断。
 
-### 6.4 `stitch`
+### 6.4 `sphericalWrap` — implemented in M05
+
+`sphericalWrap` maps one explicit rectangular 2D parameter panel onto a
+spherical patch. It is a deformation rule; it does not create a sphere,
+invent seam topology, or call a Unity primitive.
+
+| Field | Type | Required | Meaning |
+|---|---:|:---:|---|
+| `panel` | ID | yes | Rectangle parameter panel to map. |
+| `radius` | positive number | yes | Sphere radius in document units, measured from the resolved `CurrentOrigin`. |
+| `latitudeRange` | `[number,number]` | yes | Signed latitude endpoints in degrees. Each endpoint is inside `[-90,90]`; the span must be nonzero. |
+| `longitudeRange` | `[number,number]` | yes | Signed longitude endpoints in degrees. Each endpoint is inside `[-360,360]`, the span must be nonzero, and its magnitude may not exceed 360 degrees. |
+| `wrapDirection` | enum | yes | `"longitudeAlongU"` maps source U to longitude and V to latitude; `"longitudeAlongV"` swaps those parameter roles. |
+| `poleMode` | enum | yes | `"merge"` emits one render pole per panel fan. `"keepFan"` retains one render pole copy per adjacent longitude cell while assigning all copies one logical topology identity. |
+| `subdivisionMode` | enum | yes | M05 accepts only `"panelGrid"` and uses the panel's authored segment counts. |
+
+Before mapping, the complete current panel must still be a congruent,
+non-degenerate planar embedding. The compiler resolves:
+
+```text
+CurrentOrigin = current position corresponding to source (0,0)
+CurrentU      = unit current direction of increasing source X/U
+CurrentV      = unit current direction of increasing source Y/V
+CurrentNormal = normalize(cross(CurrentU, CurrentV))
+```
+
+Translation, rotation, and a unit reflection are preserved. In-plane
+metric-changing scale, shear, collapse, or a prior non-planar deformation
+returns `FC6010 UnsupportedSphericalEmbedding`.
+
+Let `longitudeT` and `latitudeT` be selected by `wrapDirection` and linearly
+interpolate the authored angular ranges. With radians `lambda` and `phi`:
+
+```text
+currentPosition =
+    CurrentOrigin
+    + radius * cos(phi) * cos(lambda) * CurrentU
+    + radius * sin(phi)               * CurrentV
+    + radius * cos(phi) * sin(lambda) * CurrentNormal
+```
+
+The compiler chooses triangle index orientation from the actual mapped frame
+and then verifies every triangle faces radially outward. It does not rely on a
+two-sided material.
+
+An exact `-90` or `+90` endpoint changes tessellation before deformation.
+`merge` uses one source/UV sample at the midpoint of that panel's pole edge.
+`keepFan` retains a render sample per adjacent longitude cell so UV/provenance
+splits survive, but unions those copies to one `TopologyVertexId`. A panel that
+spans both poles needs at least two authored latitude segments so at least one
+non-pole row exists. Pole topology is never repaired by collapsing a generated
+mesh afterward.
+
+Neighboring gores remain separate until an explicit `stitch` selects their
+side seams. If unequal correspondence inserts a new point, the source
+coordinate and UV are interpolated, but current 3D position is recomputed
+through this spherical formula. It therefore remains on `radius` rather than a
+straight chord. A complete stitched zero-thickness sphere must pass the M05
+sphere report: one component, no open/non-manifold/orientation-conflict or
+isolated topology, Euler characteristic 2, one north pole, one south pole,
+outward winding, consistent frame, and bounded radius error.
+
+中文摘要：`sphericalWrap` 只把明确声明的矩形二维球瓣映射到当前局部球面，
+不会凭空生成球体。二维源坐标和 UV 保留；极点在离散阶段明确处理；球瓣之间
+只有经过 Seam Graph 与 `stitch` 才会焊接。新增接缝采样点重新执行球面公式，
+不会落在球内弦线上。
+
+### 6.5 `stitch`
 
 | Field | Type | Meaning |
 |---|---:|---|
@@ -389,11 +457,11 @@ an open topological edge. Bridge emits a strip from the same paired samples
 without unioning them. `hinge` and `keepOpen` execution remain unsupported.
 
 Until topology-group deformation propagation exists, a later
-`rigidTransform`, `fold`, or `roll` cannot target any panel selected by an
-earlier Stitch. It returns `FC2010` and no Mesh. Solidify is allowed after
-Stitch because it consumes complete logical topology groups.
+`rigidTransform`, `fold`, `roll`, or `sphericalWrap` cannot target any panel
+selected by an earlier Stitch. It returns `FC2010` and no Mesh. Solidify is
+allowed after Stitch because it consumes complete logical topology groups.
 
-### 6.5 `solidify` — implemented in M04
+### 6.6 `solidify` — implemented in M04
 
 Creates thickness from one or more zero-thickness panels after requested seam
 operations.

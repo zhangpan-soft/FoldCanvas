@@ -10,7 +10,8 @@ namespace FoldCanvas
         Fold = 1,
         Roll = 2,
         Stitch = 3,
-        Solidify = 4
+        Solidify = 4,
+        SphericalWrap = 5
     }
 
     [Serializable]

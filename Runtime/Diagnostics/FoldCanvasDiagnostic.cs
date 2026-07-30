@@ -72,6 +72,21 @@ namespace FoldCanvas
         public const string ZeroAreaTriangle = "FC5002";
         public const string NonManifoldTopology = "FC5003";
         public const string InvalidWeldEpsilon = "FC5004";
+        public const string SphericalWrapTargetMissing = "FC6001";
+        public const string UnsupportedSphericalWrapPanelShape = "FC6002";
+        public const string NonFiniteSphericalWrapParameter = "FC6003";
+        public const string InvalidSphericalRadius = "FC6004";
+        public const string CollapsedSphericalRange = "FC6005";
+        public const string UnsupportedSphericalMultiTurn = "FC6006";
+        public const string InvalidSphericalWrapDirection = "FC6007";
+        public const string InvalidSphericalPoleMode = "FC6008";
+        public const string UnsupportedSphericalSubdivisionMode = "FC6009";
+        public const string UnsupportedSphericalEmbedding = "FC6010";
+        public const string InsufficientSphericalPoleTessellation = "FC6011";
+        public const string SphericalRadiusError = "FC6012";
+        public const string InvalidSphericalPoleTopology = "FC6013";
+        public const string SphereValidationFailed = "FC6014";
+        public const string DuplicateSphericalWrapTarget = "FC6015";
     }
 
     public sealed class FoldCanvasDiagnosticValue

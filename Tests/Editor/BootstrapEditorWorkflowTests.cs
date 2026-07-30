@@ -19,6 +19,10 @@ namespace FoldCanvas.Tests
         private const string M02AssetPath = SampleFolder + "/M02BoxFoldCanvas.asset";
         private const string M03TexturePath = SampleFolder + "/M03CupCanvas.png";
         private const string M03AssetPath = SampleFolder + "/M03CupFoldCanvas.asset";
+        private const string M05TexturePath =
+            SampleFolder + "/M05SphereCanvas.png";
+        private const string M05AssetPath =
+            SampleFolder + "/M05SphereGoldenFoldCanvas.asset";
 
         private UnityEngine.Object previousSelection;
 
@@ -700,6 +704,302 @@ namespace FoldCanvas.Tests
             });
         }
 
+        [Test]
+        public void CreateM05SphereSample_TwiceKeepsGuidsAndCompilesClosedSphere()
+        {
+            bool sampleFolderAlreadyExisted =
+                AssetDatabase.IsValidFolder(SampleFolder);
+            try
+            {
+                int objectCountBefore =
+                    Resources.FindObjectsOfTypeAll<GameObject>().Length;
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereSample();
+
+                string firstAssetGuid =
+                    AssetDatabase.AssetPathToGUID(M05AssetPath);
+                string firstTextureGuid =
+                    AssetDatabase.AssetPathToGUID(M05TexturePath);
+                FoldCanvasAsset firstAsset =
+                    AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(
+                        M05AssetPath);
+                Texture2D firstTexture =
+                    AssetDatabase.LoadAssetAtPath<Texture2D>(
+                        M05TexturePath);
+                Assert.That(firstAsset, Is.Not.Null);
+                Assert.That(firstTexture, Is.Not.Null);
+                Assert.That(firstAssetGuid, Is.Not.Empty);
+                Assert.That(firstTextureGuid, Is.Not.Empty);
+                Assert.That(firstTexture.width, Is.EqualTo(2048));
+                Assert.That(firstTexture.height, Is.EqualTo(1024));
+                Assert.That(firstAsset.Panels.Count, Is.EqualTo(8));
+                Assert.That(firstAsset.Seams.Count, Is.EqualTo(8));
+                Assert.That(firstAsset.Operations.Count, Is.EqualTo(9));
+                Assert.That(
+                    firstAsset.Operations[0],
+                    Is.TypeOf<SphericalWrapOperationDefinition>());
+                Assert.That(
+                    firstAsset.Operations[8],
+                    Is.TypeOf<StitchOperationDefinition>());
+
+                FoldCanvasCompileResult firstCompile =
+                    FoldCanvasCompiler.Compile(firstAsset);
+                Assert.That(
+                    firstCompile.Success,
+                    Is.True,
+                    JoinDiagnostics(firstCompile));
+                Assert.That(firstCompile.SphereReport, Is.Not.Null);
+                Assert.That(
+                    firstCompile.SphereReport.IsClosedSphere,
+                    Is.True);
+                UnityEngine.Object.DestroyImmediate(firstCompile.Mesh);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereSample();
+
+                FoldCanvasAsset secondAsset =
+                    AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(
+                        M05AssetPath);
+                Assert.That(secondAsset, Is.SameAs(firstAsset));
+                Assert.That(
+                    AssetDatabase.AssetPathToGUID(M05AssetPath),
+                    Is.EqualTo(firstAssetGuid));
+                Assert.That(
+                    AssetDatabase.AssetPathToGUID(M05TexturePath),
+                    Is.EqualTo(firstTextureGuid));
+                Assert.That(
+                    Resources.FindObjectsOfTypeAll<GameObject>().Length,
+                    Is.EqualTo(objectCountBefore));
+            }
+            finally
+            {
+                if (!sampleFolderAlreadyExisted)
+                {
+                    AssetDatabase.DeleteAsset(SampleFolder);
+                }
+            }
+        }
+
+        [Test]
+        public void CreateM05SphereProof_CreatesOwnedDebugHierarchyAndClosedReport()
+        {
+            InTemporaryScene(scene =>
+            {
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+                GameObject root = FindM05PreviewRoot(scene);
+                Assert.That(root.tag, Is.EqualTo("EditorOnly"));
+
+                Transform source =
+                    root.transform.Find("Source Canvas Preview");
+                Transform generated =
+                    root.transform.Find("Generated Sphere");
+                Transform solid =
+                    root.transform.Find("Solid Validation");
+                Transform wireframe =
+                    root.transform.Find("Wireframe Debug");
+                Transform seams =
+                    root.transform.Find("Seam Debug");
+                Transform poles =
+                    root.transform.Find("Pole Debug");
+                Transform uvStretch =
+                    root.transform.Find("UV Stretch Debug");
+                Transform radiusError =
+                    root.transform.Find("Radius Error Debug");
+                Transform reportTransform =
+                    root.transform.Find("Validation Report");
+                Transform cameraTransform =
+                    root.transform.Find("Preview Camera");
+
+                Assert.That(source, Is.Not.Null);
+                Assert.That(generated, Is.Not.Null);
+                Assert.That(solid, Is.Not.Null);
+                Assert.That(wireframe, Is.Not.Null);
+                Assert.That(seams, Is.Not.Null);
+                Assert.That(poles, Is.Not.Null);
+                Assert.That(uvStretch, Is.Not.Null);
+                Assert.That(radiusError, Is.Not.Null);
+                Assert.That(reportTransform, Is.Not.Null);
+                Assert.That(cameraTransform, Is.Not.Null);
+                AssertTextureFree(solid);
+                AssertLineMesh(wireframe);
+                AssertLineMesh(seams);
+                AssertLineMesh(poles);
+
+                TextMesh reportText =
+                    reportTransform.GetComponent<TextMesh>();
+                Assert.That(reportText, Is.Not.Null);
+                Assert.That(
+                    reportText.text,
+                    Does.Contain("CLOSED SPHERE: YES"));
+                Assert.That(reportText.text, Does.Contain("PANELS 8"));
+                Assert.That(reportText.text, Does.Contain("OPEN 0"));
+                Assert.That(
+                    reportText.text,
+                    Does.Contain("NON-MANIFOLD 0"));
+                Assert.That(reportText.text, Does.Contain("EULER 2"));
+                Assert.That(reportText.text, Does.Contain("POLES 1/1"));
+
+                FoldCanvasAsset proofAsset =
+                    AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(
+                        M05AssetPath);
+                FoldCanvasCompileResult proofCompile =
+                    FoldCanvasCompiler.Compile(proofAsset);
+                Assert.That(
+                    proofCompile.Success,
+                    Is.True,
+                    JoinDiagnostics(proofCompile));
+                Assert.That(
+                    proofCompile.SphereReport.IsClosedSphere,
+                    Is.True);
+                Assert.That(
+                    proofCompile.SphereReport.SphericalPanelCount,
+                    Is.EqualTo(8));
+                Assert.That(
+                    proofCompile.SphereReport.OpenEdgeCount,
+                    Is.Zero);
+                Assert.That(
+                    proofCompile.SphereReport.NonManifoldEdgeCount,
+                    Is.Zero);
+                Assert.That(
+                    proofCompile.SphereReport.EulerCharacteristic,
+                    Is.EqualTo(2));
+                Assert.That(
+                    proofCompile.SphereReport.NorthPoleTopologyCount,
+                    Is.EqualTo(1));
+                Assert.That(
+                    proofCompile.SphereReport.SouthPoleTopologyCount,
+                    Is.EqualTo(1));
+                Assert.That(
+                    proofCompile.SphereReport.MaximumRadiusError,
+                    Is.LessThanOrEqualTo(
+                        proofCompile.SphereReport.RadiusTolerance));
+                UnityEngine.Object.DestroyImmediate(proofCompile.Mesh);
+
+                Camera[] cameras =
+                    root.GetComponentsInChildren<Camera>(true);
+                Assert.That(cameras.Length, Is.EqualTo(1));
+                Assert.That(cameras[0].enabled, Is.True);
+                Assert.That(cameras[0].CompareTag("MainCamera"), Is.False);
+            });
+        }
+
+        [Test]
+        public void CreateM05SphereProof_TwiceKeepsOwnedObjectCountAndCamera()
+        {
+            InTemporaryScene(scene =>
+            {
+                int countBefore = CountSceneObjects(scene);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+                GameObject firstRoot = FindM05PreviewRoot(scene);
+                Camera firstCamera =
+                    firstRoot.GetComponentInChildren<Camera>(true);
+                int rootId = firstRoot.GetInstanceID();
+                int cameraId = firstCamera.GetInstanceID();
+                int countAfterFirst = CountSceneObjects(scene);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+
+                GameObject secondRoot = FindM05PreviewRoot(scene);
+                Camera[] secondCameras =
+                    secondRoot.GetComponentsInChildren<Camera>(true);
+                Assert.That(countAfterFirst, Is.EqualTo(countBefore + 11));
+                Assert.That(
+                    CountSceneObjects(scene),
+                    Is.EqualTo(countAfterFirst));
+                Assert.That(secondRoot.GetInstanceID(), Is.EqualTo(rootId));
+                Assert.That(secondCameras.Length, Is.EqualTo(1));
+                Assert.That(
+                    secondCameras[0].GetInstanceID(),
+                    Is.EqualTo(cameraId));
+            });
+        }
+
+        [Test]
+        public void CreateM05SphereProof_ReusesInactiveOwnedObjects()
+        {
+            InTemporaryScene(scene =>
+            {
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+                GameObject firstRoot = FindM05PreviewRoot(scene);
+                int rootId = firstRoot.GetInstanceID();
+                int childCount = firstRoot.transform.childCount;
+                int[] childIds = new int[childCount];
+                string[] childNames = new string[childCount];
+                for (int i = 0; i < childCount; i++)
+                {
+                    Transform child = firstRoot.transform.GetChild(i);
+                    childIds[i] = child.gameObject.GetInstanceID();
+                    childNames[i] = child.name;
+                    child.gameObject.SetActive(false);
+                }
+
+                firstRoot.SetActive(false);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+
+                GameObject secondRoot = FindM05PreviewRoot(scene);
+                Assert.That(secondRoot.GetInstanceID(), Is.EqualTo(rootId));
+                Assert.That(secondRoot.activeSelf, Is.True);
+                Assert.That(
+                    secondRoot.transform.childCount,
+                    Is.EqualTo(childCount));
+                for (int i = 0; i < childCount; i++)
+                {
+                    Transform child =
+                        secondRoot.transform.Find(childNames[i]);
+                    Assert.That(child, Is.Not.Null, childNames[i]);
+                    Assert.That(
+                        child.gameObject.GetInstanceID(),
+                        Is.EqualTo(childIds[i]),
+                        childNames[i]);
+                    Assert.That(child.gameObject.activeSelf, Is.True);
+                }
+            });
+        }
+
+        [Test]
+        public void CreateM05SphereProof_DoesNotModifyExistingMainCamera()
+        {
+            InTemporaryScene(scene =>
+            {
+                GameObject cameraObject =
+                    new GameObject("User Main Camera", typeof(Camera));
+                cameraObject.tag = "MainCamera";
+                cameraObject.transform.SetPositionAndRotation(
+                    new Vector3(7f, 8f, 9f),
+                    Quaternion.Euler(12f, 34f, 56f));
+                Camera camera = cameraObject.GetComponent<Camera>();
+                camera.fieldOfView = 47f;
+                camera.nearClipPlane = 0.33f;
+                camera.farClipPlane = 777f;
+                camera.clearFlags = CameraClearFlags.Depth;
+                camera.backgroundColor =
+                    new Color(0.2f, 0.3f, 0.4f, 0.5f);
+                camera.depth = -7f;
+                string serializedCamera =
+                    EditorJsonUtility.ToJson(camera);
+                string serializedTransform =
+                    EditorJsonUtility.ToJson(cameraObject.transform);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM05SphereProof();
+
+                Assert.That(
+                    EditorJsonUtility.ToJson(camera),
+                    Is.EqualTo(serializedCamera));
+                Assert.That(
+                    EditorJsonUtility.ToJson(cameraObject.transform),
+                    Is.EqualTo(serializedTransform));
+                Assert.That(cameraObject.CompareTag("MainCamera"), Is.True);
+            });
+        }
+
         private static void InTemporaryScene(Action<Scene> assertion)
         {
             Scene previousScene = SceneManager.GetActiveScene();
@@ -823,6 +1123,29 @@ namespace FoldCanvas.Tests
                     objects[i].scene == scene &&
                     objects[i].name ==
                         "FoldCanvas M04.1 Closed Volume Preview Root" &&
+                    objects[i].CompareTag("EditorOnly"))
+                {
+                    match = objects[i];
+                    matches++;
+                }
+            }
+
+            Assert.That(matches, Is.EqualTo(1));
+            return match;
+        }
+
+        private static GameObject FindM05PreviewRoot(Scene scene)
+        {
+            GameObject[] objects =
+                Resources.FindObjectsOfTypeAll<GameObject>();
+            GameObject match = null;
+            int matches = 0;
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] != null &&
+                    !EditorUtility.IsPersistent(objects[i]) &&
+                    objects[i].scene == scene &&
+                    objects[i].name == "FoldCanvas Sphere Root" &&
                     objects[i].CompareTag("EditorOnly"))
                 {
                     match = objects[i];

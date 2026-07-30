@@ -118,6 +118,50 @@ Explicit-radius Roll emits an ordered structured
 `stretchRatio`. Diagnostic value and repair-suggestion lists are copied,
 read-only, and deterministic.
 
+### M05 current-frame SphericalWrap
+
+`SphericalWrap` is a deformation of one explicit rectangle parameter panel,
+not a request to generate a sphere. Before mapping, the compiler verifies the
+complete current panel is one finite, non-degenerate, congruent planar
+embedding and resolves:
+
+```text
+CurrentOrigin
+CurrentU
+CurrentV
+CurrentNormal = normalize(cross(CurrentU, CurrentV))
+```
+
+Prior translation, rotation, and unit reflection are retained. Metric-changing
+scale, shear, axis collapse, or earlier non-planarity returns
+`FC6010 UnsupportedSphericalEmbedding` and no Mesh.
+
+For normalized source coordinates, `wrapDirection` selects which axis supplies
+longitude and which supplies latitude. The mapped position is:
+
+```text
+P = CurrentOrigin
+  + radius * cos(latitude) * cos(longitude) * CurrentU
+  + radius * sin(latitude)                  * CurrentV
+  + radius * cos(latitude) * sin(longitude) * CurrentNormal
+```
+
+M05 accepts latitude endpoints only inside `[-90, 90]` and at most one signed
+longitude turn. The panel's authored `PanelGrid` segment counts remain the
+sampling contract. If both latitude endpoints are poles, at least two latitude
+segments are required so a non-pole row exists.
+
+Pole topology is decided during tessellation. `Merge` emits one render pole
+per panel fan. `KeepFan` retains one render copy per adjacent longitude cell
+for UV/provenance continuity while assigning every copy the same logical
+topology identity. No later vertex-collapse or mesh-cleanup stage is used.
+
+Each panel's first non-degenerate triangle determines whether its indices must
+be reversed; every emitted triangle is then checked for positive radial dot
+product. The compiler stores immutable frame, range, pole, source, radius, and
+area-stretch metadata for seam projection, validation, and Editor
+visualization.
+
 ## Stage 4: explicit seam resolution
 
 Seam definitions are declarative source records. Their presence alone does not
@@ -139,6 +183,14 @@ ID list. M04 processes each selected seam as follows:
 9. for `Bridge`, emit a consistently wound strip without unioning the two
    boundary topology sets
 
+When a selected boundary belongs to a spherical surface, inserted samples
+retain the interpolated immutable source coordinate and UV but recompute their
+current position through that panel's recorded spherical evaluator. Meridian
+boundary distances use exact spherical arc length. This prevents unequal
+sample counts from leaving new vertices on straight chords inside the sphere,
+and it preserves the authored minimum/maximum longitude side even where both
+sides meet at an exact pole.
+
 Topology and manifold validation use `TopologyVertexId`; raw render indices are
 not a reliable topological oracle at attribute seams. `Hinge` and `KeepOpen`
 remain declarative. `FitTargetBoundary` returns one dedicated
@@ -151,7 +203,7 @@ therefore consume the closed-loop topology created by an earlier seam.
 
 Until shared topology groups participate in deformation propagation, the
 compiler treats every panel selected by a Stitch as position-final. A later
-`RigidTransform`, `Fold`, or `Roll` targeting any such panel fails with
+`RigidTransform`, `Fold`, `Roll`, or `SphericalWrap` targeting any such panel fails with
 `FC2010 StitchMustBeTerminalForSelectedPanels` and returns no Mesh. Operations
 on unrelated panels remain legal.
 
@@ -216,6 +268,22 @@ Every successful compile exposes a read-only
 results, but their report has `IsClosedVolume = false`. A cup produced by
 Solidify must have `IsSingleClosedVolume = true`. This bounded M04.1 report
 does not claim global self-intersection detection or mesh repair.
+
+When multiple spherical panels are joined by Stitch and no later Solidify
+replaces their zero-thickness surface, the compiler also requires a read-only
+`FoldCanvasSphereReport` to satisfy all of:
+
+- one connected spherical component
+- zero open, non-manifold, orientation-conflict, and isolated logical vertices
+- Euler characteristic `V - E + F = 2`
+- one logical north pole and one logical south pole
+- zero inward triangles and one consistent center/radius frame
+- maximum radial error within the centralized absolute-plus-relative tolerance
+
+Failure returns `FC6014 SphereValidationFailed` and no Mesh. A later Solidify
+is allowed and is validated by the existing operation-scoped closed-volume
+contract because its inner/outer positions intentionally no longer lie on the
+original zero-thickness radius.
 
 ## Stage 8: artifact creation
 

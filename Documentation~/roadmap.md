@@ -97,8 +97,7 @@ Mesh.
 
 ## M04: General Stitch and solidify
 
-**Status:** implemented on `feat/m04-stitch-solidify`; awaiting final human
-review before merge.
+**Status:** implemented, human-audited, and merged through PR #3.
 
 **Proof:** the cup becomes a closed manifold shell with configurable wall and base thickness.
 
@@ -107,7 +106,8 @@ review before merge.
 - deterministic resampling
 - resampled weld and bridge modes
 - Stitch is terminal for every selected panel until topology-group deformation
-  propagation exists; later per-panel RigidTransform/Fold/Roll fails
+  propagation exists; later per-panel RigidTransform/Fold/Roll/SphericalWrap
+  fails
 - open-boundary classification
 - inner shell and rim generation
 - manifold tests
@@ -116,7 +116,7 @@ review before merge.
 
 ### M04.1: Closed Volume Validation
 
-**Status:** implemented on `feat/m04-stitch-solidify`; awaiting PR review.
+**Status:** implemented, human-audited, and merged through PR #3.
 
 **Proof:** the same production 2D cup canvas and geometry program compile into
 one non-zero closed volume, with inspectable logical wireframe, vertical
@@ -136,14 +136,27 @@ diagnostic milestone.
 
 ## M05: Sphere gores
 
-**Proof:** symmetric 2D gores reconstruct a closed sphere with bounded radial error and preserved artwork.
+**Status:** implemented on `codex/m05-spherical-wrap`; awaiting human audit
+before merge or `CURRENT_TASK.md` advancement.
 
-- gore panel generator/import
-- spherical wrap operation or curvature field prototype
-- pole handling
-- neighbor seam graph
-- distortion visualization
-- radial error test
+**Proof:** eight explicit rectangular 2D gores reconstruct one closed outward
+sphere with preserved artwork, bounded radial error, one logical north pole,
+one logical south pole, and Euler characteristic 2.
+
+- `SphericalWrap` in each panel's resolved current congruent planar frame
+- explicit radius, latitude/longitude ranges, U/V parameter direction, pole
+  mode, and panel-grid subdivision fields
+- pole-aware source tessellation with `Merge` and `KeepFan` render policies
+- neighbor seam graph using the reusable M04 normalized arc-length solver and
+  Weld
+- curved seam insertion that re-evaluates source samples on the sphere
+- read-only radius, winding, component, edge-incidence, Euler, and pole report
+- deterministic 2048 x 1024 source artwork plus textured, one-sided solid,
+  wireframe/seam/pole, UV-stretch, and radius-error Editor views
+
+M05 does not use a Unity Sphere/UV Sphere/Icosphere, imported or fixed sphere
+Mesh, automatic topology repair, bevel, subdivision, remesh, mesh cleanup, or
+M06 authoring UI.
 
 ## M06: Authoring workspace
 

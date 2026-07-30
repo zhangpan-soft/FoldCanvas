@@ -34,7 +34,7 @@ compiler stage and source order.
 | FC3xxx | operations |
 | FC4xxx | thickness and topology |
 | FC5xxx | mesh validation |
-| FC6xxx | editor baking/import/export |
+| FC6xxx | spherical mapping and closed-sphere validation |
 
 ## Initial codes
 
@@ -97,11 +97,26 @@ compiler stage and source order.
 - `FC5002 ZeroAreaTriangle`
 - `FC5003 NonManifoldTopology`
 - `FC5004 InvalidWeldEpsilon`
+- `FC6001 SphericalWrapTargetMissing`
+- `FC6002 UnsupportedSphericalWrapPanelShape`
+- `FC6003 NonFiniteSphericalWrapParameter`
+- `FC6004 InvalidSphericalRadius`
+- `FC6005 CollapsedSphericalRange`
+- `FC6006 UnsupportedSphericalMultiTurn`
+- `FC6007 InvalidSphericalWrapDirection`
+- `FC6008 InvalidSphericalPoleMode`
+- `FC6009 UnsupportedSphericalSubdivisionMode`
+- `FC6010 UnsupportedSphericalEmbedding`
+- `FC6011 InsufficientSphericalPoleTessellation`
+- `FC6012 SphericalRadiusError`
+- `FC6013 InvalidSphericalPoleTopology`
+- `FC6014 SphereValidationFailed`
+- `FC6015 DuplicateSphericalWrapTarget`
 
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
-deformation propagation exists, a later RigidTransform, Fold, or Roll may not
-target a panel selected by an earlier Stitch. Solidify may follow because it
-consumes complete welded topology groups.
+deformation propagation exists, a later RigidTransform, Fold, Roll, or
+SphericalWrap may not target a panel selected by an earlier Stitch. Solidify
+may follow because it consumes complete welded topology groups.
 
 `FC2011`–`FC2013` stop collapsed, closure-incompatible, or non-subdividable
 seams without creating unattached samples. `FC4001`–`FC4006` stop invalid
@@ -111,6 +126,15 @@ non-manifold input, and invalid direction values without returning a Mesh.
 non-manifold-edge, winding-conflict, collapsed-edge, topology-position,
 component, and zero-volume counts when Solidify fails to create a closed
 oriented volume.
+
+`FC6001`–`FC6013` reject invalid spherical targets, fields, frames,
+tessellation, radius, winding, or pole construction before a misleading
+surface can escape. `FC6014` is the complete zero-thickness sphere gate. Its
+ordered structural values report panels, render/topology vertices, triangles,
+edges, open/non-manifold/orientation-conflict/isolated counts, components,
+Euler characteristic, pole counts, inward triangles, frame inconsistencies,
+maximum radius error, and tolerance. `FC6015` prevents two spherical mappings
+from silently targeting the same panel.
 
 ## Validation levels
 
@@ -145,6 +169,9 @@ Do not silently:
 
 - clamp a 720-degree operation to 360 degrees
 - emit a 720-degree Circular Roll as overlapping zero-thickness layers
+- leave a newly inserted spherical seam sample on a straight chord
+- collapse a rectangular grid into a pole after deformation and call it cleanup
+- substitute a Unity Sphere when an explicit gore seam graph is invalid
 - weld boundaries with incompatible intent
 - reverse a seam without recording it
 - drop triangles

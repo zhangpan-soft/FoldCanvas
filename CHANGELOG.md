@@ -8,6 +8,57 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.9] - 2026-07-30
+
+### Added
+
+- `SphericalWrapOperationDefinition` with explicit radius, latitude and
+  longitude ranges, U/V direction, pole mode, and panel-grid subdivision
+- Deterministic current-frame spherical mapping that preserves source
+  positions, canvas UVs, panel ownership, provenance, ordered boundaries, and
+  outward winding
+- Pole-aware tessellation with `Merge` and `KeepFan` render policies backed by
+  one logical north-pole and one logical south-pole identity
+- Curved seam subdivision that re-evaluates inserted source samples on their
+  spherical map instead of leaving chord points inside the requested radius
+- Read-only spherical-surface metadata and `FoldCanvasSphereReport` validation
+  for radius error, edge incidence, orientation, components, Euler
+  characteristic, and pole topology
+- Stable M05 diagnostics `FC6001` through `FC6015`
+- An importable eight-gore FoldScript and deterministic 2048 x 1024 source
+  canvas with visible `NORTH`, `FOLDCANVAS`, `SOUTH`, equator, and gore markers
+- An idempotent package-owned `EditorOnly` proof with source canvas, textured
+  sphere, texture-free one-sided solid, logical wireframe, seam and pole
+  overlays, UV-stretch and radius-error views, validation report, and owned
+  preview camera
+
+### Changed
+
+- Terminal-Stitch ordering also rejects a later per-panel `SphericalWrap`
+  until shared-topology deformation propagation exists
+- The package status, schema, architecture, compiler pipeline, field reference,
+  geometry model, diagnostics, editor workflow, and roadmap now define the M05
+  spherical reconstruction contract
+- Package version advanced to `0.1.0-preview.9`, with the explicit-gore sphere
+  exposed as an importable Package Manager sample
+
+### Verified
+
+- The golden asset derives one closed outward sphere from eight explicit 2D
+  panels: 616 render vertices, 482 logical topology vertices, 960 triangles,
+  1,440 logical edges, Euler characteristic 2, zero open or non-manifold
+  edges, and one logical topology identity at each pole
+- The measured maximum radial error is `0 m` for the golden asset; unequal seam
+  sampling also remains on the requested spherical radius
+- Unity `6000.3.20f1` passed all 174 Edit Mode tests and rendered the textured,
+  one-sided solid, wireframe/seam, UV-stretch, and radius-error proof views
+
+### Not included
+
+- Unity Sphere/UV Sphere/Icosphere generation, imported or fixed sphere
+  meshes, automatic topology repair, bevel, subdivision, remesh, mesh cleanup,
+  and M06 remain intentionally unimplemented
+
 ## [0.1.0-preview.8] - 2026-07-30
 
 ### Added

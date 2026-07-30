@@ -22,5 +22,11 @@ namespace FoldCanvas
         public const float ClosedVolumeTopologyPositionTolerance = 1e-6f;
         public const double MinimumClosedVolume = 1e-18d;
         public const double RelativeClosedVolumeTolerance = 1e-12d;
+        public const float MinimumSphericalRadius = 1e-6f;
+        public const float MinimumSphericalRangeDegrees = 1e-4f;
+        public const double MaximumSphericalLongitudeSpanDegrees = 360d;
+        public const double SphericalAngleToleranceDegrees = 1e-4d;
+        public const float SphericalRadiusAbsoluteTolerance = 1e-6f;
+        public const float SphericalRadiusRelativeTolerance = 1e-5f;
     }
 }

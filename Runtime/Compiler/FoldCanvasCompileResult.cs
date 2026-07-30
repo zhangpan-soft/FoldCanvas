@@ -29,6 +29,12 @@ namespace FoldCanvas
             internal set;
         }
 
+        public FoldCanvasSphereReport SphereReport
+        {
+            get;
+            internal set;
+        }
+
         public IReadOnlyList<FoldCanvasClosedVolumeReport>
             SolidifyClosedVolumeReports =>
                 readOnlySolidifyClosedVolumeReports;

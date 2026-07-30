@@ -45,6 +45,13 @@ namespace FoldCanvas
             cornerSegments =
                 new List<FoldCanvasCompiledCornerSegment>();
 
+        private readonly List<SphericalWrapBuildRecord> sphericalWraps =
+            new List<SphericalWrapBuildRecord>();
+
+        private readonly Dictionary<int, SphericalWrapBuildRecord>
+            sphericalWrapsByPanelIndex =
+                new Dictionary<int, SphericalWrapBuildRecord>();
+
         public readonly List<MeshBuildVertex> Vertices =
             new List<MeshBuildVertex>();
 
@@ -105,6 +112,46 @@ namespace FoldCanvas
                 outerToVertexIndex,
                 innerFromVertexIndex,
                 innerToVertexIndex));
+        }
+
+        public void AddSphericalWrap(SphericalWrapBuildRecord sphericalWrap)
+        {
+            if (sphericalWrap == null)
+            {
+                throw new ArgumentNullException(nameof(sphericalWrap));
+            }
+
+            sphericalWraps.Add(sphericalWrap);
+            sphericalWrapsByPanelIndex.Add(
+                sphericalWrap.PanelIndex,
+                sphericalWrap);
+        }
+
+        public bool TryEvaluateSphericalPosition(
+            int panelIndex,
+            Vector2 sourcePosition,
+            out Vector3 position,
+            out SphericalWrapBuildRecord sphericalWrap)
+        {
+            if (!sphericalWrapsByPanelIndex.TryGetValue(
+                panelIndex,
+                out sphericalWrap))
+            {
+                position = default;
+                return false;
+            }
+
+            position = sphericalWrap.Evaluate(sourcePosition);
+            return true;
+        }
+
+        public bool TryGetSphericalWrap(
+            int panelIndex,
+            out SphericalWrapBuildRecord sphericalWrap)
+        {
+            return sphericalWrapsByPanelIndex.TryGetValue(
+                panelIndex,
+                out sphericalWrap);
         }
 
         public bool TryGetPanel(string panelId, out PanelBuildRecord panel)
@@ -181,11 +228,21 @@ namespace FoldCanvas
                 compiledPanels[i] = orderedPanels[i].Freeze();
             }
 
+            FoldCanvasCompiledSphericalSurface[] compiledSphericalSurfaces =
+                new FoldCanvasCompiledSphericalSurface[
+                    sphericalWraps.Count];
+            for (int i = 0; i < sphericalWraps.Count; i++)
+            {
+                compiledSphericalSurfaces[i] =
+                    sphericalWraps[i].Freeze(this);
+            }
+
             return new FoldCanvasCompiledData(
                 compiledVertices,
                 Triangles,
                 compiledPanels,
-                cornerSegments);
+                cornerSegments,
+                compiledSphericalSurfaces);
         }
 
         private int FindTopologyRoot(int vertexIndex)

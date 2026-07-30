@@ -123,6 +123,7 @@ MVP operation family:
 - rigid transform
 - fold around a 2D line
 - roll a panel along U or V
+- spherical-wrap an explicit parameter panel
 - stitch seam
 - solidify/thicken
 
@@ -145,9 +146,22 @@ editor selection, locale, frame time, random state, or object discovery.
 - M04.1 freezes paired outer/inner hard-corner segments and a closed-volume
   report over logical topology, connected components, edge incidence, winding,
   and oriented volume.
+- M05 `SphericalWrap` accepts only a finite, non-degenerate, congruent planar
+  embedding. It resolves `CurrentOrigin`, unit `CurrentU`, unit `CurrentV`, and
+  `CurrentNormal = normalize(cross(CurrentU, CurrentV))` from the complete
+  current panel, preserving prior translation, rotation, or unit reflection.
+- With longitude `lambda`, latitude `phi`, and radius `r`, M05 evaluates
+  `CurrentOrigin + r*cos(phi)*cos(lambda)*CurrentU +
+  r*sin(phi)*CurrentV + r*cos(phi)*sin(lambda)*CurrentNormal`. Direction
+  selects whether source U or V supplies longitude; it does not replace the
+  current frame with world axes.
+- Spherical triangles are wound so their geometric normal has a positive dot
+  product with the radial direction. Exact pole rows are emitted as explicit
+  fan topology before deformation, never collapsed by cleanup afterward.
 
-The M04.1 corner and volume records are read-only derived metadata. Editor
-wireframe and section Meshes may visualize them, but they never become source
+The M04.1 corner/volume records and M05 spherical-surface/sphere-report records
+are read-only derived metadata. Editor wireframe, section, seam, pole, stretch,
+and radius-error Meshes may visualize them, but they never become source
 geometry or feed back into compilation.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.

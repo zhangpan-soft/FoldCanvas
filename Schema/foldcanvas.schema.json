@@ -68,6 +68,7 @@
           { "$ref": "#/$defs/rigidTransform" },
           { "$ref": "#/$defs/fold" },
           { "$ref": "#/$defs/roll" },
+          { "$ref": "#/$defs/sphericalWrap" },
           { "$ref": "#/$defs/stitch" },
           { "$ref": "#/$defs/solidify" }
         ]
@@ -501,6 +502,80 @@
           }
         }
       ]
+    },
+    "sphericalWrap": {
+      "description": "Maps one explicit rectangle parameter panel into the target's current congruent planar frame using documented spherical latitude/longitude coordinates. It is a deformation rule, not a sphere generator.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "panel",
+        "radius",
+        "latitudeRange",
+        "longitudeRange",
+        "wrapDirection",
+        "poleMode",
+        "subdivisionMode"
+      ],
+      "properties": {
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects M05 spherical parameter mapping.",
+          "const": "sphericalWrap"
+        },
+        "panel": {
+          "description": "ID of the rectangle parameter panel to map.",
+          "$ref": "#/$defs/id"
+        },
+        "radius": {
+          "description": "Positive sphere radius in document units, measured from the resolved current panel origin.",
+          "$ref": "#/$defs/positiveNumber"
+        },
+        "latitudeRange": {
+          "description": "Signed [start, end] latitude range in degrees. Endpoints must remain inside [-90, 90] and the span must be non-zero.",
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": -90, "maximum": 90 },
+            { "type": "number", "minimum": -90, "maximum": 90 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "longitudeRange": {
+          "description": "Signed [start, end] longitude range in degrees. Runtime validation limits the absolute span to one full turn.",
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": -360, "maximum": 360 },
+            { "type": "number", "minimum": -360, "maximum": 360 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "wrapDirection": {
+          "description": "longitudeAlongU maps source U to longitude and V to latitude; longitudeAlongV swaps those roles.",
+          "enum": ["longitudeAlongU", "longitudeAlongV"]
+        },
+        "poleMode": {
+          "description": "merge uses one render pole per panel fan; keepFan retains per-cell render UV splits while sharing one logical pole identity.",
+          "enum": ["merge", "keepFan"],
+          "default": "merge"
+        },
+        "subdivisionMode": {
+          "description": "M05 panelGrid uses the panel's authored U/V segment counts. Adaptive policies are not implemented.",
+          "const": "panelGrid"
+        }
+      }
     },
     "stitch": {
       "description": "Resolves named seams in listed order through deterministic normalized arc-length correspondence. M04 executes weld and bridge; hinge and keepOpen remain declarative.",

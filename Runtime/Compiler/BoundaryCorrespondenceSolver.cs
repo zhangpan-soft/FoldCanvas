@@ -277,9 +277,25 @@ namespace FoldCanvas
                     next = segment + 1;
                 }
 
-                Vector3 from = buffer.Vertices[ordered[segment]].Position;
-                Vector3 to = buffer.Vertices[ordered[next]].Position;
-                float length = Vector3.Distance(from, to);
+                MeshBuildVertex fromVertex =
+                    buffer.Vertices[ordered[segment]];
+                MeshBuildVertex toVertex =
+                    buffer.Vertices[ordered[next]];
+                float length;
+                if (!buffer.TryGetSphericalWrap(
+                        panel.PanelIndex,
+                        out SphericalWrapBuildRecord sphericalWrap) ||
+                    !sphericalWrap.TryEvaluateBoundaryArcLength(
+                        boundary.Id,
+                        fromVertex.SourcePosition,
+                        toVertex.SourcePosition,
+                        out length))
+                {
+                    length = Vector3.Distance(
+                        fromVertex.Position,
+                        toVertex.Position);
+                }
+
                 if (!FiniteMath.IsFinite(length))
                 {
                     AddZeroLengthDiagnostic(
@@ -423,17 +439,55 @@ namespace FoldCanvas
                 segmentLength;
             MeshBuildVertex from = buffer.Vertices[fromIndex];
             MeshBuildVertex to = buffer.Vertices[toIndex];
+            Vector2 sourcePosition = Vector2.LerpUnclamped(
+                from.SourcePosition,
+                to.SourcePosition,
+                alpha);
+            Vector2 sourceUv = Vector2.LerpUnclamped(
+                from.SourceUv,
+                to.SourceUv,
+                alpha);
+            Vector3 currentPosition = Vector3.LerpUnclamped(
+                from.Position,
+                to.Position,
+                alpha);
+            SphericalWrapBuildRecord sphericalWrap = null;
+            if (buffer.TryGetSphericalWrap(
+                    path.Panel.PanelIndex,
+                    out sphericalWrap))
+            {
+                sourcePosition =
+                    sphericalWrap.InterpolateBoundarySourcePosition(
+                        path.Boundary.Id,
+                        from.SourcePosition,
+                        to.SourcePosition,
+                        alpha);
+                sourceUv =
+                    sphericalWrap.EvaluateSourceUv(sourcePosition);
+                Vector3 sphericalPosition =
+                    sphericalWrap.Evaluate(sourcePosition);
+                if (!FiniteMath.IsFinite(sphericalPosition))
+                {
+                    result.Add(new FoldCanvasDiagnostic(
+                        FoldCanvasDiagnosticCodes
+                            .NonFiniteSphericalWrapParameter,
+                        FoldCanvasDiagnosticSeverity.Error,
+                        "Spherical seam subdivision produced a non-finite mapped position.",
+                        path.Panel.PanelId,
+                        operationId,
+                        seam.Id));
+                    return false;
+                }
+
+                currentPosition = sphericalPosition;
+            }
+
             insertedVertex = buffer.AddVertex(
-                Vector3.LerpUnclamped(from.Position, to.Position, alpha),
-                Vector2.LerpUnclamped(
-                    from.SourcePosition,
-                    to.SourcePosition,
-                    alpha),
-                Vector2.LerpUnclamped(
-                    from.SourceUv,
-                    to.SourceUv,
-                    alpha),
+                currentPosition,
+                sourcePosition,
+                sourceUv,
                 path.Panel.PanelIndex);
+            sphericalWrap?.RegisterSurfaceVertex(insertedVertex);
 
             buffer.Triangles[triangleOffset] = orientedFrom;
             buffer.Triangles[triangleOffset + 1] = insertedVertex;
