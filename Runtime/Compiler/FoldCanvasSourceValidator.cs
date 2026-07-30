@@ -6,7 +6,15 @@ namespace FoldCanvas
 {
     internal static class FoldCanvasSourceValidator
     {
-        public static void ValidatePanels(
+        public static void Validate(
+            FoldCanvasAsset asset,
+            FoldCanvasCompileResult result)
+        {
+            ValidatePanels(asset, result);
+            ValidateSeams(asset, result);
+        }
+
+        private static void ValidatePanels(
             FoldCanvasAsset asset,
             FoldCanvasCompileResult result)
         {
@@ -196,7 +204,7 @@ namespace FoldCanvas
             }
         }
 
-        private static bool TryEstimateGeometry(
+        internal static bool TryEstimateGeometry(
             PanelDefinition panel,
             out long vertices,
             out long triangles)
@@ -248,6 +256,45 @@ namespace FoldCanvas
                 FoldCanvasDiagnosticSeverity.Error,
                 $"Panel tessellation would exceed the configured cumulative safety limits of {maxVertices} vertices and {maxTriangles} triangles.",
                 panel.Id));
+        }
+
+        private static void ValidateSeams(
+            FoldCanvasAsset asset,
+            FoldCanvasCompileResult result)
+        {
+            for (int i = 0; i < asset.Seams.Count; i++)
+            {
+                SeamDefinition seam = asset.Seams[i];
+                if (seam == null)
+                {
+                    continue;
+                }
+
+                if (seam.SampleCount >
+                    FoldCanvasLimits.MaximumStitchSampleCount)
+                {
+                    result.Add(new FoldCanvasDiagnostic(
+                        FoldCanvasDiagnosticCodes
+                            .StitchSampleCountOutOfRange,
+                        FoldCanvasDiagnosticSeverity.Error,
+                        $"Stitch sampleCount must be between {FoldCanvasLimits.MinimumStitchSampleCount} and {FoldCanvasLimits.MaximumStitchSampleCount} for both JSON and native assets.",
+                        seamId: seam.Id,
+                        values: new[]
+                        {
+                            new FoldCanvasDiagnosticValue(
+                                "requestedSampleCount",
+                                seam.SampleCount),
+                            new FoldCanvasDiagnosticValue(
+                                "minimumSampleCount",
+                                FoldCanvasLimits
+                                    .MinimumStitchSampleCount),
+                            new FoldCanvasDiagnosticValue(
+                                "maximumSampleCount",
+                                FoldCanvasLimits
+                                    .MaximumStitchSampleCount)
+                        }));
+                }
+            }
         }
     }
 }

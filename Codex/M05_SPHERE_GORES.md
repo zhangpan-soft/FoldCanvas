@@ -141,6 +141,14 @@ SphericalWrap must occur before Stitch. The existing rule that Stitch is the
 terminal position-deforming operation for selected panels remains active.
 Solidify may consume the final welded sphere in a later operation.
 
+Enabled SphericalWrap panels form components through Stitch-selected seams
+whose two endpoints are spherical. Validate each component after its last
+relevant Stitch and before the first Solidify selecting that component.
+Unrelated Stitch and Solidify operations must not affect this lifecycle, and
+Solidify cannot replace the zero-thickness sphere proof. Preserve the
+pre-Solidify report in `SphereReports`; `SphereReport` is the first-report
+compatibility view.
+
 ## Validation
 
 The golden sphere must report:
@@ -157,6 +165,10 @@ The golden sphere must report:
   tolerance
 - preserved source UV, canvas coordinates, panel ownership, and provenance
 - deterministic vertices, triangles, topology IDs, reports, and diagnostics
+
+This validation does not include a global triangle-triangle
+self-intersection test. Do not describe the M05 report as a universal
+no-self-intersection proof.
 
 The compiled result also exposes immutable SphericalWrap metadata needed by the
 Editor proof, including center, frame, radius, ranges, pole mode, maximum
@@ -181,6 +193,14 @@ radius error, and deterministic UV-stretch samples.
 - `SphericalWrap_InsufficientPoleTessellation_ReturnsStableDiagnostic`
 - `SphericalWrap_KeepFan_PreservesRenderUvSplitsAndOneTopologyPole`
 - `Sphere_CanContinueSolidify`
+- `OpenSphere_FollowedBySolidify_IsRejected`
+- `UnrelatedSolidify_DoesNotSuppressSphereValidation`
+- `UnrelatedStitch_DoesNotTriggerSphereValidation`
+- `TwoIndependentSphereComponents_AreValidatedIndependently`
+- `SphereReport_PreservesPreSolidifyEvidence`
+- `GoldenSphere_ThreeCompilesHaveStableCountsReportsAndHash`
+- cumulative Panel/Stitch/Solidify budget and rollback coverage
+- native `sampleCount` range and scale-aware pole coverage
 
 Existing M00-M04.1 tests must remain intact.
 
@@ -232,6 +252,10 @@ M05 adds stable diagnostics for:
 - radius error outside tolerance
 - invalid pole topology
 - sphere validation failure
+- Solidify ordered before required sphere validation
+- cumulative generated vertex/triangle budget exhaustion or arithmetic
+  overflow
+- native Stitch `sampleCount` above `8192`
 
 Invalid geometry returns diagnostics and no Mesh. The compiler must never
 substitute a hidden sphere generator or automatic topology repair.

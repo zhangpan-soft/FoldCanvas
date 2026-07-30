@@ -5,9 +5,10 @@ on:
   pull_request:
 
 jobs:
-  static-checks:
+  repository-validation:
+    name: Repository validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - name: Validate JSON and architecture boundaries
         run: python3 Scripts/validate_repository.py

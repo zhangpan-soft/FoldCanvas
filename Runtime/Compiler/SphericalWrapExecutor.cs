@@ -197,8 +197,14 @@ namespace FoldCanvas
                 return false;
             }
 
-            bool startIsPole = IsPole(operation.LatitudeRange.x);
-            bool endIsPole = IsPole(operation.LatitudeRange.y);
+            bool startIsPole = IsPole(
+                operation.LatitudeRange.x,
+                operation.Radius,
+                buffer.PositionTolerance);
+            bool endIsPole = IsPole(
+                operation.LatitudeRange.y,
+                operation.Radius,
+                buffer.PositionTolerance);
             int latitudeSegments =
                 operation.WrapDirection ==
                     SphericalWrapDirection.LongitudeAlongU
@@ -342,12 +348,35 @@ namespace FoldCanvas
             return true;
         }
 
-        internal static bool IsPole(float latitudeDegrees)
+        internal static bool IsPole(
+            float latitudeDegrees,
+            float radius,
+            float positionTolerance)
         {
-            return Math.Abs(
-                Math.Abs((double)latitudeDegrees) - 90d) <=
+            if (!FiniteMath.IsFinite(latitudeDegrees) ||
+                !FiniteMath.IsFinite(radius) ||
+                !FiniteMath.IsFinite(positionTolerance) ||
+                radius <= 0f ||
+                positionTolerance <= 0f)
+            {
+                return false;
+            }
+
+            double angularDeviationDegrees = Math.Abs(
+                Math.Abs((double)latitudeDegrees) - 90d);
+            if (angularDeviationDegrees >
                 FoldCanvasGeometryTolerances
-                    .SphericalAngleToleranceDegrees;
+                    .SphericalAngleToleranceDegrees)
+            {
+                return false;
+            }
+
+            double arcDistance =
+                (double)radius *
+                angularDeviationDegrees *
+                Math.PI /
+                180d;
+            return arcDistance <= positionTolerance;
         }
 
         private static bool IsSupportedLatitude(float latitudeDegrees)
@@ -649,7 +678,10 @@ namespace FoldCanvas
                     ? "vMax"
                     : "uMax";
 
-            if (IsPole(operation.LatitudeRange.x) &&
+            if (IsPole(
+                    operation.LatitudeRange.x,
+                    operation.Radius,
+                    buffer.PositionTolerance) &&
                 !TryAssignPole(
                     operation.LatitudeRange.x,
                     latitudeStartBoundary,
@@ -662,7 +694,10 @@ namespace FoldCanvas
                 return false;
             }
 
-            if (IsPole(operation.LatitudeRange.y) &&
+            if (IsPole(
+                    operation.LatitudeRange.y,
+                    operation.Radius,
+                    buffer.PositionTolerance) &&
                 !TryAssignPole(
                     operation.LatitudeRange.y,
                     latitudeEndBoundary,

@@ -1,12 +1,31 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 
 namespace FoldCanvas
 {
+    public enum SphereValidationStage
+    {
+        SurfaceSnapshot = 0,
+        PreSolidify = 1,
+        PostSolidify = 2
+    }
+
     public sealed class FoldCanvasSphereReport
     {
+        private readonly ReadOnlyCollection<string> panelIds;
+
+        private readonly ReadOnlyCollection<string>
+            sphericalWrapOperationIds;
+
         internal FoldCanvasSphereReport(
+            string componentId,
+            IReadOnlyList<string> orderedPanelIds,
+            IReadOnlyList<string> orderedSphericalWrapOperationIds,
+            SphereValidationStage validationStage,
+            string validationOperationId,
+            int validationOperationIndex,
             int sphericalPanelCount,
             int surfaceRenderVertexCount,
             int surfaceTopologyVertexCount,
@@ -25,6 +44,17 @@ namespace FoldCanvas
             double maximumRadiusError,
             double radiusTolerance)
         {
+            ComponentId = componentId ??
+                throw new ArgumentNullException(nameof(componentId));
+            panelIds = CopyStrings(
+                orderedPanelIds,
+                nameof(orderedPanelIds));
+            sphericalWrapOperationIds = CopyStrings(
+                orderedSphericalWrapOperationIds,
+                nameof(orderedSphericalWrapOperationIds));
+            ValidationStage = validationStage;
+            ValidationOperationId = validationOperationId;
+            ValidationOperationIndex = validationOperationIndex;
             SphericalPanelCount = sphericalPanelCount;
             SurfaceRenderVertexCount = surfaceRenderVertexCount;
             SurfaceTopologyVertexCount = surfaceTopologyVertexCount;
@@ -45,6 +75,22 @@ namespace FoldCanvas
             MaximumRadiusError = maximumRadiusError;
             RadiusTolerance = radiusTolerance;
         }
+
+        public string ComponentId { get; }
+
+        public IReadOnlyList<string> PanelIds => panelIds;
+
+        public IReadOnlyList<string> SphericalWrapOperationIds =>
+            sphericalWrapOperationIds;
+
+        public SphereValidationStage ValidationStage { get; }
+
+        public string ValidationOperationId { get; }
+
+        public int ValidationOperationIndex { get; }
+
+        public bool IsPreSolidify =>
+            ValidationStage == SphereValidationStage.PreSolidify;
 
         public int SphericalPanelCount { get; }
 
@@ -94,8 +140,34 @@ namespace FoldCanvas
             InwardTriangleCount == 0 &&
             InconsistentFrameCount == 0 &&
             MaximumRadiusError <= RadiusTolerance;
+
+        private static ReadOnlyCollection<string> CopyStrings(
+            IReadOnlyList<string> source,
+            string parameterName)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(parameterName);
+            }
+
+            string[] copy = new string[source.Count];
+            for (int i = 0; i < source.Count; i++)
+            {
+                copy[i] = source[i] ??
+                    throw new ArgumentException(
+                        "Sphere report identifiers cannot contain null.",
+                        parameterName);
+            }
+
+            return Array.AsReadOnly(copy);
+        }
     }
 
+    /// <summary>
+    /// Validates component topology, manifold edge incidence, pole identity,
+    /// radius agreement, frame consistency, and winding. This validator does
+    /// not perform global triangle-triangle self-intersection detection.
+    /// </summary>
     public static class FoldCanvasSphereValidator
     {
         public static FoldCanvasSphereReport Analyze(
@@ -106,6 +178,56 @@ namespace FoldCanvas
                 throw new ArgumentNullException(nameof(data));
             }
 
+            List<string> panelIds = new List<string>();
+            List<string> operationIds = new List<string>();
+            for (int i = 0; i < data.SphericalSurfaces.Count; i++)
+            {
+                panelIds.Add(data.SphericalSurfaces[i].PanelId);
+                operationIds.Add(
+                    data.SphericalSurfaces[i].OperationId);
+            }
+
+            return Analyze(
+                data,
+                "surface-snapshot",
+                panelIds,
+                operationIds,
+                SphereValidationStage.SurfaceSnapshot,
+                null,
+                -1);
+        }
+
+        public static FoldCanvasSphereReport Analyze(
+            FoldCanvasCompiledData data,
+            string componentId,
+            IReadOnlyList<string> orderedPanelIds,
+            IReadOnlyList<string> orderedSphericalWrapOperationIds,
+            SphereValidationStage validationStage,
+            string validationOperationId,
+            int validationOperationIndex)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            if (string.IsNullOrWhiteSpace(componentId))
+            {
+                throw new ArgumentException(
+                    "Sphere component IDs must be non-empty.",
+                    nameof(componentId));
+            }
+
+            if (orderedPanelIds == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(orderedPanelIds));
+            }
+
+            HashSet<string> selectedPanelIds =
+                new HashSet<string>(
+                    orderedPanelIds,
+                    StringComparer.Ordinal);
             HashSet<int> surfaceRenderVertices = new HashSet<int>();
             HashSet<int> allSurfaceTopology = new HashSet<int>();
             HashSet<int> northPoles = new HashSet<int>();
@@ -117,12 +239,19 @@ namespace FoldCanvas
             double maximumRadiusError = 0d;
             double radiusTolerance = 0d;
             int inconsistentFrameCount = 0;
+            int selectedSurfaceCount = 0;
             FoldCanvasCompiledSphericalSurface referenceSurface = null;
 
             for (int i = 0; i < data.SphericalSurfaces.Count; i++)
             {
                 FoldCanvasCompiledSphericalSurface surface =
                     data.SphericalSurfaces[i];
+                if (!selectedPanelIds.Contains(surface.PanelId))
+                {
+                    continue;
+                }
+
+                selectedSurfaceCount++;
                 surfacesByPanel.Add(surface.PanelIndex, surface);
                 if (referenceSurface == null)
                 {
@@ -289,7 +418,13 @@ namespace FoldCanvas
                 edges.Count +
                 triangleCount;
             return new FoldCanvasSphereReport(
-                data.SphericalSurfaces.Count,
+                componentId,
+                orderedPanelIds,
+                orderedSphericalWrapOperationIds,
+                validationStage,
+                validationOperationId,
+                validationOperationIndex,
+                selectedSurfaceCount,
                 surfaceRenderVertices.Count,
                 referencedTopology.Count,
                 triangleCount,

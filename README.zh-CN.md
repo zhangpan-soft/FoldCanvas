@@ -58,6 +58,9 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   极点与细分字段映射到球面
 - 球面接缝插点会重新执行球面公式，极点拥有明确逻辑拓扑，最终用欧拉特征、
   边关联、绕序和半径误差验证真正闭合
+- 每个球面组件都在最后一个相关 Stitch 之后、相关 Solidify 之前独立生成报告，
+  无关 Stitch/Solidify 不能触发、关闭或替代闭球验证
+- 面板离散、Stitch 插点/Bridge 与 Solidify 内外壳/rim 共用同一份累计几何预算
 - 一张包含 `NORTH`、`FOLDCANVAS`、`SOUTH`、赤道与球瓣编号的二维画布，
   可以在不调用 Unity 球体原语的情况下重建为闭合球体
 - 稳定的编译诊断与确定性验证
@@ -78,6 +81,9 @@ M05 不是新增一个“球体生成器”。八个矩形球瓣先从二维源�
 终端 `Stitch` 焊接。接缝新增采样点会重新落在球面公式上，而不是停留在球内
 弦线上；最终必须满足单一连通分量、零开放边、零非流形边、向外绕序、欧拉
 示性数 2，以及南北极各一个逻辑拓扑点。
+这份零厚度报告会在组件最后一个相关 Stitch 后、任何命中该组件的 Solidify
+之前固定下来。M05 当前不执行全局 triangle-triangle 自相交检测，因此闭球
+报告不等于对任意几何“绝无自交”的完整证明。
 
 ## 七条项目宪法
 
@@ -118,6 +124,19 @@ M05 不是新增一个“球体生成器”。八个矩形球瓣先从二维源�
    `Tools > FoldCanvas > Create Sphere Proof` 可查看 M05 二维球瓣、纹理球、
    单面纯材质球、接缝/极点、UV 拉伸、半径误差与闭合报告。所有证明相机均由
    FoldCanvas 自己拥有，不会修改项目已有 MainCamera。
+
+## 持续集成
+
+GitHub Actions 包含两个独立检查：
+
+- `repository-validation` 解析 JSON，检查程序集与 Runtime 边界、Schema 和
+  C# 原生 `sampleCount` 上限一致性、文档链接及版本元数据；
+- `unity-editmode-tests` 用 Unity `6000.3.20f1` 打开仓库自带的 `Project~`
+  宿主，真实编译 Runtime、Editor、Tests 程序集并运行全部 Edit Mode 测试，
+  成功或失败都会上传 NUnit XML 与 `Editor.log`。
+
+Unity CI 使用 GameCI。Unity Personal 授权需要在仓库 Actions Secrets 中配置
+`UNITY_LICENSE`、`UNITY_EMAIL`、`UNITY_PASSWORD`，许可证信息不会写入仓库。
 
 ## 交给 Codex
 

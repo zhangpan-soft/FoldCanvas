@@ -80,6 +80,27 @@ namespace FoldCanvas
             }
         }
 
+        internal int CaptureSurfaceVertexCount()
+        {
+            return surfaceVertexIndices.Count;
+        }
+
+        internal void RestoreSurfaceVertexCount(int count)
+        {
+            if (count < 0 || count > surfaceVertexIndices.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            for (int i = surfaceVertexIndices.Count - 1;
+                i >= count;
+                i--)
+            {
+                surfaceVertexSet.Remove(surfaceVertexIndices[i]);
+                surfaceVertexIndices.RemoveAt(i);
+            }
+        }
+
         public Vector3 Evaluate(Vector2 sourcePosition)
         {
             double normalizedU =

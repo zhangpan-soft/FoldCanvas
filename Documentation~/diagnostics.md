@@ -63,6 +63,7 @@ compiler stage and source order.
 - `FC2011 ZeroLengthStitchBoundary`
 - `FC2012 StitchBoundaryClosureMismatch`
 - `FC2013 StitchBoundarySubdivisionFailed`
+- `FC2014 StitchSampleCountOutOfRange`
 - `FC3001 UnsupportedOperation`
 - `FC3002 NonFiniteOperationParameter`
 - `FC3003 FoldTargetMissing`
@@ -97,6 +98,9 @@ compiler stage and source order.
 - `FC5002 ZeroAreaTriangle`
 - `FC5003 NonManifoldTopology`
 - `FC5004 InvalidWeldEpsilon`
+- `FC5005 GeneratedVertexLimitExceeded`
+- `FC5006 GeneratedTriangleLimitExceeded`
+- `FC5007 GeometryBudgetOverflow`
 - `FC6001 SphericalWrapTargetMissing`
 - `FC6002 UnsupportedSphericalWrapPanelShape`
 - `FC6003 NonFiniteSphericalWrapParameter`
@@ -112,6 +116,7 @@ compiler stage and source order.
 - `FC6013 InvalidSphericalPoleTopology`
 - `FC6014 SphereValidationFailed`
 - `FC6015 DuplicateSphericalWrapTarget`
+- `FC6016 SphereValidationRequiredBeforeSolidify`
 
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
 deformation propagation exists, a later RigidTransform, Fold, Roll, or
@@ -134,7 +139,16 @@ ordered structural values report panels, render/topology vertices, triangles,
 edges, open/non-manifold/orientation-conflict/isolated counts, components,
 Euler characteristic, pole counts, inward triangles, frame inconsistencies,
 maximum radius error, and tolerance. `FC6015` prevents two spherical mappings
-from silently targeting the same panel.
+from silently targeting the same panel. `FC6016` prevents a Solidify that
+targets a spherical component from running before that component's final
+relevant Stitch and pre-Solidify sphere validation.
+
+`FC2014` enforces the shared JSON/native `sampleCount` maximum of `8192`.
+`FC5005` and `FC5006` report cumulative generated vertex or triangle budget
+exhaustion with ordered `currentUsed`, `requestedAdditional`, and
+`maximumAllowed` values. `FC5007` reports unsafe arithmetic or an operation
+that attempts to exceed its exact reservation. Budget failures roll back the
+failing Stitch or Solidify transaction and return no partial Mesh.
 
 ## Validation levels
 
@@ -158,10 +172,16 @@ Adds:
 
 Adds expensive checks:
 
-- self-intersection
+- global triangle-triangle self-intersection (planned, not implemented in M05)
 - shell thickness collision
 - orientation consistency across components
 - topology expectations
+
+The current sphere validator proves component topology, manifold edge
+incidence, Euler characteristic, pole identities, frame/radius agreement, and
+winding. It does not perform global triangle-triangle self-intersection
+detection, so `IsClosedSphere` must not be described as a universal no-self-
+intersection proof.
 
 ## Failure philosophy
 

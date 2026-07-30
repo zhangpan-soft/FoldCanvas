@@ -66,6 +66,15 @@ if package.get("unity") != "6000.3":
 if package.get("dependencies"):
     errors.append("The M00 core package must not add package dependencies")
 
+package_version = package.get("version")
+changelog_text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+if not isinstance(package_version, str) or (
+    f"## [{package_version}]" not in changelog_text
+):
+    errors.append(
+        "package.json version must have a matching CHANGELOG.md release heading"
+    )
+
 project_manifest = read_json("Project~/Packages/manifest.json")
 if project_manifest.get("dependencies", {}).get("com.foldcanvas.core") != "file:../../":
     errors.append("Project~ must reference the repository root through file:../../")
@@ -98,10 +107,53 @@ required = [
     "CURRENT_TASK.md",
     "Documentation~/architecture.md",
     "Schema/foldcanvas.schema.json",
+    ".github/workflows/unity-tests.yml",
 ]
 for relative in required:
     if not (ROOT / relative).exists():
         errors.append(f"Missing required file: {relative}")
+
+schema = read_json("Schema/foldcanvas.schema.json")
+schema_sample_count_maximum = (
+    schema.get("$defs", {})
+    .get("seam", {})
+    .get("properties", {})
+    .get("sampleCount", {})
+    .get("maximum")
+)
+limits_source = (
+    ROOT / "Runtime" / "Data" / "FoldCanvasLimits.cs"
+).read_text(encoding="utf-8")
+limits_match = re.search(
+    r"\bMaximumStitchSampleCount\s*=\s*(\d+)\s*;",
+    limits_source,
+)
+if limits_match is None:
+    errors.append(
+        "FoldCanvasLimits.MaximumStitchSampleCount must be a literal integer"
+    )
+elif schema_sample_count_maximum != int(limits_match.group(1)):
+    errors.append(
+        "Schema seam.sampleCount maximum must match "
+        "FoldCanvasLimits.MaximumStitchSampleCount"
+    )
+
+unity_workflow = (
+    ROOT / ".github" / "workflows" / "unity-tests.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "game-ci/unity-test-runner@",
+    "projectPath: Project~",
+    "unityVersion: 6000.3.20f1",
+    "testMode: EditMode",
+    "actions/upload-artifact@",
+    "if: always()",
+]:
+    if required_fragment not in unity_workflow:
+        errors.append(
+            "Unity workflow is missing required configuration: "
+            f"{required_fragment}"
+        )
 
 gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 for required_pattern in [

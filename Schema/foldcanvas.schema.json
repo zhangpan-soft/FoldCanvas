@@ -317,7 +317,7 @@
           "type": "boolean"
         },
         "sampleCount": {
-          "description": "Minimum requested correspondence density. M04 retains both boundaries' normalized arc-length breakpoints and adds a uniform grid when positive, so the final paired count may exceed this value. Zero uses the natural breakpoint union.",
+          "description": "Minimum requested correspondence density, limited to 8192 in both JSON and native ScriptableObject compilation. Stitch retains both boundaries' normalized arc-length breakpoints and adds a uniform grid when positive, so the final paired count may exceed this value. Zero uses the natural breakpoint union.",
           "type": "integer",
           "minimum": 0,
           "maximum": 8192

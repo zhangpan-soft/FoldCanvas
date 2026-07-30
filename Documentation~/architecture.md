@@ -132,6 +132,10 @@ MVP operation family:
 Include tolerances, normal mode, output naming, validation level, and cumulative
 generated-vertex/triangle safety limits. Compiler behavior must not depend on
 editor selection, locale, frame time, random state, or object discovery.
+One compile-scoped `GeometryBudget` covers panel tessellation and every later
+Stitch or Solidify addition. Geometry-producing operations reserve before
+mutation and use rollback transactions; the build buffer remains the hard
+enforcement boundary.
 
 ## 4. Coordinate conventions
 
@@ -158,11 +162,21 @@ editor selection, locale, frame time, random state, or object discovery.
 - Spherical triangles are wound so their geometric normal has a positive dot
   product with the radial direction. Exact pole rows are emitted as explicit
   fan topology before deformation, never collapsed by cleanup afterward.
+- Near-pole canonicalization must satisfy both angular tolerance and
+  `radius * angularDeviationRadians <= weldEpsilon`; scale cannot turn a
+  spatially large ring into one logical pole.
 
 The M04.1 corner/volume records and M05 spherical-surface/sphere-report records
 are read-only derived metadata. Editor wireframe, section, seam, pole, stretch,
 and radius-error Meshes may visualize them, but they never become source
 geometry or feed back into compilation.
+
+M05 derives spherical components only from enabled SphericalWrap panels joined
+by relevant Stitch-selected seams. It freezes each component report after its
+last relevant Stitch and before a Solidify that touches that component.
+Solidify may build a later shell but cannot replace this zero-thickness proof.
+The report proves the documented topology, radius, frame, and winding
+invariants; it does not run a global triangle-triangle self-intersection test.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 

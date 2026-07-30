@@ -60,6 +60,10 @@ The repository currently contains the **M05 spherical-surface compiler**:
 - Deterministic spherical pole topology, curved-surface seam subdivision,
   outward winding, and closed-sphere validation with Euler characteristic and
   bounded radial error
+- Component-scoped pre-Solidify sphere reports, so unrelated Stitch or
+  Solidify operations cannot trigger, suppress, or replace a sphere proof
+- One cumulative geometry budget across panel tessellation, Stitch
+  subdivision/bridges, and Solidify shell/rim generation
 - An editor-generated six-region canvas that compiles into a textured box
 - An editor-generated thick cup whose wall seam and bottom perimeter are
   welded, whose inner corner remains connected, and whose top rim is closed
@@ -90,6 +94,9 @@ pole samples are represented explicitly, inserted seam samples are
 re-evaluated on the spherical map, and the final logical topology must report
 one component, no open/non-manifold edges, outward winding, Euler
 characteristic 2, one north pole, one south pole, and bounded radius error.
+That report is frozen after the component's last relevant Stitch and before a
+Solidify touching the component. It does not perform global triangle-triangle
+self-intersection detection.
 
 ## Design principles
 
@@ -131,6 +138,21 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
    `Tools > FoldCanvas > Create Sphere Proof` for the M05 2D-gore source,
    textured and one-sided solid spheres, logical wireframe, seam/pole overlays,
    UV-stretch view, radius-error view, and validation report.
+
+## Continuous integration
+
+GitHub Actions runs two independent checks:
+
+- `repository-validation` parses repository JSON, checks assembly and runtime
+  boundaries, confirms the Schema/native `sampleCount` maximum, and validates
+  documentation links and version metadata.
+- `unity-editmode-tests` opens the tracked `Project~` host in Unity
+  `6000.3.20f1`, compiles Runtime, Editor, and Tests assemblies, runs all Edit
+  Mode tests, and uploads the NUnit XML plus `Editor.log`, even on failure.
+
+The Unity job uses GameCI and requires repository Actions secrets
+`UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal
+license. License data is never stored in the repository.
 
 ## Install in another Unity project
 

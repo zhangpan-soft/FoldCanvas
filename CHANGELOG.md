@@ -8,6 +8,52 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.10] - 2026-07-30
+
+### Added
+
+- Component-scoped `SphereReports` with ordered panel/wrap identities,
+  validation stage, operation ID, and operation index
+- One cumulative `GeometryBudget` for panel tessellation, Stitch
+  subdivision/Bridge geometry, and Solidify shell/rim geometry, backed by
+  build-buffer hard limits and operation rollback
+- Native ScriptableObject `sampleCount` validation using the same `8192`
+  maximum as the JSON Schema
+- Scale-aware pole classification using angular deviation, sphere radius, and
+  the configured positional tolerance
+- Three-pass golden-sphere deterministic hash coverage and independent
+  open/closed multi-component regression cases
+- A real Unity `6000.3.20f1` Edit Mode GitHub Actions job that uploads NUnit
+  results and the Editor log
+
+### Fixed
+
+- Unrelated Solidify no longer suppresses zero-thickness sphere validation,
+  and unrelated Stitch no longer triggers it
+- An open spherical component cannot use a later Solidify shell to bypass its
+  required pre-Solidify validation
+- Stitch correspondence now batches sorted insertions with cached edge
+  adjacency instead of rescanning every triangle for each sample
+- Null, empty, whitespace, and missing spherical panel references return
+  stable diagnostics instead of dictionary-key exceptions
+- Budget or later seam failure rolls back a complete Stitch/Solidify
+  transaction without retaining partial geometry or consumed budget
+
+### Changed
+
+- Package version advanced to `0.1.0-preview.10`
+- Closed-sphere documentation now states that M05 proves topology,
+  manifoldness, radius, frame, poles, and winding, but does not run global
+  triangle-triangle self-intersection detection
+- Repository checks now enforce Schema/native sample-limit consistency,
+  Unity workflow presence, and package-version/CHANGELOG consistency
+
+### Not included
+
+- Global triangle-triangle self-intersection detection, Bevel, subdivision,
+  smoothing, Remesh, Mesh Cleanup, automatic topology repair, and M06 remain
+  intentionally unimplemented
+
 ## [0.1.0-preview.9] - 2026-07-30
 
 ### Added

@@ -60,6 +60,7 @@ namespace FoldCanvas
             int sourceVertexCount = buffer.Vertices.Count;
             bool[] selectedVertices = new bool[sourceVertexCount];
             HashSet<int> selectedTopologyRoots = new HashSet<int>();
+            int selectedRenderVertexCount = 0;
             for (int vertexIndex = 0;
                 vertexIndex < sourceVertexCount;
                 vertexIndex++)
@@ -71,6 +72,7 @@ namespace FoldCanvas
                 }
 
                 selectedVertices[vertexIndex] = true;
+                selectedRenderVertexCount++;
                 selectedTopologyRoots.Add(
                     buffer.GetTopologyId(vertexIndex));
             }
@@ -272,6 +274,57 @@ namespace FoldCanvas
                 unitMiters.Add(topologyRoot, unitMiter);
             }
 
+            int openSourceEdgeCount = 0;
+            foreach (KeyValuePair<ulong, SourceEdgeUse> pair in
+                sourceEdges)
+            {
+                if (pair.Value.Count == 1)
+                {
+                    openSourceEdgeCount++;
+                }
+            }
+
+            long additionalVertices;
+            long additionalTriangles;
+            try
+            {
+                checked
+                {
+                    additionalVertices =
+                        (long)selectedRenderVertexCount +
+                        4L * openSourceEdgeCount;
+                    additionalTriangles =
+                        (long)selectedTriangles.Count +
+                        2L * openSourceEdgeCount;
+                }
+            }
+            catch (OverflowException)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes
+                        .GeometryBudgetOverflow,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Solidify geometry preflight overflowed its count representation.",
+                    operationId: operation.Id));
+                return false;
+            }
+
+            using (MeshBuildBufferTransaction transaction =
+                buffer.BeginTransaction())
+            {
+                if (!buffer.TryBeginGeometryOperation(
+                        additionalVertices,
+                        additionalTriangles,
+                        operation.Id,
+                        "Solidify",
+                        result,
+                        out GeometryOperationScope geometryScope))
+                {
+                    return false;
+                }
+
+                using (geometryScope)
+                {
             GetLayerDistances(
                 operation,
                 out float outerDistance,
@@ -466,8 +519,11 @@ namespace FoldCanvas
                 return false;
             }
 
-            result.AddClosedVolumeReport(closedVolumeReport);
-            return true;
+                result.AddClosedVolumeReport(closedVolumeReport);
+                transaction.Commit();
+                return true;
+                }
+            }
         }
 
         private static float MinimumNormalDot(

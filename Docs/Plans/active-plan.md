@@ -5,6 +5,14 @@ curvature rules, the existing seam graph, Weld, and the deterministic compiler
 produce a genuine closed sphere. The generated Mesh is derived evidence, never
 the editable source.
 
+PR #4 hardening additionally requires component-scoped closed-sphere
+validation at the zero-thickness surface stage, before any Solidify that
+touches that component; one cumulative geometry budget across panel
+tessellation, Stitch subdivision/bridges, and Solidify; defensive native asset
+validation; scale-aware pole classification; and a real Unity Edit Mode CI
+job. Unrelated Stitch or Solidify operations must not change whether a
+spherical component is validated.
+
 M04/M04.1 passed human audit and merged through PR #3 into `main` at merge
 commit `ef36808`. The M05 baseline is Unity `6000.3.20f1` with 152/152 Edit
 Mode tests.
@@ -73,6 +81,16 @@ It does not use or modify `Camera.main`.
 - Reuse the M04.1 closed-volume report.
 - Add sphere-specific radius, pole, Euler characteristic, winding, and
   determinism checks.
+- Build deterministic spherical components only from enabled SphericalWrap
+  panels connected by Stitch-selected seams whose two endpoints are spherical.
+- Validate each component after its final relevant Stitch and before its first
+  relevant Solidify. Preserve that pre-Solidify report even when the compiled
+  result later contains a thick shell.
+- Treat the sphere validator as a topology, manifoldness, radius, pole, and
+  winding proof. It is not a global triangle-triangle self-intersection proof.
+- Enforce `MaxGeneratedVertices` and `MaxGeneratedTriangles` cumulatively in
+  the build buffer. Geometry-producing operations preflight their exact or
+  conservative additions before mutating geometry.
 - Return stable diagnostics and no Mesh for invalid parameters, embeddings,
   pole topology, or final sphere invariants.
 
@@ -151,7 +169,8 @@ It does not use or modify `Camera.main`.
 
 ## Tolerances
 
-- angular pole/full-turn comparisons use explicit centralized tolerances
+- pole classification requires both the centralized angular tolerance and
+  `radius * angularDeviationRadians <= CompileSettings.WeldEpsilon`
 - current-frame congruence uses the established Roll frame scale-aware
   tolerance
 - radius validation uses absolute plus relative tolerance
@@ -180,6 +199,9 @@ It does not use or modify `Camera.main`.
    `git diff --check`, and actual Unity proof rendering.
 10. Update package version/changelog, commit, push, and open a non-merged review
     PR. Keep `CURRENT_TASK.md` on M05.
+11. Harden PR #4 with component-scoped pre-Solidify reports, cumulative
+    GeometryBudget enforcement, native `sampleCount`/reference validation,
+    scale-aware poles, three-pass golden determinism, and Unity CI artifacts.
 
 # Test matrix
 
@@ -216,6 +238,16 @@ It does not use or modify `Camera.main`.
 ## Regression
 
 - all existing M00-M04.1 Edit Mode tests remain enabled and unchanged
+- open sphere followed by Solidify is rejected before shell generation
+- unrelated Stitch and Solidify operations do not trigger or suppress sphere
+  validation
+- two independent spherical components emit two deterministic reports
+- panel, Stitch, Bridge, and Solidify additions share one cumulative budget
+- budget failures leave counts, topology, panel records, and boundaries
+  unchanged
+- null/empty/whitespace native references return diagnostics, not exceptions
+- a radius `1e9` near-pole ring is not collapsed by fixed angular tolerance
+- the golden asset compiles three times with stable geometry and report hashes
 - repository validation
 - JSON and asmdef parsing
 - Runtime `UnityEditor` isolation
@@ -236,6 +268,11 @@ It does not use or modify `Camera.main`.
   labels plus numerical UV/orientation tests.
 - Solidify may expose new corner cases after sphere Weld. Treat Solidify
   compatibility as a regression proof, not permission for mesh repair.
+- Operation-level budget preflight must agree with build-buffer hard limits.
+  Keep the hard guard authoritative and test disagreement as an internal
+  failure rather than permitting over-allocation.
+- Component identity and report ordering must be based on source panel order,
+  operation order, and ordinal IDs; dictionary iteration cannot order reports.
 
 Rollback is one branch revert. No M05 source behavior is added to `main` until
 human audit.
@@ -258,6 +295,22 @@ human audit.
   The readable labels are not mirrored; the radius-error surface is uniformly
   within tolerance.
 - 2026-07-30: Unity `6000.3.20f1` passed the complete 174/174 Edit Mode suite.
+- 2026-07-30: PR #4 hardening baseline re-ran repository validation and the
+  complete Unity suite: 174/174 passed before changes.
+- 2026-07-30: Source audit confirmed the asset-level
+  `hasStitch && !hasSolidify` sphere gate, panel-only safety limits, unguarded
+  null dictionary keys, fixed-angle pole classification, and Python-only CI.
+- 2026-07-30: Replaced the asset-level gate with deterministic relevant-seam
+  components and preserved staged pre-Solidify reports. Added full-compile
+  GeometryBudget enforcement, Stitch/Solidify rollback transactions, native
+  input guards, and scale-aware pole classification.
+- 2026-07-30: Batched Stitch sample insertion with one edge-adjacency index;
+  the `8192`-sample regression completed in Unity in about `0.42 s`.
+- 2026-07-30: Added pinned GameCI Unity Edit Mode CI plus NUnit/Editor-log
+  artifacts, and expanded repository validation for workflow, version, and
+  Schema/native limit consistency.
+- 2026-07-30: Unity `6000.3.20f1` passed the complete hardened suite:
+  208/208 passed, with zero failed, skipped, or inconclusive tests.
 
 # Decisions made
 
@@ -275,14 +328,23 @@ human audit.
   coordinates.
 - Outwardness is verified from emitted geometry rather than hidden by a
   two-sided material.
+- `WeldEpsilon` is the existing compile-time positional tolerance used for
+  scale-aware pole normalization; no second competing positional setting is
+  introduced in M05.
+- `SphereReport` remains the compatibility view while `SphereReports` preserves
+  every component-scoped validation report and its stage.
+- M05 CI uses the tracked `Project~` host so Runtime, Editor, package Tests, and
+  the exact local-package dependency compile together.
 
-# Final verification
+# Current verification
 
-- Package version: `0.1.0-preview.9`
+- Package version: `0.1.0-preview.10`
 - Unity Editor: `6000.3.20f1 (c9ba695d4f07)`
-- Edit Mode: 174/174 passed, zero failed/skipped/inconclusive
+- Edit Mode: 208/208 passed, zero failed/skipped/inconclusive
 - Test XML:
-  `Project~/TestResults/M05SphereEditMode.xml`
+  `Project~/TestResults/M05HardeningFinal.xml`
+- Editor log:
+  `Project~/TestResults/M05HardeningFinal-Editor.log`
 - Golden source: 8 explicit rectangle gore panels and 8 explicit Weld seams
 - Surface: 616 render vertices, 482 logical topology vertices, 960 triangles,
   and 1,440 unique logical edges
@@ -293,17 +355,21 @@ human audit.
 - Winding: zero inward triangles
 - Maximum radius error: `0 m`; tolerance
   `5.9999998711646185e-6 m`
-- Determinism: `Sphere_RegenerationIsDeterministic` passed for vertex count,
-  triangle order, topology IDs, and diagnostics
+- Determinism: `Sphere_RegenerationIsDeterministic` and
+  `GoldenSphere_ThreeCompilesHaveStableCountsReportsAndHash` passed for vertex
+  order, triangle order, topology IDs, staged reports, and deterministic hash
 - Unequal correspondence: `Sphere_UnequalSeamSamplesRemainOnRadius` passed
 - Current frame/reflection and Solidify compatibility tests passed
 - Proof captures:
   `Project~/TestResults/M05SphereProofViews/overview.png`,
   `textured.png`, `solid.png`, `wireframe.png`, `uv-stretch.png`, and
   `radius-error.png`
-- Repository validation, all JSON parsing, Draft 2020-12 FoldScript schema
-  validation, Runtime `UnityEditor` isolation, asmdef inspection, and
+- Repository validation, all tracked JSON parsing, workflow YAML parsing,
+  Draft 2020-12 FoldScript schema validation, Runtime `UnityEditor` isolation,
+  asmdef inspection, prohibited-sphere-generator scan, and
   `git diff --check` passed
+- GitHub Actions Unity status is recorded after the hardening commit is pushed;
+  the workflow requires the documented Unity license secrets
 - No Unity Sphere/UV Sphere/Icosphere, imported or fixed sphere Mesh, automatic
   repair, bevel, subdivision, remesh, mesh cleanup, or M06 behavior was
   implemented

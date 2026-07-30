@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +34,10 @@ namespace FoldCanvas
 
     internal sealed class MeshBuildBuffer
     {
+        private readonly GeometryBudget geometryBudget;
+
+        private GeometryReservation activeGeometryReservation;
+
         private readonly List<PanelBuildRecord> orderedPanels =
             new List<PanelBuildRecord>();
 
@@ -52,14 +57,88 @@ namespace FoldCanvas
             sphericalWrapsByPanelIndex =
                 new Dictionary<int, SphericalWrapBuildRecord>();
 
-        public readonly List<MeshBuildVertex> Vertices =
-            new List<MeshBuildVertex>();
+        public MeshBuildBuffer(
+            int maxGeneratedVertices =
+                FoldCanvasCompileSettings.DefaultMaxGeneratedVertices,
+            int maxGeneratedTriangles =
+                FoldCanvasCompileSettings.DefaultMaxGeneratedTriangles,
+            float positionTolerance =
+                FoldCanvasCompileSettings.DefaultWeldEpsilon)
+        {
+            geometryBudget = new GeometryBudget(
+                maxGeneratedVertices,
+                maxGeneratedTriangles);
+            PositionTolerance = positionTolerance;
+            Vertices = new MeshBuildVertexCollection();
+            Triangles = new MeshBuildTriangleCollection(this);
+        }
 
-        public readonly List<int> Triangles = new List<int>();
+        public MeshBuildVertexCollection Vertices { get; }
+
+        public MeshBuildTriangleCollection Triangles { get; }
 
         public int PanelCount => orderedPanels.Count;
 
         public bool HasTopologyWelds { get; private set; }
+
+        public int UsedGeneratedVertices =>
+            geometryBudget.UsedVertices;
+
+        public int UsedGeneratedTriangles =>
+            geometryBudget.UsedTriangles;
+
+        public int MaxGeneratedVertices =>
+            geometryBudget.MaxVertices;
+
+        public int MaxGeneratedTriangles =>
+            geometryBudget.MaxTriangles;
+
+        public float PositionTolerance { get; }
+
+        public bool TryBeginGeometryOperation(
+            long additionalVertices,
+            long additionalTriangles,
+            string operationId,
+            string operationType,
+            FoldCanvasCompileResult result,
+            out GeometryOperationScope scope)
+        {
+            scope = null;
+            if (activeGeometryReservation != null)
+            {
+                throw new InvalidOperationException(
+                    "Geometry budget reservations cannot be nested.");
+            }
+
+            if (!geometryBudget.TryReserve(
+                    additionalVertices,
+                    additionalTriangles,
+                    operationId,
+                    operationType,
+                    out GeometryReservation reservation,
+                    out FoldCanvasDiagnostic diagnostic))
+            {
+                result.Add(diagnostic);
+                return false;
+            }
+
+            activeGeometryReservation = reservation;
+            scope = new GeometryOperationScope(this, reservation);
+            return true;
+        }
+
+        public MeshBuildBufferTransaction BeginTransaction()
+        {
+            if (activeGeometryReservation != null)
+            {
+                throw new InvalidOperationException(
+                    "A mesh transaction cannot begin during an active geometry reservation.");
+            }
+
+            return new MeshBuildBufferTransaction(
+                this,
+                CaptureState());
+        }
 
         public int AddVertex(
             Vector3 position,
@@ -82,8 +161,13 @@ namespace FoldCanvas
             int panelIndex,
             int provenanceId)
         {
+            if (!TryConsumeVertex(out FoldCanvasDiagnostic diagnostic))
+            {
+                throw new GeometryBudgetExceededException(diagnostic);
+            }
+
             int vertexIndex = Vertices.Count;
-            Vertices.Add(new MeshBuildVertex(
+            Vertices.AddUnchecked(new MeshBuildVertex(
                 position,
                 sourcePosition,
                 sourceUv,
@@ -91,6 +175,54 @@ namespace FoldCanvas
                 provenanceId));
             topologyParents.Add(vertexIndex);
             return vertexIndex;
+        }
+
+        public bool TryAddVertex(
+            Vector3 position,
+            Vector2 sourcePosition,
+            Vector2 sourceUv,
+            int panelIndex,
+            out int vertexIndex,
+            out FoldCanvasDiagnostic diagnostic)
+        {
+            if (!TryConsumeVertex(out diagnostic))
+            {
+                vertexIndex = -1;
+                return false;
+            }
+
+            vertexIndex = Vertices.Count;
+            Vertices.AddUnchecked(new MeshBuildVertex(
+                position,
+                sourcePosition,
+                sourceUv,
+                panelIndex,
+                vertexIndex));
+            topologyParents.Add(vertexIndex);
+            return true;
+        }
+
+        public bool TryAddTriangle(
+            int first,
+            int second,
+            int third,
+            out FoldCanvasDiagnostic diagnostic)
+        {
+            if (Triangles.Count % 3 != 0)
+            {
+                throw new InvalidOperationException(
+                    "Triangle indices must be emitted in complete triples.");
+            }
+
+            if (!TryConsumeTriangle(out diagnostic))
+            {
+                return false;
+            }
+
+            Triangles.AddUnchecked(first);
+            Triangles.AddUnchecked(second);
+            Triangles.AddUnchecked(third);
+            return true;
         }
 
         public void AddPanel(PanelBuildRecord panel)
@@ -156,6 +288,12 @@ namespace FoldCanvas
 
         public bool TryGetPanel(string panelId, out PanelBuildRecord panel)
         {
+            if (string.IsNullOrWhiteSpace(panelId))
+            {
+                panel = null;
+                return false;
+            }
+
             return panelsById.TryGetValue(panelId, out panel);
         }
 
@@ -263,6 +401,337 @@ namespace FoldCanvas
 
             return root;
         }
+
+        internal void AddTriangleIndex(int vertexIndex)
+        {
+            if (Triangles.Count % 3 == 0 &&
+                !TryConsumeTriangle(out FoldCanvasDiagnostic diagnostic))
+            {
+                throw new GeometryBudgetExceededException(diagnostic);
+            }
+
+            Triangles.AddUnchecked(vertexIndex);
+        }
+
+        internal void EndGeometryOperation(
+            GeometryReservation reservation)
+        {
+            if (!ReferenceEquals(
+                    activeGeometryReservation,
+                    reservation))
+            {
+                throw new InvalidOperationException(
+                    "The active geometry reservation changed unexpectedly.");
+            }
+
+            activeGeometryReservation = null;
+        }
+
+        private MeshBuildBufferState CaptureState()
+        {
+            int[][][] panelBoundaryIndices =
+                new int[orderedPanels.Count][][];
+            for (int i = 0; i < orderedPanels.Count; i++)
+            {
+                panelBoundaryIndices[i] =
+                    orderedPanels[i].CaptureBoundaryIndices();
+            }
+
+            int[] sphericalSurfaceVertexCounts =
+                new int[sphericalWraps.Count];
+            for (int i = 0; i < sphericalWraps.Count; i++)
+            {
+                sphericalSurfaceVertexCounts[i] =
+                    sphericalWraps[i].CaptureSurfaceVertexCount();
+            }
+
+            return new MeshBuildBufferState(
+                Vertices.Capture(),
+                Triangles.Capture(),
+                topologyParents.ToArray(),
+                panelBoundaryIndices,
+                sphericalSurfaceVertexCounts,
+                cornerSegments.Count,
+                HasTopologyWelds,
+                geometryBudget.UsedVertices,
+                geometryBudget.UsedTriangles);
+        }
+
+        internal void RestoreState(MeshBuildBufferState state)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state));
+            }
+
+            if (activeGeometryReservation != null)
+            {
+                throw new InvalidOperationException(
+                    "A mesh transaction can only roll back after its geometry reservation has ended.");
+            }
+
+            Vertices.Restore(state.Vertices);
+            Triangles.Restore(state.Triangles);
+            topologyParents.Clear();
+            topologyParents.AddRange(state.TopologyParents);
+            for (int i = 0; i < orderedPanels.Count; i++)
+            {
+                orderedPanels[i].RestoreBoundaryIndices(
+                    state.PanelBoundaryIndices[i]);
+            }
+
+            for (int i = 0; i < sphericalWraps.Count; i++)
+            {
+                sphericalWraps[i].RestoreSurfaceVertexCount(
+                    state.SphericalSurfaceVertexCounts[i]);
+            }
+
+            if (cornerSegments.Count > state.CornerSegmentCount)
+            {
+                cornerSegments.RemoveRange(
+                    state.CornerSegmentCount,
+                    cornerSegments.Count - state.CornerSegmentCount);
+            }
+
+            HasTopologyWelds = state.HasTopologyWelds;
+            geometryBudget.RestoreUsage(
+                state.UsedVertices,
+                state.UsedTriangles);
+        }
+
+        private bool TryConsumeVertex(
+            out FoldCanvasDiagnostic diagnostic)
+        {
+            return activeGeometryReservation != null
+                ? geometryBudget.TryConsumeVertex(
+                    activeGeometryReservation,
+                    out diagnostic)
+                : geometryBudget.TryConsumeImmediateVertex(
+                    out diagnostic);
+        }
+
+        private bool TryConsumeTriangle(
+            out FoldCanvasDiagnostic diagnostic)
+        {
+            return activeGeometryReservation != null
+                ? geometryBudget.TryConsumeTriangle(
+                    activeGeometryReservation,
+                    out diagnostic)
+                : geometryBudget.TryConsumeImmediateTriangle(
+                    out diagnostic);
+        }
+    }
+
+    internal sealed class MeshBuildBufferState
+    {
+        public MeshBuildBufferState(
+            MeshBuildVertex[] vertices,
+            int[] triangles,
+            int[] topologyParents,
+            int[][][] panelBoundaryIndices,
+            int[] sphericalSurfaceVertexCounts,
+            int cornerSegmentCount,
+            bool hasTopologyWelds,
+            int usedVertices,
+            int usedTriangles)
+        {
+            Vertices = vertices;
+            Triangles = triangles;
+            TopologyParents = topologyParents;
+            PanelBoundaryIndices = panelBoundaryIndices;
+            SphericalSurfaceVertexCounts =
+                sphericalSurfaceVertexCounts;
+            CornerSegmentCount = cornerSegmentCount;
+            HasTopologyWelds = hasTopologyWelds;
+            UsedVertices = usedVertices;
+            UsedTriangles = usedTriangles;
+        }
+
+        public MeshBuildVertex[] Vertices { get; }
+
+        public int[] Triangles { get; }
+
+        public int[] TopologyParents { get; }
+
+        public int[][][] PanelBoundaryIndices { get; }
+
+        public int[] SphericalSurfaceVertexCounts { get; }
+
+        public int CornerSegmentCount { get; }
+
+        public bool HasTopologyWelds { get; }
+
+        public int UsedVertices { get; }
+
+        public int UsedTriangles { get; }
+    }
+
+    internal sealed class MeshBuildBufferTransaction : IDisposable
+    {
+        private MeshBuildBuffer owner;
+
+        private readonly MeshBuildBufferState state;
+
+        private bool committed;
+
+        public MeshBuildBufferTransaction(
+            MeshBuildBuffer owner,
+            MeshBuildBufferState state)
+        {
+            this.owner = owner ??
+                throw new ArgumentNullException(nameof(owner));
+            this.state = state ??
+                throw new ArgumentNullException(nameof(state));
+        }
+
+        public void Commit()
+        {
+            committed = true;
+        }
+
+        public void Dispose()
+        {
+            MeshBuildBuffer currentOwner = owner;
+            if (currentOwner == null)
+            {
+                return;
+            }
+
+            owner = null;
+            if (!committed)
+            {
+                currentOwner.RestoreState(state);
+            }
+        }
+    }
+
+    internal sealed class GeometryOperationScope : IDisposable
+    {
+        private MeshBuildBuffer owner;
+
+        private readonly GeometryReservation reservation;
+
+        public GeometryOperationScope(
+            MeshBuildBuffer owner,
+            GeometryReservation reservation)
+        {
+            this.owner = owner ??
+                throw new ArgumentNullException(nameof(owner));
+            this.reservation = reservation ??
+                throw new ArgumentNullException(nameof(reservation));
+        }
+
+        public void Dispose()
+        {
+            MeshBuildBuffer currentOwner = owner;
+            if (currentOwner == null)
+            {
+                return;
+            }
+
+            owner = null;
+            currentOwner.EndGeometryOperation(reservation);
+        }
+    }
+
+    internal sealed class MeshBuildVertexCollection :
+        IReadOnlyList<MeshBuildVertex>
+    {
+        private readonly List<MeshBuildVertex> values =
+            new List<MeshBuildVertex>();
+
+        public int Count => values.Count;
+
+        public MeshBuildVertex this[int index]
+        {
+            get => values[index];
+            set => values[index] = value;
+        }
+
+        internal void AddUnchecked(MeshBuildVertex vertex)
+        {
+            values.Add(vertex);
+        }
+
+        internal MeshBuildVertex[] Capture()
+        {
+            return values.ToArray();
+        }
+
+        internal void Restore(IReadOnlyList<MeshBuildVertex> snapshot)
+        {
+            values.Clear();
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                values.Add(snapshot[i]);
+            }
+        }
+
+        public IEnumerator<MeshBuildVertex> GetEnumerator()
+        {
+            return values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
+    internal sealed class MeshBuildTriangleCollection :
+        IReadOnlyList<int>
+    {
+        private readonly MeshBuildBuffer owner;
+
+        private readonly List<int> values = new List<int>();
+
+        public MeshBuildTriangleCollection(MeshBuildBuffer owner)
+        {
+            this.owner = owner ??
+                throw new ArgumentNullException(nameof(owner));
+        }
+
+        public int Count => values.Count;
+
+        public int this[int index]
+        {
+            get => values[index];
+            set => values[index] = value;
+        }
+
+        public void Add(int vertexIndex)
+        {
+            owner.AddTriangleIndex(vertexIndex);
+        }
+
+        internal void AddUnchecked(int vertexIndex)
+        {
+            values.Add(vertexIndex);
+        }
+
+        internal int[] Capture()
+        {
+            return values.ToArray();
+        }
+
+        internal void Restore(IReadOnlyList<int> snapshot)
+        {
+            values.Clear();
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                values.Add(snapshot[i]);
+            }
+        }
+
+        public IEnumerator<int> GetEnumerator()
+        {
+            return values.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
     }
 
     internal sealed class PanelBuildRecord
@@ -328,6 +797,12 @@ namespace FoldCanvas
             string boundaryId,
             out BoundaryBuildRecord boundary)
         {
+            if (string.IsNullOrWhiteSpace(boundaryId))
+            {
+                boundary = null;
+                return false;
+            }
+
             for (int i = 0; i < orderedBoundaries.Count; i++)
             {
                 BoundaryBuildRecord candidate = orderedBoundaries[i];
@@ -366,6 +841,36 @@ namespace FoldCanvas
                 VertexStart,
                 VertexCount,
                 compiledBoundaries);
+        }
+
+        internal int[][] CaptureBoundaryIndices()
+        {
+            int[][] snapshot = new int[orderedBoundaries.Count][];
+            for (int i = 0; i < orderedBoundaries.Count; i++)
+            {
+                snapshot[i] =
+                    orderedBoundaries[i].VertexIndices.ToArray();
+            }
+
+            return snapshot;
+        }
+
+        internal void RestoreBoundaryIndices(
+            IReadOnlyList<int[]> snapshot)
+        {
+            if (snapshot.Count != orderedBoundaries.Count)
+            {
+                throw new InvalidOperationException(
+                    "Panel boundary topology changed during a mesh transaction.");
+            }
+
+            for (int i = 0; i < orderedBoundaries.Count; i++)
+            {
+                List<int> indices =
+                    orderedBoundaries[i].VertexIndices;
+                indices.Clear();
+                indices.AddRange(snapshot[i]);
+            }
         }
     }
 

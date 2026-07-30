@@ -154,7 +154,7 @@ A seam declares topology intent between two ordered boundaries:
 | `seams[].b` | boundary ref | yes | Second ordered boundary. |
 | `seams[].mode` | enum | yes | `"weld"`, `"bridge"`, `"hinge"`, or `"keepOpen"`. |
 | `seams[].reverseB` | boolean | yes | Reverse B's sample order before matching it to A. |
-| `seams[].sampleCount` | integer ≥ 0 | yes | Minimum correspondence density. `0` uses the union of existing normalized breakpoints; a positive value also adds a uniform parameter grid. Existing samples are never discarded, so the final count may be larger. |
+| `seams[].sampleCount` | integer 0–8192 | yes | Minimum correspondence density. `0` uses the union of existing normalized breakpoints; a positive value also adds a uniform parameter grid. Existing samples are never discarded, so the final count may be larger. The same maximum is enforced for JSON and native ScriptableObject assets. |
 
 Seam modes:
 
@@ -420,6 +420,13 @@ spans both poles needs at least two authored latitude segments so at least one
 non-pole row exists. Pole topology is never repaired by collapsing a generated
 mesh afterward.
 
+Near-pole classification also depends on scale. Besides the angular tolerance,
+the spatial arc deviation must satisfy
+`radius * angularDeviationRadians <= compile.weldEpsilon`. Exact poles have
+zero deviation. A latitude that looks numerically close to `+/-90` on a
+radius-`1e9` sphere remains a normal ring when its spatial radius is larger
+than the configured tolerance.
+
 Neighboring gores remain separate until an explicit `stitch` selects their
 side seams. If unequal correspondence inserts a new point, the source
 coordinate and UV are interpolated, but current 3D position is recomputed
@@ -428,6 +435,15 @@ straight chord. A complete stitched zero-thickness sphere must pass the M05
 sphere report: one component, no open/non-manifold/orientation-conflict or
 isolated topology, Euler characteristic 2, one north pole, one south pole,
 outward winding, consistent frame, and bounded radius error.
+
+Spherical components are formed only by Stitch-selected seams whose two
+endpoints target enabled `sphericalWrap` panels. Each component is validated
+after its last such Stitch and before any Solidify that selects that component.
+Unrelated Stitch or Solidify operations do not affect this lifecycle.
+`SphereReports` preserves one staged report per component; `SphereReport`
+remains the first-report compatibility view. Solidify cannot replace the
+pre-Solidify proof. This validation does not include global triangle-triangle
+self-intersection detection.
 
 中文摘要：`sphericalWrap` 只把明确声明的矩形二维球瓣映射到当前局部球面，
 不会凭空生成球体。二维源坐标和 UV 保留；极点在离散阶段明确处理；球瓣之间
@@ -446,9 +462,11 @@ Seam declarations remain inert until selected here.
 M04 parameterizes both ordered boundaries by normalized current-space arc
 length. It retains the union of authored breakpoints and, when
 `sampleCount > 0`, adds a uniform minimum-density grid. Missing samples are
-inserted by subdividing the corresponding boundary edge and adjacent source
-triangle; current position, source position, UV0, panel ownership, and
-provenance are interpolated. No free-floating sample is permitted.
+sorted and inserted with one cached edge-adjacency pass, subdividing the
+corresponding boundary segment and adjacent source triangle; current position,
+source position, UV0, panel ownership, and provenance are interpolated. No
+free-floating sample is permitted. The complete Stitch is transactional, so a
+failure in a later selected seam restores earlier changes from that operation.
 
 Weld requires paired positions within `compile.weldEpsilon` and assigns one
 deterministic `TopologyVertexId`. Separate render vertices remain legal when
@@ -502,10 +520,12 @@ not receive hidden internal walls.
 | `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for explicit Weld and coincidence checks. It does not implicitly weld geometry. |
 | `recalculateNormals` | boolean | yes | Derive Unity mesh normals after geometry compilation. |
 | `validationLevel` | enum | yes | `"basic"`, `"standard"`, or `"strict"`; higher levels add more expensive validation when implemented. |
-| `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative pre-allocation safety limit. C# default: `1,000,000`. |
-| `maxGeneratedTriangles` | integer ≥ 1 | no | Cumulative pre-allocation safety limit. C# default: `2,000,000`. |
+| `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative full-compile safety limit covering panel tessellation, Stitch additions, and Solidify additions. C# default: `1,000,000`. |
+| `maxGeneratedTriangles` | integer ≥ 1 | no | Cumulative full-compile safety limit covering panel tessellation, Stitch additions, and Solidify additions. C# default: `2,000,000`. |
 
-M01 rejects an unsafe tessellation request before allocating partial geometry.
+Every geometry-producing operation preflights and reserves its exact additions,
+while `MeshBuildBuffer` remains the final hard limit. Budget or arithmetic
+overflow returns a stable diagnostic and rolls back the failing operation.
 Limits are errors, not automatic simplification targets.
 
 ## 8. Determinism and failure behavior

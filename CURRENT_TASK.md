@@ -19,6 +19,12 @@ the existing seam graph, Weld, and the deterministic compiler can reconstruct
 one closed sphere while preserving source UV, canvas coordinates, provenance,
 and outward winding.
 
+PR #4 is in its hardening review gate. Before human approval it must also
+prove component-scoped pre-Solidify sphere validation, a single cumulative
+Panel/Stitch/Solidify geometry budget with rollback, native asset and
+scale-aware pole defenses, three-pass golden determinism, and a real Unity
+Edit Mode GitHub Actions job that uploads test XML and Editor logs.
+
 The generated sphere Mesh remains a derived artifact. Do not use a Unity
 Sphere primitive, UV Sphere, Icosphere, imported sphere Mesh, fixed precomputed
 sphere vertices, or an automatic mesh-repair/cleanup stage as the generation
@@ -28,3 +34,7 @@ M05 must not implement Bevel, Subdivision surface smoothing, Remesh, Mesh
 Cleanup, arbitrary topology repair, or M06. Keep `CURRENT_TASK.md` on M05
 until the full diff, complete Edit Mode suite, topology/radius report, and
 actual Unity sphere proof pass human audit.
+
+M05 topology/radius/winding validation does not include global
+triangle-triangle self-intersection detection. That limitation must remain
+explicit in documentation and review claims.
