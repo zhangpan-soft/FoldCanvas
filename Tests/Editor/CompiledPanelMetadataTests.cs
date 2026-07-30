@@ -231,6 +231,9 @@ namespace FoldCanvas.Tests
             Assert.Throws<NotSupportedException>(() =>
                 ((IList<FoldCanvasCompiledPanel>)data.Panels).Clear());
             Assert.Throws<NotSupportedException>(() =>
+                ((IList<FoldCanvasCompiledCornerSegment>)
+                    data.CornerSegments).Clear());
+            Assert.Throws<NotSupportedException>(() =>
                 ((IList<FoldCanvasCompiledBoundary>)panel.Boundaries).Clear());
             Assert.Throws<NotSupportedException>(() =>
                 ((IList<int>)boundary.VertexIndices)[0] =

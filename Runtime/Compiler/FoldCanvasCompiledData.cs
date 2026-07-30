@@ -92,6 +92,34 @@ namespace FoldCanvas
         public IReadOnlyList<int> VertexIndices => vertexIndices;
     }
 
+    public sealed class FoldCanvasCompiledCornerSegment
+    {
+        internal FoldCanvasCompiledCornerSegment(
+            string operationId,
+            int outerFromVertexIndex,
+            int outerToVertexIndex,
+            int innerFromVertexIndex,
+            int innerToVertexIndex)
+        {
+            OperationId = operationId ??
+                throw new ArgumentNullException(nameof(operationId));
+            OuterFromVertexIndex = outerFromVertexIndex;
+            OuterToVertexIndex = outerToVertexIndex;
+            InnerFromVertexIndex = innerFromVertexIndex;
+            InnerToVertexIndex = innerToVertexIndex;
+        }
+
+        public string OperationId { get; }
+
+        public int OuterFromVertexIndex { get; }
+
+        public int OuterToVertexIndex { get; }
+
+        public int InnerFromVertexIndex { get; }
+
+        public int InnerToVertexIndex { get; }
+    }
+
     public sealed class FoldCanvasCompiledPanel
     {
         private readonly ReadOnlyCollection<FoldCanvasCompiledBoundary> boundaries;
@@ -182,13 +210,17 @@ namespace FoldCanvas
         private readonly ReadOnlyCollection<FoldCanvasCompiledVertex> vertices;
         private readonly ReadOnlyCollection<int> triangleIndices;
         private readonly ReadOnlyCollection<FoldCanvasCompiledPanel> panels;
+        private readonly ReadOnlyCollection<FoldCanvasCompiledCornerSegment>
+            cornerSegments;
 
         private readonly int topologyVertexCount;
 
         internal FoldCanvasCompiledData(
             IReadOnlyList<FoldCanvasCompiledVertex> sourceVertices,
             IReadOnlyList<int> sourceTriangleIndices,
-            IReadOnlyList<FoldCanvasCompiledPanel> sourcePanels)
+            IReadOnlyList<FoldCanvasCompiledPanel> sourcePanels,
+            IReadOnlyList<FoldCanvasCompiledCornerSegment>
+                sourceCornerSegments)
         {
             if (sourceVertices == null)
             {
@@ -203,6 +235,12 @@ namespace FoldCanvas
             if (sourcePanels == null)
             {
                 throw new ArgumentNullException(nameof(sourcePanels));
+            }
+
+            if (sourceCornerSegments == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(sourceCornerSegments));
             }
 
             FoldCanvasCompiledVertex[] copiedVertices =
@@ -225,9 +263,18 @@ namespace FoldCanvas
                 copiedPanels[i] = sourcePanels[i];
             }
 
+            FoldCanvasCompiledCornerSegment[] copiedCornerSegments =
+                new FoldCanvasCompiledCornerSegment[
+                    sourceCornerSegments.Count];
+            for (int i = 0; i < sourceCornerSegments.Count; i++)
+            {
+                copiedCornerSegments[i] = sourceCornerSegments[i];
+            }
+
             vertices = Array.AsReadOnly(copiedVertices);
             triangleIndices = Array.AsReadOnly(copiedTriangleIndices);
             panels = Array.AsReadOnly(copiedPanels);
+            cornerSegments = Array.AsReadOnly(copiedCornerSegments);
 
             bool[] seenTopologyVertices = new bool[copiedVertices.Length];
             int uniqueTopologyVertices = 0;
@@ -257,6 +304,9 @@ namespace FoldCanvas
         public IReadOnlyList<int> TriangleIndices => triangleIndices;
 
         public IReadOnlyList<FoldCanvasCompiledPanel> Panels => panels;
+
+        public IReadOnlyList<FoldCanvasCompiledCornerSegment>
+            CornerSegments => cornerSegments;
 
         public int TopologyVertexCount => topologyVertexCount;
 

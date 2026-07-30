@@ -12,7 +12,7 @@
     {
       "id": "wall",
       "shape": "rectangle",
-      "canvasRect": [0.05, 0.1, 0.9, 0.5],
+      "canvasRect": [0.06, 0.46, 0.88, 0.44],
       "physicalSize": [0.31415927, 0.12],
       "tessellation": {
         "uSegments": 64,
@@ -22,7 +22,7 @@
     {
       "id": "bottom",
       "shape": "disk",
-      "canvasRect": [0.1, 0.68, 0.22, 0.22],
+      "canvasRect": [0.32, 0.02, 0.36, 0.36],
       "physicalSize": [0.1, 0.1],
       "tessellation": {
         "radialSegments": 64,
@@ -44,7 +44,7 @@
       "a": { "panel": "wall", "boundary": "vMin" },
       "b": { "panel": "bottom", "boundary": "perimeter" },
       "mode": "weld",
-      "reverseB": true,
+      "reverseB": false,
       "sampleCount": 64
     }
   ],
@@ -56,7 +56,7 @@
       "direction": "u",
       "angleDegrees": 360,
       "radiusMode": "preserveArcLength",
-      "startAngleDegrees": 0
+      "startAngleDegrees": 180
     },
     {
       "id": "place-bottom",
@@ -75,7 +75,7 @@
       "id": "solidify",
       "type": "solidify",
       "targets": ["wall", "bottom"],
-      "thickness": 0.002,
+      "thickness": 0.004,
       "direction": "inward"
     }
   ],

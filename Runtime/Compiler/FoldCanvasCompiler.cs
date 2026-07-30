@@ -51,6 +51,9 @@ namespace FoldCanvas
                 asset.CompileSettings.RecalculateNormals;
 
             result.CompiledData = buffer.Freeze();
+            result.ClosedVolumeReport =
+                FoldCanvasClosedVolumeValidator.Analyze(
+                    result.CompiledData);
             result.Mesh = UnityMeshConverter.Create(
                 result.CompiledData,
                 meshName,
@@ -91,6 +94,8 @@ namespace FoldCanvas
             MeshBuildBuffer buffer,
             FoldCanvasCompileResult result)
         {
+            HashSet<string> stitchedPanelIds =
+                new HashSet<string>(StringComparer.Ordinal);
             for (int i = 0; i < asset.Operations.Count; i++)
             {
                 FoldOperationDefinition operation = asset.Operations[i];
@@ -101,6 +106,15 @@ namespace FoldCanvas
 
                 if (operation is RigidTransformOperationDefinition rigidTransform)
                 {
+                    if (RejectPostStitchDeformation(
+                        rigidTransform.PanelId,
+                        rigidTransform.Id,
+                        stitchedPanelIds,
+                        result))
+                    {
+                        return;
+                    }
+
                     if (!RigidTransformExecutor.TryExecute(
                         rigidTransform,
                         buffer,
@@ -114,6 +128,15 @@ namespace FoldCanvas
 
                 if (operation is FoldLineOperationDefinition fold)
                 {
+                    if (RejectPostStitchDeformation(
+                        fold.PanelId,
+                        fold.Id,
+                        stitchedPanelIds,
+                        result))
+                    {
+                        return;
+                    }
+
                     if (!FoldLineExecutor.TryExecute(fold, buffer, result))
                     {
                         return;
@@ -124,6 +147,15 @@ namespace FoldCanvas
 
                 if (operation is RollOperationDefinition roll)
                 {
+                    if (RejectPostStitchDeformation(
+                        roll.PanelId,
+                        roll.Id,
+                        stitchedPanelIds,
+                        result))
+                    {
+                        return;
+                    }
+
                     if (!RollExecutor.TryExecute(roll, buffer, result))
                     {
                         return;
@@ -137,6 +169,27 @@ namespace FoldCanvas
                     if (!StitchExecutor.TryExecute(
                         stitch,
                         asset,
+                        buffer,
+                        result,
+                        out List<string> selectedPanelIds))
+                    {
+                        return;
+                    }
+
+                    for (int panelIndex = 0;
+                        panelIndex < selectedPanelIds.Count;
+                        panelIndex++)
+                    {
+                        stitchedPanelIds.Add(selectedPanelIds[panelIndex]);
+                    }
+
+                    continue;
+                }
+
+                if (operation is SolidifyOperationDefinition solidify)
+                {
+                    if (!SolidifyExecutor.TryExecute(
+                        solidify,
                         buffer,
                         result))
                     {
@@ -155,6 +208,26 @@ namespace FoldCanvas
             }
         }
 
+        private static bool RejectPostStitchDeformation(
+            string panelId,
+            string operationId,
+            HashSet<string> stitchedPanelIds,
+            FoldCanvasCompileResult result)
+        {
+            if (!stitchedPanelIds.Contains(panelId))
+            {
+                return false;
+            }
+
+            result.Add(new FoldCanvasDiagnostic(
+                FoldCanvasDiagnosticCodes.StitchMustBeTerminalForSelectedPanels,
+                FoldCanvasDiagnosticSeverity.Error,
+                "Stitch must be the terminal position-deforming operation for every panel selected by that Stitch until topology-group deformation propagation is implemented.",
+                panelId,
+                operationId));
+            return true;
+        }
+
         private static void ValidateGeneratedGeometry(
             MeshBuildBuffer buffer,
             FoldCanvasCompileResult result)
@@ -171,13 +244,10 @@ namespace FoldCanvas
                 }
             }
 
-            if (buffer.HasTopologyWelds)
+            ValidateWeldedTopology(buffer, result);
+            if (result.HasErrors())
             {
-                ValidateWeldedTopology(buffer, result);
-                if (result.HasErrors())
-                {
-                    return;
-                }
+                return;
             }
 
             for (int i = 0; i < buffer.Triangles.Count; i += 3)

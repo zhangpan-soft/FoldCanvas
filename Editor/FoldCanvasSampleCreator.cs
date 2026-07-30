@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 
 namespace FoldCanvas.Editor
 {
-    public static class FoldCanvasSampleCreator
+    public static partial class FoldCanvasSampleCreator
     {
         private const string SampleFolder = "Assets/FoldCanvasSamples";
         private const string TexturePath = SampleFolder + "/BootstrapCanvas.png";
@@ -1393,7 +1393,24 @@ namespace FoldCanvas.Editor
             System.Text.StringBuilder builder = new System.Text.StringBuilder();
             for (int i = 0; i < result.Diagnostics.Count; i++)
             {
-                builder.AppendLine(result.Diagnostics[i].ToString());
+                FoldCanvasDiagnostic diagnostic =
+                    result.Diagnostics[i];
+                builder.Append(diagnostic.ToString());
+                for (int valueIndex = 0;
+                    valueIndex < diagnostic.Values.Count;
+                    valueIndex++)
+                {
+                    FoldCanvasDiagnosticValue value =
+                        diagnostic.Values[valueIndex];
+                    builder.Append(
+                        $" {value.Key}={value.Value:R}");
+                    if (!string.IsNullOrEmpty(value.Unit))
+                    {
+                        builder.Append(value.Unit);
+                    }
+                }
+
+                builder.AppendLine();
             }
 
             return builder.ToString();

@@ -34,6 +34,10 @@ namespace FoldCanvas
         public const string UnsupportedStitchSeamMode = "FC2007";
         public const string DuplicateSeamId = "FC2008";
         public const string EmptyStitchSeamList = "FC2009";
+        public const string StitchMustBeTerminalForSelectedPanels = "FC2010";
+        public const string ZeroLengthStitchBoundary = "FC2011";
+        public const string StitchBoundaryClosureMismatch = "FC2012";
+        public const string StitchBoundarySubdivisionFailed = "FC2013";
         public const string UnsupportedOperation = "FC3001";
         public const string NonFiniteOperationParameter = "FC3002";
         public const string FoldTargetMissing = "FC3003";
@@ -57,6 +61,13 @@ namespace FoldCanvas
         public const string UnsupportedRollEmbedding = "FC3021";
         public const string InsufficientRollTessellation = "FC3022";
         public const string UnsupportedMultiTurnRoll = "FC3023";
+        public const string InvalidSolidifyThickness = "FC4001";
+        public const string SolidifyTargetMissing = "FC4002";
+        public const string IncompleteSolidifyTopologySelection = "FC4003";
+        public const string UnsupportedSolidifyCorner = "FC4004";
+        public const string NonManifoldSolidifyInput = "FC4005";
+        public const string InvalidSolidifyDirection = "FC4006";
+        public const string SolidifyClosedVolumeValidationFailed = "FC4007";
         public const string NonFiniteVertex = "FC5001";
         public const string ZeroAreaTriangle = "FC5002";
         public const string NonManifoldTopology = "FC5003";

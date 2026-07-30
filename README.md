@@ -30,7 +30,7 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 ## Status
 
-The repository currently contains the **M03 Roll and minimum Weld compiler**:
+The repository currently contains the **M04 Stitch and Solidify compiler**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -45,11 +45,18 @@ The repository currently contains the **M03 Roll and minimum Weld compiler**:
   non-linear current hinges
 - Circular Roll in the target's current congruent planar frame, with
   documented signed handedness and outward winding
-- Explicit equal-sample Weld seams with deterministic logical topology IDs;
+- Unequal-count seam resampling with real adjacent-triangle subdivision
+- Reusable Weld and Bridge seams with deterministic logical topology IDs;
   source UV/provenance splits remain valid render-vertex splits
+- Inward, outward, and centered Solidify, including shared welded-corner
+  miters, reversed inner winding, and side walls only on true open edges
+- Immutable closed-volume reports with logical edge incidence, connected
+  components, winding conflicts, and signed/absolute volume
+- Automatically derived outer/inner hard-corner segments over emitted
+  Solidify vertices
 - An editor-generated six-region canvas that compiles into a textured box
-- An editor-generated cup whose wall seam and bottom perimeter are welded
-  while its 64-edge top rim remains open
+- An editor-generated thick cup whose wall seam and bottom perimeter are
+  welded, whose inner corner remains connected, and whose top rim is closed
 - Deterministic diagnostics and validation
 - Mesh baking tools for the Unity Editor
 - Edit-mode tests
@@ -57,12 +64,13 @@ The repository currently contains the **M03 Roll and minimum Weld compiler**:
 
 The first public proof target is a cup whose base and wall artwork live on one 2D canvas and compile into a closed, thickened 3D object.
 
-On the M03 audit branch, Circular Roll is intentionally narrower than that
-future closed-shell target: it supports at most one signed turn, requires at
-least three source segments for a complete turn, and accepts only congruent
-planar current embeddings. The cup wall and base are explicitly welded in
-logical topology, but the object remains a zero-thickness open cup until M04
-adds the inner shell, rim walls, and general seam resampling.
+M04 keeps M03 Circular Roll's one-turn and congruent-planar-frame contracts.
+Its seam solver retains both boundaries' normalized breakpoints, performs real
+surface subdivision for missing samples, and then Welds or Bridges the paired
+chains. Solidify consumes the final stitched topology, creates outer and inner
+shells, and rims only true open boundaries. Until shared-topology deformation
+propagation exists, Stitch is terminal for later position deformation on every
+panel it selected.
 
 ## Design principles
 
@@ -93,9 +101,14 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
 5. Open `Window > FoldCanvas > FoldCanvas`.
 6. Use `Tools > FoldCanvas > Create Bootstrap Sample` to create the planar
    M01 source, or `Tools > FoldCanvas > Create M02 Box Proof` to create, bake,
-   and display the six-face fold proof. On the M03 audit branch, use
-   `Tools > FoldCanvas > Create M03 Cup Proof` for the owned cup/source/camera
-   proof.
+   and display the six-face fold proof. Use
+   `Tools > FoldCanvas > Create M03 Cup Proof` for the retained zero-thickness
+   presentation example, or
+   `Tools > FoldCanvas > Create M04 Production Cup Proof` for the solid-color
+   and bleed-safe thick-cup proof with four owned validation cameras. Use
+   `Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof` for the
+   texture-free solid, logical-wireframe, section, and inner/outer-corner
+   validation hierarchy.
 
 ## Install in another Unity project
 
@@ -142,8 +155,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M00 | Repository opens and bootstrap tests pass |
 | M01 | Robust planar panels and preserved UVs |
 | M02 | Fold six decorated rectangle panels into a box — complete |
-| M03 | Roll a decorated wall into a cylindrical cup |
-| M04 | General seam resampling/bridging and shell thickness |
+| M03 | Roll a decorated wall into a cylindrical cup — complete |
+| M04 | General seam resampling/bridging, shell thickness, and M04.1 closed-volume proof — implemented |
 | M05 | Compile sphere gores into a closed sphere |
 | M06 | Split 2D canvas / 3D preview editor |
 | M07 | Manifold, inversion, seam, and intersection validators |

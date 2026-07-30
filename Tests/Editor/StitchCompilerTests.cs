@@ -97,7 +97,7 @@ namespace FoldCanvas.Tests
         }
 
         [Test]
-        public void Stitch_SampleCountMismatch_ReturnsStableDiagnostic()
+        public void Stitch_UnequalExistingCounts_ResamplesInsteadOfFailing()
         {
             FoldCanvasAsset asset = CreateAdjacentRectangleAsset(1, 1f);
             asset.Panels[1] = PanelDefinition.CreateRectangle(
@@ -109,14 +109,33 @@ namespace FoldCanvas.Tests
 
             FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
 
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(
+                result.CompiledData.GetPanel("left")
+                    .GetBoundary("uMax").VertexIndices.Count,
+                Is.EqualTo(3));
+            Assert.That(
+                result.CompiledData.GetPanel("right")
+                    .GetBoundary("uMin").VertexIndices.Count,
+                Is.EqualTo(3));
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Stitch_NegativeSampleCount_ReturnsStableDiagnostic()
+        {
+            FoldCanvasAsset asset = CreateAdjacentRectangleAsset(1, 1f);
+            asset.Seams[0].SampleCount = -1;
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
             AssertOnlyError(
                 result,
                 FoldCanvasDiagnosticCodes.StitchSampleCountMismatch,
                 "join",
                 "stitch");
             Assert.That(result.Diagnostics[0].Values.Count, Is.EqualTo(3));
-            Assert.That(result.Diagnostics[0].Values[0].Value, Is.EqualTo(2d));
-            Assert.That(result.Diagnostics[0].Values[1].Value, Is.EqualTo(3d));
+            Assert.That(result.Diagnostics[0].Values[2].Value, Is.EqualTo(-1d));
             Destroy(result, asset);
         }
 
@@ -316,6 +335,91 @@ namespace FoldCanvas.Tests
             Destroy(second, asset);
         }
 
+        [Test]
+        public void PostStitchRigidTransform_OnSelectedPanel_ReturnsTerminalOperationDiagnostic()
+        {
+            FoldCanvasAsset asset = CreateAdjacentRectangleAsset(1, 1f);
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "move-after-stitch",
+                PanelId = "left",
+                Translation = Vector3.right
+            });
+
+            AssertTerminalOperationDiagnostic(
+                FoldCanvasCompiler.Compile(asset),
+                "left",
+                "move-after-stitch");
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void PostStitchFold_OnSelectedPanel_ReturnsTerminalOperationDiagnostic()
+        {
+            FoldCanvasAsset asset = CreateAdjacentRectangleAsset(1, 1f);
+            asset.Operations.Add(new FoldLineOperationDefinition
+            {
+                Id = "fold-after-stitch",
+                PanelId = "right",
+                LineStart = new Vector2(0f, 0f),
+                LineEnd = new Vector2(0f, 1f),
+                AngleDegrees = 45f
+            });
+
+            AssertTerminalOperationDiagnostic(
+                FoldCanvasCompiler.Compile(asset),
+                "right",
+                "fold-after-stitch");
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void PostStitchRoll_OnSelectedPanel_ReturnsTerminalOperationDiagnostic()
+        {
+            FoldCanvasAsset asset = CreateAdjacentRectangleAsset(3, 1f);
+            asset.Operations.Add(new RollOperationDefinition
+            {
+                Id = "roll-after-stitch",
+                PanelId = "left",
+                Direction = RollDirection.V,
+                AngleDegrees = 180f
+            });
+
+            AssertTerminalOperationDiagnostic(
+                FoldCanvasCompiler.Compile(asset),
+                "left",
+                "roll-after-stitch");
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void PostStitchDeformation_OnUnselectedPanel_RemainsAllowed()
+        {
+            FoldCanvasAsset asset = CreateAdjacentRectangleAsset(1, 1f);
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "free",
+                new Rect(0.45f, 0f, 0.1f, 1f),
+                Vector2.one,
+                1,
+                1));
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "move-free",
+                PanelId = "free",
+                Translation = new Vector3(0f, 0f, 1f)
+            });
+
+            FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            FoldCanvasCompiledPanel free =
+                result.CompiledData.GetPanel("free");
+            Assert.That(
+                result.CompiledData.Vertices[free.VertexStart].Position.z,
+                Is.EqualTo(1f));
+            Destroy(result, asset);
+        }
+
         private static FoldCanvasAsset CreateAdjacentRectangleAsset(
             int vSegments,
             float rightTranslation)
@@ -496,6 +600,26 @@ namespace FoldCanvas.Tests
             Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
             Assert.That(result.Diagnostics[0].Code, Is.EqualTo(code));
             Assert.That(result.Diagnostics[0].SeamId, Is.EqualTo(seamId));
+            Assert.That(
+                result.Diagnostics[0].OperationId,
+                Is.EqualTo(operationId));
+        }
+
+        private static void AssertTerminalOperationDiagnostic(
+            FoldCanvasCompileResult result,
+            string panelId,
+            string operationId)
+        {
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.CompiledData, Is.Null);
+            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(
+                    FoldCanvasDiagnosticCodes
+                        .StitchMustBeTerminalForSelectedPanels));
+            Assert.That(result.Diagnostics[0].PanelId, Is.EqualTo(panelId));
             Assert.That(
                 result.Diagnostics[0].OperationId,
                 Is.EqualTo(operationId));

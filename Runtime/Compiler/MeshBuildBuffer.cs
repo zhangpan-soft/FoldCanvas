@@ -41,6 +41,10 @@ namespace FoldCanvas
 
         private readonly List<int> topologyParents = new List<int>();
 
+        private readonly List<FoldCanvasCompiledCornerSegment>
+            cornerSegments =
+                new List<FoldCanvasCompiledCornerSegment>();
+
         public readonly List<MeshBuildVertex> Vertices =
             new List<MeshBuildVertex>();
 
@@ -56,13 +60,28 @@ namespace FoldCanvas
             Vector2 sourceUv,
             int panelIndex)
         {
+            return AddVertex(
+                position,
+                sourcePosition,
+                sourceUv,
+                panelIndex,
+                Vertices.Count);
+        }
+
+        public int AddVertex(
+            Vector3 position,
+            Vector2 sourcePosition,
+            Vector2 sourceUv,
+            int panelIndex,
+            int provenanceId)
+        {
             int vertexIndex = Vertices.Count;
             Vertices.Add(new MeshBuildVertex(
                 position,
                 sourcePosition,
                 sourceUv,
                 panelIndex,
-                vertexIndex));
+                provenanceId));
             topologyParents.Add(vertexIndex);
             return vertexIndex;
         }
@@ -73,9 +92,29 @@ namespace FoldCanvas
             panelsById.Add(panel.PanelId, panel);
         }
 
+        public void AddCornerSegment(
+            string operationId,
+            int outerFromVertexIndex,
+            int outerToVertexIndex,
+            int innerFromVertexIndex,
+            int innerToVertexIndex)
+        {
+            cornerSegments.Add(new FoldCanvasCompiledCornerSegment(
+                operationId,
+                outerFromVertexIndex,
+                outerToVertexIndex,
+                innerFromVertexIndex,
+                innerToVertexIndex));
+        }
+
         public bool TryGetPanel(string panelId, out PanelBuildRecord panel)
         {
             return panelsById.TryGetValue(panelId, out panel);
+        }
+
+        public PanelBuildRecord GetPanelAt(int panelIndex)
+        {
+            return orderedPanels[panelIndex];
         }
 
         public int GetTopologyId(int vertexIndex)
@@ -145,7 +184,8 @@ namespace FoldCanvas
             return new FoldCanvasCompiledData(
                 compiledVertices,
                 Triangles,
-                compiledPanels);
+                compiledPanels,
+                cornerSegments);
         }
 
         private int FindTopologyRoot(int vertexIndex)
@@ -216,11 +256,15 @@ namespace FoldCanvas
 
         public int TriangleIndexCount { get; }
 
-        public void AddBoundary(string boundaryId, int[] vertexIndices)
+        public void AddBoundary(
+            string boundaryId,
+            int[] vertexIndices,
+            bool isClosed = false)
         {
             orderedBoundaries.Add(new BoundaryBuildRecord(
                 boundaryId,
-                vertexIndices));
+                vertexIndices,
+                isClosed));
         }
 
         public bool TryGetBoundary(
@@ -270,14 +314,20 @@ namespace FoldCanvas
 
     internal sealed class BoundaryBuildRecord
     {
-        public BoundaryBuildRecord(string id, int[] vertexIndices)
+        public BoundaryBuildRecord(
+            string id,
+            IReadOnlyList<int> vertexIndices,
+            bool isClosed)
         {
             Id = id;
-            VertexIndices = vertexIndices;
+            VertexIndices = new List<int>(vertexIndices);
+            IsClosed = isClosed;
         }
 
         public string Id { get; }
 
-        public int[] VertexIndices { get; }
+        public List<int> VertexIndices { get; }
+
+        public bool IsClosed { get; }
     }
 }

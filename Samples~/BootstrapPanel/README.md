@@ -40,7 +40,46 @@ The proof material is an opaque two-sided Unlit visualization so the
 zero-thickness M03 wall and disk stay visible while orbiting the selected
 object. This does not duplicate triangles, add an inner wall, or weaken the
 compiler's outward-winding tests; physical thickness and the closed thick-shell
-construction remain M04 work.
+construction are demonstrated separately by the M04 proof.
 
-M03 supports only explicit equal-sample Weld seams. Deterministic resampling,
-Bridge, Solidify, inner walls, and thickness intentionally remain M04 work.
+For the M04 result proof, keep `M04ProductionCupCanvas.png` available and use:
+
+```text
+Tools > FoldCanvas > Create M04 Production Cup Proof
+```
+
+The command compiles the same exact wall and bottom placement into an inward
+solid shell. It creates two copies of the one generated mesh: a texture-free,
+one-sided solid diagnostic and a one-sided production-texture proof. The
+production canvas fills every wall edge with safe color, keeps the welded wall
+bottom and disk perimeter the same color, and supplies 12 pixels of disk-edge
+bleed for bilinear filtering.
+
+The owned `EditorOnly` root contains normal exterior, exact-side, interior, and
+underside cameras. Exterior is enabled by default; switch views from
+`Tools > FoldCanvas > M04 View`. The retained decorated M03 canvas is a
+presentation example, not the M04 geometry-seam oracle.
+
+For the M04.1 closed-volume inspection proof, use:
+
+```text
+Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof
+```
+
+The command creates a separate `Cup ClosedVolume` FoldCanvas source using the
+same production 2D canvas, exact bottom placement, explicit Welds, and inward
+Solidify rules. It rejects the proof unless the compiled result reports one
+connected non-zero closed volume.
+
+Its owned `EditorOnly` hierarchy shows:
+
+- the authoritative 2D source canvas
+- a texture-free one-sided solid result
+- a wireframe made from unique logical topology edges
+- a fixed vertical section and triangle/plane intersection lines
+- automatically generated `OuterCorner` and `InnerCorner` overlays for the
+  welded wall-bottom hard corner
+
+Switch between `Overview`, `Wireframe`, and `Section` from
+`Tools > FoldCanvas > M04.1 View`. The proof does not add bevels, subdivision,
+smoothing, or mesh-cleanup postprocessing.

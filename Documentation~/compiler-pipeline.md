@@ -122,27 +122,32 @@ read-only, and deterministic.
 
 Seam definitions are declarative source records. Their presence alone does not
 execute or reject geometry. A Stitch operation resolves only its ordered seam
-ID list. The M03 cup gate supports existing equal-sample `Weld` seams:
+ID list. M04 processes each selected seam as follows:
 
-1. resolve both ordered boundaries
-2. collapse a terminal sample already topology-welded to the first sample
-3. apply the declared B orientation
-4. require the effective counts and requested positive `sampleCount` to match
-5. require every pair within `compile.weldEpsilon`
-6. union each pair's deterministic topology identity
-7. snap render copies to the lowest-index representative
-8. retain render splits needed by source UV, provenance, or hard normals
+1. resolve both ordered boundaries and their open/closed state
+2. apply the declared B orientation
+3. parameterize each boundary by normalized current-space cumulative arc
+   length
+4. retain the sorted union of both authored breakpoint sets
+5. when `sampleCount > 0`, add a uniform minimum-density parameter grid
+6. insert every missing sample by splitting its boundary edge and exactly one
+   adjacent source-surface triangle
+7. interpolate current position, immutable source position, UV0, panel
+   ownership, and deterministic provenance
+8. for `Weld`, require every pair within `compile.weldEpsilon`, union logical
+   topology IDs, and snap render copies to the deterministic representative
+9. for `Bridge`, emit a consistently wound strip without unioning the two
+   boundary topology sets
 
 Topology and manifold validation use `TopologyVertexId`; raw render indices are
-not a reliable topological oracle at attribute seams. General normalized
-arc-length resampling, `Bridge`, and other Stitch modes remain planned for
-M04. `FitTargetBoundary` returns one dedicated
+not a reliable topological oracle at attribute seams. `Hinge` and `KeepOpen`
+remain declarative. `FitTargetBoundary` returns one dedicated
 `FC3016 UnsupportedFitTargetBoundary`.
 
 Seams are processed in the Stitch operation's listed order. A later seam may
 therefore consume the closed-loop topology created by an earlier seam.
 
-### M04 terminal-Stitch ordering
+### Terminal-Stitch ordering
 
 Until shared topology groups participate in deformation propagation, the
 compiler treats every panel selected by a Stitch as position-final. A later
@@ -157,11 +162,32 @@ identity.
 
 ## Stage 5: thickness
 
-- classify closed versus open boundaries
-- generate inner shell
-- reverse inner triangles
-- create rim/side-wall topology only where needed
-- maintain source-to-generated vertex provenance
+M04 Solidify consumes complete selected logical-topology components:
+
+1. reject non-finite/non-positive thickness, missing panels, partial welded
+   groups, partial Bridge triangles, and non-manifold source topology
+2. collect oriented incident face planes per logical topology vertex
+3. solve one deterministic bounded offset-plane miter at smooth and hard
+   corners
+4. position the outer and inner layers according to `inward`, `outward`, or
+   `centered`
+5. preserve UV0/provenance on both shell copies and reverse inner winding
+6. classify source logical edges by incidence after Stitch
+7. generate a rim strip exactly once for every incidence-one edge and never
+   across an already welded seam
+8. record paired outer/inner segments for deterministic material hard corners
+9. validate only the selected generated shell as a closed oriented volume
+
+The final M04 cup therefore has one top rim, no internal wall at the wall
+closure or wall-to-bottom seam, and no open or non-manifold topology edge.
+
+The M04.1 closed-volume check requires every selected logical edge to have
+exactly two oppositely directed triangle uses, every logical topology identity
+to resolve to one position, and every connected component to have non-zero
+absolute signed volume. It reports
+`FC4007 SolidifyClosedVolumeValidationFailed` and returns no Mesh if the
+selected Solidify shell violates that contract. Unrelated unsolidified panels
+are not included in the operation-scoped check.
 
 ## Stage 6: derived attributes
 
@@ -178,9 +204,18 @@ identity.
 - consistent winding where expected
 - open-boundary count
 - manifold edge count
+- logical-topology position agreement
+- connected component count
+- signed and absolute component volume
 - duplicate/coincident vertices
 - seam closure error
 - self-intersection when enabled
+
+Every successful compile exposes a read-only
+`FoldCanvasClosedVolumeReport`. Open source panels remain valid compile
+results, but their report has `IsClosedVolume = false`. A cup produced by
+Solidify must have `IsSingleClosedVolume = true`. This bounded M04.1 report
+does not claim global self-intersection detection or mesh repair.
 
 ## Stage 8: artifact creation
 

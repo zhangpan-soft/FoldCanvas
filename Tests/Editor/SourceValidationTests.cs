@@ -324,8 +324,8 @@ namespace FoldCanvas.Tests
             Object.DestroyImmediate(asset);
         }
 
-        [TestCase(FoldOperationType.Solidify)]
-        public void UnsupportedOperation_IsNeverSilentlyIgnored(FoldOperationType operationType)
+        [Test]
+        public void Solidify_IsNoLongerReportedAsUnsupportedOperation()
         {
             FoldCanvasAsset asset = ScriptableObject.CreateInstance<FoldCanvasAsset>();
             asset.Panels.Add(PanelDefinition.CreateRectangle(
@@ -334,15 +334,28 @@ namespace FoldCanvas.Tests
                 Vector2.one,
                 4,
                 4));
-            asset.Operations.Add(CreateUnsupportedOperation(operationType));
+            SolidifyOperationDefinition solidify =
+                new SolidifyOperationDefinition
+                {
+                    Id = "Solidify",
+                    Thickness = 0.1f,
+                    Direction = SolidifyDirection.Inward
+                };
+            solidify.PanelIds.Add("panel");
+            asset.Operations.Add(solidify);
 
             FoldCanvasCompileResult result = FoldCanvasCompiler.Compile(asset);
 
-            Assert.That(result.Success, Is.False);
-            Assert.That(ContainsCode(result, FoldCanvasDiagnosticCodes.UnsupportedOperation), Is.True);
-            Assert.That(result.Mesh, Is.Null);
-            Assert.That(result.Diagnostics.Count, Is.EqualTo(1));
-            Assert.That(result.Diagnostics[0].OperationId, Is.EqualTo(operationType.ToString()));
+            Assert.That(
+                result.Success,
+                Is.True,
+                DiagnosticSignature(result));
+            Assert.That(
+                ContainsCode(
+                    result,
+                    FoldCanvasDiagnosticCodes.UnsupportedOperation),
+                Is.False);
+            Object.DestroyImmediate(result.Mesh);
             Object.DestroyImmediate(asset);
         }
 

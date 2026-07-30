@@ -2,7 +2,8 @@
 
 ## Milestone state
 
-M04 is active after M03 human approval and PR #1 merge. Work occurs on
+M04 is active after M03 human approval, PR #1 merge, and the human-approved
+planning PR #2 merge at `1644090`. Geometry implementation occurs on
 `feat/m04-stitch-solidify`. The executable plan is
 [`Docs/Plans/active-plan.md`](../Docs/Plans/active-plan.md).
 
@@ -17,6 +18,38 @@ The proof must be inspected in Unity from exterior, interior, rim, and underside
 views with a one-sided material. A collider may be generated after Unity
 convexity limitations are acknowledged, but collider convenience cannot hide
 open, overlapping, inverted, or non-manifold topology.
+
+The seam proof is performed in two passes:
+
+1. a texture-free, solid-color, one-sided material proves geometry
+2. `M04ProductionCupCanvas.png` proves bilinear-filtered appearance without
+   atlas-background contamination
+
+The production wall fills its rectangular UV region with square corners and no
+outline along welded `vMin`. The bottom color reaches its perimeter and bleeds
+8 to 16 pixels beyond the sampled circle. Wall `vMin` and bottom `perimeter`
+use matching colors. The decorated M03 canvas remains a presentation example
+only.
+
+The default camera is a normal exterior view. Exact-side, interior, and
+underside views remain separate validation views.
+
+M04.1 adds a separate `Cup ClosedVolume` validation example. The same
+production 2D source canvas and deterministic Roll, Stitch, and Solidify rules
+must produce:
+
+- a one-sided, texture-free solid proof
+- a unique logical-topology wireframe
+- a vertical section proof
+- automatically derived `OuterCorner` and `InnerCorner` overlays at the welded
+  wall/bottom hard corner
+
+The wireframe, section lines, and corner overlays are Editor-only derived
+evidence. They do not replace or modify the FoldCanvas source or compiled cup.
+
+The accepted cup placement is locked: bottom rotation `(90, 0, 0)`, bottom and
+wall `vMin` at `Y = -height / 2`, and explicit wall-to-bottom Weld. Do not
+move, enlarge, overlap, or epsilon-offset the disk to conceal a line.
 
 ## Operation-ordering constraint
 
@@ -102,6 +135,31 @@ policy. Bridge must use the same ordered correspondence solver as Weld.
 - reject invalid or non-manifold shell construction instead of returning a
   visually plausible approximation
 
+## M04.1 closed-volume validation
+
+A successful compile exposes an immutable report over logical topology. A
+component is a closed volume only when:
+
+- it contains triangles
+- every logical edge has exactly two oppositely directed incident triangles
+- every logical topology identity resolves to one current position
+- its absolute signed volume is non-zero
+
+The report also records connected-component, open-edge, non-manifold-edge,
+orientation-conflict, collapsed-edge, and zero-volume counts. The Cup
+ClosedVolume example must report exactly one closed component.
+
+Solidify applies the same check to only the shell produced by its selected
+panels before it can return success. Unrelated panels are excluded from that
+operation-scoped validation.
+
+This proof does not claim robust global self-intersection detection.
+
+Solidify also records paired outer/inner hard-corner segments referencing the
+actual emitted shell vertices. The cup's wall `vMin` / bottom `perimeter`
+connection therefore exposes continuous `OuterCorner` and `InnerCorner` rings
+without adding bevel geometry.
+
 ## Tests
 
 - mismatched 32/64-sample boundaries stitch correctly
@@ -125,6 +183,13 @@ Required named ordering tests:
 - `PostStitchDeformation_OnUnselectedPanel_RemainsAllowed`
 - `StitchThenSolidify_UsesFinalTopology`
 
+Required result tests:
+
+- `BottomPanel_AllVerticesAreCoplanar`
+- `WallBottomWeld_HasZeroBoundaryPositionGap`
+- `WallBottomWeld_HasNoOpenTopologyEdge`
+- `Solidify_WallBottomInnerCornerRemainsConnected`
+
 ## Diagnostics
 
 - `FC2010 StitchMustBeTerminalForSelectedPanels`
@@ -143,6 +208,10 @@ Required named ordering tests:
 - no topology-group deformation propagation
 - no robust global self-intersection repair
 - no bevels
+- no subdivision
+- no smoothing
+- no mesh-cleanup postprocessing
+- no bottom overlap or transform adjustment used as a seam workaround
 - no variable thickness field
 - no handle
 - no SpiralRoll or LayeredRoll
