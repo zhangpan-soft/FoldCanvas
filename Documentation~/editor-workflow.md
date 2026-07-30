@@ -45,6 +45,24 @@ modifies `Camera.main`; exterior is the default camera and the other three
 views remain independently selectable. The retained M03 decorated canvas is
 not used as evidence of geometric closure.
 
+M04.1 adds:
+
+- `Tools > FoldCanvas > Create M04.1 Closed Volume Cup Sample`
+- `Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof`
+- `Tools > FoldCanvas > M04.1 View > Overview | Wireframe | Section`
+
+The separate owned `EditorOnly` hierarchy keeps the production 2D source
+canvas visible beside a texture-free one-sided solid, a wireframe built from
+unique logical topology edges, and a fixed object-space vertical section. The
+section-line Mesh comes from exact triangle/plane intersections. Generated
+`OuterCorner` and `InnerCorner` line objects reference the emitted hard-corner
+shell positions. Re-running the proof reuses inactive objects and never reads
+or modifies `Camera.main`.
+
+The wireframe, section, and corner line Meshes are disposable inspection
+artifacts. They are not mesh cleanup, subdivision, smoothing, or editable
+source.
+
 ## Authoring actions
 
 Planned actions:

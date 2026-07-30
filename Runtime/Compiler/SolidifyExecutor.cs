@@ -192,18 +192,21 @@ namespace FoldCanvas
                         topologyB,
                         a,
                         b,
+                        normal,
                         sourceEdges) ||
                     !TryAddSourceEdge(
                         topologyB,
                         topologyC,
                         b,
                         c,
+                        normal,
                         sourceEdges) ||
                     !TryAddSourceEdge(
                         topologyC,
                         topologyA,
                         c,
                         a,
+                        normal,
                         sourceEdges))
                 {
                     AddNonManifoldDiagnostic(
@@ -370,6 +373,13 @@ namespace FoldCanvas
                 buffer.Triangles.Add(innerMap[triangle.B]);
             }
 
+            AppendCornerSegments(
+                operation,
+                sourceEdges,
+                outerMap,
+                innerMap,
+                buffer);
+
             foreach (KeyValuePair<ulong, SourceEdgeUse> pair in sourceEdges)
             {
                 SourceEdgeUse edge = pair.Value;
@@ -387,6 +397,76 @@ namespace FoldCanvas
             }
 
             buffer.SnapWeldedTopologyPositions();
+            HashSet<int> shellTopologyRoots = new HashSet<int>();
+            for (int vertexIndex = 0;
+                vertexIndex < sourceVertexCount;
+                vertexIndex++)
+            {
+                if (!selectedVertices[vertexIndex])
+                {
+                    continue;
+                }
+
+                shellTopologyRoots.Add(
+                    buffer.GetTopologyId(outerMap[vertexIndex]));
+                shellTopologyRoots.Add(
+                    buffer.GetTopologyId(innerMap[vertexIndex]));
+            }
+
+            FoldCanvasClosedVolumeReport closedVolumeReport =
+                FoldCanvasClosedVolumeValidator.Analyze(
+                    buffer.Freeze(),
+                    shellTopologyRoots,
+                    operation.Id);
+            if (!closedVolumeReport.IsClosedVolume)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes
+                        .SolidifyClosedVolumeValidationFailed,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Solidify did not produce a closed, consistently oriented volume for its selected topology.",
+                    operationId: operation.Id,
+                    values: new[]
+                    {
+                        new FoldCanvasDiagnosticValue(
+                            "openEdgeCount",
+                            closedVolumeReport.OpenEdgeCount),
+                        new FoldCanvasDiagnosticValue(
+                            "nonManifoldEdgeCount",
+                            closedVolumeReport.NonManifoldEdgeCount),
+                        new FoldCanvasDiagnosticValue(
+                            "orientationConflictEdgeCount",
+                            closedVolumeReport
+                                .OrientationConflictEdgeCount),
+                        new FoldCanvasDiagnosticValue(
+                            "collapsedTopologyEdgeCount",
+                            closedVolumeReport
+                                .CollapsedTopologyEdgeCount),
+                        new FoldCanvasDiagnosticValue(
+                            "topologyPositionConflictCount",
+                            closedVolumeReport
+                                .TopologyPositionConflictCount),
+                        new FoldCanvasDiagnosticValue(
+                            "partiallySelectedTriangleCount",
+                            closedVolumeReport
+                                .PartiallySelectedTriangleCount),
+                        new FoldCanvasDiagnosticValue(
+                            "componentCount",
+                            closedVolumeReport.ComponentCount),
+                        new FoldCanvasDiagnosticValue(
+                            "zeroVolumeComponentCount",
+                            closedVolumeReport
+                                .ZeroVolumeComponentCount),
+                        new FoldCanvasDiagnosticValue(
+                            "totalAbsoluteVolume",
+                            closedVolumeReport
+                                .TotalAbsoluteVolume,
+                            "m^3")
+                    }));
+                return false;
+            }
+
+            result.AddClosedVolumeReport(closedVolumeReport);
             return true;
         }
 
@@ -605,6 +685,7 @@ namespace FoldCanvas
             int topologyTo,
             int rawFrom,
             int rawTo,
+            Vector3 triangleNormal,
             Dictionary<ulong, SourceEdgeUse> edges)
         {
             int minimum = Math.Min(topologyFrom, topologyTo);
@@ -621,7 +702,9 @@ namespace FoldCanvas
                         1,
                         direction,
                         rawFrom,
-                        rawTo));
+                        rawTo,
+                        triangleNormal,
+                        Vector3.zero));
                 return true;
             }
 
@@ -635,8 +718,42 @@ namespace FoldCanvas
                 use.Count + 1,
                 use.FirstDirection,
                 use.FromVertex,
-                use.ToVertex);
+                use.ToVertex,
+                use.FirstNormal,
+                triangleNormal);
             return true;
+        }
+
+        private static void AppendCornerSegments(
+            SolidifyOperationDefinition operation,
+            Dictionary<ulong, SourceEdgeUse> sourceEdges,
+            int[] outerMap,
+            int[] innerMap,
+            MeshBuildBuffer buffer)
+        {
+            List<ulong> orderedKeys =
+                new List<ulong>(sourceEdges.Keys);
+            orderedKeys.Sort();
+            for (int i = 0; i < orderedKeys.Count; i++)
+            {
+                SourceEdgeUse edge = sourceEdges[orderedKeys[i]];
+                if (edge.Count != 2 ||
+                    Vector3.Dot(
+                        edge.FirstNormal,
+                        edge.SecondNormal) >
+                    FoldCanvasGeometryTolerances
+                        .SolidifyHardCornerMaximumNormalDot)
+                {
+                    continue;
+                }
+
+                buffer.AddCornerSegment(
+                    operation.Id,
+                    outerMap[edge.FromVertex],
+                    outerMap[edge.ToVertex],
+                    innerMap[edge.FromVertex],
+                    innerMap[edge.ToVertex]);
+            }
         }
 
         private static void AppendRim(
@@ -756,12 +873,16 @@ namespace FoldCanvas
                 int count,
                 int firstDirection,
                 int fromVertex,
-                int toVertex)
+                int toVertex,
+                Vector3 firstNormal,
+                Vector3 secondNormal)
             {
                 Count = count;
                 FirstDirection = firstDirection;
                 FromVertex = fromVertex;
                 ToVertex = toVertex;
+                FirstNormal = firstNormal;
+                SecondNormal = secondNormal;
             }
 
             public int Count { get; }
@@ -771,6 +892,10 @@ namespace FoldCanvas
             public int FromVertex { get; }
 
             public int ToVertex { get; }
+
+            public Vector3 FirstNormal { get; }
+
+            public Vector3 SecondNormal { get; }
         }
     }
 }

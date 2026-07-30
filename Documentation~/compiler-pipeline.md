@@ -175,9 +175,19 @@ M04 Solidify consumes complete selected logical-topology components:
 6. classify source logical edges by incidence after Stitch
 7. generate a rim strip exactly once for every incidence-one edge and never
    across an already welded seam
+8. record paired outer/inner segments for deterministic material hard corners
+9. validate only the selected generated shell as a closed oriented volume
 
 The final M04 cup therefore has one top rim, no internal wall at the wall
 closure or wall-to-bottom seam, and no open or non-manifold topology edge.
+
+The M04.1 closed-volume check requires every selected logical edge to have
+exactly two oppositely directed triangle uses, every logical topology identity
+to resolve to one position, and every connected component to have non-zero
+absolute signed volume. It reports
+`FC4007 SolidifyClosedVolumeValidationFailed` and returns no Mesh if the
+selected Solidify shell violates that contract. Unrelated unsolidified panels
+are not included in the operation-scoped check.
 
 ## Stage 6: derived attributes
 
@@ -194,9 +204,18 @@ closure or wall-to-bottom seam, and no open or non-manifold topology edge.
 - consistent winding where expected
 - open-boundary count
 - manifold edge count
+- logical-topology position agreement
+- connected component count
+- signed and absolute component volume
 - duplicate/coincident vertices
 - seam closure error
 - self-intersection when enabled
+
+Every successful compile exposes a read-only
+`FoldCanvasClosedVolumeReport`. Open source panels remain valid compile
+results, but their report has `IsClosedVolume = false`. A cup produced by
+Solidify must have `IsSingleClosedVolume = true`. This bounded M04.1 report
+does not claim global self-intersection detection or mesh repair.
 
 ## Stage 8: artifact creation
 

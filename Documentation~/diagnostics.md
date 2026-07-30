@@ -92,6 +92,7 @@ compiler stage and source order.
 - `FC4004 UnsupportedSolidifyCorner`
 - `FC4005 NonManifoldSolidifyInput`
 - `FC4006 InvalidSolidifyDirection`
+- `FC4007 SolidifyClosedVolumeValidationFailed`
 - `FC5001 NonFiniteVertex`
 - `FC5002 ZeroAreaTriangle`
 - `FC5003 NonManifoldTopology`
@@ -106,6 +107,10 @@ consumes complete welded topology groups.
 seams without creating unattached samples. `FC4001`–`FC4006` stop invalid
 thickness, missing/partial targets, unbounded hard-corner offsets,
 non-manifold input, and invalid direction values without returning a Mesh.
+`FC4007` is the final selected-shell gate: it reports ordered open-edge,
+non-manifold-edge, winding-conflict, collapsed-edge, topology-position,
+component, and zero-volume counts when Solidify fails to create a closed
+oriented volume.
 
 ## Validation levels
 

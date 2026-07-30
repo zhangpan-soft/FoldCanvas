@@ -91,6 +91,24 @@ guessing an averaged direction.
 M04 does not attempt global self-intersection repair, variable thickness, or
 bevels. Those require separate contracts.
 
+M04.1 records each material hard edge as paired outer/inner corner segments
+that point at the actual Solidify vertices. The cup's welded wall-bottom loop
+therefore exposes an `OuterCorner` ring and an `InnerCorner` ring without
+adding any rounding or cleanup geometry. The centralized hard-corner threshold
+is an incident unit-normal dot product of `0.95` or less.
+
+The compiler also derives a closed-volume report from logical topology:
+
+```text
+closed component =
+  every logical edge used twice in opposite directions
+  + one position per logical topology identity
+  + non-zero absolute signed volume
+```
+
+This proves a closed, consistently oriented triangle shell. It is deliberately
+separate from future robust global self-intersection analysis.
+
 ## 7. UV preservation invariant
 
 For each generated vertex originating from panel sample `(u,v)`:

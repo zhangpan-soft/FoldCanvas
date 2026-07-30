@@ -41,6 +41,10 @@ namespace FoldCanvas
 
         private readonly List<int> topologyParents = new List<int>();
 
+        private readonly List<FoldCanvasCompiledCornerSegment>
+            cornerSegments =
+                new List<FoldCanvasCompiledCornerSegment>();
+
         public readonly List<MeshBuildVertex> Vertices =
             new List<MeshBuildVertex>();
 
@@ -86,6 +90,21 @@ namespace FoldCanvas
         {
             orderedPanels.Add(panel);
             panelsById.Add(panel.PanelId, panel);
+        }
+
+        public void AddCornerSegment(
+            string operationId,
+            int outerFromVertexIndex,
+            int outerToVertexIndex,
+            int innerFromVertexIndex,
+            int innerToVertexIndex)
+        {
+            cornerSegments.Add(new FoldCanvasCompiledCornerSegment(
+                operationId,
+                outerFromVertexIndex,
+                outerToVertexIndex,
+                innerFromVertexIndex,
+                innerToVertexIndex));
         }
 
         public bool TryGetPanel(string panelId, out PanelBuildRecord panel)
@@ -165,7 +184,8 @@ namespace FoldCanvas
             return new FoldCanvasCompiledData(
                 compiledVertices,
                 Triangles,
-                compiledPanels);
+                compiledPanels,
+                cornerSegments);
         }
 
         private int FindTopologyRoot(int vertexIndex)

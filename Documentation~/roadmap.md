@@ -114,6 +114,26 @@ review before merge.
 - solid-color and bleed-safe production-canvas proof from exterior, exact-side,
   interior, and underside views
 
+### M04.1: Closed Volume Validation
+
+**Status:** implemented on `feat/m04-stitch-solidify`; awaiting PR review.
+
+**Proof:** the same production 2D cup canvas and geometry program compile into
+one non-zero closed volume, with inspectable logical wireframe, vertical
+section, and generated inner/outer wall-bottom corner rings.
+
+- immutable aggregate and per-component closed-volume reports
+- exactly two oppositely directed uses per logical edge
+- one position per logical topology identity
+- non-zero absolute signed volume per component
+- operation-scoped Solidify closure gate
+- generated `OuterCorner` and `InnerCorner` hard-edge segments
+- Editor-only texture-free solid, logical-wireframe, and section proof
+
+M04.1 does not implement bevel, subdivision, smoothing, mesh cleanup, or
+robust global self-intersection repair. M07 remains the broader broken-geometry
+diagnostic milestone.
+
 ## M05: Sphere gores
 
 **Proof:** symmetric 2D gores reconstruct a closed sphere with bounded radial error and preserved artwork.

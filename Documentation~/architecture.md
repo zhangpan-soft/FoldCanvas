@@ -142,6 +142,13 @@ editor selection, locale, frame time, random state, or object discovery.
 - M04 thickness solves incident oriented face-offset planes per logical
   topology vertex, preserving one shared position across UV/provenance render
   splits and hard welded corners.
+- M04.1 freezes paired outer/inner hard-corner segments and a closed-volume
+  report over logical topology, connected components, edge incidence, winding,
+  and oriented volume.
+
+The M04.1 corner and volume records are read-only derived metadata. Editor
+wireframe and section Meshes may visualize them, but they never become source
+geometry or feed back into compilation.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 

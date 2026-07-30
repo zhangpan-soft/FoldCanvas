@@ -50,6 +50,10 @@ The repository currently contains the **M04 Stitch and Solidify compiler**:
   source UV/provenance splits remain valid render-vertex splits
 - Inward, outward, and centered Solidify, including shared welded-corner
   miters, reversed inner winding, and side walls only on true open edges
+- Immutable closed-volume reports with logical edge incidence, connected
+  components, winding conflicts, and signed/absolute volume
+- Automatically derived outer/inner hard-corner segments over emitted
+  Solidify vertices
 - An editor-generated six-region canvas that compiles into a textured box
 - An editor-generated thick cup whose wall seam and bottom perimeter are
   welded, whose inner corner remains connected, and whose top rim is closed
@@ -101,7 +105,10 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
    `Tools > FoldCanvas > Create M03 Cup Proof` for the retained zero-thickness
    presentation example, or
    `Tools > FoldCanvas > Create M04 Production Cup Proof` for the solid-color
-   and bleed-safe thick-cup proof with four owned validation cameras.
+   and bleed-safe thick-cup proof with four owned validation cameras. Use
+   `Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof` for the
+   texture-free solid, logical-wireframe, section, and inner/outer-corner
+   validation hierarchy.
 
 ## Install in another Unity project
 
@@ -149,7 +156,7 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M01 | Robust planar panels and preserved UVs |
 | M02 | Fold six decorated rectangle panels into a box — complete |
 | M03 | Roll a decorated wall into a cylindrical cup — complete |
-| M04 | General seam resampling/bridging and shell thickness — implemented |
+| M04 | General seam resampling/bridging, shell thickness, and M04.1 closed-volume proof — implemented |
 | M05 | Compile sphere gores into a closed sphere |
 | M06 | Split 2D canvas / 3D preview editor |
 | M07 | Manifold, inversion, seam, and intersection validators |

@@ -51,6 +51,9 @@ namespace FoldCanvas
                 asset.CompileSettings.RecalculateNormals;
 
             result.CompiledData = buffer.Freeze();
+            result.ClosedVolumeReport =
+                FoldCanvasClosedVolumeValidator.Analyze(
+                    result.CompiledData);
             result.Mesh = UnityMeshConverter.Create(
                 result.CompiledData,
                 meshName,

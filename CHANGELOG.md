@@ -8,6 +8,44 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.8] - 2026-07-30
+
+### Added
+
+- Immutable aggregate and per-component closed-volume reports with logical
+  edge incidence, winding conflicts, topology-position agreement, connected
+  components, and signed/absolute volume
+- An operation-scoped Solidify closure gate with stable
+  `FC4007 SolidifyClosedVolumeValidationFailed` structural values
+- Deterministic paired outer/inner hard-corner segment metadata referencing the
+  actual emitted shell vertices
+- A separate M04.1 `Cup ClosedVolume` source example and idempotent
+  `EditorOnly` proof hierarchy
+- Texture-free one-sided solid, unique logical-topology wireframe, exact
+  triangle/plane section lines, and generated `OuterCorner` / `InnerCorner`
+  overlays
+
+### Changed
+
+- Successful compile results now expose `ClosedVolumeReport`; each successful
+  Solidify also exposes its selected-shell report independently from unrelated
+  panels
+- M04 architecture, pipeline, geometry, diagnostics, editor workflow, sample,
+  roadmap, and active plan now define the bounded closed-volume contract
+
+### Verified
+
+- The production cup reports one component, 7,680 unique logical edges, zero
+  open/non-manifold/orientation-conflict edges, 64 paired wall-bottom corner
+  segments, and non-zero material volume
+- Unity `6000.3.20f1` passed all 152 Edit Mode tests, and rendered the
+  texture-free solid, logical-wireframe, and vertical-section proof views
+
+### Not included
+
+- Bevel, subdivision, smoothing, and mesh-cleanup postprocessing remain
+  intentionally unimplemented
+
 ## [0.1.0-preview.7] - 2026-07-29
 
 ### Added

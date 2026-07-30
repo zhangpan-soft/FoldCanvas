@@ -18,5 +18,9 @@ namespace FoldCanvas
         public const double FullRollAngleToleranceDegrees = 1e-4d;
         public const double MinimumRollDistortionRatio = 0.5d;
         public const double MaximumRollDistortionRatio = 2d;
+        public const float SolidifyHardCornerMaximumNormalDot = 0.95f;
+        public const float ClosedVolumeTopologyPositionTolerance = 1e-6f;
+        public const double MinimumClosedVolume = 1e-18d;
+        public const double RelativeClosedVolumeTolerance = 1e-12d;
     }
 }

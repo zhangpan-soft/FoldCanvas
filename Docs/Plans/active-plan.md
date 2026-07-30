@@ -18,6 +18,17 @@ M04 prioritizes visible and topological correctness of Solidify, thickness,
 inner walls, rim generation, and reusable seam processing. It does not reopen
 M03 for additional defensive parameter validation.
 
+The current package iteration is **M04.1 Closed Volume Validation**. It turns
+the generated Solidify shell into explicit, inspectable evidence:
+
+1. a read-only closed-volume report over logical topology
+2. automatically derived outer/inner hard-corner segments
+3. a dedicated cup source example
+4. texture-free solid, wireframe, and section proofs
+
+M04.1 remains inside M04. It does not add a new modeling source or a
+mesh-repair/postprocessing stage.
+
 # User-visible proof
 
 Two deliberately separate appearance proofs use the same generated geometry:
@@ -40,6 +51,16 @@ The proof is viewed in Unity from a normal exterior default view, exact side,
 interior, and underside validation views. Two-sided preview rendering,
 overlapping surfaces, enlarged disks, epsilon offsets, or coincident but
 topologically separate faces are not acceptance substitutes.
+
+M04.1 adds a separate `Cup ClosedVolume` proof in which the production 2D
+canvas remains visible beside three derived views of the same compiled Mesh:
+
+- one-sided solid color with no texture
+- unique logical-topology wireframe
+- a deterministic vertical section with outer and inner corner overlays
+
+The section and wireframe are Editor-only derived inspection artifacts. They
+must never become canonical mesh edits.
 
 ## Wall-to-bottom geometry lock
 
@@ -183,6 +204,67 @@ Contracts:
 - Local self-overlap may return a stable warning or error according to whether
   a valid shell can still be proven. M04 does not attempt global repair.
 
+## M04.1 closed-volume report
+
+Every successful compile exposes a deterministic, read-only topology report.
+For each connected triangle component it records triangle count, logical
+topology-vertex count, and signed/absolute volume. The aggregate records:
+
+- unique logical edge count
+- open edge count
+- non-manifold edge count
+- inconsistent directed-edge winding count
+- collapsed topology-edge count
+- topology groups whose render copies disagree in position
+- connected component count
+- zero-volume component count
+
+`IsClosedVolume` requires non-empty triangles, every logical edge to have
+exactly two oppositely directed incident triangles, one position per logical
+topology identity, and non-zero absolute volume for every component.
+`IsSingleClosedVolume` additionally requires exactly one component. Signed
+volume is a winding diagnostic; closure uses its absolute magnitude so a
+globally reflected but consistently wound shell can still be recognized as a
+closed volume.
+
+Solidify validates its selected generated shell with the same report before
+returning success. A failure returns one stable root-cause diagnostic and no
+Mesh. Unrelated unsolidified panels are not included in that operation-scoped
+check.
+
+This is a topological/oriented-volume proof. Robust global
+self-intersection detection remains out of scope.
+
+## M04.1 generated corner evidence
+
+Solidify automatically records paired outer/inner corner segments for source
+edges whose two incident face normals form a material hard corner. This
+metadata points at the actual emitted shell vertices; it does not duplicate,
+round, bevel, smooth, or move the compiled surface.
+
+M04.1 classifies the edge as hard when the incident unit-normal dot product is
+at most `0.95` (an angle of about `18.19` degrees or greater). The centralized
+threshold prevents the production cup's 64-segment cylindrical facets from
+being mislabeled while retaining its perpendicular wall-bottom corner.
+
+For the cup, the wall `vMin` / bottom `perimeter` Weld yields one continuous
+outer ring and one continuous inner ring. The proof names their derived line
+objects `OuterCorner` and `InnerCorner` and overlays them on the exact generated
+positions. Both rings must be closed, have zero positional gap at their
+wall/bottom render copies, and belong to the same closed shell.
+
+## M04.1 section and wireframe policy
+
+- Wireframe lines are generated from the sorted set of unique logical topology
+  edges, not raw render-index edges, so UV splits do not look like cracks.
+- The section uses a fixed object-space vertical plane and a texture-free
+  clipping material. A separately generated triangle/plane intersection-line
+  Mesh exposes the actual outer, inner, bottom, and rim crossings.
+- Section and line Meshes are bake-time inspection derivatives under an
+  `EditorOnly` preview root. They never feed back into FoldCanvas source.
+- Repeated proof creation reuses the same owned inactive-aware objects and
+  never reads or modifies `Camera.main`.
+
 ## Open-boundary classification and rim
 
 Open boundaries are classified only after Stitch and logical-topology
@@ -235,6 +317,9 @@ These tests are required in addition to the gate-specific topology tests:
 - no post-Stitch topology-group deformation propagation
 - no robust global self-intersection repair
 - no bevels or rounded rims
+- no subdivision
+- no smoothing or normal-smoothing feature
+- no mesh-cleanup postprocessing
 - no variable thickness field
 - no cup handle
 - no SpiralRoll or LayeredRoll
@@ -274,6 +359,8 @@ This is not authorization for a broad compiler refactor.
 - `Tests/Editor/StitchCompilerTests.cs`
 - new focused Solidify/topology Edit Mode tests
 - `Editor/FoldCanvasSampleCreator.cs`
+- `Editor/FoldCanvasM041ClosedVolumeSampleCreator.cs`
+- texture-free section and wireframe proof shaders under `Editor/Shaders`
 - M04 sample assets under `Samples~`
 - M04-relevant files under `Documentation~` and `Schema`, including the
   precise `sampleCount` meaning
@@ -301,6 +388,12 @@ This is not authorization for a broad compiler refactor.
     only from preview material settings.
 13. Invalid geometry returns diagnostics and no Mesh; no stage silently emits
     an approximation.
+14. A successful Solidify shell has exactly two oppositely directed triangle
+    uses per logical edge and non-zero absolute volume per component.
+15. Automatically generated inner/outer corner metadata references emitted
+    shell positions and cannot mutate them.
+16. Wireframe and section proof geometry is derived only from frozen compiled
+    data and is excluded from player builds.
 
 # Implementation and acceptance gates
 
@@ -478,6 +571,56 @@ Acceptance:
 - no background is visible through the wall-to-bottom joint in either material
 - final cup has no unintended open or non-manifold topology edge
 
+## M04.1 iteration: closed-volume validation and inspectable proof
+
+This package sub-iteration follows the completed M04 implementation gates. It
+is distinct from the historical `Gate M04.1` ordering-foundation label above.
+
+Implement:
+
+- a public immutable closed-volume report attached to successful compile
+  results
+- an operation-scoped Solidify closed-shell check
+- automatically generated paired `OuterCorner` / `InnerCorner` segment
+  metadata at hard welded corners
+- a separate `Cup ClosedVolume` source asset using the production 2D canvas
+  and the same Roll, Stitch, and Solidify rules
+- idempotent Editor-only solid, logical-wireframe, and vertical-section proof
+  objects
+- texture-free one-sided solid, wireframe, section, and corner materials
+
+Required tests:
+
+- `ClosedVolumeCup_IsSingleClosedVolume`
+- `ClosedVolumeCup_EveryLogicalEdgeHasTwoOppositeUses`
+- `ClosedVolumeCup_HasNonZeroOrientedVolume`
+- `ClosedVolumeCup_GeneratesWallBottomInnerAndOuterCorners`
+- `ClosedVolumeCup_WallBottomOuterAndInnerConnectionsShareTopology`
+- `ClosedVolumeReport_OpenPanelIsNotClosed`
+- `ClosedVolumeReport_RepeatedCompileIsDeterministic`
+- `ClosedVolumeProof_CreatesSolidWireframeSectionAndCornerObjects`
+- `ClosedVolumeProof_ReusesOwnedHierarchy`
+
+Required visual verification:
+
+- solid proof shows no background through wall, bottom, rim, or welded corner
+- logical wireframe visibly closes around outer wall, inner wall, bottom, and
+  rim
+- section view shows separated outer/inner surfaces connected through the
+  bottom corner and top rim
+- outer and inner corner overlays lie on the generated cup, with no transform,
+  radius, overlap, or epsilon seam workaround
+
+Acceptance:
+
+- the cup report has one connected component, zero open/non-manifold/
+  orientation-conflict/collapsed edges, zero topology-position conflicts, and
+  non-zero absolute volume
+- both generated corner rings are present and reference emitted shell vertices
+- all proof objects use no texture except the separately displayed source
+  canvas
+- the full existing suite remains enabled
+
 # Planned diagnostics
 
 Final codes are added only with their implementation and tests. `FC2010` is
@@ -496,6 +639,7 @@ runtime registry before use.
 | `FC4004` | `UnsupportedSolidifyCorner` | incident offset planes have no stable bounded corner solution |
 | `FC4005` | `NonManifoldSolidifyInput` | source shell topology is collapsed, overused, or inconsistently oriented |
 | `FC4006` | `InvalidSolidifyDirection` | serialized direction is not an implemented enum value |
+| `FC4007` | `SolidifyClosedVolumeValidationFailed` | the selected generated Solidify shell is not a closed oriented volume |
 | TBD | `SolidifySelfOverlap` | requested local offset produces detected overlap |
 | existing `FC5003` or focused successor | `NonManifoldTopology` | topology edge incidence exceeds two or shell construction is non-manifold |
 
@@ -581,6 +725,12 @@ and never claim robust global repair.
 - True open topology edges alone generate rim/side-wall faces.
 - Implementation proceeds gate by gate; later gates do not begin until the
   preceding gate's tests and diff are reviewed.
+- M04.1 defines closure from logical topology plus per-component absolute
+  oriented volume; it does not claim global self-intersection repair.
+- M04.1 corner segments are immutable evidence over emitted hard-corner shell
+  vertices. They do not introduce bevel, subdivision, smoothing, or cleanup.
+- M04.1 wireframe and section objects are Editor-only derived validation
+  artifacts; the 2D canvas and geometry program remain authoritative.
 
 # Progress log
 
@@ -621,6 +771,23 @@ and never claim robust global repair.
 - 2026-07-29: JSON parsing, assembly-reference checks, Runtime `UnityEditor`
   isolation, repository validation, and `git diff --check` passed. Human PR
   audit remains; `CURRENT_TASK.md` stays on M04.
+- 2026-07-30: Began the M04.1 Closed Volume Validation iteration on
+  `feat/m04-stitch-solidify`. Locked the topology/volume report, generated
+  corner metadata, section/wireframe proof, and explicit no-bevel/
+  no-subdivision/no-smoothing/no-cleanup boundaries before implementation.
+- 2026-07-30: Implemented immutable aggregate/per-component closed-volume
+  reports and the operation-scoped `FC4007` Solidify closure gate.
+- 2026-07-30: Solidify now records 64 deterministic paired outer/inner
+  wall-bottom hard-corner segments for the production cup.
+- 2026-07-30: Added the separate Cup ClosedVolume source and idempotent
+  Editor-only overview, logical-wireframe, and vertical-section proof.
+- 2026-07-30: Unity `6000.3.20f1` passed all 152 Edit Mode tests. The cup
+  reported one component, 7,680 unique logical edges, zero open/non-manifold/
+  winding-conflict edges, and `0.00017124137488801479 m^3` total absolute
+  oriented volume.
+- 2026-07-30: Unity rendered and visually inspected the texture-free solid,
+  logical-wireframe with orange/magenta outer/inner corner rings, and U-shaped
+  section connecting both walls through the bottom.
 
 # M04 verification
 
@@ -636,3 +803,23 @@ and never claim robust global repair.
 - Four one-sided proof views rendered successfully with both the solid
   diagnostic and production texture
 - M05 and later milestones remain unimplemented
+
+# M04.1 verification
+
+- Package version: `0.1.0-preview.8`
+- Unity Editor: `6000.3.20f1`
+- Edit Mode: `152/152` passed, zero skipped or failed
+- Results: `Project~/TestResults/M041ClosedVolumeEditMode.xml`
+- Closed components: `1`
+- Unique logical edges: `7,680`; two-incident opposite uses: `7,680`
+- Open, non-manifold, orientation-conflict, and collapsed logical edges: `0`
+- Topology-position conflicts and zero-volume components: `0`
+- Total absolute oriented volume: `0.00017124137488801479 m^3`
+- Generated wall-bottom corner pairs: `64`
+- Derived wireframe edges: `7,680`
+- Derived section segments: `228`
+- Rendered proof views:
+  `Project~/TestResults/M041ClosedVolumeProofViews/overview.png`,
+  `solid.png`, `wireframe.png`, and `section.png`
+- No Bevel, Subdivision, Smooth, mesh cleanup, M05, or later milestone was
+  implemented

@@ -67,6 +67,7 @@ namespace FoldCanvas
         public const string UnsupportedSolidifyCorner = "FC4004";
         public const string NonManifoldSolidifyInput = "FC4005";
         public const string InvalidSolidifyDirection = "FC4006";
+        public const string SolidifyClosedVolumeValidationFailed = "FC4007";
         public const string NonFiniteVertex = "FC5001";
         public const string ZeroAreaTriangle = "FC5002";
         public const string NonManifoldTopology = "FC5003";

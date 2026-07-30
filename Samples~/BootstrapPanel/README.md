@@ -59,3 +59,27 @@ The owned `EditorOnly` root contains normal exterior, exact-side, interior, and
 underside cameras. Exterior is enabled by default; switch views from
 `Tools > FoldCanvas > M04 View`. The retained decorated M03 canvas is a
 presentation example, not the M04 geometry-seam oracle.
+
+For the M04.1 closed-volume inspection proof, use:
+
+```text
+Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof
+```
+
+The command creates a separate `Cup ClosedVolume` FoldCanvas source using the
+same production 2D canvas, exact bottom placement, explicit Welds, and inward
+Solidify rules. It rejects the proof unless the compiled result reports one
+connected non-zero closed volume.
+
+Its owned `EditorOnly` hierarchy shows:
+
+- the authoritative 2D source canvas
+- a texture-free one-sided solid result
+- a wireframe made from unique logical topology edges
+- a fixed vertical section and triangle/plane intersection lines
+- automatically generated `OuterCorner` and `InnerCorner` overlays for the
+  welded wall-bottom hard corner
+
+Switch between `Overview`, `Wireframe`, and `Section` from
+`Tools > FoldCanvas > M04.1 View`. The proof does not add bevels, subdivision,
+smoothing, or mesh-cleanup postprocessing.
