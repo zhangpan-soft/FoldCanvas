@@ -29,7 +29,7 @@ jobs:
           projectPath: Project~
           unityVersion: 6000.3.20f1
           testMode: EditMode
-          artifactsPath: artifacts/unity-editmode
+          artifactsPath: Project~/CIArtifacts/unity-editmode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: FoldCanvas Edit Mode Tests
 
@@ -38,23 +38,44 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          source_root="${{ steps.unity-tests.outputs.artifactsPath }}"
           artifact_root="artifacts/unity-editmode"
+
+          if [[ -z "$source_root" ]]; then
+            source_root="Project~/CIArtifacts/unity-editmode"
+          fi
+
           mkdir -p "$artifact_root"
 
-          test_xml="$(find "$artifact_root" -type f \( -iname '*results*.xml' -o -iname 'test-results.xml' \) | LC_ALL=C sort | head -n 1)"
-          editor_log="$(find "$artifact_root" -type f \( -iname 'editmode.log' -o -iname 'Editor.log' \) | LC_ALL=C sort | head -n 1)"
+          if [[ ! -d "$source_root" ]]; then
+            echo "::error::GameCI artifact directory was not created: $source_root"
+            exit 1
+          fi
+
+          mapfile -t test_xml_candidates < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t editor_log_candidates < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+
+          test_xml="${test_xml_candidates[0]:-}"
+          editor_log="${editor_log_candidates[0]:-}"
 
           if [[ -z "$test_xml" || -z "$editor_log" ]]; then
             echo "::error::Unity did not produce both test XML and Editor log."
             exit 1
           fi
 
-          if [[ "$test_xml" != "$artifact_root/test-results.xml" ]]; then
-            cp "$test_xml" "$artifact_root/test-results.xml"
-          fi
-          if [[ "$editor_log" != "$artifact_root/Editor.log" ]]; then
-            cp "$editor_log" "$artifact_root/Editor.log"
-          fi
+          cp -- "$test_xml" "$artifact_root/test-results.xml"
+          cp -- "$editor_log" "$artifact_root/Editor.log"
+
+          test -s "$artifact_root/test-results.xml"
+          test -s "$artifact_root/Editor.log"
 
       - name: Upload Unity test results and Editor log
         if: always()

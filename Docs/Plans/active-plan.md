@@ -153,6 +153,8 @@ It does not use or modify `Camera.main`.
 - `Samples~/Sphere/`
 - `Tests/Editor/SphereCompilerTests.cs`
 - Editor workflow tests
+- `.github/workflows/unity-tests.yml`
+- `Scripts/validate_repository.py`
 - `README.md`, `README.zh-CN.md`, `CHANGELOG.md`, and `package.json`
 
 # Geometry invariants
@@ -230,6 +232,9 @@ It does not use or modify `Camera.main`.
     scale-aware poles, three-pass golden determinism, and Unity CI artifacts.
 12. Preflight every enabled SphericalWrap/Stitch endpoint dependency before
     tessellation and retain an independent component-plan ordering guard.
+13. Stage GameCI output under the host project's non-imported root, then
+    normalize the XML and Editor log into the required repository artifact
+    directory only after Unity exits.
 
 # Test matrix
 
@@ -292,6 +297,10 @@ It does not use or modify `Camera.main`.
 - a radius `1e9` near-pole ring is not collapsed by fixed angular tolerance
 - the golden asset compiles three times with stable geometry and report hashes
 - repository validation
+- GameCI output must not be written into the repository-root UPM package while
+  Unity is running
+- failed and successful Unity runs both normalize the real GameCI XML and
+  Editor log into `artifacts/unity-editmode`
 - JSON and asmdef parsing
 - Runtime `UnityEditor` isolation
 - `git diff --check`
@@ -320,6 +329,11 @@ It does not use or modify `Camera.main`.
   at an earlier Stitch. Reject that dependency in source preflight and make
   the plan omit unschedulable components so it cannot emit an early report
   even if the upper preflight is bypassed.
+- The repository root is the locally referenced `com.foldcanvas.core` package.
+  Writing a live GameCI log beneath that root makes Unity import a file that is
+  continuously changing and can trigger an infinite package-import loop.
+  Keep live evidence under `Project~/CIArtifacts`, outside `Assets` and
+  `Packages`, and copy it to the public artifact path only after Unity exits.
 
 Rollback is one branch revert. No M05 source behavior is added to `main` until
 human audit.
@@ -382,6 +396,13 @@ human audit.
 - 2026-07-31: Unity `6000.3.20f1` passed the complete ordering-gate suite at
   230/230, with zero failed, skipped, or inconclusive tests. Repository
   validation, workflow YAML, JSON parsing, and `git diff --check` passed.
+- 2026-07-31: GitHub Actions attempt 2 successfully activated Unity
+  `6000.3.20f1` and discovered all 230 Edit Mode tests. It reported 212 passed
+  and 18 failed because the live `artifacts/unity-editmode/editmode.log` was
+  visible through the repository-root local UPM package and caused Unity's
+  infinite-import-loop error in all 18 `BootstrapEditorWorkflowTests`.
+- 2026-07-31: Locked the CI repair to evidence staging only; no M05 geometry,
+  seam lifecycle, or test assertion is weakened.
 
 # Decisions made
 
@@ -420,6 +441,10 @@ human audit.
 - `SphereValidationPlan` computes each formed component's maximum member-wrap
   index and does not create a validation schedule unless the last touching
   Stitch is strictly later. This guard does not replace the source diagnostic.
+- GameCI writes its live XML/log directory beneath the host project root,
+  outside Unity-imported `Assets` and `Packages`. A post-Unity normalization
+  step copies the deterministic evidence names to
+  `artifacts/unity-editmode/test-results.xml` and `Editor.log`.
 
 # Current verification
 

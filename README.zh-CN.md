@@ -136,7 +136,9 @@ GitHub Actions 包含两个独立检查：
   C# 原生 `sampleCount` 上限一致性、文档链接及版本元数据；
 - `unity-editmode-tests` 用 Unity `6000.3.20f1` 打开仓库自带的 `Project~`
   宿主，真实编译 Runtime、Editor、Tests 程序集并运行全部 Edit Mode 测试，
-  成功或失败都会上传 NUnit XML 与 `Editor.log`。
+  成功或失败都会上传 NUnit XML 与 `Editor.log`。GameCI 运行中的文件先写入
+  宿主项目根目录下的非导入区域，避免持续变化的日志通过仓库根 UPM 包触发
+  Unity 重复导入；Unity 退出后才复制到 `artifacts/unity-editmode`。
 
 Unity CI 使用 GameCI。Unity Personal 授权需要在仓库 Actions Secrets 中配置
 `UNITY_LICENSE`、`UNITY_EMAIL`、`UNITY_PASSWORD`，许可证信息不会写入仓库。

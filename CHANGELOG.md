@@ -8,6 +8,30 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.13] - 2026-07-31
+
+### Fixed
+
+- GameCI now writes its live Edit Mode XML and Editor log beneath the host
+  project root, outside Unity-imported `Assets` and `Packages`
+- CI no longer exposes a continuously changing Editor log through the
+  repository-root `com.foldcanvas.core` package, preventing Unity's
+  infinite-import-loop error across the Editor workflow fixture
+- The post-Unity normalization step now resolves the real GameCI output,
+  copies it to stable `test-results.xml` and `Editor.log` names, and rejects
+  missing or empty evidence
+
+### Changed
+
+- Repository validation locks the non-imported GameCI staging path and the
+  action output used by evidence normalization
+- Package version advanced to `0.1.0-preview.13`
+
+### Not included
+
+- No M05 geometry, seam lifecycle, sphere validation, test assertion, or M06
+  behavior was changed
+
 ## [0.1.0-preview.12] - 2026-07-31
 
 ### Added

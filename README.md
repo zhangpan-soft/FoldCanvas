@@ -152,6 +152,9 @@ GitHub Actions runs two independent checks:
 - `unity-editmode-tests` opens the tracked `Project~` host in Unity
   `6000.3.20f1`, compiles Runtime, Editor, and Tests assemblies, runs all Edit
   Mode tests, and uploads the NUnit XML plus `Editor.log`, even on failure.
+  Live GameCI output is staged below the host-project root so a changing log
+  is never imported through the repository-root local UPM package; evidence is
+  copied to `artifacts/unity-editmode` only after Unity exits.
 
 The Unity job uses GameCI and requires repository Actions secrets
 `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal

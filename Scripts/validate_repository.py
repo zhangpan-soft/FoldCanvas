@@ -146,7 +146,9 @@ for required_fragment in [
     "projectPath: Project~",
     "unityVersion: 6000.3.20f1",
     "testMode: EditMode",
+    "artifactsPath: Project~/CIArtifacts/unity-editmode",
     "UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}",
+    "steps.unity-tests.outputs.artifactsPath",
     "actions/upload-artifact@",
     "if: always()",
     "test-results.xml",
@@ -158,6 +160,12 @@ for required_fragment in [
             "Unity workflow is missing required configuration: "
             f"{required_fragment}"
         )
+
+if "artifactsPath: artifacts/unity-editmode" in unity_workflow:
+    errors.append(
+        "GameCI live artifacts must not be written inside the repository-root "
+        "UPM package"
+    )
 
 gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 for required_pattern in [
