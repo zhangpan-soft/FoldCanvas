@@ -160,15 +160,26 @@ M06 authoring UI.
 
 ## M06: Authoring workspace
 
+**Status:** implemented on `codex/m06-editor-workspace`; awaiting human audit
+and stacked on the unmerged M05 review head.
+
 **Proof:** a non-modeler can create and edit the cup without touching code or vertex coordinates.
 
 - UI Toolkit split window
-- 2D canvas region editor
-- 3D preview
-- operation list/timeline
-- boundary pairing UI
-- diagnostics navigation
-- undo/redo
+- cursor-centered zoom, bounded pan, rectangle/disk canvas handles, and named
+  boundary highlighting
+- locally owned orbiting 3D preview with frame, logical wireframe, panel color,
+  seam, normal, and thickness overlays
+- ordered explicit operation forms for RigidTransform, Fold, Roll, Stitch,
+  Solidify, and SphericalWrap
+- boundary pairing UI with deterministic A/B highlighting
+- deterministic structured diagnostics with source-context navigation
+- Undo/Redo, revisioned debounce, stale-result rejection, disposable preview
+  resources, and valid-only explicit Bake
+- documented blank-source-to-closed-cup walkthrough
+
+M06 does not edit generated Mesh topology, add runtime authoring, introduce a
+node graph, or implement M07 self-intersection/broken-geometry validation.
 
 ## M07: Geometry validator
 

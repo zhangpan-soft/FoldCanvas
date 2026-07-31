@@ -50,6 +50,13 @@ Contains:
 - preview object management
 - import/export adapters
 
+M06's authoring workspace mutates only `FoldCanvasAsset` source data through
+Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
+3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived
+Meshes/materials; it never discovers or modifies scene cameras. Source edits
+schedule a revisioned debounced compile, while Bake is a separate explicit
+save action that accepts only a successful compile.
+
 ### `FoldCanvas.Tests.Editor`
 
 Contains deterministic unit and integration tests. Tests should primarily assert topology, coordinates, UVs, boundaries, and diagnostics rather than screenshots.

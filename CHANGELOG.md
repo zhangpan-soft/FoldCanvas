@@ -8,6 +8,33 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.14] - 2026-07-31
+
+### Added
+
+- M06 UI Toolkit authoring workspace with a persistent split 2D source canvas
+  and locally owned interactive 3D derived preview
+- Rectangle/disk panel creation, stable renaming, numeric and handle-based
+  canvas-region editing, named boundary highlighting, and seam endpoint pairing
+- Ordered explicit operation forms, source-context diagnostic navigation,
+  revisioned debounced compilation, and valid-only Bake controls
+- Logical wireframe, panel-color, selected-seam, normal, and thickness preview
+  overlays, all owned and disposed by the Editor window
+- A bilingual blank-source-to-closed-cup walkthrough and 23 M06 Edit Mode tests
+  covering Undo/Redo, deterministic diagnostics, stale-result rejection,
+  preview ownership, full cup compilation, and protected baking
+
+### Changed
+
+- The legacy FoldCanvas window command now opens the M06 authoring workspace
+- Package version advanced to `0.1.0-preview.14`
+
+### Not included
+
+- No M00-M05 geometry semantics were changed, and no M07 validator, M08
+  import/export or AI loop, runtime authoring, node graph, bevel, subdivision,
+  smoothing, remesh, or Mesh cleanup was added
+
 ## [0.1.0-preview.13] - 2026-07-31
 
 ### Fixed

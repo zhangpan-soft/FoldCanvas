@@ -67,6 +67,9 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   可以在不调用 Unity 球体原语的情况下重建为闭合球体
 - 稳定的编译诊断与确定性验证
 - Unity Editor Mesh 烘焙工具
+- UI Toolkit 二维源画布 / 三维派生预览分栏工作区
+- 矩形与圆盘创建、画布区域拖拽、命名边界与接缝配对、显式操作表单、
+  结构化诊断定位、Undo/Redo、防抖编译、调试叠加和仅限有效结果的 Bake
 - Edit Mode 测试
 - 完整架构、FoldScript 规格、路线图与 Codex 分阶段提示词
 
@@ -87,6 +90,12 @@ M05 不是新增一个“球体生成器”。八个矩形球瓣先从二维源�
 之前固定下来。球面到普通面板的 Bridge/Weld 也属于触碰操作，不能保留更早的
 旧报告。M05 当前不执行全局 triangle-triangle 自相交检测，因此闭球报告不
 等于对任意几何“绝无自交”的完整证明。
+
+M06 让同一套源数据不再必须通过代码创建。执行
+`Tools > FoldCanvas > Open Authoring Workspace`，即可在左侧编辑二维面板和
+接缝，在右侧查看由编译器生成的三维结果，并在下方编辑操作、查看诊断和显式
+Bake。预览对象只是 Editor 内可销毁的派生产物，不会取代源资产。完整步骤见
+[《M06 工作区：从空白源到闭合杯子》](Documentation~/authoring-workspace.md)。
 
 ## 七条项目宪法
 
@@ -115,7 +124,7 @@ M05 不是新增一个“球体生成器”。八个矩形球瓣先从二维源�
 2. 用 Unity Hub 打开 `Project~`。
 3. Unity 会通过 `file:../../` 引用仓库根目录的本地包。
 4. 在 Test Runner 中运行 Edit Mode 测试。
-5. 打开 `Window > FoldCanvas > FoldCanvas`。
+5. 打开 `Tools > FoldCanvas > Open Authoring Workspace`。
 6. 执行 `Tools > FoldCanvas > Create Bootstrap Sample` 查看 M01 平面样例；
    执行 `Tools > FoldCanvas > Create M02 Box Proof` 可直接创建、烘焙并显示
    六面折叠盒体；执行 `Tools > FoldCanvas > Create M03 Cup Proof` 可保留
