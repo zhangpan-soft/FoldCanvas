@@ -403,6 +403,13 @@ human audit.
   infinite-import-loop error in all 18 `BootstrapEditorWorkflowTests`.
 - 2026-07-31: Locked the CI repair to evidence staging only; no M05 geometry,
   seam lifecycle, or test assertion is weakened.
+- 2026-07-31: GitHub Actions push run `30616734918` and pull-request run
+  `30616738935` both passed Unity `6000.3.20f1`. Each discovered and passed
+  all 230 Edit Mode tests with zero failed, skipped, or inconclusive results
+  and uploaded a two-file `unity-editmode-results-and-logs` artifact containing
+  the normalized XML and Editor log.
+- 2026-07-31: Repository validation also passed for both the push run
+  `30616734975` and pull-request run `30616738973`.
 
 # Decisions made
 
@@ -448,7 +455,7 @@ human audit.
 
 # Current verification
 
-- Package version: `0.1.0-preview.12`
+- Package version: `0.1.0-preview.13`
 - Unity Editor: `6000.3.20f1 (c9ba695d4f07)`
 - Edit Mode: 230/230 passed, zero failed/skipped/inconclusive
 - Test XML:
@@ -478,8 +485,11 @@ human audit.
   Draft 2020-12 FoldScript schema validation, Runtime `UnityEditor` isolation,
   asmdef inspection, prohibited-sphere-generator scan, and
   `git diff --check` passed
-- GitHub Actions Unity status is recorded after the hardening commit is pushed;
-  the workflow requires the documented Unity license secrets
+- GitHub Actions push and pull-request Unity runs passed at 230/230 with zero
+  failed, skipped, or inconclusive tests; both uploaded real
+  `test-results.xml` and `Editor.log` files in the
+  `unity-editmode-results-and-logs` artifact
+- GitHub Actions push and pull-request repository-validation runs both passed
 - No Unity Sphere/UV Sphere/Icosphere, imported or fixed sphere Mesh, automatic
   repair, bevel, subdivision, remesh, mesh cleanup, or M06 behavior was
   implemented
