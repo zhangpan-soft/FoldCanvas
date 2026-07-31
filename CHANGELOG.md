@@ -8,6 +8,36 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.11] - 2026-07-31
+
+### Added
+
+- Stable source validation for every Stitch-selected seam ID, endpoint panel
+  ID, endpoint boundary ID, referenced panel, and referenced built-in boundary
+- Regression coverage for default/null/empty/whitespace/missing seam
+  references and sphere-to-ordinary Bridge/Weld lifecycle changes
+
+### Fixed
+
+- Default or malformed `BoundaryReference` values no longer reach a null-key
+  `Dictionary.TryGetValue` call in `SphereValidationPlan.Build`
+- Spherical component reports are now generated after the last Stitch whose
+  selected seam touches the component, preventing a later cross-type Stitch
+  from leaving an earlier closed report
+- Solidify cannot consume sphere evidence captured before a later
+  component-touching Stitch
+
+### Changed
+
+- Component-forming seams and component-touching Stitches are documented as
+  separate deterministic planning passes
+- Package version advanced to `0.1.0-preview.11`
+
+### Not included
+
+- No M05 mapping, pole, tessellation, geometry-budget, or topology-repair
+  architecture was replaced, and no M06 behavior was added
+
 ## [0.1.0-preview.10] - 2026-07-30
 
 ### Added

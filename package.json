@@ -1,6 +1,6 @@
 {
   "name": "com.foldcanvas.core",
-  "version": "0.1.0-preview.10",
+  "version": "0.1.0-preview.11",
   "displayName": "FoldCanvas",
   "description": "A deterministic 2D-first surface compiler for Unity with preserved artwork, seam processing, shell thickness, closed-volume validation, and explicit spherical surface reconstruction.",
   "unity": "6000.3",

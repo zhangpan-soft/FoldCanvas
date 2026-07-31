@@ -437,13 +437,17 @@ isolated topology, Euler characteristic 2, one north pole, one south pole,
 outward winding, consistent frame, and bounded radius error.
 
 Spherical components are formed only by Stitch-selected seams whose two
-endpoints target enabled `sphericalWrap` panels. Each component is validated
-after its last such Stitch and before any Solidify that selects that component.
-Unrelated Stitch or Solidify operations do not affect this lifecycle.
-`SphereReports` preserves one staged report per component; `SphereReport`
-remains the first-report compatibility view. Solidify cannot replace the
-pre-Solidify proof. This validation does not include global triangle-triangle
-self-intersection detection.
+endpoints target enabled `sphericalWrap` panels. Formation is followed by a
+separate touching pass: any selected seam with either endpoint in a component,
+including a Bridge or Weld to an ordinary panel, delays validation until that
+Stitch completes. Each component is validated after its last touching Stitch
+and before any Solidify that selects that component. Selected seam IDs,
+endpoint panel IDs, endpoint boundary IDs, panels, and boundaries must all
+resolve before planning. Unrelated Stitch or Solidify operations do not affect
+this lifecycle. `SphereReports` preserves one staged report per component;
+`SphereReport` remains the first-report compatibility view. Solidify cannot
+replace the pre-Solidify proof. This validation does not include global
+triangle-triangle self-intersection detection.
 
 中文摘要：`sphericalWrap` 只把明确声明的矩形二维球瓣映射到当前局部球面，
 不会凭空生成球体。二维源坐标和 UV 保留；极点在离散阶段明确处理；球瓣之间

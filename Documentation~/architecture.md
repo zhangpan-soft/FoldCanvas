@@ -172,11 +172,14 @@ and radius-error Meshes may visualize them, but they never become source
 geometry or feed back into compilation.
 
 M05 derives spherical components only from enabled SphericalWrap panels joined
-by relevant Stitch-selected seams. It freezes each component report after its
-last relevant Stitch and before a Solidify that touches that component.
-Solidify may build a later shell but cannot replace this zero-thickness proof.
-The report proves the documented topology, radius, frame, and winding
-invariants; it does not run a global triangle-triangle self-intersection test.
+by Stitch-selected seams whose two endpoints are spherical. Component
+formation and component modification are separate: after components are
+formed, any Stitch-selected seam with either endpoint in a component touches
+that component. The compiler freezes its report after the last touching Stitch
+and before a Solidify that touches that component. Solidify may build a later
+shell but cannot replace this zero-thickness proof. The report proves the
+documented topology, radius, frame, and winding invariants; it does not run a
+global triangle-triangle self-intersection test.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 

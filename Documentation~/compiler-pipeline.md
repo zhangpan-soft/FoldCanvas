@@ -216,6 +216,13 @@ therefore consume the closed-loop topology created by an earlier seam. The
 complete Stitch operation is transactional: if any selected seam fails,
 earlier seams from that same operation are rolled back.
 
+Before component planning or tessellation, every Stitch-selected seam must
+resolve to one non-empty seam ID. Both endpoint panel IDs and boundary IDs must
+be non-empty, each panel must exist, and each boundary must be a built-in
+boundary of that panel shape. Invalid native references return `FC2001`,
+`FC2003`, `FC2004`, or `FC2008`; component planning independently guards all
+string dictionary keys as defense in depth.
+
 ### Terminal-Stitch ordering
 
 Until shared topology groups participate in deformation propagation, the
@@ -288,11 +295,13 @@ does not claim global self-intersection detection or mesh repair.
 
 Enabled `SphericalWrap` panels form a spherical component only through seams
 selected by enabled Stitch operations where both seam endpoints are spherical
-panels. Unrelated Stitch operations do not create or trigger such a component.
-Each component is validated immediately after its last relevant Stitch and
-before the first Solidify that selects any panel in that component. A
-Solidify on unrelated panels neither triggers nor suppresses the check. A
-Solidify ordered before the component's required Stitch returns
+panels. These are component-forming seams. After formation, every Stitch whose
+selected seam has either endpoint in a component is component-touching,
+including a Bridge or Weld to an ordinary panel. Each component is validated
+immediately after its last touching Stitch and before the first Solidify that
+selects any panel in that component. A Solidify on unrelated panels neither
+triggers nor suppresses the check. A Solidify ordered before the component's
+last touching Stitch returns
 `FC6016 SphereValidationRequiredBeforeSolidify`.
 
 The compiler stores one read-only report per component in `SphereReports`.

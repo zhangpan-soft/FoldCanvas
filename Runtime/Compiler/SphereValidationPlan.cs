@@ -60,10 +60,10 @@ namespace FoldCanvas
 
             SeamLookup seamLookup = BuildSeamLookup(asset);
             int[] parents = new int[orderedWraps.Count];
-            bool[] hasRelevantStitch =
+            bool[] hasComponentFormingStitch =
                 new bool[orderedWraps.Count];
-            List<RelevantStitch> relevantStitches =
-                new List<RelevantStitch>();
+            List<SelectedStitch> selectedStitches =
+                new List<SelectedStitch>();
             for (int i = 0; i < parents.Length; i++)
             {
                 parents[i] = i;
@@ -89,24 +89,32 @@ namespace FoldCanvas
                     if (!seamLookup.TryGetUnique(
                             seamId,
                             out SeamDefinition seam) ||
-                        !wrapIndexByPanel.TryGetValue(
-                            seam.A.PanelId,
+                        !TryGetEndpointPanelIds(
+                            seam,
+                            out string firstPanelId,
+                            out string secondPanelId))
+                    {
+                        continue;
+                    }
+
+                    selectedStitches.Add(new SelectedStitch(
+                        operationIndex,
+                        stitch.Id,
+                        firstPanelId,
+                        secondPanelId));
+                    if (!wrapIndexByPanel.TryGetValue(
+                            firstPanelId,
                             out int first) ||
                         !wrapIndexByPanel.TryGetValue(
-                            seam.B.PanelId,
+                            secondPanelId,
                             out int second))
                     {
                         continue;
                     }
 
                     Union(parents, first, second);
-                    hasRelevantStitch[first] = true;
-                    hasRelevantStitch[second] = true;
-                    relevantStitches.Add(new RelevantStitch(
-                        operationIndex,
-                        stitch.Id,
-                        first,
-                        second));
+                    hasComponentFormingStitch[first] = true;
+                    hasComponentFormingStitch[second] = true;
                 }
             }
 
@@ -114,7 +122,7 @@ namespace FoldCanvas
                 new Dictionary<int, List<int>>();
             for (int i = 0; i < orderedWraps.Count; i++)
             {
-                if (!hasRelevantStitch[i])
+                if (!hasComponentFormingStitch[i])
                 {
                     continue;
                 }
@@ -143,29 +151,6 @@ namespace FoldCanvas
                 componentIndex++)
             {
                 List<int> members = orderedGroups[componentIndex];
-                HashSet<int> memberSet = new HashSet<int>(members);
-                int lastStitchIndex = -1;
-                string lastStitchId = null;
-                for (int stitchIndex = 0;
-                    stitchIndex < relevantStitches.Count;
-                    stitchIndex++)
-                {
-                    RelevantStitch relevant =
-                        relevantStitches[stitchIndex];
-                    if (!memberSet.Contains(relevant.FirstWrapIndex) ||
-                        !memberSet.Contains(relevant.SecondWrapIndex))
-                    {
-                        continue;
-                    }
-
-                    if (relevant.OperationIndex >= lastStitchIndex)
-                    {
-                        lastStitchIndex =
-                            relevant.OperationIndex;
-                        lastStitchId = relevant.OperationId;
-                    }
-                }
-
                 List<string> panelIds =
                     new List<string>(members.Count);
                 List<string> operationIds =
@@ -180,12 +165,37 @@ namespace FoldCanvas
                     operationIds.Add(source.OperationId);
                 }
 
+                HashSet<string> memberPanelIds =
+                    new HashSet<string>(
+                        panelIds,
+                        StringComparer.Ordinal);
+                int lastTouchingStitchIndex = -1;
+                string lastTouchingStitchId = null;
+                for (int stitchIndex = 0;
+                    stitchIndex < selectedStitches.Count;
+                    stitchIndex++)
+                {
+                    SelectedStitch selected =
+                        selectedStitches[stitchIndex];
+                    if (!selected.Touches(memberPanelIds) ||
+                        selected.OperationIndex <
+                            lastTouchingStitchIndex)
+                    {
+                        continue;
+                    }
+
+                    lastTouchingStitchIndex =
+                        selected.OperationIndex;
+                    lastTouchingStitchId =
+                        selected.OperationId;
+                }
+
                 componentPlans.Add(new SphereComponentPlan(
                     $"sphere-component-{componentIndex:000}",
                     panelIds,
                     operationIds,
-                    lastStitchIndex,
-                    lastStitchId));
+                    lastTouchingStitchIndex,
+                    lastTouchingStitchId));
             }
 
             return new SphereValidationPlan(componentPlans);
@@ -202,7 +212,7 @@ namespace FoldCanvas
             {
                 SphereComponentPlan component = components[i];
                 if (!component.Validated &&
-                    component.LastRelevantStitchOperationIndex ==
+                    component.LastTouchingStitchOperationIndex ==
                         operationIndex)
                 {
                     due.Add(component);
@@ -230,13 +240,13 @@ namespace FoldCanvas
                 }
 
                 if (operationIndex <=
-                    component.LastRelevantStitchOperationIndex)
+                    component.LastTouchingStitchOperationIndex)
                 {
                     result.Add(new FoldCanvasDiagnostic(
                         FoldCanvasDiagnosticCodes
                             .SphereValidationRequiredBeforeSolidify,
                         FoldCanvasDiagnosticSeverity.Error,
-                        $"Spherical component '{component.ComponentId}' must complete its relevant Stitch operations and closed-sphere validation before Solidify.",
+                        $"Spherical component '{component.ComponentId}' must complete every Stitch operation that touches the component and closed-sphere validation before Solidify.",
                         component.PanelIds[0],
                         solidify.Id,
                         values: new[]
@@ -247,7 +257,7 @@ namespace FoldCanvas
                             new FoldCanvasDiagnosticValue(
                                 "requiredStitchOperationIndex",
                                 component
-                                    .LastRelevantStitchOperationIndex)
+                                    .LastTouchingStitchOperationIndex)
                         }));
                     return false;
                 }
@@ -303,9 +313,9 @@ namespace FoldCanvas
                         component.PanelIds,
                         component.SphericalWrapOperationIds,
                         SphereValidationStage.PreSolidify,
-                        component.LastRelevantStitchOperationId,
+                        component.LastTouchingStitchOperationId,
                         component
-                            .LastRelevantStitchOperationIndex);
+                            .LastTouchingStitchOperationIndex);
                 result.AddSphereReport(report);
                 component.Validated = true;
                 if (report.IsClosedSphere)
@@ -333,6 +343,7 @@ namespace FoldCanvas
             {
                 PanelDefinition panel = asset.Panels[panelIndex];
                 if (panel != null &&
+                    !string.IsNullOrWhiteSpace(panel.Id) &&
                     wrapsByPanel.TryGetValue(
                         panel.Id,
                         out WrapSource source))
@@ -354,6 +365,18 @@ namespace FoldCanvas
             }
 
             return lookup;
+        }
+
+        private static bool TryGetEndpointPanelIds(
+            SeamDefinition seam,
+            out string firstPanelId,
+            out string secondPanelId)
+        {
+            firstPanelId = seam?.A.PanelId;
+            secondPanelId = seam?.B.PanelId;
+            return
+                !string.IsNullOrWhiteSpace(firstPanelId) &&
+                !string.IsNullOrWhiteSpace(secondPanelId);
         }
 
         private static int Find(int[] parents, int index)
@@ -412,27 +435,36 @@ namespace FoldCanvas
             public int OperationIndex { get; }
         }
 
-        private readonly struct RelevantStitch
+        private readonly struct SelectedStitch
         {
-            public RelevantStitch(
+            public SelectedStitch(
                 int operationIndex,
                 string operationId,
-                int firstWrapIndex,
-                int secondWrapIndex)
+                string firstPanelId,
+                string secondPanelId)
             {
                 OperationIndex = operationIndex;
                 OperationId = operationId;
-                FirstWrapIndex = firstWrapIndex;
-                SecondWrapIndex = secondWrapIndex;
+                FirstPanelId = firstPanelId;
+                SecondPanelId = secondPanelId;
             }
 
             public int OperationIndex { get; }
 
             public string OperationId { get; }
 
-            public int FirstWrapIndex { get; }
+            public string FirstPanelId { get; }
 
-            public int SecondWrapIndex { get; }
+            public string SecondPanelId { get; }
+
+            public bool Touches(
+                HashSet<string> componentPanelIds)
+            {
+                return
+                    componentPanelIds != null &&
+                    (componentPanelIds.Contains(FirstPanelId) ||
+                     componentPanelIds.Contains(SecondPanelId));
+            }
         }
 
         private sealed class SphereComponentPlan
@@ -441,17 +473,17 @@ namespace FoldCanvas
                 string componentId,
                 List<string> panelIds,
                 List<string> sphericalWrapOperationIds,
-                int lastRelevantStitchOperationIndex,
-                string lastRelevantStitchOperationId)
+                int lastTouchingStitchOperationIndex,
+                string lastTouchingStitchOperationId)
             {
                 ComponentId = componentId;
                 PanelIds = panelIds;
                 SphericalWrapOperationIds =
                     sphericalWrapOperationIds;
-                LastRelevantStitchOperationIndex =
-                    lastRelevantStitchOperationIndex;
-                LastRelevantStitchOperationId =
-                    lastRelevantStitchOperationId;
+                LastTouchingStitchOperationIndex =
+                    lastTouchingStitchOperationIndex;
+                LastTouchingStitchOperationId =
+                    lastTouchingStitchOperationId;
             }
 
             public string ComponentId { get; }
@@ -460,9 +492,9 @@ namespace FoldCanvas
 
             public List<string> SphericalWrapOperationIds { get; }
 
-            public int LastRelevantStitchOperationIndex { get; }
+            public int LastTouchingStitchOperationIndex { get; }
 
-            public string LastRelevantStitchOperationId { get; }
+            public string LastTouchingStitchOperationId { get; }
 
             public bool Validated { get; set; }
 

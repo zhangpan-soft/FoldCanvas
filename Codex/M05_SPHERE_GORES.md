@@ -141,13 +141,17 @@ SphericalWrap must occur before Stitch. The existing rule that Stitch is the
 terminal position-deforming operation for selected panels remains active.
 Solidify may consume the final welded sphere in a later operation.
 
-Enabled SphericalWrap panels form components through Stitch-selected seams
-whose two endpoints are spherical. Validate each component after its last
-relevant Stitch and before the first Solidify selecting that component.
-Unrelated Stitch and Solidify operations must not affect this lifecycle, and
-Solidify cannot replace the zero-thickness sphere proof. Preserve the
-pre-Solidify report in `SphereReports`; `SphereReport` is the first-report
-compatibility view.
+Enabled SphericalWrap panels form components only through Stitch-selected
+seams whose two endpoints are spherical. After forming those components, every
+Stitch-selected seam with either endpoint in a component is component-touching,
+including spherical-to-ordinary Bridge or Weld seams. Validate each component
+after its last touching Stitch and before the first Solidify selecting that
+component. Invalid selected seam IDs, panel IDs, boundary IDs, or missing
+source references return diagnostics before component planning. Unrelated
+Stitch and Solidify operations must not affect this lifecycle, and Solidify
+cannot replace the zero-thickness sphere proof. Preserve the pre-Solidify
+report in `SphereReports`; `SphereReport` is the first-report compatibility
+view.
 
 ## Validation
 
@@ -198,6 +202,9 @@ radius error, and deterministic UV-stretch samples.
 - `UnrelatedStitch_DoesNotTriggerSphereValidation`
 - `TwoIndependentSphereComponents_AreValidatedIndependently`
 - `SphereReport_PreservesPreSolidifyEvidence`
+- selected seam default/null/empty/whitespace/missing reference coverage
+- cross-type Bridge/Weld last-touching-Stitch report coverage
+- post-closure boundary-subdivision stale-report coverage
 - `GoldenSphere_ThreeCompilesHaveStableCountsReportsAndHash`
 - cumulative Panel/Stitch/Solidify budget and rollback coverage
 - native `sampleCount` range and scale-aware pole coverage

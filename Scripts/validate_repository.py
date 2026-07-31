@@ -148,6 +148,9 @@ for required_fragment in [
     "testMode: EditMode",
     "actions/upload-artifact@",
     "if: always()",
+    "test-results.xml",
+    "Editor.log",
+    "if-no-files-found: error",
 ]:
     if required_fragment not in unity_workflow:
         errors.append(

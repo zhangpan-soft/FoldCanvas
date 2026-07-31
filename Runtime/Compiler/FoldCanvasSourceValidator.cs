@@ -262,6 +262,8 @@ namespace FoldCanvas
             FoldCanvasAsset asset,
             FoldCanvasCompileResult result)
         {
+            Dictionary<string, PanelDefinition> panelsById =
+                BuildPanelLookup(asset);
             for (int i = 0; i < asset.Seams.Count; i++)
             {
                 SeamDefinition seam = asset.Seams[i];
@@ -294,6 +296,227 @@ namespace FoldCanvas
                                     .MaximumStitchSampleCount)
                         }));
                 }
+            }
+
+            HashSet<SeamDefinition> validatedSelections =
+                new HashSet<SeamDefinition>();
+            for (int operationIndex = 0;
+                operationIndex < asset.Operations.Count;
+                operationIndex++)
+            {
+                if (!(asset.Operations[operationIndex] is
+                        StitchOperationDefinition stitch) ||
+                    !stitch.Enabled ||
+                    stitch.SeamIds == null)
+                {
+                    continue;
+                }
+
+                for (int seamIndex = 0;
+                    seamIndex < stitch.SeamIds.Count;
+                    seamIndex++)
+                {
+                    string seamId = stitch.SeamIds[seamIndex];
+                    if (!TryResolveSelectedSeam(
+                            asset,
+                            seamId,
+                            stitch.Id,
+                            result,
+                            out SeamDefinition seam) ||
+                        !validatedSelections.Add(seam))
+                    {
+                        continue;
+                    }
+
+                    ValidateBoundaryReference(
+                        seam.A,
+                        "A",
+                        seam.Id,
+                        stitch.Id,
+                        panelsById,
+                        result);
+                    ValidateBoundaryReference(
+                        seam.B,
+                        "B",
+                        seam.Id,
+                        stitch.Id,
+                        panelsById,
+                        result);
+                }
+            }
+        }
+
+        private static Dictionary<string, PanelDefinition>
+            BuildPanelLookup(FoldCanvasAsset asset)
+        {
+            Dictionary<string, PanelDefinition> panelsById =
+                new Dictionary<string, PanelDefinition>(
+                    StringComparer.Ordinal);
+            for (int i = 0; i < asset.Panels.Count; i++)
+            {
+                PanelDefinition panel = asset.Panels[i];
+                if (panel == null ||
+                    string.IsNullOrWhiteSpace(panel.Id) ||
+                    panelsById.ContainsKey(panel.Id))
+                {
+                    continue;
+                }
+
+                panelsById.Add(panel.Id, panel);
+            }
+
+            return panelsById;
+        }
+
+        private static bool TryResolveSelectedSeam(
+            FoldCanvasAsset asset,
+            string seamId,
+            string operationId,
+            FoldCanvasCompileResult result,
+            out SeamDefinition seam)
+        {
+            seam = null;
+            if (string.IsNullOrWhiteSpace(seamId))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.StitchSeamMissing,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Stitch seam IDs must be non-empty.",
+                    operationId: operationId,
+                    seamId: seamId));
+                return false;
+            }
+
+            int matches = 0;
+            for (int i = 0; i < asset.Seams.Count; i++)
+            {
+                SeamDefinition candidate = asset.Seams[i];
+                if (candidate == null ||
+                    string.IsNullOrWhiteSpace(candidate.Id) ||
+                    !string.Equals(
+                        candidate.Id,
+                        seamId,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                seam = candidate;
+                matches++;
+            }
+
+            if (matches == 0)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.StitchSeamMissing,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Stitch references a seam that is not declared with a non-empty ID.",
+                    operationId: operationId,
+                    seamId: seamId));
+                return false;
+            }
+
+            if (matches > 1)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.DuplicateSeamId,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "A Stitch-selected seam ID must resolve to exactly one declaration.",
+                    operationId: operationId,
+                    seamId: seamId));
+                seam = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static void ValidateBoundaryReference(
+            BoundaryReference reference,
+            string endpointName,
+            string seamId,
+            string operationId,
+            Dictionary<string, PanelDefinition> panelsById,
+            FoldCanvasCompileResult result)
+        {
+            string panelId = reference.PanelId;
+            if (string.IsNullOrWhiteSpace(panelId))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.MissingPanelReference,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    $"Stitch-selected seam endpoint {endpointName} must contain a non-empty panelId.",
+                    panelId,
+                    operationId,
+                    seamId));
+                return;
+            }
+
+            if (!panelsById.TryGetValue(
+                    panelId,
+                    out PanelDefinition panel))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.MissingPanelReference,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    $"Stitch-selected seam endpoint {endpointName} references a panel that does not exist.",
+                    panelId,
+                    operationId,
+                    seamId));
+                return;
+            }
+
+            string boundaryId = reference.BoundaryId;
+            if (string.IsNullOrWhiteSpace(boundaryId) ||
+                !PanelDefinesBoundary(panel, boundaryId))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.StitchBoundaryMissing,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    $"Stitch-selected seam endpoint {endpointName} references a boundary that does not exist on its panel.",
+                    panelId,
+                    operationId,
+                    seamId));
+            }
+        }
+
+        private static bool PanelDefinesBoundary(
+            PanelDefinition panel,
+            string boundaryId)
+        {
+            if (panel == null ||
+                string.IsNullOrWhiteSpace(boundaryId))
+            {
+                return false;
+            }
+
+            switch (panel.Shape)
+            {
+                case PanelShape.Rectangle:
+                    return
+                        string.Equals(
+                            boundaryId,
+                            "uMin",
+                            StringComparison.Ordinal) ||
+                        string.Equals(
+                            boundaryId,
+                            "uMax",
+                            StringComparison.Ordinal) ||
+                        string.Equals(
+                            boundaryId,
+                            "vMin",
+                            StringComparison.Ordinal) ||
+                        string.Equals(
+                            boundaryId,
+                            "vMax",
+                            StringComparison.Ordinal);
+                case PanelShape.Disk:
+                    return string.Equals(
+                        boundaryId,
+                        "perimeter",
+                        StringComparison.Ordinal);
+                default:
+                    return false;
             }
         }
     }

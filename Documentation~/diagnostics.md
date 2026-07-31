@@ -141,7 +141,9 @@ Euler characteristic, pole counts, inward triangles, frame inconsistencies,
 maximum radius error, and tolerance. `FC6015` prevents two spherical mappings
 from silently targeting the same panel. `FC6016` prevents a Solidify that
 targets a spherical component from running before that component's final
-relevant Stitch and pre-Solidify sphere validation.
+touching Stitch and pre-Solidify sphere validation. `FC2001`, `FC2003`,
+`FC2004`, and `FC2008` also protect component planning from invalid
+Stitch-selected seam, panel, and boundary references.
 
 `FC2014` enforces the shared JSON/native `sampleCount` maximum of `8192`.
 `FC5005` and `FC5006` report cumulative generated vertex or triangle budget

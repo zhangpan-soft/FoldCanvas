@@ -94,9 +94,10 @@ pole samples are represented explicitly, inserted seam samples are
 re-evaluated on the spherical map, and the final logical topology must report
 one component, no open/non-manifold edges, outward winding, Euler
 characteristic 2, one north pole, one south pole, and bounded radius error.
-That report is frozen after the component's last relevant Stitch and before a
-Solidify touching the component. It does not perform global triangle-triangle
-self-intersection detection.
+Only spherical-to-spherical seams form a component, but any later Stitch seam
+with either endpoint in that component delays its report. The report is frozen
+after the last touching Stitch and before a Solidify touching the component.
+It does not perform global triangle-triangle self-intersection detection.
 
 ## Design principles
 

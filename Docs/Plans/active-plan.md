@@ -13,6 +13,14 @@ validation; scale-aware pole classification; and a real Unity Edit Mode CI
 job. Unrelated Stitch or Solidify operations must not change whether a
 spherical component is validated.
 
+The current review gate additionally requires every Stitch-selected seam
+reference to fail through stable diagnostics before component planning, and
+requires a sphere report to be captured only after the last Stitch whose seam
+touches that spherical component. Component-forming seams and
+component-touching Stitches are separate concepts: only spherical-to-spherical
+seams form components, while a seam with either endpoint in a component delays
+that component's validation.
+
 M04/M04.1 passed human audit and merged through PR #3 into `main` at merge
 commit `ef36808`. The M05 baseline is Unity `6000.3.20f1` with 152/152 Edit
 Mode tests.
@@ -83,9 +91,15 @@ It does not use or modify `Camera.main`.
   determinism checks.
 - Build deterministic spherical components only from enabled SphericalWrap
   panels connected by Stitch-selected seams whose two endpoints are spherical.
-- Validate each component after its final relevant Stitch and before its first
-  relevant Solidify. Preserve that pre-Solidify report even when the compiled
-  result later contains a thick shell.
+- Validate each component after its final touching Stitch and before its first
+  relevant Solidify. A touching Stitch selects any seam whose A or B panel is
+  a component member, including spherical-to-ordinary Bridge or Weld seams.
+  Preserve that pre-Solidify report even when the compiled result later
+  contains a thick shell.
+- Validate every selected seam ID, endpoint panel ID, endpoint boundary ID,
+  referenced panel, and referenced built-in panel boundary before component
+  planning. `SphereValidationPlan.Build` still guards all string dictionary
+  keys independently so malformed native data cannot throw.
 - Treat the sphere validator as a topology, manifoldness, radius, pole, and
   winding proof. It is not a global triangle-triangle self-intersection proof.
 - Enforce `MaxGeneratedVertices` and `MaxGeneratedTriangles` cumulatively in
@@ -246,6 +260,14 @@ It does not use or modify `Camera.main`.
 - budget failures leave counts, topology, panel records, and boundaries
   unchanged
 - null/empty/whitespace native references return diagnostics, not exceptions
+- default, null, empty, whitespace, missing-panel, and missing-boundary
+  Stitch-selected seam references return stable diagnostics before planning
+- a later cross-type Bridge or Weld touching a spherical component cannot
+  leave an earlier closed report; report operation ID/index identify the last
+  touching Stitch
+- post-closure boundary subdivision is either rejected or represented by a
+  fresh failed/closed report from the modified topology
+- Solidify after a cross-type Stitch consumes only fresh sphere evidence
 - a radius `1e9` near-pole ring is not collapsed by fixed angular tolerance
 - the golden asset compiles three times with stable geometry and report hashes
 - repository validation
@@ -311,6 +333,18 @@ human audit.
   Schema/native limit consistency.
 - 2026-07-30: Unity `6000.3.20f1` passed the complete hardened suite:
   208/208 passed, with zero failed, skipped, or inconclusive tests.
+- 2026-07-31: Began the second PR #4 blocker pass. Scope is limited to
+  Stitch-selected seam reference diagnostics, defensive component planning,
+  last-touching-Stitch sphere evidence, and a genuinely executed Unity CI run
+  with uploaded XML and Editor log.
+- 2026-07-31: Reproduced the blocker gate at 5/15 passing: malformed selected
+  seam panel IDs threw from component planning, and cross-type Stitch reports
+  still identified the earlier internal sphere Stitch.
+- 2026-07-31: Added selected-seam source validation plus independent null-key
+  guards, split component-forming seams from component-touching Stitches, and
+  passed the focused gate at 15/15.
+- 2026-07-31: Unity `6000.3.20f1` passed the complete local suite at 223/223,
+  with zero failed, skipped, or inconclusive tests.
 
 # Decisions made
 
@@ -335,16 +369,23 @@ human audit.
   every component-scoped validation report and its stage.
 - M05 CI uses the tracked `Project~` host so Runtime, Editor, package Tests, and
   the exact local-package dependency compile together.
+- Spherical-to-spherical selected seams form components. Every selected Stitch
+  seam with at least one endpoint in a formed component determines that
+  component's final validation operation, even when the other endpoint is an
+  ordinary panel.
+- Invalid selected seam source references are rejected before tessellation,
+  but `SphereValidationPlan` keeps its own null/whitespace guards as a
+  defense-in-depth boundary.
 
 # Current verification
 
-- Package version: `0.1.0-preview.10`
+- Package version: `0.1.0-preview.11`
 - Unity Editor: `6000.3.20f1 (c9ba695d4f07)`
-- Edit Mode: 208/208 passed, zero failed/skipped/inconclusive
+- Edit Mode: 223/223 passed, zero failed/skipped/inconclusive
 - Test XML:
-  `Project~/TestResults/M05HardeningFinal.xml`
+  `Project~/TestResults/M05SeamLifecycleFinal2.xml`
 - Editor log:
-  `Project~/TestResults/M05HardeningFinal-Editor.log`
+  `Project~/TestResults/M05SeamLifecycleFinal2-Editor.log`
 - Golden source: 8 explicit rectangle gore panels and 8 explicit Weld seams
 - Surface: 616 render vertices, 482 logical topology vertices, 960 triangles,
   and 1,440 unique logical edges
