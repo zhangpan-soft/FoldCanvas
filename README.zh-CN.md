@@ -60,6 +60,8 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   边关联、绕序和半径误差验证真正闭合
 - 只有球面到球面的接缝用于形成组件；任何一端命中该组件的后续 Stitch 都会推迟
   报告，组件只在最后一个触碰 Stitch 之后、相关 Solidify 之前独立生成报告
+- 所选球面端点必须先执行 SphericalWrap、再执行 Stitch；非法顺序会在面板离散前
+  返回 `FC2010`，不会生成提前或过期的球面报告
 - 面板离散、Stitch 插点/Bridge 与 Solidify 内外壳/rim 共用同一份累计几何预算
 - 一张包含 `NORTH`、`FOLDCANVAS`、`SOUTH`、赤道与球瓣编号的二维画布，
   可以在不调用 Unity 球体原语的情况下重建为闭合球体

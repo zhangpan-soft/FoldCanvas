@@ -155,6 +155,7 @@ namespace FoldCanvas
                     new List<string>(members.Count);
                 List<string> operationIds =
                     new List<string>(members.Count);
+                int maximumWrapOperationIndex = -1;
                 for (int memberIndex = 0;
                     memberIndex < members.Count;
                     memberIndex++)
@@ -163,6 +164,9 @@ namespace FoldCanvas
                         orderedWraps[members[memberIndex]];
                     panelIds.Add(source.PanelId);
                     operationIds.Add(source.OperationId);
+                    maximumWrapOperationIndex = Math.Max(
+                        maximumWrapOperationIndex,
+                        source.OperationIndex);
                 }
 
                 HashSet<string> memberPanelIds =
@@ -188,6 +192,12 @@ namespace FoldCanvas
                         selected.OperationIndex;
                     lastTouchingStitchId =
                         selected.OperationId;
+                }
+
+                if (lastTouchingStitchIndex <=
+                    maximumWrapOperationIndex)
+                {
+                    continue;
                 }
 
                 componentPlans.Add(new SphereComponentPlan(

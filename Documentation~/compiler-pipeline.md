@@ -231,6 +231,15 @@ compiler treats every panel selected by a Stitch as position-final. A later
 `FC2010 StitchMustBeTerminalForSelectedPanels` and returns no Mesh. Operations
 on unrelated panels remain legal.
 
+The same terminal contract is preflighted in the forward direction before
+panel tessellation: when a selected seam endpoint has an enabled
+`SphericalWrap`, its operation index must be strictly less than the selecting
+Stitch index. A violation returns `FC2010` with
+`sphericalWrapOperationIndex` and `stitchOperationIndex`; neither
+`StitchExecutor` nor sphere validation runs. Component planning independently
+requires the last touching Stitch to be later than the maximum member-wrap
+index, so bypassing source preflight still cannot schedule an early report.
+
 `Solidify` is not a post-Stitch per-panel deformation. It consumes the complete
 final stitched topology in Stage 5 and must construct both shell sides and
 their rims without separating render copies that share one logical topology

@@ -264,6 +264,8 @@ namespace FoldCanvas
         {
             Dictionary<string, PanelDefinition> panelsById =
                 BuildPanelLookup(asset);
+            Dictionary<string, int> sphericalWrapIndexByPanel =
+                BuildSphericalWrapIndexLookup(asset);
             for (int i = 0; i < asset.Seams.Count; i++)
             {
                 SeamDefinition seam = asset.Seams[i];
@@ -322,28 +324,109 @@ namespace FoldCanvas
                             seamId,
                             stitch.Id,
                             result,
-                            out SeamDefinition seam) ||
-                        !validatedSelections.Add(seam))
+                            out SeamDefinition seam))
                     {
                         continue;
                     }
 
-                    ValidateBoundaryReference(
+                    if (validatedSelections.Add(seam))
+                    {
+                        ValidateBoundaryReference(
+                            seam.A,
+                            "A",
+                            seam.Id,
+                            stitch.Id,
+                            panelsById,
+                            result);
+                        ValidateBoundaryReference(
+                            seam.B,
+                            "B",
+                            seam.Id,
+                            stitch.Id,
+                            panelsById,
+                            result);
+                    }
+
+                    ValidateSphericalWrapBeforeStitch(
                         seam.A,
                         "A",
                         seam.Id,
                         stitch.Id,
-                        panelsById,
+                        operationIndex,
+                        sphericalWrapIndexByPanel,
                         result);
-                    ValidateBoundaryReference(
+                    ValidateSphericalWrapBeforeStitch(
                         seam.B,
                         "B",
                         seam.Id,
                         stitch.Id,
-                        panelsById,
+                        operationIndex,
+                        sphericalWrapIndexByPanel,
                         result);
                 }
             }
+        }
+
+        private static Dictionary<string, int>
+            BuildSphericalWrapIndexLookup(FoldCanvasAsset asset)
+        {
+            Dictionary<string, int> operationIndexByPanel =
+                new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int operationIndex = 0;
+                operationIndex < asset.Operations.Count;
+                operationIndex++)
+            {
+                if (!(asset.Operations[operationIndex] is
+                        SphericalWrapOperationDefinition sphericalWrap) ||
+                    !sphericalWrap.Enabled ||
+                    string.IsNullOrWhiteSpace(sphericalWrap.PanelId))
+                {
+                    continue;
+                }
+
+                operationIndexByPanel[sphericalWrap.PanelId] =
+                    operationIndex;
+            }
+
+            return operationIndexByPanel;
+        }
+
+        private static void ValidateSphericalWrapBeforeStitch(
+            BoundaryReference reference,
+            string endpointName,
+            string seamId,
+            string stitchOperationId,
+            int stitchOperationIndex,
+            Dictionary<string, int> sphericalWrapIndexByPanel,
+            FoldCanvasCompileResult result)
+        {
+            string panelId = reference.PanelId;
+            if (string.IsNullOrWhiteSpace(panelId) ||
+                !sphericalWrapIndexByPanel.TryGetValue(
+                    panelId,
+                    out int sphericalWrapOperationIndex) ||
+                sphericalWrapOperationIndex < stitchOperationIndex)
+            {
+                return;
+            }
+
+            result.Add(new FoldCanvasDiagnostic(
+                FoldCanvasDiagnosticCodes
+                    .StitchMustBeTerminalForSelectedPanels,
+                FoldCanvasDiagnosticSeverity.Error,
+                $"SphericalWrap for Stitch-selected seam endpoint {endpointName} must occur before the Stitch because Stitch is terminal for every selected panel.",
+                panelId,
+                stitchOperationId,
+                seamId,
+                values: new[]
+                {
+                    new FoldCanvasDiagnosticValue(
+                        "sphericalWrapOperationIndex",
+                        sphericalWrapOperationIndex),
+                    new FoldCanvasDiagnosticValue(
+                        "stitchOperationIndex",
+                        stitchOperationIndex)
+                }));
         }
 
         private static Dictionary<string, PanelDefinition>

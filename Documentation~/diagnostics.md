@@ -121,7 +121,11 @@ compiler stage and source order.
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
 deformation propagation exists, a later RigidTransform, Fold, Roll, or
 SphericalWrap may not target a panel selected by an earlier Stitch. Solidify
-may follow because it consumes complete welded topology groups.
+may follow because it consumes complete welded topology groups. Source
+preflight also returns `FC2010` when a Stitch-selected endpoint's enabled
+SphericalWrap is not strictly earlier than that Stitch. This form carries
+`sphericalWrapOperationIndex` and `stitchOperationIndex` and runs before
+tessellation or sphere reporting.
 
 `FC2011`–`FC2013` stop collapsed, closure-incompatible, or non-subdividable
 seams without creating unattached samples. `FC4001`–`FC4006` stop invalid

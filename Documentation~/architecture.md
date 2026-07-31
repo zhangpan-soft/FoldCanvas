@@ -181,6 +181,12 @@ shell but cannot replace this zero-thickness proof. The report proves the
 documented topology, radius, frame, and winding invariants; it does not run a
 global triangle-triangle self-intersection test.
 
+Operation order is a source invariant: every enabled SphericalWrap targeting a
+selected seam endpoint must occur strictly before that Stitch. Source preflight
+rejects the opposite order before tessellation, and component planning refuses
+to schedule validation unless the last touching Stitch is later than every
+member wrap.
+
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 
 ## 5. Determinism contract

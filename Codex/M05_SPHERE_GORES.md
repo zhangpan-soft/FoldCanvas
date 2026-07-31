@@ -141,6 +141,14 @@ SphericalWrap must occur before Stitch. The existing rule that Stitch is the
 terminal position-deforming operation for selected panels remains active.
 Solidify may consume the final welded sphere in a later operation.
 
+Before tessellation, the compiler maps each panel to its enabled
+SphericalWrap operation index and checks every enabled Stitch-selected seam
+endpoint. Each dependency must satisfy
+`sphericalWrapOperationIndex < stitchOperationIndex`; otherwise compilation
+returns `FC2010`, no Mesh, and no sphere report. Component planning separately
+requires its last touching Stitch to be later than every member wrap so it
+cannot schedule early validation when called without source preflight.
+
 Enabled SphericalWrap panels form components only through Stitch-selected
 seams whose two endpoints are spherical. After forming those components, every
 Stitch-selected seam with either endpoint in a component is component-touching,
@@ -205,6 +213,8 @@ radius error, and deterministic UV-stretch samples.
 - selected seam default/null/empty/whitespace/missing reference coverage
 - cross-type Bridge/Weld last-touching-Stitch report coverage
 - post-closure boundary-subdivision stale-report coverage
+- Wrap-before-Stitch ordering, deterministic diagnostic, cross-type endpoint,
+  and valid Wrap/Stitch/Solidify coverage
 - `GoldenSphere_ThreeCompilesHaveStableCountsReportsAndHash`
 - cumulative Panel/Stitch/Solidify budget and rollback coverage
 - native `sampleCount` range and scale-aware pole coverage

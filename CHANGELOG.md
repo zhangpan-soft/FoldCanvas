@@ -8,6 +8,36 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.12] - 2026-07-31
+
+### Added
+
+- Deterministic source preflight for every enabled SphericalWrap dependency of
+  a Stitch-selected seam endpoint
+- Regression coverage for a component-forming Stitch before all wraps, a
+  Stitch between member wraps, a cross-type Stitch before a wrap, deterministic
+  ordering diagnostics, and the valid Wrap-to-Stitch-to-Solidify sequence
+- `UNITY_SERIAL` forwarding for GameCI serial-license activation while
+  preserving the existing Personal-license `UNITY_LICENSE` path
+
+### Fixed
+
+- A Stitch can no longer execute or trigger sphere validation before all
+  enabled SphericalWrap operations targeting its selected panels
+- `SphereValidationPlan` independently refuses to schedule a component when
+  its last touching Stitch is not later than every member wrap
+- Invalid Wrap/Stitch order now returns `FC2010` before tessellation and never
+  emits `FC6014 SphereValidationFailed` or a premature sphere report
+
+### Changed
+
+- Package version advanced to `0.1.0-preview.12`
+
+### Not included
+
+- No Seam lifecycle, last-touching-Stitch, spherical mapping, topology repair,
+  or M06 architecture was replaced
+
 ## [0.1.0-preview.11] - 2026-07-31
 
 ### Added

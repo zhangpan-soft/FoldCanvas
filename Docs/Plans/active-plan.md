@@ -21,6 +21,12 @@ component-touching Stitches are separate concepts: only spherical-to-spherical
 seams form components, while a seam with either endpoint in a component delays
 that component's validation.
 
+The current ordering gate requires every enabled `SphericalWrap` targeting a
+Stitch-selected seam endpoint to occur strictly before that Stitch. Invalid
+ordering must fail during source preflight, before panel tessellation,
+`StitchExecutor`, component planning, or sphere reporting. The existing
+component-forming and last-touching-Stitch architecture remains unchanged.
+
 M04/M04.1 passed human audit and merged through PR #3 into `main` at merge
 commit `ef36808`. The M05 baseline is Unity `6000.3.20f1` with 152/152 Edit
 Mode tests.
@@ -100,6 +106,12 @@ It does not use or modify `Camera.main`.
   referenced panel, and referenced built-in panel boundary before component
   planning. `SphereValidationPlan.Build` still guards all string dictionary
   keys independently so malformed native data cannot throw.
+- Build an enabled panel-to-SphericalWrap operation-index map during source
+  preflight. Every selected seam endpoint that has a wrap must satisfy
+  `sphericalWrapOperationIndex < stitchOperationIndex`; otherwise return
+  `FC2010 StitchMustBeTerminalForSelectedPanels`, no Mesh, and no sphere
+  report. `SphereValidationPlan.Build` independently refuses to schedule a
+  component whose last touching Stitch is not later than every member wrap.
 - Treat the sphere validator as a topology, manifoldness, radius, pole, and
   winding proof. It is not a global triangle-triangle self-intersection proof.
 - Enforce `MaxGeneratedVertices` and `MaxGeneratedTriangles` cumulatively in
@@ -216,6 +228,8 @@ It does not use or modify `Camera.main`.
 11. Harden PR #4 with component-scoped pre-Solidify reports, cumulative
     GeometryBudget enforcement, native `sampleCount`/reference validation,
     scale-aware poles, three-pass golden determinism, and Unity CI artifacts.
+12. Preflight every enabled SphericalWrap/Stitch endpoint dependency before
+    tessellation and retain an independent component-plan ordering guard.
 
 # Test matrix
 
@@ -268,6 +282,13 @@ It does not use or modify `Camera.main`.
 - post-closure boundary subdivision is either rejected or represented by a
   fresh failed/closed report from the modified topology
 - Solidify after a cross-type Stitch consumes only fresh sphere evidence
+- `ComponentFormingStitch_BeforeWrap_ReturnsOrderingDiagnostic`
+- `StitchBetweenComponentWraps_ReturnsOrderingDiagnostic`
+- `CrossTypeStitch_BeforeWrap_DoesNotEmitSphereReport`
+- `InvalidWrapStitchOrder_DoesNotReturnSphereValidationFailed`
+- `InvalidWrapStitchOrder_IsDeterministic`
+- `ValidWrapThenStitch_StillProducesFreshPreSolidifyReport`
+- `ValidWrapThenStitchThenSolidify_StillPasses`
 - a radius `1e9` near-pole ring is not collapsed by fixed angular tolerance
 - the golden asset compiles three times with stable geometry and report hashes
 - repository validation
@@ -295,6 +316,10 @@ It does not use or modify `Camera.main`.
   failure rather than permitting over-allocation.
 - Component identity and report ordering must be based on source panel order,
   operation order, and ordinal IDs; dictionary iteration cannot order reports.
+- Full-list component planning can see a future wrap while execution is still
+  at an earlier Stitch. Reject that dependency in source preflight and make
+  the plan omit unschedulable components so it cannot emit an early report
+  even if the upper preflight is bypassed.
 
 Rollback is one branch revert. No M05 source behavior is added to `main` until
 human audit.
@@ -345,6 +370,18 @@ human audit.
   passed the focused gate at 15/15.
 - 2026-07-31: Unity `6000.3.20f1` passed the complete local suite at 223/223,
   with zero failed, skipped, or inconclusive tests.
+- 2026-07-31: Began the Wrap-before-Stitch ordering gate from exact PR #4 head
+  `4f52925c51a32806dcdaad6ab844ca6aced9963a`. Scope is limited to source
+  operation-order preflight, independent plan scheduling defense, seven
+  regressions, and actual licensed Unity CI evidence.
+- 2026-07-31: Reproduced the focused ordering gate at 3/7 passing. A
+  component-forming Stitch before wraps reached `FC2006`, and direct plan use
+  scheduled validation at the early Stitch index.
+- 2026-07-31: Added the strict source-order preflight plus maximum-member-wrap
+  plan guard. The focused ordering gate now passes 7/7.
+- 2026-07-31: Unity `6000.3.20f1` passed the complete ordering-gate suite at
+  230/230, with zero failed, skipped, or inconclusive tests. Repository
+  validation, workflow YAML, JSON parsing, and `git diff --check` passed.
 
 # Decisions made
 
@@ -376,16 +413,23 @@ human audit.
 - Invalid selected seam source references are rejected before tessellation,
   but `SphereValidationPlan` keeps its own null/whitespace guards as a
   defense-in-depth boundary.
+- Reuse `FC2010 StitchMustBeTerminalForSelectedPanels` for a Stitch that
+  selects a panel before its enabled SphericalWrap. The strict contract is
+  `wrapIndex < stitchIndex`; diagnostic order follows operation order, seam
+  selection order, then endpoint A before B.
+- `SphereValidationPlan` computes each formed component's maximum member-wrap
+  index and does not create a validation schedule unless the last touching
+  Stitch is strictly later. This guard does not replace the source diagnostic.
 
 # Current verification
 
-- Package version: `0.1.0-preview.11`
+- Package version: `0.1.0-preview.12`
 - Unity Editor: `6000.3.20f1 (c9ba695d4f07)`
-- Edit Mode: 223/223 passed, zero failed/skipped/inconclusive
+- Edit Mode: 230/230 passed, zero failed/skipped/inconclusive
 - Test XML:
-  `Project~/TestResults/M05SeamLifecycleFinal2.xml`
+  `Project~/TestResults/M05WrapStitchOrderingFull.xml`
 - Editor log:
-  `Project~/TestResults/M05SeamLifecycleFinal2-Editor.log`
+  `Project~/TestResults/M05WrapStitchOrderingFull-Editor.log`
 - Golden source: 8 explicit rectangle gore panels and 8 explicit Weld seams
 - Surface: 616 render vertices, 482 logical topology vertices, 960 triangles,
   and 1,440 unique logical edges

@@ -449,6 +449,12 @@ this lifecycle. `SphereReports` preserves one staged report per component;
 replace the pre-Solidify proof. This validation does not include global
 triangle-triangle self-intersection detection.
 
+For every selected seam endpoint with an enabled `sphericalWrap`,
+`sphericalWrap` must appear earlier in the ordered operation list than the
+selecting `stitch`. The strict comparison is
+`sphericalWrapOperationIndex < stitchOperationIndex`; `FC2010` is returned
+before tessellation when it is false.
+
 中文摘要：`sphericalWrap` 只把明确声明的矩形二维球瓣映射到当前局部球面，
 不会凭空生成球体。二维源坐标和 UV 保留；极点在离散阶段明确处理；球瓣之间
 只有经过 Seam Graph 与 `stitch` 才会焊接。新增接缝采样点重新执行球面公式，
@@ -482,6 +488,8 @@ Until topology-group deformation propagation exists, a later
 `rigidTransform`, `fold`, `roll`, or `sphericalWrap` cannot target any panel
 selected by an earlier Stitch. It returns `FC2010` and no Mesh. Solidify is
 allowed after Stitch because it consumes complete logical topology groups.
+The compiler also detects the same invalid order by looking forward before
+tessellation, so an early Stitch cannot trigger a premature sphere report.
 
 ### 6.6 `solidify` — implemented in M04
 

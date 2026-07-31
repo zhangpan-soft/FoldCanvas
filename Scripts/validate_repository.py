@@ -146,6 +146,7 @@ for required_fragment in [
     "projectPath: Project~",
     "unityVersion: 6000.3.20f1",
     "testMode: EditMode",
+    "UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}",
     "actions/upload-artifact@",
     "if: always()",
     "test-results.xml",

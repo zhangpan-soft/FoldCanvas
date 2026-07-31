@@ -97,6 +97,8 @@ characteristic 2, one north pole, one south pole, and bounded radius error.
 Only spherical-to-spherical seams form a component, but any later Stitch seam
 with either endpoint in that component delays its report. The report is frozen
 after the last touching Stitch and before a Solidify touching the component.
+Every selected spherical endpoint must be wrapped before its Stitch; invalid
+order fails before tessellation and cannot emit a premature sphere report.
 It does not perform global triangle-triangle self-intersection detection.
 
 ## Design principles
