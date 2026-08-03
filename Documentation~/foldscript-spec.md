@@ -1,4 +1,4 @@
-# FoldScript specification draft
+# FoldScript 0.1 specification
 
 FoldScript is the portable, human-readable interchange format for FoldCanvas source documents. Unity `ScriptableObject` assets are an editor representation; FoldScript is the long-term serialized contract.
 
@@ -9,6 +9,12 @@ Field-by-field semantics, units, formulas, defaults, and implementation status:
 
 Project motivation and the production problem this format addresses:
 [`project-background.md`](project-background.md).
+
+**Implementation status:** M08 implements this `0.1` document as executable
+Runtime import/export. The bounded reader accepts only the fields and operation
+types documented here, canonical output is deterministic, and corrected AI
+output must re-enter the same importer and compiler. See
+[FoldScript 0.1 runtime and Editor workflow](foldscript-runtime.md).
 
 ## 1. Goals
 
@@ -304,7 +310,31 @@ example.
 
 ## 7. Versioning
 
-- Unknown major schema versions are errors.
+- Any schema version other than exact `"0.1"` is an error in M08.
 - Unknown operation types are errors.
-- Unknown optional fields produce warnings only when forward compatibility is safe.
-- Importers must preserve unrecognized metadata under a dedicated extension object once schema extensions are introduced.
+- Unknown fields outside the top-level `extensions` object are errors; required
+  fields are never guessed or silently defaulted.
+- Namespaced data inside `extensions` is preserved canonically but never changes
+  geometry or compiler behavior.
+
+## 8. Canonical interchange and safety
+
+The M08 writer emits root properties in this order:
+
+```text
+schemaVersion, assetId, displayName, units, canvas,
+panels, seams, operations, compile, extensions
+```
+
+Known nested properties use fixed order while semantic source arrays retain
+their authored order. Numbers use invariant round-trip formatting, output uses
+LF line endings and one trailing newline, and extension-object keys are sorted
+ordinally. The parser rejects malformed or duplicate properties, non-finite
+numbers, excessive size/depth/node/string/collection limits, invalid IDs,
+missing references, and unsafe appearance paths before native geometry is
+compiled.
+
+Runtime performs no file or network I/O. Appearance resolution is supplied by
+`IFoldScriptAppearanceResolver`; the Editor adapter accepts only normalized
+project paths under `Assets/` or `Packages/`. Full API and repair-loop details
+are in [the M08 runtime guide](foldscript-runtime.md).

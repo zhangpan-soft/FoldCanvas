@@ -10,6 +10,10 @@ namespace FoldCanvas
         private Texture2D appearance;
 
         [SerializeField]
+        private FoldCanvasSourceMetadata sourceMetadata =
+            new FoldCanvasSourceMetadata();
+
+        [SerializeField]
         private List<PanelDefinition> panels = new List<PanelDefinition>();
 
         [SerializeReference]
@@ -27,12 +31,36 @@ namespace FoldCanvas
             set => appearance = value;
         }
 
+        public FoldCanvasSourceMetadata SourceMetadata
+        {
+            get
+            {
+                if (sourceMetadata == null)
+                {
+                    sourceMetadata = new FoldCanvasSourceMetadata();
+                }
+
+                return sourceMetadata;
+            }
+        }
+
         public List<PanelDefinition> Panels => panels;
 
         public List<FoldOperationDefinition> Operations => operations;
 
         public List<SeamDefinition> Seams => seams;
 
-        public FoldCanvasCompileSettings CompileSettings => compileSettings;
+        public FoldCanvasCompileSettings CompileSettings
+        {
+            get
+            {
+                if (compileSettings == null)
+                {
+                    compileSettings = new FoldCanvasCompileSettings();
+                }
+
+                return compileSettings;
+            }
+        }
     }
 }

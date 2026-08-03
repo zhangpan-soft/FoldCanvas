@@ -124,6 +124,16 @@ schema_sample_count_maximum = (
 limits_source = (
     ROOT / "Runtime" / "Data" / "FoldCanvasLimits.cs"
 ).read_text(encoding="utf-8")
+
+
+def literal_limit(name: str) -> int | None:
+    match = re.search(rf"\b{name}\s*=\s*(\d+)\s*;", limits_source)
+    if match is None:
+        errors.append(f"FoldCanvasLimits.{name} must be a literal integer")
+        return None
+    return int(match.group(1))
+
+
 limits_match = re.search(
     r"\bMaximumStitchSampleCount\s*=\s*(\d+)\s*;",
     limits_source,
@@ -136,6 +146,51 @@ elif schema_sample_count_maximum != int(limits_match.group(1)):
     errors.append(
         "Schema seam.sampleCount maximum must match "
         "FoldCanvasLimits.MaximumStitchSampleCount"
+    )
+
+schema_definitions = schema.get("$defs", {})
+m08_schema_limits = {
+    "MaximumFoldScriptIdentifierLength": schema_definitions.get("id", {}).get(
+        "maxLength"
+    ),
+    "MaximumFoldScriptDisplayNameLength": schema.get("properties", {})
+    .get("displayName", {})
+    .get("maxLength"),
+    "MaximumFoldScriptAppearancePathLength": schema_definitions.get("canvas", {})
+    .get("properties", {})
+    .get("appearance", {})
+    .get("maxLength"),
+    "MaximumFoldScriptPanels": schema.get("properties", {})
+    .get("panels", {})
+    .get("maxItems"),
+    "MaximumFoldScriptSeams": schema.get("properties", {})
+    .get("seams", {})
+    .get("maxItems"),
+    "MaximumFoldScriptOperations": schema.get("properties", {})
+    .get("operations", {})
+    .get("maxItems"),
+    "MaximumFoldScriptCanvasDimension": schema_definitions.get("canvas", {})
+    .get("properties", {})
+    .get("width", {})
+    .get("maximum"),
+}
+for constant_name, schema_value in m08_schema_limits.items():
+    runtime_value = literal_limit(constant_name)
+    if runtime_value is not None and schema_value != runtime_value:
+        errors.append(
+            f"Schema value for {constant_name} must match FoldCanvasLimits"
+        )
+
+version_source = (
+    ROOT / "Runtime" / "Data" / "FoldCanvasVersion.cs"
+).read_text(encoding="utf-8")
+version_match = re.search(
+    r'\bPackage\s*=\s*"([^"]+)"\s*;',
+    version_source,
+)
+if version_match is None or version_match.group(1) != package_version:
+    errors.append(
+        "FoldCanvasVersion.Package must match package.json version"
     )
 
 unity_workflow = (

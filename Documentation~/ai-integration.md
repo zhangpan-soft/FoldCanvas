@@ -2,86 +2,117 @@
 
 ## Core rule
 
-AI systems generate or revise **FoldCanvas source**, not final mesh binaries.
+AI systems generate or revise **FoldCanvas source**, never final Mesh binaries.
 
 ```text
 User intent / image / sketch
         ↓
-AI source proposal
-├── appearance canvas
-├── panel segmentation
-├── boundaries
-├── seams
-└── FoldScript operations
+external provider adapter proposes FoldScript + appearance
         ↓
-Deterministic compiler
+bounded FoldScript importer
         ↓
-Structured diagnostics
+deterministic compiler
         ↓
-AI or human source repair
+structured diagnostics
+        ↓
+external adapter proposes complete replacement FoldScript
+        ↓
+the same importer and compiler gates
 ```
 
-## Provider isolation
+The source remains reviewable, diffable, editable, and reproducible. A failed
+compile is never replaced silently by unrelated triangles.
 
-Provider integrations live outside `FoldCanvas.Runtime`. The core package must compile and be useful with no account, key, network connection, or model download.
+## M08 provider-neutral API
 
-A future provider package might be named:
+The Runtime assembly exposes synchronous data contracts only:
 
-```text
-com.foldcanvas.ai.openai
-com.foldcanvas.ai.local
-com.foldcanvas.ai.generic
-```
-
-No provider is privileged by the source format.
-
-## AI output constraints
-
-An AI adapter should produce:
-
-- schema-valid JSON
-- stable IDs
-- explicit units
-- bounded numeric values
-- no embedded executable code
-- no arbitrary file paths
-- no mesh or base64 geometry blobs in the MVP contract
-
-## Feedback payload
-
-Compiler diagnostics should be serializable into a compact repair request:
-
-```json
+```csharp
+public interface IFoldCanvasSourceProposer
 {
-  "assetId": "gpt-cup",
-  "compilerVersion": "0.3.0",
-  "errors": [
-    {
-      "code": "FC2104",
-      "seam": "attach-bottom",
-      "relativeDifference": 0.032,
-      "suggestions": [
-        "increase wall physical width",
-        "set radiusMode to fitTargetBoundary"
-      ]
-    }
-  ]
+    FoldCanvasSourceProposal Propose(
+        FoldCanvasSourceProposalRequest request);
+}
+
+public interface IFoldCanvasSourceRepairer
+{
+    FoldCanvasRepairResponse Repair(FoldCanvasRepairRequest request);
 }
 ```
 
+No implementation, provider SDK, authentication flow, credential, HTTP client,
+or background request is included. An external package may implement these
+interfaces for any provider without gaining privileged access to the compiler.
+The core package remains fully usable offline.
+
+## Proposal constraints
+
+A proposal returns complete FoldScript JSON. It must contain:
+
+- exact schema version `0.1`;
+- stable, unique IDs and explicit units;
+- bounded finite values and collection counts;
+- only documented panel/operation types and valid references;
+- a safe project-relative appearance reference.
+
+The format contains no executable code, arbitrary polymorphic type name,
+external URL fetch, embedded credential, base64 geometry, or Mesh buffer.
+
+## Repair request
+
+`FoldCanvasRepairRequestBuilder.Create` combines the canonical document with an
+ordinary `FoldCanvasCompileResult`. `ToCanonicalJson()` emits fixed-order data:
+
+- `schemaVersion`, `compilerVersion`, and `assetId`;
+- the complete canonical FoldScript in `source`;
+- ordered diagnostics with code, severity, message, panel/operation/seam/
+  boundary and localized geometry context;
+- ordered structured numeric values and repair suggestions.
+
+The request deliberately excludes Unity Mesh objects, vertex positions,
+triangle buffers, texture pixels, provider metadata, accounts, and credentials.
+Collections are defensive read-only copies and repeated builds of identical
+source/diagnostics produce byte-identical payloads.
+
+## Repair response and acceptance
+
+A repair response is complete replacement FoldScript JSON. It is not a patch
+language and cannot mutate compiler buffers. `FoldCanvasRepairCoordinator.Apply`
+passes it through:
+
+1. bounded JSON parse;
+2. strict FoldScript semantic and reference validation;
+3. explicit unit-aware native conversion;
+4. the ordinary deterministic geometry compiler and M07 validation.
+
+Malformed, unsafe, or still-invalid responses return stable diagnostics and no
+successful Mesh. M08 does not automatically send requests or accept changes;
+transport and human review belong to an external integration.
+
 ## Evaluation
 
-AI success is not judged only by rendered resemblance. It is judged by:
+AI-assisted source quality is judged by:
 
-- compile success
-- manifold topology when required
-- seam error
-- UV correctness
-- parameter editability
-- deterministic rebuild
-- source simplicity
-- diagnostic repair count
+- import and compile success;
+- manifold/closed topology when required;
+- seam and winding evidence;
+- UV correctness and preserved source artwork;
+- editable parameters and stable identifiers;
+- deterministic rebuild and canonical round-trip;
+- source simplicity and number of repair iterations.
 
-## Safety
+Rendered resemblance alone is not acceptance.
 
-Treat model output as untrusted data. Validate schema, finite numbers, array limits, path references, and operation counts before compilation.
+## Safety boundary
+
+Treat all model output as untrusted text. The M08 reader limits total
+characters, nesting depth, node count, string length, identifier length,
+collection counts, and numeric ranges before native source construction.
+Appearance paths must remain under approved `Assets/` or `Packages/` roots.
+Runtime performs no file or network I/O; Editor import validates a detached
+source before replacing an explicitly selected asset and records Undo on an
+existing FoldCanvas destination.
+
+See [the M08 runtime guide](foldscript-runtime.md),
+[FoldScript fields](foldscript-field-reference.md), and
+[diagnostics](diagnostics.md).

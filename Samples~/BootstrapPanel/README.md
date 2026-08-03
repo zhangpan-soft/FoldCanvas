@@ -17,6 +17,15 @@ The command creates a checker-pattern appearance canvas and a `FoldCanvasAsset` 
 
 Bake it from the Inspector or `Window > FoldCanvas > FoldCanvas`.
 
+M08 also makes the bundled
+`gpt-cup.future-example.foldcanvas.json` executable. The historical filename is
+retained so existing sample links remain stable. After importing this package
+sample into the host project's `Assets` tree, open the authoring workspace,
+choose `Import JSON`, select that file, and save the editable source to an
+explicit `.asset` path. `Export JSON` writes the selected source back in
+canonical FoldScript `0.1` form; Diagnostics can copy a provider-neutral repair
+payload without making a network request.
+
 For the M03 decorated cup proof, keep the packaged
 `gpt-cup-canvas.png` available and use:
 

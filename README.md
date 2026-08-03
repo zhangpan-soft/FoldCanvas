@@ -31,7 +31,8 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 ## Status
 
 The repository currently contains the **M05 spherical-surface compiler, M06
-Editor authoring workspace, and M07 geometry validator**:
+Editor authoring workspace, M07 geometry validator, and M08 FoldScript
+interchange/repair boundary**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -86,6 +87,15 @@ Editor authoring workspace, and M07 geometry validator**:
 - Adversarial validator fixtures for malformed topology, open seams,
   self-intersecting rolls, and thickness overlap, plus valid cup/sphere
   false-positive regressions
+- Bounded executable FoldScript `0.1` import/export with explicit DTOs, strict
+  semantic/reference validation, safe appearance paths, and unit conversion
+- Deterministic canonical JSON that preserves authored panel, seam, and
+  operation order while producing locale-independent byte-stable output
+- Provider-neutral immutable source proposal/repair contracts and compact
+  diagnostic payloads; replacement source must re-enter the normal importer
+  and compiler, with no model SDK or network dependency in the package
+- M06 Import JSON, Export JSON, and Copy Repair Payload actions with explicit
+  Editor asset ownership, Undo-aware replacement, and failed-import isolation
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
@@ -130,6 +140,15 @@ executed Welds, components, and orientation, and Strict adds exact
 triangle-intersection checks behind a deterministic broad phase. Intentional
 open sheets and multi-part assets remain valid with warnings. See
 [M07 geometry validation](Documentation~/geometry-validation.md).
+
+M08 makes FoldScript `0.1` a real portable source boundary. Runtime accepts
+bounded untrusted JSON, validates all documented fields and references,
+converts declared physical units to native meters, and emits deterministic
+canonical JSON. The Editor can import/export explicit project assets, while an
+external AI integration may consume immutable repair payloads and return only
+complete replacement FoldScript. The package itself performs no provider call,
+authentication, or automatic repair. See the
+[M08 Runtime and Editor workflow](Documentation~/foldscript-runtime.md).
 
 ## Design principles
 
@@ -239,8 +258,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M04 | General seam resampling/bridging, shell thickness, and M04.1 closed-volume proof — implemented |
 | M05 | Compile explicit 2D sphere gores into a validated closed sphere — implemented |
 | M06 | Split 2D canvas / 3D preview editor — implemented and merged |
-| M07 | Manifold, inversion, seam, and exact intersection validators — implemented on review branch |
-| M08 | FoldScript import/export and AI feedback loop |
+| M07 | Manifold, inversion, seam, and exact intersection validators — implemented and merged |
+| M08 | FoldScript import/export and AI feedback loop — implemented on review branch |
 | M09 | Handle cup, torus, and non-trivial topology |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).

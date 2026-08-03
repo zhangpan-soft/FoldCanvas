@@ -88,6 +88,7 @@
     "id": {
       "description": "Case-sensitive stable identifier used for references and diagnostics.",
       "type": "string",
+      "maxLength": 64,
       "pattern": "^[A-Za-z][A-Za-z0-9_.-]{0,63}$"
     },
     "finiteNumber": {
@@ -167,10 +168,11 @@
       "required": ["appearance", "width", "height"],
       "properties": {
         "appearance": {
-          "description": "Relative asset path or importer-resolvable image reference; not an arbitrary network request.",
+          "description": "Forward-slash project-relative image reference resolved under Assets/ or Packages/ by the M08 importer; absolute paths, URI schemes, backslashes, and traversal segments are forbidden.",
           "type": "string",
           "minLength": 1,
-          "maxLength": 512
+          "maxLength": 512,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
         },
         "width": {
           "description": "Source image width in pixels for validation and authoring tools.",

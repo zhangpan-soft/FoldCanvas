@@ -1,32 +1,33 @@
 # Current task
 
-Execute **M07: Geometry validator**.
+Execute **M08: FoldScript import/export and AI repair contract**.
 
 Authoritative task file:
-[`Codex/M07_VALIDATOR.md`](Codex/M07_VALIDATOR.md)
+[`Codex/M08_FOLDSCRIPT_AI.md`](Codex/M08_FOLDSCRIPT_AI.md)
 
-M05 PR #4 and M06 PR #5 were merged into `main` in that order. M07 development
-occurs on `codex/m07-geometry-validator`, created from merged `main` commit
-`f5c8116`.
+M07 PR #6 was human-approved and merged into `main` as `9ca0d68`. M08
+development occurs on `codex/m08-foldscript-ai`, created from that merged
+commit.
 
-M07 turns generated-geometry failures into deterministic, localized compiler
-diagnostics. Validation must cover structural mesh safety, topology, winding,
-seam closure, connected components, and strict triangle self-intersection
-without editing or repairing the derived Mesh.
+M08 makes FoldScript `0.1` executable as the portable source contract:
 
-Validation levels are part of the source contract:
+- parse untrusted JSON into explicit FoldScript DTOs;
+- emit canonical JSON with fixed property order, source array order, invariant
+  numeric formatting, and stable escaping;
+- convert explicitly between DTOs and `FoldCanvasAsset` without serializing
+  Unity object internals;
+- retain document identity, units, appearance reference, and canvas metadata;
+- reject malformed, oversized, unknown-version, unknown-operation,
+  non-finite, duplicate-ID, and unsafe-path input with stable diagnostics;
+- expose provider-neutral proposal/repair contracts and a compact diagnostic
+  payload whose corrected FoldScript must pass the same importer and compiler;
+- provide Editor import/export actions whose appearance resolution is confined
+  to approved Unity project paths.
 
-- `Basic`: finite/index/degeneracy/duplicate and fatal manifold safety;
-- `Standard`: Basic plus boundaries, components, seam closure, bow-tie and
-  closed-component orientation evidence;
-- `Strict`: Standard plus deterministic broad-phase candidates and exact
-  triangle-intersection confirmation.
+The Runtime assembly remains offline and provider-independent. It must not
+reference `UnityEditor`, access arbitrary files, add a JSON/AI/network package,
+or accept binary mesh payloads. Generated Meshes remain derived artifacts.
 
-Diagnostics must have stable code/order and structured panel, seam, operation,
-component, triangle, topology-vertex, or edge context where available. One
-root-cause diagnostic per issue category is preferred over cascaded floods.
-
-M07 must reuse the deterministic M00-M06 compiler and Editor diagnostics UI.
-It must not silently repair topology, edit generated Meshes as source, add a
-cleanup/remesh stage, implement M08 FoldScript/AI round-tripping, or begin M09
-non-trivial topology.
+M08 does not implement a model provider, network transport, automatic repair,
+M09 handle/torus topology, Bevel, subdivision, smoothing, remesh, or Mesh
+cleanup.

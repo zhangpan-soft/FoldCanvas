@@ -1,260 +1,295 @@
 # Goal
 
-Deliver M07 on `codex/m07-geometry-validator`: a deterministic geometry
-validation stage that converts malformed or self-intersecting generated
-geometry into stable, localized diagnostics suitable for a human author and a
-future provider-neutral AI repair loop.
+Deliver M08 on `codex/m08-foldscript-ai`: make FoldScript `0.1` a real,
+deterministic interchange format that can round-trip through
+`FoldCanvasAsset`, reject untrusted input before geometry allocation, serialize
+compiler evidence into a provider-neutral repair request, and accept only a
+corrected source that passes the same import and compiler gates.
 
 # User-visible proof
 
-The existing FoldCanvas authoring workspace compiles intentionally broken
-fixtures and displays one clear primary diagnostic for each defect, including
-its available source and geometry context. A valid panel, cup, and sphere still
-compile through the unchanged source-to-derived-Mesh pipeline.
-
-The proof includes fixtures for invalid indices, non-finite coordinates,
-zero-area and duplicate triangles, a bow-tie vertex, inverted winding, an open
-seam, a zero-length boundary, self-intersecting rolled surfaces, and intersecting
-thickness shells.
+The M06 workspace can import the checked-in cup FoldScript into an editable
+source asset, compile its derived cup, and export canonical JSON. Reimporting
+that output preserves panels, seams, operation order, compile settings, units,
+UV canvas metadata, and geometry. An invalid source produces one stable repair
+payload; a corrected second JSON document clears the targeted diagnostic and
+compiles. No provider account or network connection is involved.
 
 # Scope
 
-## Validation report
+## FoldScript data and canonical JSON
 
-- add one read-only geometry-validation report to `FoldCanvasCompileResult`;
-- report the executed level and deterministic counts for vertices, triangles,
-  topology edges, components, seams, candidates, and confirmed intersections;
-- retain stable evidence records for components and confirmed triangle pairs;
-- expose no mutable Mesh or repair API.
+- public explicit DTOs for document, canvas, panel, seam, all M00-M07
+  operations, and compile settings;
+- a bounded JSON reader that rejects malformed syntax, duplicate properties,
+  excessive depth/nodes/strings, non-standard NaN/Infinity tokens, and
+  oversized input before document conversion;
+- strict `0.1` structural validation, required/additional-property checks,
+  identifier grammar, enum values, numeric bounds, collection limits, and
+  cross-reference/duplicate-ID checks;
+- canonical exporter with documented root/property order, preserved source
+  array order, invariant round-trip numeric formatting, deterministic escaping,
+  and one trailing newline;
+- unknown schema versions and unknown operation types fail explicitly.
 
-## Structured diagnostics
+## Unity conversion and paths
 
-- preserve existing `FC5001`-`FC5007` behavior where it already names the
-  correct root cause;
-- add stable FC5xxx codes for incomplete/invalid index buffers, duplicate
-  triangles, open topology, inconsistent winding, disconnected components,
-  seam closure, bow-tie vertices, topology-position conflicts, inverted closed
-  components, strict self-intersection, degenerate compiled boundaries, and a
-  bounded strict-check budget;
-- extend diagnostic context with optional vertex, topology-vertex, component,
-  triangle-pair, and topology-edge identities;
-- keep structured values in deterministic key order.
+- store portable asset/document identity, display name, units, appearance
+  reference, pixel dimensions, and optional canonical extensions on
+  `FoldCanvasAsset` source metadata;
+- explicit DTO-to-native and native-to-DTO converters; no Unity internal
+  serialization is part of FoldScript;
+- convert centimeter/millimeter source lengths to native meters and export
+  back using the declared document unit;
+- Runtime performs no file I/O and accepts an appearance resolver contract;
+- Editor resolves a relative appearance reference only from a FoldScript file
+  under `Assets/` or `Packages/`, normalizes the result, rejects traversal or
+  absolute/network paths, and then uses `AssetDatabase`;
+- importer creates or replaces only the explicitly selected `.asset`, with
+  Undo/dirty/save behavior appropriate to Editor workflows.
 
-## Validation levels
+## Repair contract
 
-- `Basic` runs structural safety, finite coordinates, index range, collapsed
-  topology, zero area, duplicate triangles, non-manifold incidence, and
-  orientation-conflict checks;
-- `Standard` adds open-boundary/component evidence, seam closure, boundary
-  length, bow-tie vertex fans, topology-position consistency, connectivity, and
-  closed-component orientation;
-- `Strict` adds deterministic sweep-and-prune broad phase and exact
-  triangle-triangle intersection confirmation;
-- lower levels never run higher-level expensive checks.
+- provider-neutral `IFoldCanvasSourceProposer` and
+  `IFoldCanvasSourceRepairer` interfaces with no SDK dependency;
+- immutable repair request/response types containing schema/compiler version,
+  asset ID, canonical source JSON, stable diagnostics, compact numeric values,
+  repair suggestions, and source/geometry context;
+- no binary Mesh, raw vertex, triangle, texture, credential, or provider data;
+- corrected responses re-enter the normal bounded importer and deterministic
+  compiler; no privileged repair path exists.
 
 ## Editor proof
 
-- show geometry context in the existing Diagnostics tab;
-- show validation-level and report-count evidence without introducing a second
-  authoring model;
-- preserve diagnostic focus for panel/operation/seam source context.
+- add Import FoldScript and Export FoldScript actions to the existing M06
+  toolbar without creating a second source editor;
+- imported source becomes the selected editable `FoldCanvasAsset` and compiles
+  through the existing preview;
+- Diagnostics can create/copy or save the current canonical repair payload;
+- status and failure notifications report stable diagnostic codes.
 
 # Non-goals
 
-- automatic repair, vertex welding, remesh, cleanup, decimation, smoothing,
-  subdivision, bevel, or collision resolution;
-- changing Fold, Roll, Stitch, Solidify, or SphericalWrap geometry semantics;
-- global continuous-collision detection or animation-time validation;
-- treating intentional open geometry as a compile error solely because it is
-  open; Standard reports it as localized warning evidence;
-- M08 JSON round-trip, AI adapter, or repair-payload orchestration;
-- M09 handles, torus, cyclic topology, or multiple-hole panel domains.
+- OpenAI, local-model, or other provider implementation, authentication,
+  network transport, prompt design, or automatic request execution;
+- executable extensions, arbitrary polymorphic type loading, embedded scripts,
+  base64 geometry, binary Mesh import, or external URL fetching;
+- automatic source repair, silent defaulting of invalid required fields, or
+  geometry fallback;
+- changing Fold, Roll, SphericalWrap, Stitch, Solidify, or M07 validator
+  semantics;
+- M09 handle/torus/cyclic topology, Bevel, subdivision, smoothing, remesh,
+  Mesh cleanup, PBR inference, or runtime cloud generation.
 
 # Files expected to change
 
 - `CURRENT_TASK.md`
 - `Docs/Plans/active-plan.md`
+- `Runtime/Data/FoldCanvasAsset.cs`
+- new `Runtime/FoldScript/` DTO, parser, validator, serializer, converter, and
+  result files
+- new `Runtime/AI/` provider-neutral repair contracts and payload builder
+- `Runtime/Data/FoldCanvasLimits.cs`
 - `Runtime/Diagnostics/FoldCanvasDiagnostic.cs`
-- `Runtime/Compiler/FoldCanvasGeometryValidator.cs`
-- `Runtime/Compiler/FoldCanvasCompileResult.cs`
-- `Runtime/Compiler/FoldCanvasCompiler.cs`
-- `Runtime/Compiler/MeshBuildBuffer.cs`
-- `Runtime/Compiler/StitchExecutor.cs`
-- `Runtime/Compiler/FoldCanvasGeometryTolerances.cs`
-- `Runtime/Compiler/FoldCanvasSourceValidator.cs`
-- `Editor/Authoring/FoldCanvasWindow.DiagnosticsAndBake.cs`
-- `Tests/Editor/M07GeometryValidatorTests.cs`
-- `Tests/Editor/Fixtures/M07AdversarialGeometryFixtures.cs`
-- relevant bilingual documentation, `README.md`, `README.zh-CN.md`,
-  `CHANGELOG.md`, and `package.json`
+- new `Editor/FoldScript/` project-path and asset import/export utilities
+- existing M06 workspace UXML/controller/window diagnostics surfaces
+- new `Tests/Editor/M08FoldScriptTests.cs` and hostile-input fixtures
+- `Schema/foldcanvas.schema.json` only where executable M08 limits or defaults
+  must be synchronized
+- relevant architecture, pipeline, field reference, FoldScript, AI, diagnostic,
+  roadmap, README, package, and changelog documentation
 
-The inventory may narrow this list. Any additional file is recorded in the
-progress log before final submission.
+Any additional file is recorded in the progress log before final submission.
 
 # Geometry invariants
 
-- The 2D appearance canvas, panels, named boundaries, seams, and ordered
-  operations remain authoritative. Validation consumes generated geometry but
-  never mutates it.
-- Identical source/settings/compiler version produce identical report values,
-  diagnostic order, diagnostic context, and confirmed intersection-pair order.
-- All edge incidence uses `TopologyVertexId`, not raw render indices, so UV and
-  provenance splits do not create false cracks.
-- A topology edge is the ordered-independent pair `(minId,maxId)`. Orientation
-  is recorded from the directed triangle edge relative to that order.
-- Triangle and component identities use source index order. Components are
-  sorted by minimum topology vertex ID before assigning component indices.
-- Existing source UVs, vertex/index order, boundary order, winding, weld
-  tolerance, and geometry-budget behavior are unchanged.
-- Strict self-intersection ignores triangle pairs sharing a topology vertex,
-  because they are adjacent surface incidence rather than global crossings.
-- Broad-phase pairs are sorted lexicographically by triangle indices before
-  exact testing. Exact evidence uses the same order.
-- An intentional open sheet may remain a successful compile; its open-edge and
-  open-boundary evidence is a Standard warning. Non-manifold, inconsistent,
-  inverted closed, or intersecting geometry is an error.
-- No validator stage performs a repair or substitutes approximate geometry.
+- The FoldScript/2D canvas/panel/seam/operation document is source; imported or
+  baked Unity Meshes remain disposable derived artifacts.
+- Source arrays retain their authored order. Import/export never sorts panels,
+  seams, or operations because ordering is semantic.
+- Units affect physical lengths only. UV rectangles, normalized fold lines,
+  angles, counts, booleans, IDs, and validation levels are unchanged.
+- Every physical length reaches the compiler in meters. Repeated export/import
+  through the same declared units is stable within native float precision.
+- Canonical JSON is byte-identical for identical DTO content and compiler
+  version, independent of locale, OS line endings, dictionary iteration, or
+  Editor selection.
+- Unknown fields outside the explicit `extensions` object are errors. Unknown
+  extension data is preserved canonically but never changes geometry.
+- Path normalization occurs before asset resolution. The normalized appearance
+  path must remain under the source document's approved `Assets/` or
+  `Packages/` project root; traversal, absolute paths, URI schemes, and
+  backslash ambiguity are rejected.
+- Limits are checked before building native panel/seam/operation collections;
+  compiler geometry budgets still apply independently afterward.
+- Repair responses have no direct access to Mesh buffers. They must parse,
+  validate, convert, and compile as ordinary FoldScript.
+- All import, conversion, diagnostic, and repair-payload ordering is
+  deterministic.
 
 # Implementation steps
 
-1. Merge the accepted M05/M06 stack, create the isolated M07 branch, and lock
-   level/ordering/no-repair contracts.
-2. Inventory existing compiler validation, topology metadata, seam execution,
-   closed-volume evidence, diagnostics, and Editor presentation.
-3. Add immutable geometry-context and validation-report types without removing
-   existing diagnostic fields or codes.
-4. Record executed Weld seam sample pairs in the build buffer so final closure
-   validation can identify seam and operation without reconstructing topology.
-5. Implement staged Basic and Standard validation with deterministic category
-   precedence and root-cause suppression.
-6. Implement bounded Strict broad phase and exact triangle intersection,
-   excluding topology-adjacent pairs and sorting all evidence.
-7. Integrate the report before Mesh creation, preserve source/operation errors,
-   and keep valid open sheets successful.
-8. Extend the M06 Diagnostics/Bake view with geometry context and report counts.
-9. Add adversarial fixture builders and Edit Mode tests for every required
-   defect, level gating, determinism, no-repair, and valid legacy assets.
-10. Update field reference, pipeline, diagnostics, roadmap, architecture,
-    bilingual README, package version, and newest-first changelog.
-11. Run repository validation, JSON/YAML parsing, assembly/runtime isolation,
-    `git diff --check`, the targeted M07 suite, and the complete Edit Mode suite.
-12. Inspect diagnostics in a live Unity window, then commit, push, and create a
-    non-auto-merged M07 review PR.
+1. Merge accepted M07, create the isolated M08 branch, read the milestone and
+   relevant ADRs, and lock the no-provider/no-file-I/O Runtime boundary.
+2. Inventory the current JSON Schema, sample documents, native source model,
+   compiler diagnostics, M06 UI, and assembly references.
+3. Add M08 limits/diagnostic codes and portable document metadata without
+   changing geometry semantics.
+4. Implement the bounded JSON value reader and stable syntax/limit errors.
+5. Implement strict FoldScript `0.1` DTO decoding and semantic validation for
+   every supported panel, seam, operation, and compile field.
+6. Implement canonical DTO serialization and deterministic extension handling.
+7. Implement explicit unit-aware DTO/native converters and resolver-based
+   appearance binding.
+8. Implement Editor project-path normalization and M06 import/export actions.
+9. Implement immutable provider-neutral repair contracts, diagnostic payload
+   serialization, and corrected-response application through the normal gates.
+10. Add canonical, hostile-input, path, round-trip, unit, geometry, repair-loop,
+    immutability, and Editor integration tests.
+11. Update Schema/documentation/version/changelog and record compatibility and
+    migration rules.
+12. Run JSON parsing, assembly/runtime isolation, repository validation,
+    `git diff --check`, targeted M08 tests, the complete Edit Mode suite, and a
+    live Editor cup import/export/reimport/preview proof.
+13. Commit, push, and open a non-auto-merged M08 review PR with exact evidence.
 
 # Test matrix
 
-## Structural and Basic
+## Canonical import/export
 
-- `InvalidTriangleIndex_ReturnsStableDiagnosticWithoutThrow`
-- `IncompleteTriangleIndexBuffer_ReturnsStableDiagnostic`
-- `NonFiniteVertex_ReturnsLocalizedStableDiagnostic`
-- `ZeroAreaTriangle_ReturnsLocalizedStableDiagnostic`
-- `DuplicateFace_ReturnsDuplicateTriangleWithoutNonManifoldFlood`
-- `NonManifoldEdge_ReturnsSortedEdgeContext`
-- `InvertedFace_ReturnsInconsistentWinding`
+- `CupFoldScript_CanonicalRoundTrip_PreservesSemanticSource`
+- `CanonicalExport_RepeatedCallsAreByteIdentical`
+- `CanonicalExport_IsInvariantAcrossCulture`
+- `Import_PreservesPanelSeamAndOperationOrder`
+- `ImportExport_PreservesAssetMetadataAndExtensions`
+- `CentimeterDocument_ConvertsPhysicalLengthsToMetersAndBack`
+- `ImportedCup_CompilesToEquivalentGeometry`
+- `BundledCupSample_ImportsAndCompiles`
+- `ImportedSphere_CompilesWithFreshSphereAndStrictReports`
 
-## Standard
+## Untrusted input
 
-- `BowTieVertex_ReturnsTopologyVertexContext`
-- `OpenSeam_ReturnsWarningAndKeepsIntentionalSheetSuccessful`
-- `ZeroLengthBoundary_ReturnsStableBoundaryDiagnostic`
-- `DisconnectedComponents_ReturnStableComponentEvidence`
-- `WeldSeamClosureGap_ReturnsSeamAndOperationContext`
-- `TopologyPositionConflict_ReturnsStableDiagnostic`
-- `InvertedClosedComponent_ReturnsStableDiagnostic`
-- `BasicLevel_DoesNotEmitStandardDiagnostics`
+- `MalformedJson_ReturnsStableDiagnosticWithoutThrow`
+- `DuplicateJsonProperty_ReturnsStableDiagnostic`
+- `UnknownSchemaVersion_ReturnsStableDiagnostic`
+- `UnknownOperation_ReturnsStableDiagnostic`
+- `NaNAndInfinity_ReturnStableNonFiniteDiagnostic`
+- `OversizedJson_IsRejectedBeforeParsing`
+- `ExcessivePanels_IsRejectedBeforeNativeAllocation`
+- `ExcessiveOperations_IsRejectedBeforeNativeAllocation`
+- `ExcessiveDepthAndNodeCount_ReturnStableDiagnostics`
+- `MissingRequiredProperty_ReturnsLocalizedDiagnostic`
+- `UnknownPropertyOutsideExtensions_ReturnsStableDiagnostic`
+- `DuplicatePanelSeamAndOperationIds_ReturnStableDiagnostics`
+- `MissingReferences_ReturnStableDiagnosticsWithoutThrow`
 
-## Strict
+## Appearance safety and Editor conversion
 
-- `SelfIntersectingRoll_ReturnsConfirmedTrianglePair`
-- `ThicknessOverlap_ReturnsConfirmedTrianglePair`
-- `StrictLevel_ReportsBroadPhaseAndExactCounts`
-- `StrictCandidateBudgetExceeded_ReturnsStableDiagnostic`
-- `StandardLevel_DoesNotRunExactIntersection`
-- `TopologyAdjacentTriangles_AreNotSelfIntersections`
-- `StrictValidation_IsDeterministicAcrossRepeatedRuns`
+- `RelativeAppearancePath_ResolvesInsideSourceFolder`
+- `AssetsAndPackagesPaths_AreAcceptedInsideApprovedRoots`
+- `PathTraversal_ReturnsUnsafeAppearancePath`
+- `AbsoluteAndUriPaths_ReturnUnsafeAppearancePath`
+- `MissingAppearance_ReturnsStableResolutionDiagnostic`
+- `EditorImport_CreatesEditableSourceAndPreservesAppearance`
+- `EditorImport_OverwriteReusesExplicitSourceAsset`
+- `EditorExport_WritesCanonicalFoldScript`
 
-## Regression and integration
+## Repair loop
 
-- `GeometryValidator_DoesNotMutateInputBuffer`
-- `GeometryValidationReport_CollectionsAreReadOnly`
-- `ValidRectangle_BasicStillCompiles`
-- `ValidProductionCup_StrictHasNoConfirmedIntersection`
-- `ValidSphere_StrictHasNoConfirmedIntersection`
-- `InvalidValidationLevel_ReturnsStableSourceDiagnostic`
-- all pre-existing M00-M06 tests remain enabled and unchanged.
+- `RepairRequest_ContainsStableCompactDiagnosticsWithoutMesh`
+- `RepairRequest_CollectionsAreReadOnly`
+- `RepairRequest_NonCanonicalOverrideCannotReplaceDocument`
+- `InvalidRepairResponse_ReentersImporterAndIsRejected`
+- `CorrectedRepairResponse_ClearsTargetDiagnosticAndCompiles`
+- `RepairPayload_IsDeterministicAcrossRepeatedCompiles`
+- `RepairPayload_InvalidNativeSourceReturnsStableDiagnostic`
+- `ProviderContracts_DoNotReferenceProviderOrNetworkAssemblies`
+
+## Regression
+
+- all existing M00-M07 tests remain enabled and unchanged;
+- Runtime contains no `UnityEditor` reference and package dependencies remain
+  empty;
+- valid native assets compile exactly as before.
 
 # Risks and rollback
 
-- **False self-intersections:** skip topology-adjacent triangle pairs, use a
-  tolerance-scaled SAT test, and keep exact pair fixtures for coplanar and
-  non-coplanar cases.
-- **Strict performance:** use deterministic X-axis sweep-and-prune, bound exact
-  candidates, and emit an explicit diagnostic instead of hanging or silently
-  skipping work.
-- **Intentional open assets:** open/disconnected evidence is Warning at Standard
-  so a valid sheet remains usable.
-- **Diagnostic regressions:** retain existing FC5001/FC5002/FC5003 meanings for
-  current root causes and stop lower-confidence stages after fatal structural
-  errors.
-- **Dictionary nondeterminism:** sort edge keys, component representatives,
-  seam records, candidate pairs, and evidence before report/diagnostic output.
-- Rollback is reverting the isolated M07 commit. Generated Meshes remain
-  disposable, and user-owned untracked Unity scenes/results remain untouched.
+- **JSON parser surface:** keep it deliberately small, bounded, strict, and
+  covered by hostile syntax/depth/size tests; it is a data parser, not a general
+  JSON framework.
+- **Float canonicalization:** use invariant round-trip formatting, normalize
+  negative zero, and test locale independence plus repeated export.
+- **Schema/runtime drift:** centralize literal limits in `FoldCanvasLimits` and
+  extend repository validation to compare executable limits with Schema.
+- **Unit mistakes:** isolate scale conversion and assert cup geometry equivalence
+  across meter/centimeter documents.
+- **Path escape:** normalize separators and dot segments before resolution,
+  reject rooted/URI paths, and verify the normalized project-relative result
+  remains under the approved source root.
+- **Asset mutation on failed import:** build and validate a detached temporary
+  source first; only the Editor layer replaces/persists an asset after success.
+- **Repair bypass:** expose no direct compiler-buffer mutation and run every
+  response through the same importer/converter/compiler.
+- Rollback is reverting the isolated M08 commits. M07 `main` remains intact;
+  user-owned untracked Unity scenes/results are not touched.
 
 # Progress log
 
-- 2026-08-03: User authorized merging and continuing development.
-- 2026-08-03: Merged PR #4 into `main`, retargeted PR #5 from the merged M05
-  branch to `main`, verified its one-commit/38-file M06 diff and green checks,
-  then merged PR #5.
-- 2026-08-03: Fast-forwarded local `main` to `f5c8116` and created
-  `codex/m07-geometry-validator` while preserving all existing untracked Unity
-  scenes and test evidence.
-- 2026-08-03: Read the M07 milestone, current architecture, relevant ADRs, and
-  inventoried existing compiler, topology, closed-volume, seam, diagnostic,
-  and Editor validation surfaces.
-- 2026-08-03: Added the immutable final-geometry report and context, staged
-  Basic/Standard/Strict validator, transactional executed-Weld evidence,
-  Diagnostics-tab summary, and 28 adversarial/regression tests.
-- 2026-08-03: Unity `6000.3.20f1` passed the targeted M07 suite `28/28` and the
-  complete Edit Mode suite `281/281`; repository validation and
-  `git diff --check` passed.
-- 2026-08-03: Refreshed the live Unity package and inspected the M06
-  Diagnostics tab on the production cup. It displayed Basic, one component,
-  zero open/non-manifold edges, zero confirmed intersections, and the existing
-  valid 2972-vertex/5120-triangle preview.
+- 2026-08-03: User explicitly approved PR #6 and authorized merging plus M08.
+- 2026-08-03: Merged PR #6 into `main` as `9ca0d68`, fast-forwarded local
+  `main`, and created `codex/m08-foldscript-ai` while preserving all user-owned
+  untracked Unity scenes and test evidence.
+- 2026-08-03: Read M08, architecture, roadmap, Schema, source model, compiler,
+  M06 workspace, AI boundary, and ADRs 0002/0003/0005/0006. Chose a bounded
+  in-package JSON reader instead of adding a package dependency.
+- 2026-08-03: Implemented explicit FoldScript DTOs, bounded JSON parsing,
+  strict `0.1` decoding/reference validation, canonical serialization,
+  unit-aware native conversion, resolver-only Runtime appearance binding, and
+  `FC7001`-`FC7012` diagnostics.
+- 2026-08-03: Added safe Editor project-path resolution, explicit import/export
+  persistence, M06 toolbar actions, Diagnostics repair-payload copy, and
+  provider-neutral immutable proposal/repair contracts with no SDK or network.
+- 2026-08-03: Added 45 M08 tests. A live import exposed stale handedness in the
+  historical bundled cup JSON; corrected it to the current verified
+  `startAngleDegrees=180` and `reverseB=false` contract and added a regression.
+- 2026-08-03: Unity `6000.3.20f1` passed 45/45 targeted and 326/326 complete
+  Edit Mode tests with zero failures, skips, or inconclusive results.
+- 2026-08-03: In the live M06 workspace, imported the bundled cup into
+  `M08ImportedCup`, compiled a Strict 2972-vertex/5120-triangle preview,
+  exported `M08RoundTrip.foldcanvas.json`, reimported it into `M08RoundTrip`,
+  and copied/parsed a repair payload with no Mesh key.
 
 # Decisions made
 
-- M07 is a report-and-diagnostic stage inside the existing deterministic
-  compiler, not a Mesh postprocessor.
-- Basic retains current fatal safety behavior. Standard adds author-facing
-  topology/seam evidence. Strict is the only level that performs global
-  triangle-pair intersection work.
-- Diagnostic category precedence suppresses cascades: structural defects stop
-  topology analysis; degenerate/duplicate faces stop edge analysis; fatal
-  topology defects stop strict intersection.
-- Open and disconnected geometry are evidence, not inherently invalid, because
-  FoldCanvas supports intentional sheets and multi-part assets.
-- Executed Weld seam pairs are recorded during Stitch rather than recomputed by
-  a validator that could accidentally subdivide or mutate boundaries.
-- Exact self-intersection uses deterministic triangle SAT with additional
-  coplanar in-plane axes after sweep-and-prune broad phase.
+- FoldScript DTOs are explicit public source types. Unity's internal serialized
+  object layout is never the interchange format.
+- Runtime parses strings and converts data but performs no file-system or
+  `AssetDatabase` work. Appearance binding is a resolver contract implemented
+  by the Editor layer.
+- Canonical JSON property order is fixed by the writer. Only extension-object
+  keys are ordinal-sorted; semantic source arrays retain authored order.
+- FoldCanvas native geometry remains meter-based. Document units are converted
+  at the DTO/native boundary.
+- Provider-neutral interfaces and payloads live in the Runtime assembly but do
+  not execute network requests or depend on any provider SDK.
+- A repair is accepted only when its replacement FoldScript passes ordinary
+  import validation and compilation. M08 does not mutate a failed document in
+  place or guess a repair.
 
 # Final verification
 
-- Targeted M07: `28 passed, 0 failed, 0 skipped, 0 inconclusive`.
-- Complete Edit Mode: `281 passed, 0 failed, 0 skipped, 0 inconclusive`.
-- Unity: `6000.3.20f1 (c9ba695d4f07)`.
-- Local XML: temporary isolated host
-  `TestResults/m07-full-results.xml`; Editor log:
-  `Project~/M07FullTestRun.log` beneath the same temporary host.
-- `python3 Scripts/validate_repository.py`: passed.
-- `git diff --check`: passed.
-- Live Diagnostics-tab inspection passed; evidence was saved outside the
-  repository at `/tmp/FoldCanvas-M07-Diagnostics-2026-08-03.jpg`.
-- Hosted GitHub Actions/artifacts remain to be recorded after opening the
-  review PR.
-- M08, M09, automatic repair, Bevel, subdivision, smoothing, remesh, and Mesh
-  cleanup were not implemented.
+- Unity Editor: `6000.3.20f1` (`c9ba695d4f07`).
+- Targeted M08: 45 passed, 0 failed, 0 skipped, 0 inconclusive;
+  `/tmp/foldcanvas-m08-targeted-final2.xml` and
+  `/tmp/foldcanvas-m08-targeted-final2.log`.
+- Complete Edit Mode: 326 passed, 0 failed, 0 skipped, 0 inconclusive;
+  `/tmp/foldcanvas-m08-full-final2.xml` and
+  `/tmp/foldcanvas-m08-full-final2.log`.
+- Repository validation, all tracked/project JSON parsing, Runtime no-
+  `UnityEditor` isolation, and `git diff --check`: passed locally.
+- Live M06 import/export/reimport/preview and repair-payload proof: passed;
+  derived proof assets remain under ignored `Project~/Assets/FoldCanvasSamples`.
+- GitHub Actions and uploaded hosted artifacts: pending the review PR.
+- No provider integration, authentication, network transport, automatic
+  repair, binary Mesh import, M09, Bevel, subdivision, smoothing, remesh, or
+  Mesh cleanup was implemented.

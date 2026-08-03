@@ -182,8 +182,7 @@ node graph, or implement M07 self-intersection/broken-geometry validation.
 
 ## M07: Geometry validator
 
-**Status:** implemented on `codex/m07-geometry-validator`; awaiting human
-audit.
+**Status:** implemented, human-audited, and merged in PR #6.
 
 **Proof:** intentionally broken samples produce stable, localized diagnostics.
 
@@ -204,13 +203,20 @@ smoothing, remeshing, Mesh cleanup, or M08 import/AI behavior.
 
 ## M08: FoldScript and AI loop
 
-**Proof:** JSON round-trips, invalid AI output is rejected safely, and a diagnostic can drive a corrected second compile.
+**Status:** implemented on `codex/m08-foldscript-ai`; awaiting human audit.
 
-- importer/exporter
-- schema validation
-- canonical serialization
-- repair payload
-- provider-neutral adapter interface
+**Proof:** JSON round-trips canonically, invalid AI output is rejected safely,
+and a diagnostic drives a corrected second compile through the ordinary gates.
+
+- bounded Runtime importer/exporter over explicit public DTOs
+- strict schema/semantic/reference/limit validation and safe appearance paths
+- fixed-order invariant canonical serialization with preserved source arrays
+- explicit unit-aware DTO/native conversion and Editor source persistence
+- immutable compact repair payload and corrected-response coordinator
+- provider-neutral proposer/repairer interfaces with no SDK or network
+
+M08 does not choose or call a model, store credentials, automatically accept a
+repair, import binary geometry, or change M00-M07 geometry semantics.
 
 ## M09: Non-trivial topology
 
@@ -231,7 +237,7 @@ smoothing, remeshing, Mesh cleanup, or M08 import/AI behavior.
 - package release automation
 - optional exporters
 
-## Deliberate non-goals before M08
+## Deliberate non-goals before M09
 
 - photorealistic PBR inference
 - arbitrary text/image to universal 3D

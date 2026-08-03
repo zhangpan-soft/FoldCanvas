@@ -24,6 +24,14 @@ operation timeline, navigate compiler diagnostics, inspect disposable debug
 views, and explicitly bake a valid result. See the complete
 [blank-source-to-cup walkthrough](authoring-workspace.md).
 
+M08 adds `Import JSON` and `Export JSON` to the same toolbar. Import accepts a
+FoldScript `0.1` file already under the project's `Assets/` or installed
+`Packages/` tree, validates it before persistence, and writes only the explicit
+`.asset` destination chosen by the user. Export writes canonical JSON under
+`Assets/`. Diagnostics also exposes `Copy Repair Payload`; this copies source
+and diagnostics only and never sends a network request. See the
+[FoldScript Runtime and Editor workflow](foldscript-runtime.md).
+
 M02 also provides two proof commands:
 
 - `Tools > FoldCanvas > Create M02 Box Sample` creates or updates the
@@ -114,6 +122,9 @@ including when they are inactive. It never reads or modifies `Camera.main`.
 - display UV artwork over panel domains
 - display logical wireframe, panel colors, seams, normals, and thickness
 - bake derived assets
+- import canonical FoldScript into an explicit editable source asset
+- export the selected source as canonical FoldScript
+- copy a provider-neutral diagnostic repair payload
 
 ## Preview rules
 

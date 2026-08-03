@@ -8,6 +8,53 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.16] - 2026-08-03
+
+### Added
+
+- Executable FoldScript `0.1` DTOs, bounded JSON parsing, strict semantic
+  validation, canonical serialization, and explicit meter/centimeter/millimeter
+  conversion at the source/native boundary
+- Runtime appearance-resolution contract plus Editor-safe import/export for
+  explicit source paths under `Assets/` or `Packages/`
+- Provider-neutral source proposal and repair interfaces, immutable compact
+  repair payloads, and a repair coordinator that re-enters the ordinary
+  importer and compiler gates
+- M06 toolbar actions for FoldScript import/export and a Diagnostics action for
+  copying the current canonical repair payload
+- Stable `FC7001`-`FC7012` diagnostics for malformed, unsupported, unsafe,
+  excessive, duplicate, unresolved, or invalid FoldScript and repair data
+- Hostile-input, canonical round-trip, unit, path, Editor persistence,
+  cup/sphere geometry, repair-loop, immutability, and provider-isolation tests
+
+### Changed
+
+- `FoldCanvasAsset` now retains portable source metadata and compile settings so
+  imported JSON can be edited and exported without relying on Unity's internal
+  serialization format
+- Repository validation now checks executable FoldScript limits against the
+  JSON Schema and checks the runtime package-version constant against
+  `package.json`
+- Package version advanced to `0.1.0-preview.16`
+
+### Verified
+
+- Unity `6000.3.20f1` passed all 326 Edit Mode tests, including 45 M08
+  canonical, hostile-input, path, unit, Editor persistence, geometry, and
+  repair-loop cases
+- The live M06 workspace imported the bundled cup JSON, produced a successful
+  Strict preview with 2972 vertices and 5120 triangles, exported canonical
+  FoldScript, reimported it successfully, and copied a provider-neutral repair
+  payload containing no Mesh field
+- Repository validation, JSON parsing, Runtime/Editor assembly isolation, and
+  `git diff --check` passed
+
+### Not included
+
+- No model provider, network transport, automatic repair, credential handling,
+  binary Mesh import, M09 topology, Bevel, subdivision, smoothing, remeshing,
+  or Mesh cleanup was added
+
 ## [0.1.0-preview.15] - 2026-08-03
 
 ### Added

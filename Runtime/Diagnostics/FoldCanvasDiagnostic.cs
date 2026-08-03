@@ -106,6 +106,18 @@ namespace FoldCanvas
         public const string SphereValidationFailed = "FC6014";
         public const string DuplicateSphericalWrapTarget = "FC6015";
         public const string SphereValidationRequiredBeforeSolidify = "FC6016";
+        public const string MalformedFoldScript = "FC7001";
+        public const string UnsupportedFoldScriptVersion = "FC7002";
+        public const string InvalidFoldScriptStructure = "FC7003";
+        public const string UnknownFoldScriptOperation = "FC7004";
+        public const string NonFiniteFoldScriptNumber = "FC7005";
+        public const string UnsafeAppearancePath = "FC7006";
+        public const string FoldScriptInputLimitExceeded = "FC7007";
+        public const string DuplicateFoldScriptIdentifier = "FC7008";
+        public const string FoldScriptAppearanceResolutionFailed = "FC7009";
+        public const string InvalidFoldScriptReference = "FC7010";
+        public const string InvalidRepairResponse = "FC7011";
+        public const string DuplicateFoldScriptProperty = "FC7012";
     }
 
     public sealed class FoldCanvasDiagnosticValue

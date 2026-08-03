@@ -5,6 +5,7 @@
 - [Architecture](architecture.md)
 - [Geometry model](geometry-model.md)
 - [FoldScript specification](foldscript-spec.md)
+- [FoldScript 0.1 Runtime 与 Editor 导入、导出、修复合同](foldscript-runtime.md)
 - [Compiler pipeline](compiler-pipeline.md)
 - [Diagnostics and validation](diagnostics.md)
 - [M07 geometry validation levels and report](geometry-validation.md)

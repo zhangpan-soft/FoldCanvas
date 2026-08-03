@@ -32,6 +32,9 @@ A generated mesh is never the canonical editable source. Any workflow that requi
 Contains only Unity-runtime-safe code:
 
 - source data definitions
+- bounded FoldScript DTO parsing, semantic validation, canonical serialization,
+  unit conversion, and resolver-based appearance binding
+- provider-neutral proposal/repair request and response contracts
 - geometry buffers
 - deterministic compiler stages
 - diagnostics
@@ -49,6 +52,12 @@ Contains:
 - bake and save workflows
 - preview object management
 - import/export adapters
+
+M08's Editor adapter is the only package layer that reads/writes FoldScript
+files or uses `AssetDatabase`. It accepts explicit normalized project paths,
+resolves appearances under `Assets/` or `Packages/`, validates a detached
+source before persistence, records Undo when replacing an existing FoldCanvas
+asset, and rejects occupied non-FoldCanvas targets.
 
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
@@ -226,7 +235,10 @@ Floating-point values are expected to be numerically stable within documented to
 
 ## 6. AI boundary
 
-The geometry core has no model-provider dependency. AI adapters may:
+The geometry core has no model-provider dependency. M08 exposes explicit
+`IFoldCanvasSourceProposer` and `IFoldCanvasSourceRepairer` data contracts, but
+no implementation, credential, SDK, transport, or automatic request execution.
+External AI adapters may:
 
 - create artwork
 - segment panels
@@ -235,6 +247,12 @@ The geometry core has no model-provider dependency. AI adapters may:
 - revise source after compiler diagnostics
 
 They may not silently replace a failed compile with an unrelated generated mesh.
+Proposal and repair output is untrusted FoldScript text. It must pass bounded
+parse, strict reference validation, unit conversion, and the same deterministic
+compiler as human-authored source. Repair requests contain canonical source and
+copied ordered diagnostics but never Mesh buffers or texture pixels. Runtime
+does no file or network I/O, and no provider receives privileged access to
+geometry mutation.
 
 ## 7. Render boundary
 

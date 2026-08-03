@@ -11,15 +11,16 @@ human, procedural tool, or AI system can author the same asset consistently.
 The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
-> **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M07 implements planar `rectangle` and `disk`/ellipse compilation,
+> **Implementation status:** M08 implements FoldScript `0.1` as executable,
+> bounded Runtime import/export over the M00-M07 source model. It supports
+> planar `rectangle` and `disk`/ellipse compilation,
 > `rigidTransform`, edge-aligned rigid-crease `fold`, rectangle `roll`,
 > explicit rectangle `sphericalWrap`, deterministic `weld`/`bridge` Stitch,
 > and `solidify` through the Unity
 > `FoldCanvasAsset` representation. Seam declarations remain inert until
-> selected by Stitch. JSON import/export, `hinge`, `keepOpen`, and later
-> operations remain unavailable. A schema-valid JSON file is not a claim that
-> every future operation is implemented.
+> selected by Stitch. `hinge`, `keepOpen`, and later operations remain
+> unavailable. Unknown operations and unknown fields outside `extensions`
+> return stable diagnostics rather than degrading silently.
 
 ## 1. Global conventions
 
@@ -27,7 +28,7 @@ The machine-readable constraints live in
 |---|---|
 | Document order | `panels`, `seams`, and `operations` are processed in array order. Object-property order has no geometric meaning. |
 | IDs | IDs are case-sensitive stable identifiers matching `^[A-Za-z][A-Za-z0-9_.-]{0,63}$`. They are references, not display labels. |
-| Physical units | `meter`, `centimeter`, or `millimeter`. Importers normalize physical values to meters before compilation. |
+| Physical units | `meter`, `centimeter`, or `millimeter`. M08 import normalizes physical values to meters before compilation and export converts them back to the retained source unit. |
 | Canvas coordinates | Normalized `[0,1] × [0,1]`, origin at bottom-left. |
 | Panel-local coordinates | A panel begins in local XY. `+X` is increasing U, `+Y` is increasing V, and the front normal is `+Z`. |
 | Angles | Degrees. Signed values preserve direction; they are not silently clamped. |
@@ -67,7 +68,10 @@ rect = [x, y, width, height]
 | `canvas.height` | integer | yes | Source image height in pixels, 1–32768. |
 
 `canvasRect` values on panels select regions of this image. Pixels remain
-attached because every compiled vertex stores its source-canvas UV.
+attached because every compiled vertex stores its source-canvas UV. M08 accepts
+only bounded project-relative appearance references that resolve under
+`Assets/` or `Packages/`; absolute paths, URI schemes, backslashes, empty/dot
+segments, and `..` traversal are rejected before resolution.
 
 ## 4. Panels
 
@@ -568,4 +572,8 @@ For identical source, settings, and compiler version, tools must preserve:
 
 Importers and compilers must not silently clamp, reorder, infer a seam from
 proximity, drop an unsupported operation, or substitute an unrelated generated
-mesh. See [Diagnostics and validation](diagnostics.md).
+mesh. Canonical JSON preserves authored panel/seam/operation order, uses fixed
+property order and invariant number formatting, and preserves only explicit
+top-level `extensions` metadata. See
+[FoldScript 0.1 runtime and Editor workflow](foldscript-runtime.md) and
+[Diagnostics and validation](diagnostics.md).

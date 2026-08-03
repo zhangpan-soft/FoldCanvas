@@ -38,6 +38,7 @@ compiler stage and source order.
 | FC4xxx | thickness and topology |
 | FC5xxx | mesh validation |
 | FC6xxx | spherical mapping and closed-sphere validation |
+| FC7xxx | FoldScript interchange, path safety, and repair responses |
 
 ## Initial codes
 
@@ -134,6 +135,18 @@ compiler stage and source order.
 - `FC6014 SphereValidationFailed`
 - `FC6015 DuplicateSphericalWrapTarget`
 - `FC6016 SphereValidationRequiredBeforeSolidify`
+- `FC7001 MalformedFoldScript`
+- `FC7002 UnsupportedFoldScriptVersion`
+- `FC7003 InvalidFoldScriptStructure`
+- `FC7004 UnknownFoldScriptOperation`
+- `FC7005 NonFiniteFoldScriptNumber`
+- `FC7006 UnsafeAppearancePath`
+- `FC7007 FoldScriptInputLimitExceeded`
+- `FC7008 DuplicateFoldScriptIdentifier`
+- `FC7009 FoldScriptAppearanceResolutionFailed`
+- `FC7010 InvalidFoldScriptReference`
+- `FC7011 InvalidRepairResponse`
+- `FC7012 DuplicateFoldScriptProperty`
 
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
 deformation propagation exists, a later RigidTransform, Fold, Roll, or
@@ -216,6 +229,35 @@ incidence, Euler characteristic, pole identities, frame/radius agreement, and
 winding at its documented operation stage. `IsClosedSphere` alone is not a
 universal no-self-intersection claim. A later successful Strict M07 report
 adds final-buffer triangle-intersection evidence.
+
+## FoldScript and repair diagnostics
+
+`FC7001`-`FC7012` form M08's untrusted-text boundary. The reader reports one
+stable primary root cause and does not continue into native source conversion
+or Mesh generation:
+
+- syntax/truncation is `FC7001`; a duplicate JSON key is the more specific
+  `FC7012`;
+- any version other than exact `0.1` is `FC7002`, and an unknown operation type
+  is `FC7004`;
+- missing or unknown fields, invalid field shapes/enums/ranges, and unsupported
+  document structure are `FC7003`;
+- JSON tokens such as `NaN` or `Infinity`, and non-finite DTO values during
+  write, are `FC7005`;
+- absolute, URI-like, backslash-ambiguous, traversal, or out-of-root appearance
+  references are `FC7006`; a safe path that cannot resolve is `FC7009`;
+- character, depth, node, string, identifier, collection, or pixel-dimension
+  limits use `FC7007` before unbounded native allocation;
+- duplicate panel/seam/operation IDs use `FC7008`; missing panel, boundary,
+  seam, or operation target references use `FC7010`;
+- a null, empty, or otherwise absent replacement source in the repair response
+  uses `FC7011`. Non-empty invalid replacement JSON returns its ordinary
+  FoldScript diagnostic instead.
+
+Diagnostic order, structured values, geometry context, and suggestions are
+copied into immutable repair payload collections. A response cannot suppress a
+diagnostic except by supplying complete replacement FoldScript that passes the
+same importer and compiler.
 
 ## Failure philosophy
 
