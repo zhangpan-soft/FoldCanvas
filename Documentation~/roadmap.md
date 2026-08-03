@@ -301,7 +301,7 @@ package dependency, expose topology mutation, or add runtime file/network I/O.
 
 ## M12: Production asset handoff
 
-**Status:** active on `codex/m12-production-handoff`.
+**Status:** maintainer-audited and merged through PR #11 as `0d4a576`.
 
 **Proof:** one production cup source exports twice to a byte-identical bounded
 handoff archive, then a second clean Unity project verifies and imports its
@@ -330,11 +330,27 @@ source-driven rebuild path are documented in
 
 ## M13: Robustness and scale
 
-**Status:** planned; not active.
+**Status:** active on `codex/m13-robustness-scale`.
 
-**Proof direction:** bounded fuzz/property cases, large deterministic assets,
-interruption/retry behavior, memory/time budgets, and long-running regression
-evidence fail safely without partial source or Mesh state.
+**Proof:** a versioned deterministic generator replays bounded valid and invalid
+property cases by seed and ordinal; maintained near-limit assets, repeated
+compiles, cancellation between cases, and failure-then-retry runs preserve
+source and compiler isolation while emitting canonical semantic evidence.
+
+- fixed-algorithm, versioned case identities independent of global random state
+- bounded valid/invalid source properties with no exception, silent fallback,
+  source mutation, or failed-result Mesh
+- one-below, exact-boundary, and one-over geometry/input/validation limit cases
+- maintained large planar, cup, sphere, torus, Stitch, and Solidify fixtures
+- repeated compile and large-failure-then-small-retry state-isolation proof
+- Editor runner cancellation between cases and atomic complete-report replace
+- explicit conservative elapsed-time and managed-allocation envelopes
+- required pull-request smoke corpus plus larger scheduled/manual Unity run
+- XML, Editor log, canonical report, and replay artifacts from real Unity
+
+M13 does not add geometry operations, automatic repair or cleanup, raise safety
+limits to conceal failures, add runtime I/O or dependencies, preempt a compile
+mid-operation, freeze the 1.0 API/format, publish `1.0.0`, or implement M14.
 
 ## M14: 1.0 release candidate
 

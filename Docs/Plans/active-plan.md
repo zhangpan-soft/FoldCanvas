@@ -1,295 +1,253 @@
 # Goal
 
-Deliver M12 on `codex/m12-production-handoff`: export one authoritative
-FoldCanvas production asset into a deterministic, bounded source-first handoff
-archive and prove that a separate clean Unity project can validate it, rebuild
-matching runtime assets, retain source ownership, and reject unsafe or changed
-input without partial writes.
+Deliver M13 on `codex/m13-robustness-scale`: establish a deterministic,
+bounded robustness and scale evidence layer that finds compiler exceptions,
+unstable diagnostics or geometry, stale state, unsafe growth, and retry defects
+without changing FoldCanvas source ownership or adding geometry behavior.
 
 # User-visible proof
 
-From the FoldCanvas authoring workspace, export the production cup to one
-`.foldcanvas.zip`. Hand that file to a clean receiver project and import it into
-an explicit empty `Assets/` folder. The receiver shows the editable FoldCanvas
-source and PNG beside a generated Mesh, one-sided textured Material, Prefab,
-and receipt. Deleting the derived outputs and choosing Rebuild recreates the
-same geometry/OBJ evidence from source. A tampered copy is rejected before any
-folder is created.
+Run `Tools > FoldCanvas > Run M13 Robustness Smoke` twice and obtain the same
+semantic digest for a versioned replayable corpus. Interrupt one run between
+cases and confirm that no project source, Mesh, scene, selection, or prior
+complete report changed; retry and obtain the clean digest. In hosted CI, run a
+larger corpus under Unity `6000.3.20f1` and retain XML, Editor log, canonical
+report, resource observations, and exact replay identities for failures.
 
 # Scope
 
-- deterministic fixed-layout handoff ZIP writer and bounded reader
-- versioned canonical manifest plus JSON Schema
-- canonical FoldScript and exact PNG source packaging
-- deterministic OBJ, compile/validation evidence, and rebuild instructions
-- exact package/compiler/FoldScript compatibility gate for v1
-- detached in-memory verification before Unity project persistence
-- source asset, texture, Mesh, Material, Prefab, and receipt creation
-- receipt-owned, source-driven rebuild and same-bundle idempotency
-- Authoring-window and menu export/import/rebuild entry points
-- producer/receiver clean-project scripts, hosted tests, and artifacts
-- package version, public Runtime diagnostic baseline, docs, and changelog
+- explicit fixed-algorithm deterministic generator and versioned case identity
+- bounded valid/invalid property suites across existing M00-M12 source surface
+- canonical source, geometry, diagnostic, validation, and aggregate hashing
+- maintained near-limit and large deterministic fixtures
+- repeated compilation and fresh-state retry evidence
+- Editor-only cancellable-between-cases robustness runner
+- atomic complete-report persistence under `Library/FoldCanvas`
+- conservative reviewed elapsed-time and allocation envelopes
+- replay records for unexpected exception/result/hash/limit outcomes
+- focused Edit Mode tests, complete package regression, PR smoke job, and
+  scheduled/manual long-run workflow
+- documentation, CI scripts, package version, compatibility evidence, and
+  newest-first changelog entry required by the accepted implementation
 
 # Non-goals
 
-- Mesh, OBJ, Prefab, receipt, or archive evidence as editable source
-- UnityPackage export, AssetDatabase GUID transfer, or producer scene transfer
-- arbitrary archive layouts, multiple canvases, or non-PNG appearance formats
-- native custom-operation definition/binary bundling
-- package/compiler/FoldScript migration or compatibility guessing
-- signing, encryption, DRM, cloud storage, or network transport
-- runtime file I/O, runtime authoring, or runtime asset persistence
-- glTF, FBX, USD, Blender, marketplace, or DCC integration
-- new panel/operation/topology behavior, CSG, bevel, subdivision, smoothing,
-  remesh, or cleanup
-- M13 robustness/scale implementation, M14 release decision, or `1.0.0`
+- new panels, operations, seam modes, geometry equations, or topology behavior
+- random global state or nondeterministic case generation
+- compiler parallelization or changing deterministic output order
+- thread abort, native-code sandboxing, or guaranteed mid-compile cancellation
+- automatic source minimization, repair, remesh, cleanup, bevel, subdivision,
+  smoothing, or CSG
+- raising safety limits merely to make a benchmark succeed
+- Runtime filesystem/network behavior or a new package dependency
+- public API/FoldScript 1.0 freeze, release-candidate declaration, external
+  marketplace publication, or M14 implementation
 
 # Files expected to change
 
-- `CURRENT_TASK.md`, `Codex/M12_PRODUCTION_HANDOFF.md`
-- `Docs/ADR/0010-source-first-handoff-archive.md`
-- `Docs/Plans/active-plan.md`, roadmap, architecture, governance, compatibility,
-  field/pipeline/diagnostics, and Editor workflow documentation
-- Runtime diagnostic codes only; no Runtime geometry or I/O implementation
-- Editor handoff manifest, evidence, archive, export, import, persistence,
-  rebuild, and UI adapters
-- `Schema/foldcanvas-handoff.schema.json`
-- M12 Edit Mode fixtures and tests
-- clean producer/receiver templates and repository comparison scripts
-- GitHub Actions workflows and mandatory handoff artifacts
-- public Runtime API and production-corpus baselines only as required by the
-  reviewed diagnostic/version additions
-- package version, `CHANGELOG.md`, English/Chinese README
+- `CURRENT_TASK.md`, `Codex/M13_ROBUSTNESS_SCALE.md`, this plan, roadmap, and
+  English/Chinese project documentation
+- Editor-only robustness case generator, runner, report contracts, replay
+  writer, menu command, and optional test-only fault/cancellation seam
+- M13 Edit Mode test fixtures and canonical baseline/report data
+- repository validation and deterministic evidence scripts
+- GitHub Actions smoke and scheduled/manual long-run jobs
+- `package.json`, Runtime version constant, public API/production corpus only if
+  a reviewed version change requires their existing locked values to advance
+- `CHANGELOG.md` newest entry first
 
 # Geometry invariants
 
-- The PNG appearance and canonical FoldScript are the only authoritative bundle
-  entries. Every Unity Mesh, Material, Prefab, OBJ, report, hash, and receipt is
-  derived and replaceable.
-- Export and import do not change panel equations, operation order, coordinates,
-  winding, boundaries, topology IDs, source positions, UVs, provenance, or
-  compiler tolerances.
-- Producer and receiver compile identical canonical FoldScript, PNG dimensions,
-  texture contract, validation level, package version, compiler version, and
-  FoldScript version.
-- Evidence hashes include complete ordered compiled vertices and triangle
-  indices, not only Unity Mesh bounds or counts.
-- Import never accepts archived OBJ as geometry. It recompiles source and
-  compares its own deterministic OBJ text to the archive evidence.
-- The receiver source asset retains the same logical asset ID and canonical
-  source hash. Unity GUIDs and local asset paths are intentionally receiver-owned.
-- Runtime remains free of `UnityEditor`, filesystem/network behavior, and new
-  dependencies. Archive and AssetDatabase work remains in `FoldCanvas.Editor`.
-- Invalid or unsupported handoff input returns stable diagnostics and creates no
-  approximate Mesh or partially owned destination.
+- Appearance canvas plus canonical FoldScript remain the only authoritative
+  source. Robustness reports, replay files, hashes, timings, allocations,
+  screenshots, XML, logs, and Meshes are derived evidence.
+- The harness calls the same public compiler path as ordinary sources. It does
+  not inject triangles, repair topology, or treat a generated Mesh as input.
+- Identical case identity and package/compiler/FoldScript/generator versions
+  produce identical canonical source, compile settings, validation level,
+  ordered diagnostics, and semantic geometry evidence.
+- Valid cases produce only finite positions, normals, and UVs; in-range ordered
+  indices; preserved source UV/provenance; and successful requested validation.
+- Invalid or over-budget cases return the expected stable root diagnostic and
+  no Mesh. They never silently lower tessellation, skip an operation, or emit
+  approximate success.
+- Every case uses a fresh source instance and compiler result. A failed,
+  cancelled, or large case cannot influence the next case.
+- Runtime stays free of UnityEditor, filesystem/network behavior, global random
+  state, fuzz infrastructure, and new dependencies.
 
-# Archive and persistence decisions
+# Determinism, boundary, and tolerance decisions
 
-- v1 archive entry order is exactly:
-  `manifest.json`, `source.foldcanvas.json`, `appearance.png`,
-  `derived/model.obj`, `evidence/compile-report.json`, `README.md`.
-- ZIP entries use no compression, a fixed DOS-compatible timestamp, normalized
-  UTF-8/LF text, no directories, and ordinal names.
-- `manifest.json` hashes every payload entry; the result object and hosted
-  evidence record the final archive hash separately to avoid self-reference.
-- The reader rejects extra, missing, duplicate, directory, link, absolute,
-  backslash, empty, dot, or traversal entries and enforces count/per-entry/total
-  byte limits before allocation.
-- v1 requires an exact package version, compiler version, FoldScript `0.1`, and
-  PNG canvas dimensions. It does not silently test or guess migration.
-- Import verifies/decompresses into bounded memory, decodes a temporary PNG,
-  imports detached canonical source through an in-memory appearance resolver,
-  compiles, exports OBJ, and compares all evidence before `Assets/` writes.
-- A successful import owns one new explicit destination folder. If persistence
-  fails, rollback deletes only that newly created folder.
-- An intact receipt with the same archive/source/evidence hashes makes repeated
-  import a no-write success. Any mismatch or unowned occupant fails.
-- Rebuild reads the receiver `FoldCanvasAsset` and receipt, recompiles, compares
-  source and evidence identity, then updates only receipt-owned derived assets.
+- Case IDs use `(generatorVersion, suiteId, seed, ordinal)` with ordinal string
+  comparison for suite IDs and a repository-owned unsigned 64-bit generator.
+- Generated numerical values are drawn from documented finite buckets around
+  zero, sign changes, angular limits, tessellation limits, weld epsilon, and
+  scale extremes; arbitrary NaN/Infinity inputs belong only to explicit invalid
+  buckets.
+- Full-turn winding, boundary direction, seam selection, Solidify topology,
+  sphere/torus frames, and validation tolerances remain exactly those documented
+  by M00-M12. M13 asserts them; it does not redefine them.
+- Semantic evidence includes canonical source, ordered diagnostics with
+  structured values, complete ordered geometry/topology hashes, validation
+  evidence, and source-before/source-after hashes.
+- Environment metadata and time/allocation observations are outside the
+  semantic digest. Their reviewed envelope IDs and pass/fail outcomes are
+  included so threshold changes remain explicit.
 
 # Implementation steps
 
-1. Close M11 with exact PR/run/artifact evidence; create the M12 branch, task,
-   ADR 0010, specification, roadmap entry, and this plan.
-2. Define bounded manifest/evidence/receipt DTOs, canonical serializers, limits,
-   export/import/rebuild results, and FC9301-FC9312 diagnostics.
-3. Implement deterministic fixed-entry ZIP writing and untrusted archive reading
-   with complete pre-allocation path/size/duplicate/link validation.
-4. Implement exporter conversion, exact PNG acquisition, source/geometry/OBJ/
-   diagnostic/validation evidence, README generation, temp-file validation, and
-   atomic destination replacement.
-5. Implement detached importer verification using PNG bytes and canonical
-   FoldScript, exact compatibility/evidence gates, and no-persistence failures.
-6. Implement receiver persistence and rollback: source JSON/PNG/import settings,
-   editable asset, Mesh, one-sided textured Material, Prefab, and JSON receipt.
-7. Implement receipt-owned idempotent import and source-driven rebuild without
-   using archived OBJ or existing generated topology as compiler input.
-8. Add Authoring workspace buttons and explicit menu/file-panel paths with clear
-   diagnostics, ownership, and overwrite behavior.
-9. Add Edit Mode security, determinism, integration, ownership, texture,
-   Prefab, rebuild, and rollback tests; retain all existing tests.
-10. Add clean producer/receiver project fixtures, comparison/normalization
-    scripts, hosted Unity jobs, and mandatory XML/log/archive/source/receipt/
-    evidence artifacts.
-11. Update architecture, field/pipeline/diagnostic/Editor/compatibility docs,
-    README files, schemas, public API baseline, corpus version fields, package
-    version, and newest-first changelog.
-12. Run JSON/asmdef/runtime-isolation checks, focused tests, full Edit Mode
-    tests, deterministic archive/package tests, two clean-project handoffs, and
-    foreground imported-Prefab/source ownership proof.
-13. Commit/push, open a PR, audit exact hosted artifacts and review threads,
-    record a transparent maintainer audit, and merge only with no blocker.
+1. Close M12 with exact PR/run/artifact evidence, merge PR #11, synchronize
+   `main`, create the M13 branch/specification/roadmap entry, and replace the
+   active plan before code changes.
+2. Inventory M00-M12 public source domains, stable diagnostics, geometry limits,
+   existing fixtures, M10 performance evidence, and M11/M12 clean-host gates.
+3. Define the fixed generator algorithm, versioned case/replay/report contracts,
+   canonical semantic projection, bounded suite sizes, and explicit failure
+   classifications.
+4. Implement in-memory case generation for finite valid and intentionally
+   invalid panels, references, operations, compile settings, and existing
+   geometry families without touching project assets.
+5. Implement result inspection and complete semantic hashing for source
+   non-mutation, finite buffers, ordered indices/UVs/provenance, diagnostics,
+   validation, topology, and closed-volume evidence where applicable.
+6. Add maintained scale fixtures for one-below/exact/one-over vertex, triangle,
+   FoldScript, validation, and handoff limits plus large valid compound assets.
+7. Implement the Editor runner, between-case cancellation, fresh-state retry,
+   atomic complete-report replacement, and replay evidence under `Library/`.
+8. Measure current Unity `6000.3.20f1` time/allocation evidence, choose generous
+   reviewed envelopes that catch gross regressions, and document environment
+   limitations rather than turning timing noise into geometry behavior.
+9. Add focused Edit Mode tests, run the complete M00-M13 suite, and verify
+   failure/cancellation leaves source, scene, selection, project assets, and the
+   last complete report unchanged.
+10. Add repository checks plus required PR smoke and scheduled/manual long-run
+    Unity jobs with non-empty XML/log/report/replay artifacts.
+11. Advance the preview package version and all locked compatibility/corpus/API
+    evidence together, update the newest-first changelog and bilingual docs,
+    then run JSON/asmdef/repository/release/static checks.
+12. Create a draft PR, audit exact hosted artifacts and semantic evidence,
+    record the maintainer self-audit, and merge only with green checks and no
+    unresolved security, compiler, determinism, topology, or installation issue.
 
 # Test matrix
 
-## Export and archive determinism
+## Generator and replay
 
-- production cup exports twice to byte-identical archive SHA-256
-- canonical manifest and fixed ZIP entry order/timestamps/methods are stable
-- canonical source uses `appearance.png` and retains all authored semantics
-- PNG bytes and recorded texture contract match the source asset
-- complete compiled-data/OBJ/diagnostic/validation evidence is stable
-- export does not mutate source, texture importer, scene, selection, or Mesh
-- invalid compile, missing/unsupported appearance, and custom operations create
-  no final archive and preserve any prior valid destination
+- same identity -> byte-identical canonical source and settings
+- shuffled execution order -> unchanged per-case result
+- different suite/seed/ordinal -> distinct stable identity
+- generator version present in every report and replay record
+- no global Unity or .NET random-state dependence
 
-## Untrusted import
+## Valid and invalid properties
 
-- missing archive, invalid ZIP, unsupported manifest version, and incompatible
-  package/compiler/FoldScript versions return one stable primary diagnostic
-- missing, extra, duplicate, directory, link, absolute, backslash, dot, and
-  traversal entries fail before project writes
-- archive, entry, and expanded byte limits fail before unbounded allocation
-- changed entry bytes/length/hash and noncanonical FoldScript fail integrity
-- PNG decode/dimension mismatch fails before AssetDatabase mutation
-- producer/receiver source, geometry, OBJ, diagnostics, validation, and closed
-  volume evidence must match exactly
+- bounded valid cases compile without exception and produce finite, indexed,
+  deterministic geometry with preserved source UV/provenance
+- bounded invalid cases never throw, never return Mesh, never mutate source,
+  and return deterministic diagnostic code/order/context
+- failures retain exact canonical replay identity and classification
+- tolerance-edge cases repeat across independent source instances
 
-## Receiver ownership and rebuild
+## Scale and limits
 
-- successful import creates exact documented source and derived assets
-- source asset references the receiver PNG with recorded sampler settings
-- Mesh and Prefab topology/UV evidence match the producer
-- Material is one-sided, textured, and referenced by the Prefab
-- receipt records logical ID, archive/source/appearance/geometry/OBJ hashes,
-  versions, and exact owned paths
-- same archive into intact folder is idempotent with stable GUID/object count
-- changed archive, damaged owned folder, and unowned destination never overwrite
-- simulated persistence failure removes the new folder and nothing else
-- deleting receipt-owned derived assets then rebuilding from source recreates
-  matching evidence and leaves source unchanged
+- vertex and triangle one-below/exact cases succeed as specified
+- one-over cases return FC5005/FC5006 with no Mesh or partial build state
+- checked arithmetic overflow returns FC5007 deterministically
+- FoldScript, Strict validation, archive, and decoded-canvas limits retain their
+  stable diagnostics and do not allocate unbounded payloads
+- maintained large valid assets retain counts, hashes, topology, and requested
+  validation evidence
 
-## Hosted producer/receiver
+## Repetition, cancellation, and retry
 
-- both projects resolve the same freshly built `.tgz` as `LocalTarball` under
-  their own `Library/PackageCache`
-- producer emits real XML, Editor log, handoff archive, and producer evidence
-- receiver starts without producer Assets, imports only the archive, emits real
-  XML/log/source/receipt/evidence, and builds a runtime-ready Prefab
-- repository comparison proves archive/package/source/geometry/OBJ/diagnostic/
-  validation identity and distinct project paths
-- missing evidence or Unity startup fails the workflow
+- repeated small/large compiles do not change source or geometry hashes
+- failed large compile followed by small valid compile equals clean small compile
+- cancellation between cases writes no project asset or partial final report
+- retry after cancellation equals clean complete run
+- last complete report survives cancellation and injected persistence failure
+- no scene object, selection, hidden preview, Mesh, or Material leak
+
+## Resource evidence and CI
+
+- warmup and measured iteration counts are explicit
+- semantic digest excludes raw elapsed/allocation observations
+- envelope identity and pass/fail are deterministic and reviewed
+- local smoke, hosted PR smoke, and larger scheduled/manual report use the same
+  generator/version and can replay every failure
+- XML and Editor logs prove Unity actually started and exited after tests
 
 ## Regression
 
-- all 401 M00-M11 package tests remain enabled
-- Runtime has no Editor, archive, filesystem, or network implementation
-- release package remains byte-reproducible
-- public Runtime API additions are limited to reviewed diagnostics/version data
-- M11 production corpus retains all six expected cases and hashes unless the
-  package-version field requires a reviewed baseline refresh
-- user-owned untracked `Project~` scenes and historical results remain untouched
+- every existing M00-M12 Edit Mode test remains enabled
+- repository validation, deterministic package build, JSON parsing, Python
+  compilation, asmdef checks, and `git diff --check` pass
+- clean archive installation and M12 producer/receiver evidence remain intact
 
 # Risks and rollback
 
-- **ZIP bomb/path escape:** fixed six-entry allowlist plus central-directory
-  count, link/type, compressed/uncompressed, per-entry, total, and normalized
-  path gates run before reading payloads.
-- **Partial Unity writes:** validate and compile in memory first; persist only to
-  a nonexistent folder; delete only that newly owned folder on failure.
-- **Silent overwrite:** immutable receipt ownership and exact content hashes;
-  same bundle is idempotent, everything else requires a new destination.
-- **Archive nondeterminism:** no compression, fixed metadata, ordinal entry
-  order, normalized bytes, and cross-platform hosted SHA comparison.
-- **Texture drift:** copy original PNG bytes and record/import the sampler values
-  that materially affect the one-sided reference result.
-- **Compiler drift:** v1 exact-version gate plus full evidence comparison; later
-  migration needs a new format/version decision.
-- **Native extension ambiguity:** reject custom operations with FC9306 rather
-  than losing contributor source or silently baking only their Mesh result.
-- **Prefab becomes source:** receipt and docs label it derived; rebuild requires
-  the FoldCanvas source and does not inspect the existing Mesh.
-- Rollback is reverting isolated M12 commits. M11 remains merged at `b757792`.
+- **Flaky timing gate:** warm up, use scenario-specific generous envelopes,
+  store raw observations outside semantic hashes, and change thresholds only in
+  reviewed baseline diffs.
+- **Fuzzer nondeterminism:** own the integer algorithm and generator version;
+  never use framework/global random state or unordered iteration.
+- **Corpus too expensive:** retain a required bounded PR smoke set and move the
+  larger count to scheduled/manual CI without weakening replayability.
+- **Exception hidden by harness:** record and fail unexpected exceptions; do not
+  convert them into compiler success or a generic public diagnostic.
+- **Cancellation overclaim:** check only between synchronous cases and before
+  atomic report replace; document that one compile is not forcibly aborted.
+- **Scale OOM:** pre-compute checked counts, use explicit case caps, and exercise
+  true package maxima only in an isolated reviewed scenario if safe.
+- **User scratch contamination:** stage explicit paths only and keep all
+  untracked `Project~` scenes/results outside commits.
+- Rollback is reverting isolated M13 commits. M12 remains merged as `0d4a576`.
 
 # Progress log
 
-- 2026-08-03: Audited M11 exact head `e1204ff`; hosted repository run
-  `30812427551` and Unity run `30812427595` were green.
-- 2026-08-03: Downloaded and audited both hosted artifacts. Full XML was
-  401/401; clean hosts were 1/1 each; archive SHA, corpus baseline, geometry,
-  OBJ, diagnostics, and pair evidence matched local evidence.
-- 2026-08-03: Recorded the transparent maintainer self-audit, marked PR #10
-  ready, merged it as `b757792`, and fast-forwarded local `main`.
-- 2026-08-03: Created `codex/m12-production-handoff`, ADR 0010, the M12
-  specification, roadmap contract, and this execution plan.
-- 2026-08-03: Implemented canonical manifest/evidence/receipt contracts,
-  deterministic ZIP32 Store export, bounded untrusted import, detached evidence
-  verification, receipt-owned persistence/rebuild, one-sided runtime Prefab,
-  Authoring/menu actions, schema, production cup fixture, and FC9301-FC9312.
-- 2026-08-03: Added clean producer/receiver project generators and hosted
-  handoff workflow. A local independent transfer proved source-driven import and
-  rebuild with matching source, PNG, geometry, OBJ, diagnostics, validation,
-  closed-volume, receipt, and archive evidence.
-- 2026-08-04: Unity `6000.3.20f1` passed 30/30 focused M12 tests, including
-  source non-mutation, atomic failure, exact versions, PNG mismatch, tampering,
-  decoded-pixel limits, rollback, collision, and raw missing/extra/duplicate/
-  traversal/link/path ZIP rejection.
-- 2026-08-04: The complete package suite passed 431/431 with zero failures,
-  skips, or inconclusive results in a graphics-capable clean host. Repository
-  validation, static handoff proof, deterministic release packaging, Python
-  compilation, and `git diff --check` also passed.
-- 2026-08-04: The `.20` release archive was byte-reproducible. Independent
-  producer and receiver projects each passed 1/1 test from the same local
-  tarball, resolved distinct PackageCache roots, and matched complete source/
-  appearance/geometry/OBJ/diagnostic/validation/closed-volume evidence. The
-  exact final-head package digest remains PR/hosted evidence rather than
-  self-referential package content.
-- 2026-08-04: The transferred handoff archive had SHA-256
-  `a82b3391621604667e98f8f078b44c7da94741115802158d08e7f5a6641591cd`.
-  A foreground receiver window showed the editable source beside its rebuilt
-  runtime Prefab and reported 2,972 render vertices, 2,562 topology vertices,
-  5,120 triangles, one closed component, and zero open edges. Temporary proof
-  assets were moved out of `Project~`; the user's scratch scene was not saved
-  or changed.
+- 2026-08-04: Verified PR #11 exact head `5edcc23e1e98e785c5f76802f45f19962569aa49`.
+  Repository run `30838162209` and Unity run `30838161788` were green; hosted
+  XML reported 431/431 complete package tests and 1/1 producer plus 1/1 receiver.
+- 2026-08-04: Downloaded artifacts matched GitHub digests, Unity logs identified
+  `6000.3.20f1`, local/hosted package and handoff SHA-256 values matched, and the
+  independently recomputed producer/receiver comparison was byte-identical.
+- 2026-08-04: Recorded a maintainer self-audit for exact head `5edcc23`, marked
+  PR #11 ready, merged it into `main` as `0d4a576`, and fast-forwarded local
+  `main` without adding or changing the user's untracked `Project~` scratch.
+- 2026-08-04: Created `codex/m13-robustness-scale`, the M13 specification,
+  active roadmap status, and this execution plan. No M13 implementation or M14
+  release decision was made in the planning commit.
 
 # Decisions made
 
-- Production handoff transfers source ownership and reproducibility, not a
-  frozen Unity Mesh or producer project identity.
-- A deterministic fixed-layout ZIP is the smallest reviewable one-file handoff;
-  UnityPackage/GUID semantics would obscure source and project ownership.
-- Exact PNG bytes are portable v1 appearance source. Other texture formats and
-  multi-canvas assets need later versioned contracts.
-- Import must prove evidence before persistence. Cleanup after blindly writing
-  an untrusted archive is not an acceptable security boundary.
-- Exact package/compiler/FoldScript equality is required in v1. Upgrade
-  migration is explicit future work, not a warning that continues silently.
-- Receiver Mesh/Material/Prefab assets are useful runtime outputs but remain
-  disposable and rebuildable from the received FoldCanvas source.
+- M13 is an evidence and hardening milestone, not a new geometry milestone.
+- A repository-owned fixed integer generator plus explicit version/seed/ordinal
+  is required because framework random algorithms and global state are not a
+  durable replay contract.
+- The pull-request corpus stays bounded; a larger scheduled/manual run supplies
+  long-running evidence without making every small change wait for exhaustive
+  cases.
+- Cancellation is cooperative between synchronous cases. Mid-compile thread
+  abort would risk corrupted Unity/managed state and is outside this milestone.
+- Time and allocation measurements are derived environmental evidence. Only
+  explicit envelope outcomes join the canonical report; raw noise never affects
+  compiler results or semantic hashes.
+- Failure replay lives outside project source and cannot become a generated
+  Mesh escape hatch. The canonical source remains the only route back into the
+  compiler.
 
 # Final verification
 
-Implementation and local verification are complete. Remaining release-gate
-evidence is the M12 PR head, green hosted jobs/artifacts, recorded maintainer
-audit, and merge result. Required final evidence:
+Planning is complete; implementation and verification are pending. The final
+M13 audit must record:
 
-- exact M12 head, package version, archive format, and deterministic SHA
-- focused M12 and full package Edit Mode totals under Unity `6000.3.20f1`
-- producer and receiver clean-project test totals and distinct resolution paths
-- archive entry list/method/timestamp/byte/hash audit
-- producer/receiver source, appearance, geometry, OBJ, diagnostic, validation,
-  closed-volume, Prefab, Material, and receipt evidence comparison
-- tamper/traversal/limit/collision/rollback tests with no partial output
-- foreground receiver proof showing editable source and rebuilt runtime Prefab
-- repository/release/static results and hosted run/artifact IDs
-- explicit statement that M13/M14 and later geometry were not implemented
+- exact branch head, package/compiler/FoldScript/generator versions
+- generator algorithm/version, suite IDs, seeds, case counts, and semantic hash
+- focused M13 and complete M00-M13 Unity totals with XML/log paths
+- near-limit counts and stable diagnostics for each rejected boundary
+- cancellation/retry/source non-mutation and no-partial-report evidence
+- time/allocation envelope IDs, observed values, and environment
+- required PR smoke plus scheduled/manual long-run IDs and artifact digests
+- clean-install and M12 handoff regression results
+- repository/release/static validation results and `git diff --check`
+- remaining manual foreground checks
+- explicit statement that no new geometry behavior or M14/1.0 work was included

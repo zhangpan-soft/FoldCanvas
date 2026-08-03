@@ -359,8 +359,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M09 | Handle cup, torus, boundary spans, and non-trivial topology — implemented and merged |
 | M10 | Explicit extensions, gallery, OBJ, performance, and reproducible package release — merged through PR #9 |
 | M11 | Clean archive installation, consumer API proof, compatibility baseline, and production corpus — merged through PR #10 |
-| M12 | Portable source-first production handoff — active implementation and verification |
-| M13 | Bounded robustness, scale, and long-running regression evidence — planned |
+| M12 | Portable source-first production handoff — merged through PR #11 |
+| M13 | Bounded robustness, scale, interruption/retry, and long-running regression evidence — active |
 | M14 | Public API/FoldScript freeze and 1.0 release-candidate gates — planned |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
