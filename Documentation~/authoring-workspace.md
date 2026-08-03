@@ -16,6 +16,10 @@ same `FoldCanvasAsset` edited by the controls below; no second JSON-only editor
 or independent geometry path is created. See
 [FoldScript 0.1 Runtime and Editor workflow](foldscript-runtime.md).
 
+M09 extends the same operation and seam forms with `ToroidalWrap` and optional
+normalized boundary-reference spans. It does not create a parallel topology
+editor: the 2D viewport remains the source view and the 3D view remains derived.
+
 ## Source and preview contract
 
 - The `FoldCanvasAsset`, appearance canvas, panels, seams, and ordered
@@ -39,6 +43,11 @@ the middle mouse button or `Alt` plus left drag. `Frame` resets the view.
 Select a panel to expose its four canvas-rect handles. Rectangle boundaries
 are `uMin`, `uMax`, `vMin`, and `vMax`; a disk has `perimeter`. A selected seam
 shows endpoint A in cyan and endpoint B in pink.
+
+Each seam endpoint can enable `Use Boundary Span` and edit
+`0 <= startT < endT <= 1` in authored boundary order. The full boundary remains
+selected when the option is off. The Operations tab can add `ToroidalWrap` and
+edit its target, major/minor radii, signed angle ranges, and U/V direction.
 
 In the 3D viewport, left-drag orbits, the wheel zooms, and `Frame` fits the
 current result. `Solid` forces the one-sided texture-free diagnostic material
@@ -85,7 +94,7 @@ It changes no vertex or triangle directly.
 
    Stitch is terminal for every panel selected by its seams until shared
    topology deformation propagation exists. Do not place a later per-panel
-   Roll, Fold, RigidTransform, or SphericalWrap after this Stitch.
+   Roll, Fold, RigidTransform, SphericalWrap, or ToroidalWrap after this Stitch.
 7. Click `Compile Now`. The current proof is valid only when Diagnostics has
    no errors and the closed-volume report has one component, zero open edges,
    zero non-manifold edges, and non-zero volume.
@@ -107,3 +116,5 @@ M06 工作区把权威二维源放在左侧，把可随时销毁重建的三维�
 诊断中的 `Focus Source` 会定位到对应面板、操作或接缝。只有编译成功时才能显式
 Bake，失败结果不会覆盖上一次有效 Mesh。上面的杯子步骤完全通过二维区域和几何
 规则完成，不直接编辑顶点，保持“二维源资产 + 几何规则 = 三维结果”的项目原则。
+M09 继续复用同一工作区：Seam 端点可启用归一化边界区间，Operations 可直接编辑
+`ToroidalWrap` 的主/次半径、角度范围和方向；这些字段仍属于二维源资产。

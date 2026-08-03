@@ -416,7 +416,7 @@ namespace FoldCanvas
                     value,
                     path,
                     new[] { "panel", "boundary" },
-                    new[] { "panel", "boundary" },
+                    new[] { "panel", "boundary", "span" },
                     out Dictionary<string, FoldScriptJsonValue> fields) ||
                 !TryIdentifier(
                     fields["panel"],
@@ -430,10 +430,36 @@ namespace FoldCanvas
                 return false;
             }
 
+            bool useSpan = fields.TryGetValue(
+                "span",
+                out FoldScriptJsonValue spanValue);
+            Vector2 span = new Vector2(0f, 1f);
+            if (useSpan && !TryVector2(
+                    spanValue,
+                    path + ".span",
+                    0d,
+                    1d,
+                    out span))
+            {
+                return false;
+            }
+
+            if (useSpan && span.x >= span.y)
+            {
+                AddError(
+                    FoldCanvasDiagnosticCodes.InvalidBoundarySpan,
+                    $"{path}.span must satisfy 0 <= startT < endT <= 1.",
+                    panelId: panelId,
+                    boundaryId: boundaryId);
+                return false;
+            }
+
             reference = new FoldScriptBoundaryReference
             {
                 PanelId = panelId,
-                BoundaryId = boundaryId
+                BoundaryId = boundaryId,
+                UseSpan = useSpan,
+                Span = span
             };
             return true;
         }
@@ -486,6 +512,9 @@ namespace FoldCanvas
                         break;
                     case "sphericalWrap":
                         operation = DecodeSphericalWrap(values[i], path);
+                        break;
+                    case "toroidalWrap":
+                        operation = DecodeToroidalWrap(values[i], path);
                         break;
                     case "stitch":
                         operation = DecodeStitch(values[i], path);
@@ -881,6 +910,75 @@ namespace FoldCanvas
             return operation;
         }
 
+        private FoldScriptToroidalWrapOperation DecodeToroidalWrap(
+            FoldScriptJsonValue value,
+            string path)
+        {
+            if (!TryOperationObject(
+                    value,
+                    path,
+                    new[]
+                    {
+                        "id", "type", "panel", "majorRadius",
+                        "minorRadius", "majorAngleRange",
+                        "minorAngleRange", "wrapDirection"
+                    },
+                    new[]
+                    {
+                        "id", "enabled", "type", "panel",
+                        "majorRadius", "minorRadius", "majorAngleRange",
+                        "minorAngleRange", "wrapDirection"
+                    },
+                    out Dictionary<string, FoldScriptJsonValue> fields,
+                    out string id,
+                    out bool enabled) ||
+                !TryIdentifier(
+                    fields["panel"],
+                    path + ".panel",
+                    out string panelId) ||
+                !TryPositiveFloat(
+                    fields["majorRadius"],
+                    path + ".majorRadius",
+                    1000000000d,
+                    out float majorRadius) ||
+                !TryPositiveFloat(
+                    fields["minorRadius"],
+                    path + ".minorRadius",
+                    1000000000d,
+                    out float minorRadius) ||
+                !TryVector2(
+                    fields["majorAngleRange"],
+                    path + ".majorAngleRange",
+                    -360d,
+                    360d,
+                    out Vector2 majorAngleRange) ||
+                !TryVector2(
+                    fields["minorAngleRange"],
+                    path + ".minorAngleRange",
+                    -360d,
+                    360d,
+                    out Vector2 minorAngleRange) ||
+                !TryToroidalWrapDirection(
+                    fields["wrapDirection"],
+                    path + ".wrapDirection",
+                    out ToroidalWrapDirection wrapDirection))
+            {
+                return null;
+            }
+
+            return new FoldScriptToroidalWrapOperation
+            {
+                Id = id,
+                Enabled = enabled,
+                PanelId = panelId,
+                MajorRadius = majorRadius,
+                MinorRadius = minorRadius,
+                MajorAngleRange = majorAngleRange,
+                MinorAngleRange = minorAngleRange,
+                WrapDirection = wrapDirection
+            };
+        }
+
         private FoldScriptSolidifyOperation DecodeSolidify(
             FoldScriptJsonValue value,
             string path)
@@ -1168,6 +1266,10 @@ namespace FoldCanvas
             else if (operation is FoldScriptSphericalWrapOperation sphere)
             {
                 panelId = sphere.PanelId;
+            }
+            else if (operation is FoldScriptToroidalWrapOperation torus)
+            {
+                panelId = torus.PanelId;
             }
             else if (operation is FoldScriptStitchOperation stitch)
             {
@@ -1683,6 +1785,30 @@ namespace FoldCanvas
             if (text == "merge") { result = SphericalPoleMode.Merge; return true; }
             if (text == "keepFan") { result = SphericalPoleMode.KeepFan; return true; }
             AddStructureError($"{path} has an unsupported spherical pole mode.");
+            return false;
+        }
+
+        private bool TryToroidalWrapDirection(
+            FoldScriptJsonValue value,
+            string path,
+            out ToroidalWrapDirection result)
+        {
+            result = default;
+            if (!TryString(value, path, out string text)) return false;
+            if (text == "majorAlongU")
+            {
+                result = ToroidalWrapDirection.MajorAlongU;
+                return true;
+            }
+
+            if (text == "majorAlongV")
+            {
+                result = ToroidalWrapDirection.MajorAlongV;
+                return true;
+            }
+
+            AddStructureError(
+                $"{path} must be majorAlongU or majorAlongV.");
             return false;
         }
 

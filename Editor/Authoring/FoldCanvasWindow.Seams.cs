@@ -164,6 +164,7 @@ namespace FoldCanvas.Editor
                 "Boundary A",
                 seam.A,
                 true));
+            AddBoundarySpanFields(root, seam.A, true);
 
             Label bTitle = new Label("Endpoint B");
             bTitle.AddToClassList("section-title");
@@ -176,6 +177,7 @@ namespace FoldCanvas.Editor
                 "Boundary B",
                 seam.B,
                 false));
+            AddBoundarySpanFields(root, seam.B, false);
 
             EnumField mode = new EnumField("Mode", seam.Mode);
             mode.RegisterValueChangedCallback(evt =>
@@ -256,7 +258,8 @@ namespace FoldCanvas.Editor
                             controller.FindPanel(evt.newValue);
                         IReadOnlyList<string> boundaries =
                             FoldCanvasAuthoringController.GetBoundaryIds(panel);
-                        BoundaryReference replacement = new BoundaryReference(
+                        BoundaryReference replacement = ReplaceTarget(
+                            endpoint,
                             evt.newValue,
                             boundaries.Count > 0 ? boundaries[0] : null);
                         if (endpointA)
@@ -307,18 +310,95 @@ namespace FoldCanvas.Editor
                     {
                         if (endpointA)
                         {
-                            changed.A = new BoundaryReference(
+                            changed.A = ReplaceTarget(
+                                changed.A,
                                 changed.A.PanelId,
                                 evt.newValue);
                         }
                         else
                         {
-                            changed.B = new BoundaryReference(
+                            changed.B = ReplaceTarget(
+                                changed.B,
                                 changed.B.PanelId,
                                 evt.newValue);
                         }
                     }));
             return popup;
+        }
+
+        private void AddBoundarySpanFields(
+            VisualElement root,
+            BoundaryReference endpoint,
+            bool endpointA)
+        {
+            Toggle useSpan = new Toggle("Use Boundary Span")
+            {
+                value = endpoint.UseSpan
+            };
+            useSpan.RegisterValueChangedCallback(evt =>
+                MutateSelectedSeam(
+                    "Toggle Seam Boundary Span",
+                    changed =>
+                    {
+                        BoundaryReference current = endpointA
+                            ? changed.A
+                            : changed.B;
+                        BoundaryReference replacement = evt.newValue
+                            ? new BoundaryReference(
+                                current.PanelId,
+                                current.BoundaryId,
+                                current.Span)
+                            : new BoundaryReference(
+                                current.PanelId,
+                                current.BoundaryId);
+                        if (endpointA)
+                        {
+                            changed.A = replacement;
+                        }
+                        else
+                        {
+                            changed.B = replacement;
+                        }
+                    }));
+            root.Add(useSpan);
+
+            Vector2Field span = new Vector2Field("Normalized Span")
+            {
+                value = endpoint.Span
+            };
+            span.SetEnabled(endpoint.UseSpan);
+            span.RegisterValueChangedCallback(evt =>
+                MutateSelectedSeam(
+                    "Edit Seam Boundary Span",
+                    changed =>
+                    {
+                        BoundaryReference current = endpointA
+                            ? changed.A
+                            : changed.B;
+                        BoundaryReference replacement = new BoundaryReference(
+                            current.PanelId,
+                            current.BoundaryId,
+                            evt.newValue);
+                        if (endpointA)
+                        {
+                            changed.A = replacement;
+                        }
+                        else
+                        {
+                            changed.B = replacement;
+                        }
+                    }));
+            root.Add(span);
+        }
+
+        private static BoundaryReference ReplaceTarget(
+            BoundaryReference source,
+            string panelId,
+            string boundaryId)
+        {
+            return source.UseSpan
+                ? new BoundaryReference(panelId, boundaryId, source.Span)
+                : new BoundaryReference(panelId, boundaryId);
         }
 
         private void MutateSelectedSeam(

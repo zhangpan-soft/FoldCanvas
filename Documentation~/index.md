@@ -1,7 +1,7 @@
 # FoldCanvas package documentation
 
 - [立项背景 / Why FoldCanvas exists](project-background.md)
-- [FoldScript JSON 字段与 `roll` / `sphericalWrap` 定义](foldscript-field-reference.md)
+- [FoldScript JSON 字段与 `roll` / `sphericalWrap` / `toroidalWrap` / boundary span 定义](foldscript-field-reference.md)
 - [Architecture](architecture.md)
 - [Geometry model](geometry-model.md)
 - [FoldScript specification](foldscript-spec.md)
@@ -11,6 +11,7 @@
 - [M07 geometry validation levels and report](geometry-validation.md)
 - [Editor workflow](editor-workflow.md)
 - [M06 authoring workspace and blank-to-cup proof](authoring-workspace.md)
+- [M09 torus and handled-cup topology sample](../Samples~/Topology/README.md)
 - [AI integration contract](ai-integration.md)
 - [Roadmap](roadmap.md)
 - [Glossary](glossary.md)

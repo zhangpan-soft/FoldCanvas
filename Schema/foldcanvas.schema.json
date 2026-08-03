@@ -69,6 +69,7 @@
           { "$ref": "#/$defs/fold" },
           { "$ref": "#/$defs/roll" },
           { "$ref": "#/$defs/sphericalWrap" },
+          { "$ref": "#/$defs/toroidalWrap" },
           { "$ref": "#/$defs/stitch" },
           { "$ref": "#/$defs/solidify" }
         ]
@@ -289,6 +290,17 @@
         "boundary": {
           "description": "Generated boundary ID, such as uMin, uMax, vMin, vMax, or perimeter.",
           "$ref": "#/$defs/id"
+        },
+        "span": {
+          "description": "Optional normalized non-wrapping arc-length interval [startT,endT] in authored boundary order. Runtime validation requires startT < endT. Omission selects the complete boundary.",
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "type": "number", "minimum": 0, "maximum": 1 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         }
       }
     },
@@ -576,6 +588,74 @@
         "subdivisionMode": {
           "description": "M05 panelGrid uses the panel's authored U/V segment counts. Adaptive policies are not implemented.",
           "const": "panelGrid"
+        }
+      }
+    },
+    "toroidalWrap": {
+      "description": "M09 maps one explicit rectangle parameter panel into a toroidal surface in its current congruent planar frame. Boundary positions may coincide at full turns, but topology closes only through explicit Stitch-selected seams.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "panel",
+        "majorRadius",
+        "minorRadius",
+        "majorAngleRange",
+        "minorAngleRange",
+        "wrapDirection"
+      ],
+      "properties": {
+        "id": {
+          "description": "Unique operation identifier used by diagnostics.",
+          "$ref": "#/$defs/id"
+        },
+        "enabled": {
+          "description": "Whether this serialized operation executes.",
+          "type": "boolean",
+          "default": true
+        },
+        "type": {
+          "description": "Selects M09 toroidal parameter mapping.",
+          "const": "toroidalWrap"
+        },
+        "panel": {
+          "description": "ID of the rectangle parameter panel to map.",
+          "$ref": "#/$defs/id"
+        },
+        "majorRadius": {
+          "description": "Positive distance from the resolved frame origin to the tube centerline, in document units. Runtime requires majorRadius > minorRadius.",
+          "$ref": "#/$defs/positiveNumber"
+        },
+        "minorRadius": {
+          "description": "Positive tube radius in document units. Runtime requires minorRadius < majorRadius.",
+          "$ref": "#/$defs/positiveNumber"
+        },
+        "majorAngleRange": {
+          "description": "Signed [start,end] centerline-angle range in degrees. Runtime requires a non-zero span of at most one turn.",
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": -360, "maximum": 360 },
+            { "type": "number", "minimum": -360, "maximum": 360 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "minorAngleRange": {
+          "description": "Signed [start,end] tube-profile-angle range in degrees. Runtime requires a non-zero span of at most one turn.",
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": -360, "maximum": 360 },
+            { "type": "number", "minimum": -360, "maximum": 360 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "wrapDirection": {
+          "description": "majorAlongU maps source U to the centerline angle and V to the tube profile; majorAlongV swaps those roles.",
+          "enum": ["majorAlongU", "majorAlongV"]
         }
       }
     },

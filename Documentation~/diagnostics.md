@@ -39,6 +39,7 @@ compiler stage and source order.
 | FC5xxx | mesh validation |
 | FC6xxx | spherical mapping and closed-sphere validation |
 | FC7xxx | FoldScript interchange, path safety, and repair responses |
+| FC8xxx | boundary spans and toroidal mapping |
 
 ## Initial codes
 
@@ -147,10 +148,21 @@ compiler stage and source order.
 - `FC7010 InvalidFoldScriptReference`
 - `FC7011 InvalidRepairResponse`
 - `FC7012 DuplicateFoldScriptProperty`
+- `FC8001 InvalidBoundarySpan`
+- `FC8002 ToroidalWrapTargetMissing`
+- `FC8003 UnsupportedToroidalWrapPanelShape`
+- `FC8004 NonFiniteToroidalWrapParameter`
+- `FC8005 InvalidToroidalRadius`
+- `FC8006 CollapsedToroidalRange`
+- `FC8007 UnsupportedToroidalMultiTurn`
+- `FC8008 UnsupportedToroidalEmbedding`
+- `FC8009 InsufficientToroidalTessellation`
+- `FC8010 ToroidalWindingFailed`
+- `FC8011 InvalidToroidalWrapDirection`
 
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
 deformation propagation exists, a later RigidTransform, Fold, Roll, or
-SphericalWrap may not target a panel selected by an earlier Stitch. Solidify
+SphericalWrap or ToroidalWrap may not target a panel selected by an earlier Stitch. Solidify
 may follow because it consumes complete welded topology groups. Source
 preflight also returns `FC2010` when a Stitch-selected endpoint's enabled
 SphericalWrap is not strictly earlier than that Stitch. This form carries
@@ -178,6 +190,16 @@ targets a spherical component from running before that component's final
 touching Stitch and pre-Solidify sphere validation. `FC2001`, `FC2003`,
 `FC2004`, and `FC2008` also protect component planning from invalid
 Stitch-selected seam, panel, and boundary references.
+
+`FC8001` rejects a non-finite, wrapping, reversed, collapsed, or out-of-range
+boundary span before correspondence mutates geometry. Omission is the legacy
+complete-boundary path. `FC8002`-`FC8011` reject missing or non-rectangular
+ToroidalWrap targets, non-finite fields, radii that violate
+`majorRadius > minorRadius > 0`, collapsed or multi-turn angular ranges,
+non-congruent/non-planar current embeddings, insufficient full-turn source
+segments, a surface whose emitted winding cannot be made consistently
+tube-outward, or an invalid native direction enum. These diagnostics never
+substitute a primitive torus or silently close coincident parameter boundaries.
 
 `FC2014` enforces the shared JSON/native `sampleCount` maximum of `8192`.
 `FC5005` and `FC5006` report cumulative generated vertex or triangle budget
@@ -268,6 +290,10 @@ Do not silently:
 - leave a newly inserted spherical seam sample on a straight chord
 - collapse a rectangular grid into a pole after deformation and call it cleanup
 - substitute a Unity Sphere when an explicit gore seam graph is invalid
+- substitute a Unity torus when an explicit toroidal parameter surface or
+  either cycle-closing seam is invalid
+- turn coincident full-turn toroidal boundary positions into an implicit weld
+- wrap or clamp an invalid boundary span
 - weld boundaries with incompatible intent
 - reverse a seam without recording it
 - drop triangles

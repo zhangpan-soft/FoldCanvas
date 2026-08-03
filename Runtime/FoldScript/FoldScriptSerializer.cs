@@ -264,7 +264,20 @@ namespace FoldCanvas
                 FoldScriptJsonCanonicalWriter.AppendEscapedString(builder, name);
                 builder.Append(": {\n");
                 StringProperty(indent + 1, "panel", reference.PanelId, true);
-                StringProperty(indent + 1, "boundary", reference.BoundaryId, false);
+                StringProperty(
+                    indent + 1,
+                    "boundary",
+                    reference.BoundaryId,
+                    reference.UseSpan);
+                if (reference.UseSpan)
+                {
+                    Vector2Property(
+                        indent + 1,
+                        "span",
+                        reference.Span,
+                        false,
+                        null);
+                }
                 Indent(indent);
                 builder.Append(comma ? "},\n" : "}\n");
             }
@@ -454,6 +467,48 @@ namespace FoldCanvas
                                     operation,
                                     "spherical subdivision mode",
                                     (int)sphere.SubdivisionMode),
+                            false);
+                        return;
+                    case FoldScriptToroidalWrapOperation torus:
+                        StringProperty(3, "type", "toroidalWrap", true);
+                        StringProperty(3, "panel", torus.PanelId, true);
+                        NumberProperty(
+                            3,
+                            "majorRadius",
+                            torus.MajorRadius,
+                            true,
+                            operation);
+                        NumberProperty(
+                            3,
+                            "minorRadius",
+                            torus.MinorRadius,
+                            true,
+                            operation);
+                        Vector2Property(
+                            3,
+                            "majorAngleRange",
+                            torus.MajorAngleRange,
+                            true,
+                            operation);
+                        Vector2Property(
+                            3,
+                            "minorAngleRange",
+                            torus.MinorAngleRange,
+                            true,
+                            operation);
+                        StringProperty(
+                            3,
+                            "wrapDirection",
+                            torus.WrapDirection ==
+                                ToroidalWrapDirection.MajorAlongU
+                                ? "majorAlongU"
+                                : torus.WrapDirection ==
+                                    ToroidalWrapDirection.MajorAlongV
+                                    ? "majorAlongV"
+                                    : throw UnsupportedEnum(
+                                        operation,
+                                        "toroidal wrap direction",
+                                        (int)torus.WrapDirection),
                             false);
                         return;
                     case FoldScriptStitchOperation stitch:

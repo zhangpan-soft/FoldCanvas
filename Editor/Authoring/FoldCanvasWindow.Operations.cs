@@ -189,6 +189,9 @@ namespace FoldCanvas.Editor
                 case SphericalWrapOperationDefinition sphericalWrap:
                     BuildSphericalWrapFields(root, sphericalWrap);
                     break;
+                case ToroidalWrapOperationDefinition toroidalWrap:
+                    BuildToroidalWrapFields(root, toroidalWrap);
+                    break;
                 default:
                     root.Add(new HelpBox(
                         "This operation type has no M06 form.",
@@ -580,6 +583,83 @@ namespace FoldCanvas.Editor
                             .SubdivisionMode =
                                 (SphericalSubdivisionMode)evt.newValue));
             root.Add(subdivisionMode);
+        }
+
+        private void BuildToroidalWrapFields(
+            VisualElement root,
+            ToroidalWrapOperationDefinition toroidalWrap)
+        {
+            root.Add(CreatePanelPopup(toroidalWrap.PanelId, panelId =>
+                MutateSelectedOperation(
+                    "Target Toroidal Wrap Panel",
+                    changed =>
+                        ((ToroidalWrapOperationDefinition)changed).PanelId =
+                            panelId)));
+
+            FloatField majorRadius = new FloatField("Major Radius")
+            {
+                value = toroidalWrap.MajorRadius
+            };
+            majorRadius.RegisterValueChangedCallback(evt =>
+                MutateSelectedOperation(
+                    "Edit Toroidal Major Radius",
+                    changed =>
+                        ((ToroidalWrapOperationDefinition)changed)
+                            .MajorRadius = evt.newValue));
+            root.Add(majorRadius);
+
+            FloatField minorRadius = new FloatField("Minor Radius")
+            {
+                value = toroidalWrap.MinorRadius
+            };
+            minorRadius.RegisterValueChangedCallback(evt =>
+                MutateSelectedOperation(
+                    "Edit Toroidal Minor Radius",
+                    changed =>
+                        ((ToroidalWrapOperationDefinition)changed)
+                            .MinorRadius = evt.newValue));
+            root.Add(minorRadius);
+
+            Vector2Field majorRange = new Vector2Field("Major Angle Range")
+            {
+                value = toroidalWrap.MajorAngleRange
+            };
+            majorRange.RegisterValueChangedCallback(evt =>
+                MutateSelectedOperation(
+                    "Edit Toroidal Major Range",
+                    changed =>
+                        ((ToroidalWrapOperationDefinition)changed)
+                            .MajorAngleRange = evt.newValue));
+            root.Add(majorRange);
+
+            Vector2Field minorRange = new Vector2Field("Minor Angle Range")
+            {
+                value = toroidalWrap.MinorAngleRange
+            };
+            minorRange.RegisterValueChangedCallback(evt =>
+                MutateSelectedOperation(
+                    "Edit Toroidal Minor Range",
+                    changed =>
+                        ((ToroidalWrapOperationDefinition)changed)
+                            .MinorAngleRange = evt.newValue));
+            root.Add(minorRange);
+
+            EnumField direction = new EnumField(
+                "Wrap Direction",
+                toroidalWrap.WrapDirection);
+            direction.RegisterValueChangedCallback(evt =>
+                MutateSelectedOperation(
+                    "Edit Toroidal Direction",
+                    changed =>
+                        ((ToroidalWrapOperationDefinition)changed)
+                            .WrapDirection =
+                                (ToroidalWrapDirection)evt.newValue));
+            root.Add(direction);
+
+            root.Add(new HelpBox(
+                "ToroidalWrap deforms a rectangle into a toroidal patch. " +
+                "Close each periodic cycle with explicit Stitch seams.",
+                HelpBoxMessageType.Info));
         }
 
         private VisualElement CreatePanelPopup(

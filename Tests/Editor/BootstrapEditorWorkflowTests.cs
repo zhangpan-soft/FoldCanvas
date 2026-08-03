@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
 using UnityEditor;
@@ -23,6 +24,12 @@ namespace FoldCanvas.Tests
             SampleFolder + "/M05SphereCanvas.png";
         private const string M05AssetPath =
             SampleFolder + "/M05SphereGoldenFoldCanvas.asset";
+        private const string M09TexturePath =
+            SampleFolder + "/M09TopologyCanvas.png";
+        private const string M09TorusAssetPath =
+            SampleFolder + "/M09TorusFoldCanvas.asset";
+        private const string M09HandleCupAssetPath =
+            SampleFolder + "/M09HandleCupFoldCanvas.asset";
 
         private UnityEngine.Object previousSelection;
 
@@ -1000,6 +1007,195 @@ namespace FoldCanvas.Tests
             });
         }
 
+        [Test]
+        public void CreateM09TopologySamples_TwiceKeepsGuidsAndCompilesProofs()
+        {
+            FoldCanvas.Editor.FoldCanvasSampleCreator
+                .CreateM09TopologySamples();
+            string textureGuid =
+                AssetDatabase.AssetPathToGUID(M09TexturePath);
+            string torusGuid =
+                AssetDatabase.AssetPathToGUID(M09TorusAssetPath);
+            string cupGuid =
+                AssetDatabase.AssetPathToGUID(M09HandleCupAssetPath);
+            FoldCanvasAsset torus =
+                AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(
+                    M09TorusAssetPath);
+            FoldCanvasAsset cup =
+                AssetDatabase.LoadAssetAtPath<FoldCanvasAsset>(
+                    M09HandleCupAssetPath);
+            Assert.That(textureGuid, Is.Not.Empty);
+            Assert.That(torusGuid, Is.Not.Empty);
+            Assert.That(cupGuid, Is.Not.Empty);
+            Assert.That(
+                torus.Operations[0],
+                Is.TypeOf<ToroidalWrapOperationDefinition>());
+            Assert.That(cup.Panels.Count, Is.EqualTo(3));
+            Assert.That(cup.Seams[2].B.UseSpan, Is.True);
+
+            FoldCanvasCompileResult torusCompile =
+                FoldCanvasCompiler.Compile(torus);
+            FoldCanvasCompileResult cupCompile =
+                FoldCanvasCompiler.Compile(cup);
+            Assert.That(
+                torusCompile.Success,
+                Is.True,
+                JoinDiagnostics(torusCompile));
+            Assert.That(
+                torusCompile.GeometryValidationReport.OpenEdgeCount,
+                Is.Zero);
+            Assert.That(
+                cupCompile.Success,
+                Is.True,
+                JoinDiagnostics(cupCompile));
+            Assert.That(
+                cupCompile.ClosedVolumeReport.IsSingleClosedVolume,
+                Is.True);
+            UnityEngine.Object.DestroyImmediate(torusCompile.Mesh);
+            UnityEngine.Object.DestroyImmediate(cupCompile.Mesh);
+
+            FoldCanvas.Editor.FoldCanvasSampleCreator
+                .CreateM09TopologySamples();
+            Assert.That(
+                AssetDatabase.AssetPathToGUID(M09TexturePath),
+                Is.EqualTo(textureGuid));
+            Assert.That(
+                AssetDatabase.AssetPathToGUID(M09TorusAssetPath),
+                Is.EqualTo(torusGuid));
+            Assert.That(
+                AssetDatabase.AssetPathToGUID(M09HandleCupAssetPath),
+                Is.EqualTo(cupGuid));
+        }
+
+        [Test]
+        public void CreateM09TopologyProof_IsOwnedIdempotentAndReusesInactive()
+        {
+            InTemporaryScene(scene =>
+            {
+                GameObject userCameraObject =
+                    new GameObject("User Main Camera", typeof(Camera));
+                userCameraObject.tag = "MainCamera";
+                userCameraObject.transform.SetPositionAndRotation(
+                    new Vector3(7f, 8f, 9f),
+                    Quaternion.Euler(12f, 34f, 56f));
+                Camera userCamera =
+                    userCameraObject.GetComponent<Camera>();
+                userCamera.fieldOfView = 47f;
+                string serializedCamera =
+                    EditorJsonUtility.ToJson(userCamera);
+                string serializedTransform =
+                    EditorJsonUtility.ToJson(userCameraObject.transform);
+
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM09TopologyProof();
+                GameObject firstRoot = FindM09PreviewRoot(scene);
+                Assert.That(firstRoot.tag, Is.EqualTo("EditorOnly"));
+                Assert.That(
+                    firstRoot.transform.Find("Torus Textured"),
+                    Is.Not.Null);
+                Assert.That(
+                    firstRoot.transform.Find("Torus Solid"),
+                    Is.Not.Null);
+                AssertLineMesh(
+                    firstRoot.transform.Find("Torus Wireframe"));
+                Assert.That(
+                    firstRoot.transform.Find("Handle Cup Textured"),
+                    Is.Not.Null);
+                Assert.That(
+                    firstRoot.transform.Find("Handle Cup Solid"),
+                    Is.Not.Null);
+                AssertLineMesh(
+                    firstRoot.transform.Find("Handle Cup Wireframe"));
+                Assert.That(
+                    firstRoot.transform.Find("Topology Report")
+                        .GetComponent<TextMesh>().text,
+                    Does.Contain("TORUS  Euler 0  open 0"));
+                FoldCanvas.Editor.FoldCanvasSampleCreator.UseM09TorusView();
+                Assert.That(
+                    firstRoot.transform.Find("Torus Solid").gameObject
+                        .activeSelf,
+                    Is.True);
+                Assert.That(
+                    firstRoot.transform.Find("Handle Cup Solid").gameObject
+                        .activeSelf,
+                    Is.False);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .UseM09HandleCupView();
+                Assert.That(
+                    firstRoot.transform.Find("Torus Solid").gameObject
+                        .activeSelf,
+                    Is.False);
+                Assert.That(
+                    firstRoot.transform.Find("Handle Cup Solid").gameObject
+                        .activeSelf,
+                    Is.True);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .UseM09OverviewView();
+                Assert.That(
+                    firstRoot.transform.Find("Torus Solid").gameObject
+                        .activeSelf,
+                    Is.True);
+                Assert.That(
+                    firstRoot.transform.Find("Handle Cup Solid").gameObject
+                        .activeSelf,
+                    Is.True);
+                Assert.That(
+                    firstRoot.transform.Find("Topology Report").gameObject
+                        .activeSelf,
+                    Is.True);
+                Camera[] firstCameras =
+                    firstRoot.GetComponentsInChildren<Camera>(true);
+                Assert.That(firstCameras.Length, Is.EqualTo(1));
+                Assert.That(firstCameras[0].CompareTag("MainCamera"), Is.False);
+                int rootId = firstRoot.GetInstanceID();
+                int cameraId = firstCameras[0].GetInstanceID();
+                int childCount = firstRoot.transform.childCount;
+                Dictionary<string, int> childIds =
+                    new Dictionary<string, int>();
+                for (int i = 0; i < childCount; i++)
+                {
+                    Transform child = firstRoot.transform.GetChild(i);
+                    childIds.Add(child.name, child.gameObject.GetInstanceID());
+                    child.gameObject.SetActive(false);
+                }
+
+                firstRoot.SetActive(false);
+                int objectCount = CountSceneObjects(scene);
+                FoldCanvas.Editor.FoldCanvasSampleCreator
+                    .CreateM09TopologyProof();
+                GameObject secondRoot = FindM09PreviewRoot(scene);
+                Assert.That(secondRoot.GetInstanceID(), Is.EqualTo(rootId));
+                Assert.That(secondRoot.activeSelf, Is.True);
+                Assert.That(
+                    CountSceneObjects(scene),
+                    Is.EqualTo(objectCount));
+                Assert.That(
+                    secondRoot.transform.childCount,
+                    Is.EqualTo(childCount));
+                foreach (KeyValuePair<string, int> pair in childIds)
+                {
+                    Transform child = secondRoot.transform.Find(pair.Key);
+                    Assert.That(child, Is.Not.Null, pair.Key);
+                    Assert.That(
+                        child.gameObject.GetInstanceID(),
+                        Is.EqualTo(pair.Value),
+                        pair.Key);
+                    Assert.That(child.gameObject.activeSelf, Is.True, pair.Key);
+                }
+
+                Assert.That(
+                    secondRoot.GetComponentInChildren<Camera>(true)
+                        .GetInstanceID(),
+                    Is.EqualTo(cameraId));
+                Assert.That(
+                    EditorJsonUtility.ToJson(userCamera),
+                    Is.EqualTo(serializedCamera));
+                Assert.That(
+                    EditorJsonUtility.ToJson(userCameraObject.transform),
+                    Is.EqualTo(serializedTransform));
+            });
+        }
+
         private static void InTemporaryScene(Action<Scene> assertion)
         {
             Scene previousScene = SceneManager.GetActiveScene();
@@ -1146,6 +1342,29 @@ namespace FoldCanvas.Tests
                     !EditorUtility.IsPersistent(objects[i]) &&
                     objects[i].scene == scene &&
                     objects[i].name == "FoldCanvas Sphere Root" &&
+                    objects[i].CompareTag("EditorOnly"))
+                {
+                    match = objects[i];
+                    matches++;
+                }
+            }
+
+            Assert.That(matches, Is.EqualTo(1));
+            return match;
+        }
+
+        private static GameObject FindM09PreviewRoot(Scene scene)
+        {
+            GameObject[] objects =
+                Resources.FindObjectsOfTypeAll<GameObject>();
+            GameObject match = null;
+            int matches = 0;
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] != null &&
+                    !EditorUtility.IsPersistent(objects[i]) &&
+                    objects[i].scene == scene &&
+                    objects[i].name == "FoldCanvas M09 Topology Root" &&
                     objects[i].CompareTag("EditorOnly"))
                 {
                     match = objects[i];

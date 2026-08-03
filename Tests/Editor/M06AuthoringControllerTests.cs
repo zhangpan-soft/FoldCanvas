@@ -147,6 +147,10 @@ namespace FoldCanvas.Tests
                 "perimeter",
                 SeamMode.Weld,
                 0.03d);
+            seam.A = new BoundaryReference(
+                wall.Id,
+                "vMin",
+                new Vector2(0.2f, 0.8f));
             FoldOperationDefinition place = controller.AddOperation(
                 FoldOperationType.RigidTransform,
                 wall.Id,
@@ -169,6 +173,12 @@ namespace FoldCanvas.Tests
                     wall.Id,
                     seam.Id,
                     0.07d);
+            ToroidalWrapOperationDefinition toroidalWrap =
+                (ToroidalWrapOperationDefinition)controller.AddOperation(
+                    FoldOperationType.ToroidalWrap,
+                    wall.Id,
+                    seam.Id,
+                    0.075d);
 
             Assert.That(
                 controller.RenamePanel(wall.Id, "cup-wall", 0.08d),
@@ -176,6 +186,10 @@ namespace FoldCanvas.Tests
 
             Assert.That(asset.Panels[0].Id, Is.EqualTo("cup-wall"));
             Assert.That(seam.A.PanelId, Is.EqualTo("cup-wall"));
+            Assert.That(seam.A.UseSpan, Is.True);
+            Assert.That(
+                seam.A.Span,
+                Is.EqualTo(new Vector2(0.2f, 0.8f)));
             Assert.That(
                 ((RigidTransformOperationDefinition)place).PanelId,
                 Is.EqualTo("cup-wall"));
@@ -184,6 +198,7 @@ namespace FoldCanvas.Tests
                 Is.EqualTo("cup-wall"));
             Assert.That(solidify.PanelIds, Does.Contain("cup-wall"));
             Assert.That(sphericalWrap.PanelId, Is.EqualTo("cup-wall"));
+            Assert.That(toroidalWrap.PanelId, Is.EqualTo("cup-wall"));
 
             Undo.FlushUndoRecordObjects();
             Undo.PerformUndo();

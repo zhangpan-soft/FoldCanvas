@@ -203,7 +203,7 @@ smoothing, remeshing, Mesh cleanup, or M08 import/AI behavior.
 
 ## M08: FoldScript and AI loop
 
-**Status:** implemented on `codex/m08-foldscript-ai`; awaiting human audit.
+**Status:** human-approved and merged through PR #7 as `dcc8574`.
 
 **Proof:** JSON round-trips canonically, invalid AI output is rejected safely,
 and a diagnostic drives a corrected second compile through the ordinary gates.
@@ -220,13 +220,33 @@ repair, import binary geometry, or change M00-M07 geometry semantics.
 
 ## M09: Non-trivial topology
 
-**Proof:** a cup handle and a torus compile through explicit loop topology.
+**Status:** implemented on `codex/m09-topology`; awaiting human audit.
 
-- tube/strip strategy
-- multiple closed boundaries
-- handle attachments
-- cyclic parameter domains
-- topology expectation tests
+**Proof:** one command creates two editable 2D sources and derived Unity views:
+a rectangular parameter panel mapped into a torus whose two cycles close only
+through explicit Weld seams, and a cup whose ordinary rectangular strip handle
+is positioned, folded twice, attached to two top-rim spans, and Solidified with
+the cup into one closed volume.
+
+- optional normalized non-wrapping boundary-reference spans, selected before
+  `reverseB`, with deterministic off-grid source-triangle subdivision
+- explicit `ToroidalWrap` in the panel's current congruent planar frame
+- signed major/minor angle ranges and U/V axis assignment
+- `majorRadius > minorRadius > 0`, one-turn limits, and full-turn sampling gates
+- outward winding without two-sided-material dependence
+- two explicit seam closures and retained UV attribute seams for the torus
+- reusable cup-rim span attachments using existing RigidTransform, Fold,
+  Stitch, and Solidify operations
+- torus Euler characteristic `0`, manifoldness, radius, winding, UV, and
+  deterministic-output tests
+- handle attachment gap/incidence plus final connected closed-volume tests
+- owned Editor-only textured, solid-color, wireframe, source-canvas, camera,
+  and topology-report proof objects
+
+M09 does not add an arbitrary sweep path, interior panel holes, Boolean/CSG,
+implicit proximity welding, multiple toroidal turns, bevel, subdivision,
+smoothing, remeshing, or Mesh cleanup. The appearance canvas, panels, boundary
+spans, seam graph, and ordered operations remain source; Meshes remain derived.
 
 ## M10: Extensibility and ecosystem
 

@@ -29,6 +29,7 @@ Validate:
 - existing panel and boundary references
 - finite numeric parameters
 - operation ordering prerequisites
+- optional boundary-reference spans satisfying `0 <= startT < endT <= 1`
 - native and JSON seam `sampleCount` inside the shared `[0,8192]` contract
 
 One `GeometryBudget` is created for the compile. Panel tessellation, Stitch
@@ -184,6 +185,35 @@ product. The compiler stores immutable frame, range, pole, source, radius, and
 area-stretch metadata for seam projection, validation, and Editor
 visualization.
 
+### M09 current-frame ToroidalWrap
+
+`ToroidalWrap` maps one existing rectangle parameter panel; it never replaces
+the source with a torus primitive. The complete current panel must be a finite,
+non-degenerate, congruent planar embedding. The compiler resolves the same
+ordered current frame used by Roll and SphericalWrap and preserves prior
+translation, rotation, or unit reflection.
+
+For major radius `R`, minor radius `r`, major angle `a`, and minor angle `b`:
+
+```text
+radial(a) = cos(a) * CurrentU + sin(a) * CurrentNormal
+P(a,b) = CurrentOrigin
+       + (R + r*cos(b)) * radial(a)
+       + r*sin(b) * CurrentV
+outward(a,b) = cos(b) * radial(a) + sin(b) * CurrentV
+```
+
+`wrapDirection` assigns the major parameter to source U or V. M09 requires
+`R > r > 0`, non-zero ranges no larger than one signed turn, and at least three
+source segments for each full-turn axis. It rejects spindle/horn and layered
+surfaces rather than emitting known self-overlap. The executor normalizes one
+panel-wide winding decision, validates every non-degenerate triangle against
+the analytical tube-outward direction, and preserves source UV/provenance.
+
+Full-turn minimum and maximum boundary positions may coincide, but their
+render vertices and topology IDs remain separate. Stage 4 closes each cycle
+only when an explicit Stitch-selected Weld seam requests it.
+
 ## Stage 4: explicit seam resolution
 
 Seam definitions are declarative source records. Their presence alone does not
@@ -191,20 +221,29 @@ execute or reject geometry. A Stitch operation resolves only its ordered seam
 ID list. M04 processes each selected seam as follows:
 
 1. resolve both ordered boundaries and their open/closed state
-2. apply the declared B orientation
-3. parameterize each boundary by normalized current-space cumulative arc
-   length
-4. retain the sorted union of both authored breakpoint sets
-5. when `sampleCount > 0`, add a uniform minimum-density parameter grid;
+2. parameterize each complete boundary by normalized current-space cumulative
+   arc length
+3. select each optional finite, non-wrapping authored span before orientation;
+   omission retains the exact complete-boundary path
+4. treat both correspondence paths as open chains when either endpoint uses a
+   span, then apply the declared B orientation
+5. normalize each selected path locally and retain the sorted union of both
+   authored breakpoint sets
+6. when `sampleCount > 0`, add a uniform minimum-density parameter grid;
    native and JSON inputs share the maximum value `8192`
-6. sort all missing parameters, build triangle-edge adjacency once, and split
+7. sort all missing parameters, build triangle-edge adjacency once, and split
    each affected boundary segment as one deterministic triangle fan
-7. interpolate current position, immutable source position, UV0, panel
+8. interpolate current position, immutable source position, UV0, panel
    ownership, and deterministic provenance
-8. for `Weld`, require every pair within `compile.weldEpsilon`, union logical
+9. for `Weld`, require every pair within `compile.weldEpsilon`, union logical
    topology IDs, and snap render copies to the deterministic representative
-9. for `Bridge`, emit a consistently wound strip without unioning the two
+10. for `Bridge`, emit a consistently wound strip without unioning the two
    boundary topology sets
+
+A span satisfies `0 <= startT < endT <= 1` in authored boundary order. If a
+span endpoint is not an existing sample, the same triangle-edge subdivision
+path inserts it into the real source surface. A Stitch failure restores those
+insertions, triangle fans, topology IDs, boundaries, and geometry budget.
 
 When a selected boundary belongs to a spherical surface, inserted samples
 retain the interpolated immutable source coordinate and UV but recompute their
@@ -235,7 +274,7 @@ string dictionary keys as defense in depth.
 
 Until shared topology groups participate in deformation propagation, the
 compiler treats every panel selected by a Stitch as position-final. A later
-`RigidTransform`, `Fold`, `Roll`, or `SphericalWrap` targeting any such panel fails with
+`RigidTransform`, `Fold`, `Roll`, `SphericalWrap`, or `ToroidalWrap` targeting any such panel fails with
 `FC2010 StitchMustBeTerminalForSelectedPanels` and returns no Mesh. Operations
 on unrelated panels remain legal.
 
@@ -381,7 +420,7 @@ M08 copies ordered compiler diagnostics into a provider-neutral repair request:
 
 ```text
 schemaVersion=0.1
-compilerVersion=0.1.0-preview.16
+compilerVersion=0.1.0-preview.17
 assetId=cup
 source=<canonical complete FoldScript>
 diagnostics[0].code=FC3022

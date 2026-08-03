@@ -1,33 +1,33 @@
 # Current task
 
-Execute **M08: FoldScript import/export and AI repair contract**.
+Execute **M09: cyclic topology, handle cup, and torus**.
 
 Authoritative task file:
-[`Codex/M08_FOLDSCRIPT_AI.md`](Codex/M08_FOLDSCRIPT_AI.md)
+[`Codex/M09_TOPOLOGY.md`](Codex/M09_TOPOLOGY.md)
 
-M07 PR #6 was human-approved and merged into `main` as `9ca0d68`. M08
-development occurs on `codex/m08-foldscript-ai`, created from that merged
-commit.
+M08 PR #7 was human-approved and merged into `main` as `dcc8574`. M09
+development occurs on `codex/m09-topology`, created from that merged commit.
 
-M08 makes FoldScript `0.1` executable as the portable source contract:
+M09 proves that FoldCanvas can express deterministic loop topology from its
+authoritative two-dimensional source:
 
-- parse untrusted JSON into explicit FoldScript DTOs;
-- emit canonical JSON with fixed property order, source array order, invariant
-  numeric formatting, and stable escaping;
-- convert explicitly between DTOs and `FoldCanvasAsset` without serializing
-  Unity object internals;
-- retain document identity, units, appearance reference, and canvas metadata;
-- reject malformed, oversized, unknown-version, unknown-operation,
-  non-finite, duplicate-ID, and unsafe-path input with stable diagnostics;
-- expose provider-neutral proposal/repair contracts and a compact diagnostic
-  payload whose corrected FoldScript must pass the same importer and compiler;
-- provide Editor import/export actions whose appearance resolution is confined
-  to approved Unity project paths.
+- map one rectangle parameter panel to a toroidal surface through an explicit
+  `ToroidalWrap` operation;
+- close the torus U and V cycles only through declared Weld seams selected by
+  Stitch;
+- add optional normalized, non-wrapping boundary spans so a seam can select a
+  stable sub-chain of an authored boundary;
+- form a cup handle from an ordinary rectangular strip using existing rigid
+  transforms and edge-aligned folds;
+- weld the strip's two attachment boundaries to two cup-rim spans before one
+  final Solidify;
+- prove deterministic topology, UV behavior, radii, manifoldness, and closed
+  volume through Edit Mode tests and visible Unity proof assets.
 
-The Runtime assembly remains offline and provider-independent. It must not
-reference `UnityEditor`, access arbitrary files, add a JSON/AI/network package,
-or accept binary mesh payloads. Generated Meshes remain derived artifacts.
+ADR 0007 defines the M09 topology vocabulary. Generated Meshes remain derived
+artifacts; the 2D canvas, panels, boundary spans, seams, and ordered operations
+remain the editable source.
 
-M08 does not implement a model provider, network transport, automatic repair,
-M09 handle/torus topology, Bevel, subdivision, smoothing, remesh, or Mesh
-cleanup.
+M09 does not implement arbitrary sweep paths, circular holes in panel
+interiors, Boolean/CSG operations, bevels, subdivision, smoothing, remeshing,
+mesh cleanup, skeletal deformation, or later milestones.

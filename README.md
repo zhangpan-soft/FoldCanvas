@@ -31,8 +31,8 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 ## Status
 
 The repository currently contains the **M05 spherical-surface compiler, M06
-Editor authoring workspace, M07 geometry validator, and M08 FoldScript
-interchange/repair boundary**:
+Editor authoring workspace, M07 geometry validator, M08 FoldScript
+interchange/repair boundary, and M09 cyclic-topology proof**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -96,6 +96,16 @@ interchange/repair boundary**:
   and compiler, with no model SDK or network dependency in the package
 - M06 Import JSON, Export JSON, and Copy Repair Payload actions with explicit
   Editor asset ownership, Undo-aware replacement, and failed-import isolation
+- Optional normalized boundary-reference spans with deterministic source-
+  triangle subdivision for off-grid endpoints
+- `ToroidalWrap` over an authored rectangle, with signed major/minor ranges,
+  current-frame preservation, outward winding, and explicit Weld-only cycle
+  closure
+- An editor-generated torus with two authored closure seams, Euler
+  characteristic zero, and distinct source UV copies at both topology seams
+- An editor-generated handled cup whose ordinary rectangular strip is placed,
+  folded twice, welded to two top-rim spans, and Solidified into one closed
+  connected volume
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
@@ -150,6 +160,16 @@ complete replacement FoldScript. The package itself performs no provider call,
 authentication, or automatic repair. See the
 [M08 Runtime and Editor workflow](Documentation~/foldscript-runtime.md).
 
+M09 proves non-trivial loop topology without hiding a primitive or editing the
+generated Mesh. `ToroidalWrap` maps one explicit rectangular source panel to a
+toroidal surface, while two declared Weld seams separately close its major and
+minor cycles. Boundary references may select normalized non-wrapping spans, so
+the handle proof reuses an ordinary rectangle strip, existing rigid transforms
+and edge-aligned folds, two cup-rim attachment spans, terminal Stitch, and one
+final Solidify. The torus and handled cup both retain source UV/provenance and
+must pass deterministic logical-topology tests. See the
+[M09 topology sample guide](Samples~/Topology/README.md).
+
 ## Design principles
 
 1. **The 2D source is authoritative.** Generated meshes are disposable build artifacts.
@@ -189,7 +209,10 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
    validation hierarchy. Use
    `Tools > FoldCanvas > Create Sphere Proof` for the M05 2D-gore source,
    textured and one-sided solid spheres, logical wireframe, seam/pole overlays,
-   UV-stretch view, radius-error view, and validation report.
+   UV-stretch view, radius-error view, and validation report. Use
+   `Tools > FoldCanvas > Create M09 Topology Proof` for the explicit two-cycle
+   torus and folded-strip handled cup with textured, one-sided solid, logical-
+   wireframe, source-canvas, and topology-report views.
 
 ## Continuous integration
 
@@ -259,8 +282,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M05 | Compile explicit 2D sphere gores into a validated closed sphere — implemented |
 | M06 | Split 2D canvas / 3D preview editor — implemented and merged |
 | M07 | Manifold, inversion, seam, and exact intersection validators — implemented and merged |
-| M08 | FoldScript import/export and AI feedback loop — implemented on review branch |
-| M09 | Handle cup, torus, and non-trivial topology |
+| M08 | FoldScript import/export and AI feedback loop — implemented and merged |
+| M09 | Handle cup, torus, boundary spans, and non-trivial topology — implemented on review branch |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 
