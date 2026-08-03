@@ -30,8 +30,8 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 ## Status
 
-The repository currently contains the **M05 spherical-surface compiler and
-M06 Editor authoring workspace**:
+The repository currently contains the **M05 spherical-surface compiler, M06
+Editor authoring workspace, and M07 geometry validator**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -76,6 +76,16 @@ M06 Editor authoring workspace**:
 - Rectangle/disk creation and canvas handles, named boundary/seam pairing,
   explicit ordered operation forms, structured diagnostic focus, Undo/Redo,
   revisioned debounced compilation, debug overlays, and valid-only Bake
+- Cumulative Basic, Standard, and Strict final-geometry validation with stable
+  root-cause precedence and a read-only report
+- Localized boundary, render/logical vertex, component, triangle-pair, and
+  logical-edge diagnostic context
+- Deterministic Strict sweep-and-prune plus exact non-adjacent triangle
+  intersection checks; broad-phase candidates alone are never reported as
+  confirmed collisions
+- Adversarial validator fixtures for malformed topology, open seams,
+  self-intersecting rolls, and thickness overlap, plus valid cup/sphere
+  false-positive regressions
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
@@ -104,13 +114,22 @@ with either endpoint in that component delays its report. The report is frozen
 after the last touching Stitch and before a Solidify touching the component.
 Every selected spherical endpoint must be wrapped before its Stitch; invalid
 order fails before tessellation and cannot emit a premature sphere report.
-It does not perform global triangle-triangle self-intersection detection.
+The sphere-specific report does not itself perform global triangle-triangle
+self-intersection detection. When `validationLevel` is `strict`, the later M07
+final-buffer report adds deterministic exact non-adjacent triangle evidence.
 
 M06 makes the same source model directly authorable without vertex editing.
 `Tools > FoldCanvas > Open Authoring Workspace` opens the 2D canvas, 3D
 preview, panel/operation/seam forms, diagnostics, and Bake controls. Preview
 objects are disposable Editor-only derivatives and never become source. See
 the [blank-source-to-cup walkthrough](Documentation~/authoring-workspace.md).
+
+M07 validates the final explicit geometry buffer without changing it. Basic
+protects structural safety, Standard adds logical topology, boundaries,
+executed Welds, components, and orientation, and Strict adds exact
+triangle-intersection checks behind a deterministic broad phase. Intentional
+open sheets and multi-part assets remain valid with warnings. See
+[M07 geometry validation](Documentation~/geometry-validation.md).
 
 ## Design principles
 
@@ -219,8 +238,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M03 | Roll a decorated wall into a cylindrical cup — complete |
 | M04 | General seam resampling/bridging, shell thickness, and M04.1 closed-volume proof — implemented |
 | M05 | Compile explicit 2D sphere gores into a validated closed sphere — implemented |
-| M06 | Split 2D canvas / 3D preview editor — implemented on review branch |
-| M07 | Manifold, inversion, seam, and intersection validators |
+| M06 | Split 2D canvas / 3D preview editor — implemented and merged |
+| M07 | Manifold, inversion, seam, and exact intersection validators — implemented on review branch |
 | M08 | FoldScript import/export and AI feedback loop |
 | M09 | Handle cup, torus, and non-trivial topology |
 

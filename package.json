@@ -1,8 +1,8 @@
 {
   "name": "com.foldcanvas.core",
-  "version": "0.1.0-preview.14",
+  "version": "0.1.0-preview.15",
   "displayName": "FoldCanvas",
-  "description": "A deterministic 2D-first Unity surface compiler and authoring workspace with preserved artwork, seams, shell thickness, closed-volume validation, and explicit spherical reconstruction.",
+  "description": "A deterministic 2D-first Unity surface compiler and authoring workspace with preserved artwork, explicit seams and thickness, spherical reconstruction, and tiered geometry validation.",
   "unity": "6000.3",
   "documentationUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/Documentation~/index.md",
   "changelogUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/CHANGELOG.md",

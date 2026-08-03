@@ -30,6 +30,12 @@ namespace FoldCanvas
 
         public FoldCanvasCompiledData CompiledData { get; internal set; }
 
+        public FoldCanvasGeometryValidationReport GeometryValidationReport
+        {
+            get;
+            internal set;
+        }
+
         public FoldCanvasClosedVolumeReport ClosedVolumeReport
         {
             get;

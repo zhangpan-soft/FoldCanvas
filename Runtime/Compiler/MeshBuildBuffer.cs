@@ -5,6 +5,46 @@ using UnityEngine;
 
 namespace FoldCanvas
 {
+    internal sealed class WeldValidationRecord
+    {
+        public WeldValidationRecord(
+            string operationId,
+            string seamId,
+            IReadOnlyList<int> boundaryA,
+            IReadOnlyList<int> boundaryB)
+        {
+            OperationId = operationId;
+            SeamId = seamId;
+            BoundaryA = Copy(boundaryA);
+            BoundaryB = Copy(boundaryB);
+        }
+
+        public string OperationId { get; }
+
+        public string SeamId { get; }
+
+        public IReadOnlyList<int> BoundaryA { get; }
+
+        public IReadOnlyList<int> BoundaryB { get; }
+
+        private static IReadOnlyList<int> Copy(
+            IReadOnlyList<int> source)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            int[] copy = new int[source.Count];
+            for (int i = 0; i < source.Count; i++)
+            {
+                copy[i] = source[i];
+            }
+
+            return Array.AsReadOnly(copy);
+        }
+    }
+
     internal struct MeshBuildVertex
     {
         public MeshBuildVertex(
@@ -53,6 +93,10 @@ namespace FoldCanvas
         private readonly List<SphericalWrapBuildRecord> sphericalWraps =
             new List<SphericalWrapBuildRecord>();
 
+        private readonly List<WeldValidationRecord>
+            weldValidationRecords =
+                new List<WeldValidationRecord>();
+
         private readonly Dictionary<int, SphericalWrapBuildRecord>
             sphericalWrapsByPanelIndex =
                 new Dictionary<int, SphericalWrapBuildRecord>();
@@ -94,6 +138,9 @@ namespace FoldCanvas
             geometryBudget.MaxTriangles;
 
         public float PositionTolerance { get; }
+
+        public IReadOnlyList<WeldValidationRecord>
+            WeldValidationRecords => weldValidationRecords;
 
         public bool TryBeginGeometryOperation(
             long additionalVertices,
@@ -244,6 +291,19 @@ namespace FoldCanvas
                 outerToVertexIndex,
                 innerFromVertexIndex,
                 innerToVertexIndex));
+        }
+
+        public void AddWeldValidationRecord(
+            string operationId,
+            string seamId,
+            IReadOnlyList<int> boundaryA,
+            IReadOnlyList<int> boundaryB)
+        {
+            weldValidationRecords.Add(new WeldValidationRecord(
+                operationId,
+                seamId,
+                boundaryA,
+                boundaryB));
         }
 
         public void AddSphericalWrap(SphericalWrapBuildRecord sphericalWrap)
@@ -452,6 +512,7 @@ namespace FoldCanvas
                 panelBoundaryIndices,
                 sphericalSurfaceVertexCounts,
                 cornerSegments.Count,
+                weldValidationRecords.Count,
                 HasTopologyWelds,
                 geometryBudget.UsedVertices,
                 geometryBudget.UsedTriangles);
@@ -493,6 +554,15 @@ namespace FoldCanvas
                     cornerSegments.Count - state.CornerSegmentCount);
             }
 
+            if (weldValidationRecords.Count >
+                state.WeldValidationRecordCount)
+            {
+                weldValidationRecords.RemoveRange(
+                    state.WeldValidationRecordCount,
+                    weldValidationRecords.Count -
+                    state.WeldValidationRecordCount);
+            }
+
             HasTopologyWelds = state.HasTopologyWelds;
             geometryBudget.RestoreUsage(
                 state.UsedVertices,
@@ -531,6 +601,7 @@ namespace FoldCanvas
             int[][][] panelBoundaryIndices,
             int[] sphericalSurfaceVertexCounts,
             int cornerSegmentCount,
+            int weldValidationRecordCount,
             bool hasTopologyWelds,
             int usedVertices,
             int usedTriangles)
@@ -542,6 +613,7 @@ namespace FoldCanvas
             SphericalSurfaceVertexCounts =
                 sphericalSurfaceVertexCounts;
             CornerSegmentCount = cornerSegmentCount;
+            WeldValidationRecordCount = weldValidationRecordCount;
             HasTopologyWelds = hasTopologyWelds;
             UsedVertices = usedVertices;
             UsedTriangles = usedTriangles;
@@ -558,6 +630,8 @@ namespace FoldCanvas
         public int[] SphericalSurfaceVertexCounts { get; }
 
         public int CornerSegmentCount { get; }
+
+        public int WeldValidationRecordCount { get; }
 
         public bool HasTopologyWelds { get; }
 
@@ -781,6 +855,9 @@ namespace FoldCanvas
         public int TriangleIndexStart { get; }
 
         public int TriangleIndexCount { get; }
+
+        public IReadOnlyList<BoundaryBuildRecord> Boundaries =>
+            orderedBoundaries;
 
         public void AddBoundary(
             string boundaryId,

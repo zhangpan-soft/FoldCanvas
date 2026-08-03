@@ -160,8 +160,7 @@ M06 authoring UI.
 
 ## M06: Authoring workspace
 
-**Status:** implemented on `codex/m06-editor-workspace`; awaiting human audit
-and stacked on the unmerged M05 review head.
+**Status:** merged into `main` through PR #5.
 
 **Proof:** a non-modeler can create and edit the cup without touching code or vertex coordinates.
 
@@ -183,14 +182,25 @@ node graph, or implement M07 self-intersection/broken-geometry validation.
 
 ## M07: Geometry validator
 
+**Status:** implemented on `codex/m07-geometry-validator`; awaiting human
+audit.
+
 **Proof:** intentionally broken samples produce stable, localized diagnostics.
 
-- non-manifold edges
-- zero-area triangles
-- inverted components
-- open boundaries
-- seam mismatch
-- broad-phase self-intersection
+- Basic structural gates for bad/incomplete indices, non-finite positions,
+  collapsed/zero-area/duplicate faces, non-manifold edges, and winding
+  conflicts
+- Standard logical-position, bow-tie, compiled-boundary, executed-Weld,
+  component-orientation, open-boundary, and disconnected-component evidence
+- Strict deterministic sweep-and-prune plus exact non-adjacent triangle
+  intersection, with a hard candidate-pair budget
+- read-only component, seam, and intersection report plus localized boundary,
+  vertex, topology, component, triangle-pair, and edge context
+- adversarial bow-tie, duplicate, inverted, open-seam, zero-boundary,
+  self-intersecting roll, and thickness-overlap fixtures
+
+M07 reports but does not repair geometry. It does not add Bevel, subdivision,
+smoothing, remeshing, Mesh cleanup, or M08 import/AI behavior.
 
 ## M08: FoldScript and AI loop
 

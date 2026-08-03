@@ -46,6 +46,17 @@ namespace FoldCanvas
                     "The weld epsilon must be finite and greater than zero."));
             }
 
+            if (settings != null &&
+                !Enum.IsDefined(
+                    typeof(FoldCanvasValidationLevel),
+                    settings.ValidationLevel))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.InvalidValidationLevel,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Validation level must be Basic, Standard, or Strict."));
+            }
+
             long cumulativeVertices = 0;
             long cumulativeTriangles = 0;
             HashSet<string> panelIds = new HashSet<string>(StringComparer.Ordinal);

@@ -18,6 +18,7 @@ namespace FoldCanvas
         public const string DuplicateOperationId = "FC0003";
         public const string EmptyPanelId = "FC0004";
         public const string InvalidCompileLimits = "FC0005";
+        public const string InvalidValidationLevel = "FC0006";
         public const string InvalidPanelDimensions = "FC1001";
         public const string InvalidTessellation = "FC1002";
         public const string CanvasRectOutOfRange = "FC1003";
@@ -76,6 +77,19 @@ namespace FoldCanvas
         public const string GeneratedVertexLimitExceeded = "FC5005";
         public const string GeneratedTriangleLimitExceeded = "FC5006";
         public const string GeometryBudgetOverflow = "FC5007";
+        public const string InvalidTriangleIndex = "FC5008";
+        public const string IncompleteTriangleIndexBuffer = "FC5009";
+        public const string DuplicateTriangle = "FC5010";
+        public const string OpenTopologyBoundary = "FC5011";
+        public const string InconsistentWinding = "FC5012";
+        public const string DisconnectedGeometry = "FC5013";
+        public const string SeamClosureMismatch = "FC5014";
+        public const string BowTieTopologyVertex = "FC5015";
+        public const string TopologyPositionConflict = "FC5016";
+        public const string InvertedClosedComponent = "FC5017";
+        public const string SelfIntersection = "FC5018";
+        public const string StrictValidationBudgetExceeded = "FC5019";
+        public const string DegenerateCompiledBoundary = "FC5020";
         public const string SphericalWrapTargetMissing = "FC6001";
         public const string UnsupportedSphericalWrapPanelShape = "FC6002";
         public const string NonFiniteSphericalWrapParameter = "FC6003";
@@ -127,6 +141,78 @@ namespace FoldCanvas
         public string Unit { get; }
     }
 
+    public sealed class FoldCanvasDiagnosticGeometryContext
+    {
+        public FoldCanvasDiagnosticGeometryContext(
+            int vertexIndex = -1,
+            int topologyVertexId = -1,
+            int componentIndex = -1,
+            int triangleIndex = -1,
+            int relatedTriangleIndex = -1,
+            int edgeTopologyVertexA = -1,
+            int edgeTopologyVertexB = -1)
+        {
+            ValidateOptionalIndex(vertexIndex, nameof(vertexIndex));
+            ValidateOptionalIndex(
+                topologyVertexId,
+                nameof(topologyVertexId));
+            ValidateOptionalIndex(componentIndex, nameof(componentIndex));
+            ValidateOptionalIndex(triangleIndex, nameof(triangleIndex));
+            ValidateOptionalIndex(
+                relatedTriangleIndex,
+                nameof(relatedTriangleIndex));
+            ValidateOptionalIndex(
+                edgeTopologyVertexA,
+                nameof(edgeTopologyVertexA));
+            ValidateOptionalIndex(
+                edgeTopologyVertexB,
+                nameof(edgeTopologyVertexB));
+
+            VertexIndex = vertexIndex;
+            TopologyVertexId = topologyVertexId;
+            ComponentIndex = componentIndex;
+            TriangleIndex = triangleIndex;
+            RelatedTriangleIndex = relatedTriangleIndex;
+            EdgeTopologyVertexA = edgeTopologyVertexA;
+            EdgeTopologyVertexB = edgeTopologyVertexB;
+        }
+
+        public int VertexIndex { get; }
+
+        public int TopologyVertexId { get; }
+
+        public int ComponentIndex { get; }
+
+        public int TriangleIndex { get; }
+
+        public int RelatedTriangleIndex { get; }
+
+        public int EdgeTopologyVertexA { get; }
+
+        public int EdgeTopologyVertexB { get; }
+
+        public bool HasValue =>
+            VertexIndex >= 0 ||
+            TopologyVertexId >= 0 ||
+            ComponentIndex >= 0 ||
+            TriangleIndex >= 0 ||
+            RelatedTriangleIndex >= 0 ||
+            EdgeTopologyVertexA >= 0 ||
+            EdgeTopologyVertexB >= 0;
+
+        private static void ValidateOptionalIndex(
+            int value,
+            string parameterName)
+        {
+            if (value < -1)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    "Diagnostic geometry indices must be -1 or non-negative.");
+            }
+        }
+    }
+
     public sealed class FoldCanvasDiagnostic
     {
         public FoldCanvasDiagnostic(
@@ -137,7 +223,9 @@ namespace FoldCanvas
             string operationId = null,
             string seamId = null,
             IEnumerable<FoldCanvasDiagnosticValue> values = null,
-            IEnumerable<string> repairSuggestions = null)
+            IEnumerable<string> repairSuggestions = null,
+            FoldCanvasDiagnosticGeometryContext geometryContext = null,
+            string boundaryId = null)
         {
             Code = code ?? throw new ArgumentNullException(nameof(code));
             Severity = severity;
@@ -145,8 +233,10 @@ namespace FoldCanvas
             PanelId = panelId;
             OperationId = operationId;
             SeamId = seamId;
+            BoundaryId = boundaryId;
             Values = CopyValues(values);
             RepairSuggestions = CopyRepairSuggestions(repairSuggestions);
+            GeometryContext = geometryContext;
         }
 
         public string Code { get; }
@@ -161,9 +251,13 @@ namespace FoldCanvas
 
         public string SeamId { get; }
 
+        public string BoundaryId { get; }
+
         public IReadOnlyList<FoldCanvasDiagnosticValue> Values { get; }
 
         public IReadOnlyList<string> RepairSuggestions { get; }
+
+        public FoldCanvasDiagnosticGeometryContext GeometryContext { get; }
 
         public override string ToString()
         {
@@ -181,6 +275,51 @@ namespace FoldCanvas
             if (!string.IsNullOrEmpty(SeamId))
             {
                 context += $" seam={SeamId}";
+            }
+
+            if (!string.IsNullOrEmpty(BoundaryId))
+            {
+                context += $" boundary={BoundaryId}";
+            }
+
+            if (GeometryContext != null && GeometryContext.HasValue)
+            {
+                if (GeometryContext.VertexIndex >= 0)
+                {
+                    context += $" vertex={GeometryContext.VertexIndex}";
+                }
+
+                if (GeometryContext.TopologyVertexId >= 0)
+                {
+                    context +=
+                        $" topologyVertex={GeometryContext.TopologyVertexId}";
+                }
+
+                if (GeometryContext.ComponentIndex >= 0)
+                {
+                    context +=
+                        $" component={GeometryContext.ComponentIndex}";
+                }
+
+                if (GeometryContext.TriangleIndex >= 0)
+                {
+                    context +=
+                        $" triangle={GeometryContext.TriangleIndex}";
+                }
+
+                if (GeometryContext.RelatedTriangleIndex >= 0)
+                {
+                    context +=
+                        $" relatedTriangle={GeometryContext.RelatedTriangleIndex}";
+                }
+
+                if (GeometryContext.EdgeTopologyVertexA >= 0 &&
+                    GeometryContext.EdgeTopologyVertexB >= 0)
+                {
+                    context +=
+                        $" edge=({GeometryContext.EdgeTopologyVertexA}," +
+                        $"{GeometryContext.EdgeTopologyVertexB})";
+                }
             }
 
             return $"[{Severity}] {Code}{context}: {Message}";
