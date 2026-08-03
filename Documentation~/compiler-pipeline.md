@@ -2,12 +2,20 @@
 
 ## Stage 0: source loading
 
-- load ScriptableObject or FoldScript
-- resolve appearance references
-- normalize units to meters
-- preserve stable source identifiers
+- a native `FoldCanvasAsset` enters directly, or M08 parses bounded untrusted
+  FoldScript JSON into explicit `0.1` DTOs;
+- reject malformed/duplicate JSON properties, unsupported versions or
+  operations, unknown/missing fields, invalid identifiers and references, and
+  size/depth/node/string/collection limit violations;
+- normalize and resolve appearance references through the host-supplied
+  resolver; Runtime itself performs no file or network I/O;
+- convert physical values from meter/centimeter/millimeter documents into
+  native meters while preserving stable source IDs and authored array order;
+- retain canonical portable metadata and compile settings on the native source.
 
-No geometry is generated before source-level validation completes.
+No geometry is generated before source-level validation completes. Canonical
+export reverses the explicit DTO/native conversion; it never serializes Unity's
+private object layout as the interchange format.
 
 ## Stage 1: source validation
 
@@ -369,12 +377,21 @@ geometry or consumed budget.
 
 ## Stage 9: feedback loop
 
-Diagnostics are structured so humans and AI can repair the source:
+M08 copies ordered compiler diagnostics into a provider-neutral repair request:
 
 ```text
-FC2104 SeamLengthMismatch
-panel=wall boundary=vMin
-panel=bottom boundary=perimeter
-relativeDifference=0.032
-suggestions=[increase wall width, choose fitTargetBoundary, enable resampling]
+schemaVersion=0.1
+compilerVersion=0.1.0-preview.16
+assetId=cup
+source=<canonical complete FoldScript>
+diagnostics[0].code=FC3022
+diagnostics[0].operation=roll-wall
+diagnostics[0].suggestions=[increase source tessellation]
 ```
+
+The request contains no Mesh, vertex/triangle buffer, appearance pixels,
+credentials, or provider metadata. An external adapter may return complete
+replacement FoldScript JSON. `FoldCanvasRepairCoordinator` sends that response
+back through Stage 0 and every ordinary compile stage; there is no privileged
+patch or geometry-mutation path. M08 does not execute a network request or
+automatically accept a repair.

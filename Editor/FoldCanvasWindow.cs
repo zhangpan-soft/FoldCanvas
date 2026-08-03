@@ -281,6 +281,10 @@ namespace FoldCanvas.Editor
         {
             rootVisualElement.Q<Button>("new-source-button").clicked +=
                 CreateNewSource;
+            rootVisualElement.Q<Button>("import-foldscript-button").clicked +=
+                ImportFoldScript;
+            rootVisualElement.Q<Button>("export-foldscript-button").clicked +=
+                ExportFoldScript;
             rootVisualElement.Q<Button>("compile-button").clicked += CompileNow;
             rootVisualElement.Q<Button>("bake-toolbar-button").clicked +=
                 BakeCurrentSource;

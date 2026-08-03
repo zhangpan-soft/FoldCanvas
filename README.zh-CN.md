@@ -76,6 +76,14 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   宽相位候选不会被冒充成已经确认的碰撞
 - 弓形拓扑点、重复面、翻面、开放接缝、零长度边界、自交卷面与厚度重叠等
   对抗性夹具，以及合法杯体/球体的防误报回归
+- 可执行且有输入上限的 FoldScript `0.1` 导入/导出：显式 DTO、严格字段与引用
+  校验、安全外观路径，以及米/厘米/毫米到原生米制的明确转换
+- 固定字段顺序、与区域设置无关的确定性 Canonical JSON；面板、Seam、操作数组
+  保留源作者顺序
+- 与厂商无关且集合只读的提案/修复合同与紧凑诊断载荷；修复结果只能以完整
+  FoldScript 重新进入普通导入器和编译器，核心包不依赖模型 SDK 或网络
+- M06 工作区新增 Import JSON、Export JSON、Copy Repair Payload，并提供显式
+  资产归属、覆盖 Undo 与失败导入不污染目标的保证
 - Edit Mode 测试
 - 完整架构、FoldScript 规格、路线图与 Codex 分阶段提示词
 
@@ -109,6 +117,13 @@ M07 只读取并验证最终显式几何缓冲，不会替用户改 Mesh。Basic
 Standard 增加逻辑拓扑、边界、已执行 Weld、组件和闭合绕序；Strict 再增加
 精确三角形相交检查。故意开放的薄片或多零件资产仍可成功，只产生警告。完整
 合同见[《M07 几何验证》](Documentation~/geometry-validation.md)。
+
+M08 把 FoldScript `0.1` 变成真正可执行、可移植的源合同。Runtime 对不可信 JSON
+先做有上限的解析，再校验全部字段、ID 与引用，按声明单位转成原生米制，并输出
+字节稳定的 Canonical JSON。Editor 可以导入/导出明确的项目资产；外部 AI 集成
+只能读取只读修复载荷并返回完整替换 FoldScript。核心包本身不会登录模型服务、
+发网络请求或自动接受修复。完整合同见
+[《M08 FoldScript Runtime 与 Editor 工作流》](Documentation~/foldscript-runtime.md)。
 
 ## 七条项目宪法
 

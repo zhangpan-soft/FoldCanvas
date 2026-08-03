@@ -2,9 +2,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:VisualElement name="workspace-root" class="workspace-root">
         <ui:VisualElement name="top-toolbar" class="top-toolbar">
-            <ui:Label text="FoldCanvas M06" class="workspace-title" />
+            <ui:Label text="FoldCanvas" class="workspace-title" />
             <ui:VisualElement name="asset-field-host" class="asset-field-host" />
             <ui:Button name="new-source-button" text="New Source" />
+            <ui:Button name="import-foldscript-button" text="Import JSON" />
+            <ui:Button name="export-foldscript-button" text="Export JSON" />
             <ui:Button name="compile-button" text="Compile Now" />
             <ui:Button name="bake-toolbar-button" text="Bake" class="primary-button" />
         </ui:VisualElement>

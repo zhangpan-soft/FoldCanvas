@@ -10,6 +10,12 @@ named boundaries, and selected seam endpoints. The right viewport displays a
 locally owned derived preview. The bottom tabs edit panels, ordered operations,
 seams, compiler diagnostics, and explicit bake output.
 
+M08 retains this one source workspace and adds `Import JSON` / `Export JSON` in
+the toolbar plus `Copy Repair Payload` in Diagnostics. Import/export uses the
+same `FoldCanvasAsset` edited by the controls below; no second JSON-only editor
+or independent geometry path is created. See
+[FoldScript 0.1 Runtime and Editor workflow](foldscript-runtime.md).
+
 ## Source and preview contract
 
 - The `FoldCanvasAsset`, appearance canvas, panels, seams, and ordered

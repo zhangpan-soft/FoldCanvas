@@ -45,6 +45,16 @@ namespace FoldCanvas.Editor
             summary.AddToClassList("section-title");
             root.Add(summary);
 
+            Button repairPayload = new Button(CopyRepairPayload)
+            {
+                text = "Copy Repair Payload",
+                name = "copy-repair-payload-button"
+            };
+            repairPayload.tooltip =
+                "Copies canonical FoldScript plus deterministic diagnostics; " +
+                "it never includes the generated Mesh.";
+            root.Add(repairPayload);
+
             if (result.GeometryValidationReport != null)
             {
                 FoldCanvasGeometryValidationReport validation =
