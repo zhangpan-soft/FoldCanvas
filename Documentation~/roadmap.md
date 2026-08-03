@@ -249,7 +249,7 @@ spans, seam graph, and ordered operations remain source; Meshes remain derived.
 
 ## M10: Extensibility and ecosystem
 
-**Status:** implemented on `codex/m10-extensibility`; awaiting human audit.
+**Status:** maintainer-audited and merged through PR #9 as `b67120f`.
 
 **Proof:** one Editor command compiles an ordinary 2D rectangle through a
 contributor-defined wave operation in a separate assembly, using an explicit
@@ -278,6 +278,52 @@ FoldScript `0.1` codec, add global registration, introduce a new geometry
 family, add CSG/bevel/remesh, export glTF/FBX/USD, or perform runtime file or
 network I/O. Meshes, OBJ, gallery views, reports, and release archives remain
 derived artifacts.
+
+## M11: Production-readiness foundation
+
+**Status:** active on `codex/m11-production-readiness`.
+
+**Proof:** a freshly built deterministic UPM archive installs into a generated
+clean Unity host; consumer-owned code compiles through public API only and emits
+repeatable geometry, OBJ, diagnostic, package-resolution, XML, and Editor-log
+evidence.
+
+- clean-host archive installation with no repository-package fallback
+- consumer-owned public API compile/export fixture
+- checked-in normalized public Runtime API signature baseline
+- package/FoldScript/Unity compatibility and migration policy
+- explicit trusted-code model for native operation executors
+- representative valid/invalid production acceptance corpus
+- independent hosted clean-install job with mandatory evidence artifacts
+
+M11 does not change geometry equations or topology, publish `1.0.0`, add a
+package dependency, expose topology mutation, or add runtime file/network I/O.
+
+## M12: Production asset handoff
+
+**Status:** planned; not active.
+
+**Proof direction:** one authored source bundle can be handed to another Unity
+project with appearance assets, canonical FoldScript, validation evidence, and
+derived runtime-ready outputs while retaining exact source ownership and
+rebuild instructions.
+
+## M13: Robustness and scale
+
+**Status:** planned; not active.
+
+**Proof direction:** bounded fuzz/property cases, large deterministic assets,
+interruption/retry behavior, memory/time budgets, and long-running regression
+evidence fail safely without partial source or Mesh state.
+
+## M14: 1.0 release candidate
+
+**Status:** planned; not active.
+
+**Proof direction:** supported Unity/version matrix, frozen public API and
+FoldScript compatibility policy, clean-install corpus, documentation, license,
+security, issue-response, release, and rollback gates are all satisfied before
+an explicit `1.0.0` decision.
 
 ## Deliberate product non-goals
 

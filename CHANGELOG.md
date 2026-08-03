@@ -6,7 +6,14 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
-No unreleased changes.
+### Changed
+
+- M10 was maintainer-audited and merged through PR #9; the active roadmap now
+  advances to M11 clean-install, compatibility, public-API, and production-
+  corpus evidence rather than adding another geometry family
+- Governance now records the delegated autonomous maintenance cadence and the
+  required transparent maintainer-audit, CI, escalation, and issue-priority
+  gates
 
 ## [0.1.0-preview.18] - 2026-08-03
 

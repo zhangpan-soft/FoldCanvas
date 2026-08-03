@@ -306,7 +306,11 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M07 | Manifold, inversion, seam, and exact intersection validators — implemented and merged |
 | M08 | FoldScript import/export and AI feedback loop — implemented and merged |
 | M09 | Handle cup, torus, boundary spans, and non-trivial topology — implemented and merged |
-| M10 | Explicit extensions, gallery, OBJ, performance, and reproducible package release — implemented on review branch |
+| M10 | Explicit extensions, gallery, OBJ, performance, and reproducible package release — merged through PR #9 |
+| M11 | Clean archive installation, consumer API proof, compatibility baseline, and production corpus — active |
+| M12 | Portable production asset handoff — planned |
+| M13 | Bounded robustness, scale, and long-running regression evidence — planned |
+| M14 | Public API/FoldScript freeze and 1.0 release-candidate gates — planned |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

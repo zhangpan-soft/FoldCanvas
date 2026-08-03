@@ -1,31 +1,30 @@
 # Current task
 
-Execute **M10: extensibility and ecosystem**.
+Execute **M11: production-readiness foundation**.
 
 Authoritative task file:
-[`Codex/M10_EXTENSIBILITY.md`](Codex/M10_EXTENSIBILITY.md)
+[`Codex/M11_PRODUCTION_READINESS.md`](Codex/M11_PRODUCTION_READINESS.md)
 
-M09 PR #8 was human-approved and merged into `main` as `7be4117`. M10
-development occurs on `codex/m10-extensibility`, created from that merged
-commit.
+M10 PR #9 received a recorded maintainer audit and was merged into `main` as
+`b67120f`. M11 development occurs on `codex/m11-production-readiness`, created
+from that merged commit.
 
-M10 turns the proven M00-M09 compiler into a bounded contributor platform:
+M11 changes the acceptance question from “does the package work inside its own
+repository?” to “can an ordinary Unity project install, compile, use, upgrade,
+and diagnose the published package without repository-local assumptions?”
 
-- pass an explicit operation registry to one compile without global discovery;
-- allow registered third-party position-only operations to deform exactly one
-  existing panel while preserving UV, provenance, triangles, and topology;
-- publish a versioned sample-gallery manifest and a compiling contributor
-  operation template;
-- export immutable compiled data to deterministic text OBJ without changing
-  the FoldCanvas source or generated Mesh;
-- measure repeatable Editor compilation baselines as derived evidence;
-- build a deterministic UPM release archive and automate tagged GitHub
-  releases.
+The active proof therefore covers:
 
-ADR 0008 defines the extension trust boundary. FoldCanvas source remains
-authoritative, generated Meshes and exports remain derived, and the default
-compiler behavior stays byte/topology compatible when no registry is supplied.
+- deterministic package installation into a generated clean Unity host;
+- a consumer-owned assembly that compiles a FoldCanvas source through only the
+  public package API and verifies stable geometry/export evidence;
+- a checked-in public Runtime API surface baseline and explicit compatibility
+  policy;
+- a versioned production-acceptance corpus with stable source/output hashes;
+- an extension trust model that distinguishes capability limits from a process
+  security sandbox;
+- hosted clean-install evidence in addition to repository tests.
 
-M10 does not expose topology mutation to extensions, auto-discover assemblies,
-add custom FoldScript operation codecs, add runtime file/network I/O, implement
-glTF/FBX, or add new geometry families.
+M11 does not add a geometry family, expose topology mutation, add CSG/bevel/
+remesh, introduce runtime file or network access, publish version 1.0, or add a
+new package dependency.
