@@ -152,6 +152,15 @@ M10 在不暴露内部拓扑缓冲的前提下开放一个受限贡献入口：�
 [《M10 扩展与生态》](Documentation~/extensibility.md)，可编译模板见
 [OperationExtension](Samples~/OperationExtension/README.md)。
 
+M11 把验收标准从“在仓库自带工程里能运行”提升到“发布压缩包能在全新的 Unity
+工程中被普通使用者安装和调用”。两个独立宿主会安装同一个 `.tgz`，只通过公开
+`FoldCanvas.Runtime` 编译消费者代码，并比较包、源、几何、OBJ 与诊断证据。
+同时加入实际编译程序集生成的公共 API 基线，以及平面、厚杯、球瓣、环面、注册
+扩展、预期失败六类生产语料。原生扩展属于受信任的进程内代码，不是安全沙箱。
+完整合同见[生产可用证据](Documentation~/production-readiness.md)与
+[兼容和迁移策略](Documentation~/compatibility.md)。M11 不新增几何类型，也不
+提前发布 1.0。
+
 ## 七条项目宪法
 
 1. **二维源文件拥有最高权威。** Mesh 可以删除并重新生成。
@@ -200,7 +209,7 @@ M10 在不暴露内部拓扑缓冲的前提下开放一个受限贡献入口：�
 
 ## 持续集成
 
-GitHub Actions 包含两个独立检查：
+GitHub Actions 包含三个独立证据门：
 
 - `repository-validation` 解析 JSON，检查程序集与 Runtime 边界、Schema 和
   C# 原生 `sampleCount` 上限一致性、文档链接及版本元数据；
@@ -209,6 +218,9 @@ GitHub Actions 包含两个独立检查：
   成功或失败都会上传 NUnit XML 与 `Editor.log`。GameCI 运行中的文件先写入
   宿主项目根目录下的非导入区域，避免持续变化的日志通过仓库根 UPM 包触发
   Unity 重复导入；Unity 退出后才复制到 `artifacts/unity-editmode`。
+- `unity-clean-install-tests` 构建确定性 `.tgz`，创建两个完全独立的宿主工程，
+  通过公开 Runtime API 编译消费者程序集，分别校验真实 XML、日志和包解析报告，
+  并要求两个 PackageCache 安装产生完全一致的稳定证据。
 
 独立的 `Package release` 工作流会构建两次 UPM 白名单压缩包并校验字节一致、
 版本一致，上传 `.tgz` 和 SHA-256；只有与包版本精确匹配的已推送标签才会发布。

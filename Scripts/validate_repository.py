@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import pathlib
 import re
@@ -114,6 +115,14 @@ required = [
     "Samples~/Gallery/gallery.json",
     "Schema/foldcanvas-gallery.schema.json",
     "Documentation~/m10-performance-baselines.json",
+    "Documentation~/public-runtime-api.json",
+    "Documentation~/m11-production-corpus.json",
+    "Scripts/create_clean_install_project.py",
+    "Scripts/validate_clean_install_evidence.py",
+    "Scripts/compare_clean_install_evidence.py",
+    "Scripts/test_clean_install_project.py",
+    "Scripts/Templates~/M11CleanHost/Assets/FoldCanvas.M11.Consumer.Tests.asmdef",
+    "Scripts/Templates~/M11CleanHost/Assets/M11CleanInstallConsumerTests.cs",
 ]
 for relative in required:
     if not (ROOT / relative).exists():
@@ -239,6 +248,7 @@ for required_pattern in [
     "*.py[cod]",
     "Project~/Assets/FoldCanvasGenerated/",
     "Project~/Assets/FoldCanvasSamples/",
+    "Project~/M11Evidence/",
 ]:
     if required_pattern not in gitignore.splitlines():
         errors.append(f".gitignore is missing required pattern: {required_pattern}")
@@ -339,6 +349,97 @@ else:
     ]:
         errors.append("M10 performance scenario order or identity changed")
 
+public_api = read_json("Documentation~/public-runtime-api.json")
+public_signatures = public_api.get("signatures")
+if (
+    public_api.get("format") != "foldcanvas-public-runtime-api"
+    or public_api.get("version") != "1"
+    or public_api.get("assembly") != "FoldCanvas.Runtime"
+    or public_api.get("packageVersion") != package_version
+):
+    errors.append("M11 public Runtime API manifest header is invalid")
+if not isinstance(public_signatures, list) or not public_signatures:
+    errors.append("M11 public Runtime API manifest lacks signatures")
+    public_signatures = []
+else:
+    if not all(isinstance(signature, str) for signature in public_signatures):
+        errors.append("M11 public Runtime API signatures must all be strings")
+    if public_signatures != sorted(public_signatures):
+        errors.append("M11 public Runtime API signatures must be ordinal")
+    if len(public_signatures) != len(set(public_signatures)):
+        errors.append("M11 public Runtime API signatures must be unique")
+    if public_api.get("signatureCount") != len(public_signatures):
+        errors.append("M11 public Runtime API signatureCount is inconsistent")
+    public_digest = hashlib.sha256(
+        ("\n".join(public_signatures) + "\n").encode("utf-8")
+    ).hexdigest()
+    if public_api.get("sha256") != public_digest:
+        errors.append("M11 public Runtime API signature digest is inconsistent")
+    forbidden_api_fragments = (
+        "FoldCanvas.Editor",
+        "UnityEditor",
+        "MeshBuildBuffer",
+    )
+    for fragment in forbidden_api_fragments:
+        if any(fragment in signature for signature in public_signatures):
+            errors.append(
+                f"M11 public Runtime API manifest exposes forbidden type: {fragment}"
+            )
+
+production_corpus = read_json("Documentation~/m11-production-corpus.json")
+if (
+    production_corpus.get("format") != "foldcanvas-production-corpus"
+    or production_corpus.get("version") != "1"
+    or production_corpus.get("packageVersion") != package_version
+    or production_corpus.get("foldScriptVersion") != "0.1"
+    or production_corpus.get("unityVersion") != "6000.3.20f1"
+):
+    errors.append("M11 production corpus header is invalid")
+corpus_cases = production_corpus.get("cases")
+expected_corpus_ids = [
+    "cyclic-torus",
+    "invalid-off-grid-fold",
+    "planar-artwork",
+    "production-cup",
+    "registered-wave",
+    "sphere-gores",
+]
+if not isinstance(corpus_cases, list) or [
+    case.get("id") if isinstance(case, dict) else None
+    for case in (corpus_cases or [])
+] != expected_corpus_ids:
+    errors.append("M11 production corpus order or identity changed")
+    corpus_cases = []
+else:
+    digest_pattern = re.compile(r"[0-9a-f]{64}")
+    validation_levels = {
+        case.get("validationLevel") for case in corpus_cases
+    }
+    if validation_levels != {"Basic", "Standard", "Strict"}:
+        errors.append("M11 corpus must cover Basic, Standard, and Strict validation")
+    if sum(case.get("success") is True for case in corpus_cases) != 5:
+        errors.append("M11 corpus must retain five successful production cases")
+    for case in corpus_cases:
+        for field in (
+            "sourceSha256",
+            "geometrySha256",
+            "objSha256",
+            "diagnosticSha256",
+        ):
+            value = case.get(field)
+            if not isinstance(value, str) or digest_pattern.fullmatch(value) is None:
+                errors.append(
+                    f"M11 corpus case {case.get('id')} has invalid {field}"
+                )
+    invalid_case = corpus_cases[1]
+    if (
+        invalid_case.get("success") is not False
+        or invalid_case.get("errorDiagnosticCode") != "FC3011"
+        or invalid_case.get("renderVertices") != 0
+        or invalid_case.get("triangles") != 0
+    ):
+        errors.append("M11 expected-invalid corpus evidence changed")
+
 release_workflow = (
     ROOT / ".github" / "workflows" / "package-release.yml"
 ).read_text(encoding="utf-8")
@@ -364,6 +465,21 @@ repository_workflow = (
 ).read_text(encoding="utf-8")
 if "python3 Scripts/test_release_package.py" not in repository_workflow:
     errors.append("Repository checks must validate deterministic release archives")
+if "python3 Scripts/test_clean_install_project.py" not in repository_workflow:
+    errors.append("Repository checks must validate M11 clean-install contracts")
+
+for required_fragment in [
+    "artifacts/m11-clean-host-a",
+    "artifacts/m11-clean-host-b",
+    "Scripts/compare_clean_install_evidence.py",
+    "production-corpus-report.json",
+    "unity-clean-install-results-and-logs",
+]:
+    if required_fragment not in unity_workflow:
+        errors.append(
+            "Unity workflow is missing M11 production evidence: "
+            f"{required_fragment}"
+        )
 
 sample_document_path = (
     ROOT

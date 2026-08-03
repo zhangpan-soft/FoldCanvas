@@ -18,6 +18,35 @@ FoldCanvas begins as a maintainer-led open-source project.
 - review contributor work respectfully and technically
 - preserve backward compatibility once stable formats are released
 
+## Autonomous maintenance cadence
+
+The repository owner has delegated day-to-day roadmap, implementation, issue
+triage, pull-request, merge, and preview-release maintenance to the active
+FoldCanvas maintainer workflow. That delegation does not weaken evidence gates:
+
+- every non-trivial change still uses an isolated branch and reviewable PR;
+- required repository and Unity checks must be green before merge;
+- a maintainer self-audit must identify the exact head and disclose that it is
+  not an independent human review;
+- security reports, credentials, paid services, irreversible permission
+  changes, legal decisions, and external marketplace publication are escalated
+  to the owner;
+- public issues are reproduced and prioritized by security, data loss,
+  compiler correctness, determinism, topology, installation, then usability.
+
+The project is checked periodically for new issues, pull requests, failed CI,
+and the next active production-readiness milestone. Generated Meshes never
+become source merely to shorten maintenance work.
+
+Every issue moves through reproducible states: `needs reproduction`,
+`confirmed`, `planned`, `in progress`, `blocked by owner`, or `released`.
+Geometry reports should include the smallest shareable 2D/FoldScript source,
+package and Unity versions, validation level, diagnostics, and expected versus
+actual topology or image evidence. Private assets and credentials are never
+requested in a public thread. Release-blocking priorities and the full
+clean-install/API/corpus gate are defined in
+[`Documentation~/production-readiness.md`](../Documentation~/production-readiness.md).
+
 ## Contributor paths
 
 Contributors can help through:

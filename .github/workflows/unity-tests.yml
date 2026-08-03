@@ -73,9 +73,13 @@ jobs:
 
           cp -- "$test_xml" "$artifact_root/test-results.xml"
           cp -- "$editor_log" "$artifact_root/Editor.log"
+          cp -- \
+            "Project~/M11Evidence/production-corpus-report.json" \
+            "$artifact_root/production-corpus-report.json"
 
           test -s "$artifact_root/test-results.xml"
           test -s "$artifact_root/Editor.log"
+          test -s "$artifact_root/production-corpus-report.json"
 
       - name: Upload Unity test results and Editor log
         if: always()
@@ -85,5 +89,180 @@ jobs:
           path: |
             artifacts/unity-editmode/test-results.xml
             artifacts/unity-editmode/Editor.log
+            artifacts/unity-editmode/production-corpus-report.json
+          if-no-files-found: error
+          retention-days: 14
+
+  unity-clean-install-tests:
+    name: Unity 6000.3.20f1 repeated clean archive install
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Build deterministic package archive
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="artifacts/m11-package"
+          python3 Scripts/build_release_package.py --output "$package_root"
+          mapfile -t archives < <(
+            find "$package_root" -maxdepth 1 -type f -name '*.tgz' \
+              -print | LC_ALL=C sort
+          )
+          if [[ "${#archives[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one FoldCanvas package archive."
+            exit 1
+          fi
+          archive="${archives[0]}"
+          package_version="$(
+            python3 -c 'import json; print(json.load(open("package.json"))["version"])'
+          )"
+          package_sha256="$(shasum -a 256 "$archive" | awk '{print $1}')"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+          echo "version=$package_version" >> "$GITHUB_OUTPUT"
+          echo "sha256=$package_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Generate two independent clean consumer projects
+        run: |
+          set -euo pipefail
+          python3 Scripts/create_clean_install_project.py \
+            --project artifacts/m11-clean-host-a \
+            --package "${{ steps.package.outputs.archive }}"
+          python3 Scripts/create_clean_install_project.py \
+            --project artifacts/m11-clean-host-b \
+            --package "${{ steps.package.outputs.archive }}"
+
+      - name: Compile first consumer assembly and run clean-install tests
+        id: clean-unity-tests-a
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m11-clean-host-a
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m11-clean-host-a/CIArtifacts/unity-clean-install
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Clean Archive Install A
+
+      - name: Compile second consumer assembly and run clean-install tests
+        id: clean-unity-tests-b
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m11-clean-host-b
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m11-clean-host-b/CIArtifacts/unity-clean-install
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Clean Archive Install B
+
+      - name: Normalize, validate, and compare clean-install evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          normalize_install() {
+            local install_id="$1"
+            local source_root="$2"
+            local project_root="artifacts/m11-clean-host-$install_id"
+            local artifact_root="artifacts/m11-clean-install-$install_id"
+
+            if [[ -z "$source_root" ]]; then
+              source_root="$project_root/CIArtifacts/unity-clean-install"
+            fi
+
+            mkdir -p "$artifact_root"
+            if [[ ! -d "$source_root" ]]; then
+              echo "::error::Clean Unity artifact directory was not created: $source_root"
+              return 1
+            fi
+
+            mapfile -t test_xml_candidates < <(
+              find "$source_root" -type f \
+                \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+                -print | LC_ALL=C sort
+            )
+            mapfile -t editor_log_candidates < <(
+              find "$source_root" -type f \
+                \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+                -print | LC_ALL=C sort
+            )
+
+            local test_xml="${test_xml_candidates[0]:-}"
+            local editor_log="${editor_log_candidates[0]:-}"
+            if [[ -z "$test_xml" || -z "$editor_log" ]]; then
+              echo "::error::Clean Unity run $install_id did not produce XML and Editor log."
+              return 1
+            fi
+
+            cp -- "$test_xml" "$artifact_root/test-results.xml"
+            cp -- "$editor_log" "$artifact_root/Editor.log"
+            cp -- \
+              "$project_root/M11Evidence/consumer-report.json" \
+              "$artifact_root/consumer-report.json"
+            cp -- \
+              "$project_root/Packages/manifest.json" \
+              "$artifact_root/manifest.json"
+            cp -- \
+              "$project_root/Packages/packages-lock.json" \
+              "$artifact_root/packages-lock.json"
+
+            python3 Scripts/validate_clean_install_evidence.py \
+              --report "$artifact_root/consumer-report.json" \
+              --manifest "$artifact_root/manifest.json" \
+              --lock "$artifact_root/packages-lock.json" \
+              --test-results "$artifact_root/test-results.xml" \
+              --editor-log "$artifact_root/Editor.log" \
+              --package-version "${{ steps.package.outputs.version }}" \
+              --package-sha256 "${{ steps.package.outputs.sha256 }}" \
+              > "$artifact_root/validation.json"
+            test -s "$artifact_root/validation.json"
+          }
+
+          normalize_install \
+            "a" \
+            "${{ steps.clean-unity-tests-a.outputs.artifactsPath }}"
+          normalize_install \
+            "b" \
+            "${{ steps.clean-unity-tests-b.outputs.artifactsPath }}"
+
+          python3 Scripts/compare_clean_install_evidence.py \
+            --first \
+              artifacts/m11-clean-install-a/consumer-report.json \
+            --second \
+              artifacts/m11-clean-install-b/consumer-report.json \
+            > artifacts/m11-clean-install-comparison.json
+          test -s artifacts/m11-clean-install-comparison.json
+
+      - name: Upload clean-install results and logs
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: unity-clean-install-results-and-logs
+          path: |
+            artifacts/m11-clean-install-a/test-results.xml
+            artifacts/m11-clean-install-a/Editor.log
+            artifacts/m11-clean-install-a/consumer-report.json
+            artifacts/m11-clean-install-a/manifest.json
+            artifacts/m11-clean-install-a/packages-lock.json
+            artifacts/m11-clean-install-a/validation.json
+            artifacts/m11-clean-install-b/test-results.xml
+            artifacts/m11-clean-install-b/Editor.log
+            artifacts/m11-clean-install-b/consumer-report.json
+            artifacts/m11-clean-install-b/manifest.json
+            artifacts/m11-clean-install-b/packages-lock.json
+            artifacts/m11-clean-install-b/validation.json
+            artifacts/m11-clean-install-comparison.json
           if-no-files-found: error
           retention-days: 14
