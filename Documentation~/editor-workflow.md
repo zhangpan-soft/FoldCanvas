@@ -17,8 +17,12 @@ The FoldCanvas editor evolves toward a split workspace:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-The current window intentionally starts smaller: choose an asset, compile it,
-view diagnostics, and bake a mesh.
+M06 implements this split workspace in UI Toolkit. Open
+`Tools > FoldCanvas > Open Authoring Workspace` to create/select a source,
+author rectangle and disk panels, pair named boundaries, edit the ordered
+operation timeline, navigate compiler diagnostics, inspect disposable debug
+views, and explicitly bake a valid result. See the complete
+[blank-source-to-cup walkthrough](authoring-workspace.md).
 
 M02 also provides two proof commands:
 
@@ -101,16 +105,14 @@ including when they are inactive. It never reads or modifies `Camera.main`.
 
 ## Authoring actions
 
-Planned actions:
-
-- create panel from rectangle, disk, polygon, or mask
-- name and reorder panels
+- create rectangle and disk panels
+- name and select panels
 - select and name boundaries
 - pair seam boundaries
 - add operation at current timeline position
-- scrub operation history
+- reorder, enable, disable, and edit operations through explicit forms
 - display UV artwork over panel domains
-- display stretch, curvature, and thickness channels
+- display logical wireframe, panel colors, seams, normals, and thickness
 - bake derived assets
 
 ## Preview rules
@@ -120,12 +122,17 @@ Planned actions:
 - preview compilation must not alter the source asset
 - changing the source invalidates the preview hash
 - the editor must display errors without creating partial saved assets
+- compilation is debounced and stale revisions never replace a newer preview
+- the preview owns one hidden `EditorOnly` hierarchy and never uses
+  `Camera.main`
 
 ## Baking rules
 
 - choose an explicit folder under `Assets/`
 - sanitize file names
 - update existing generated assets predictably
-- save source hash and compiler version metadata later
+- source-reference/hash and compiler-version bake metadata remain a later
+  data-model task; the M06 Mesh is still explicitly derived from its separate
+  source asset
 - never write into package-cache folders
 - never write outside the Unity project

@@ -1,40 +1,28 @@
 # Current task
 
-Execute **M05: Sphere gores and spherical surface reconstruction**.
+Execute **M06: 2D canvas and 3D preview authoring workspace**.
 
 Authoritative task file:
-[`Codex/M05_SPHERE_GORES.md`](Codex/M05_SPHERE_GORES.md)
+[`Codex/M06_EDITOR_WORKSPACE.md`](Codex/M06_EDITOR_WORKSPACE.md)
 
-M04 and M04.1 passed human audit and were merged through PR
-[#3](https://github.com/zhangpan-soft/FoldCanvas/pull/3) into `main` at merge
-commit `ef36808`. The accepted implementation heads `ecb0791` and `b78772f`
-remain in that history. Acceptance evidence is Unity `6000.3.20f1`, 152/152
-Edit Mode tests, a one-component closed-volume report, zero open or
-non-manifold logical edges, and texture-free solid, wireframe, and section
-proofs.
+M06 development occurs on `codex/m06-editor-workspace`, stacked from the
+verified M05 review head `46aa02f`. PR #4 remains open and unmerged; this
+branch must not be merged to `main` before the M05 review gate is resolved.
 
-M05 implementation occurs on `codex/m05-spherical-wrap`. It must prove that
-explicit 2D spherical panels, ordered source boundaries, `SphericalWrap`,
-the existing seam graph, Weld, and the deterministic compiler can reconstruct
-one closed sphere while preserving source UV, canvas coordinates, provenance,
-and outward winding.
+The M06 proof is an Editor workflow in which a non-modeler starts from a blank
+FoldCanvas asset, assigns an appearance canvas, creates rectangle and disk
+panels, names them, pairs boundaries, adds explicit Place/Roll/Stitch/Solidify
+operations, reads compiler diagnostics, previews the derived result, and bakes
+the cup without editing code or vertex coordinates.
 
-PR #4 is in its hardening review gate. Before human approval it must also
-prove component-scoped pre-Solidify sphere validation, a single cumulative
-Panel/Stitch/Solidify geometry budget with rollback, native asset and
-scale-aware pole defenses, three-pass golden determinism, and a real Unity
-Edit Mode GitHub Actions job that uploads test XML and Editor logs.
+Use Unity UI Toolkit. Source changes must use serialized editing and support
+Undo/Redo. Compilation is debounced and must never run on every repaint. The
+preview hierarchy, Meshes, and materials are disposable derived artifacts,
+owned by the workspace, excluded from builds, and cleaned up across recompiles
+and domain reloads.
 
-The generated sphere Mesh remains a derived artifact. Do not use a Unity
-Sphere primitive, UV Sphere, Icosphere, imported sphere Mesh, fixed precomputed
-sphere vertices, or an automatic mesh-repair/cleanup stage as the generation
-path.
-
-M05 must not implement Bevel, Subdivision surface smoothing, Remesh, Mesh
-Cleanup, arbitrary topology repair, or M06. Keep `CURRENT_TASK.md` on M05
-until the full diff, complete Edit Mode suite, topology/radius report, and
-actual Unity sphere proof pass human audit.
-
-M05 topology/radius/winding validation does not include global
-triangle-triangle self-intersection detection. That limitation must remain
-explicit in documentation and review claims.
+M06 must reuse the deterministic M00-M05 compiler and its diagnostics. It must
+not change geometry semantics merely to make the UI easier, edit generated
+Mesh data as source, add third-party UI/graph packages, add runtime authoring,
+or implement M07 geometry validation, M08 AI/FoldScript round-tripping, or any
+later milestone.

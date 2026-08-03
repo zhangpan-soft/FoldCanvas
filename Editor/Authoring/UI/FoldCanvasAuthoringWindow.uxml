@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="workspace-root" class="workspace-root">
+        <ui:VisualElement name="top-toolbar" class="top-toolbar">
+            <ui:Label text="FoldCanvas M06" class="workspace-title" />
+            <ui:VisualElement name="asset-field-host" class="asset-field-host" />
+            <ui:Button name="new-source-button" text="New Source" />
+            <ui:Button name="compile-button" text="Compile Now" />
+            <ui:Button name="bake-toolbar-button" text="Bake" class="primary-button" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="main-row" class="main-row">
+            <ui:VisualElement name="canvas-pane" class="workspace-pane canvas-pane">
+                <ui:VisualElement class="pane-toolbar">
+                    <ui:Label text="2D Source Canvas" class="pane-title" />
+                    <ui:Button name="add-rectangle-button" text="+ Rectangle" />
+                    <ui:Button name="add-disk-button" text="+ Disk" />
+                    <ui:Button name="frame-canvas-button" text="Frame" />
+                </ui:VisualElement>
+                <ui:VisualElement name="canvas-host" class="canvas-host" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="main-splitter" class="main-splitter" />
+
+            <ui:VisualElement name="preview-pane" class="workspace-pane preview-pane">
+                <ui:VisualElement class="pane-toolbar preview-toolbar">
+                    <ui:Label text="3D Derived Preview" class="pane-title" />
+                    <ui:Toggle name="solid-toggle" text="Solid" />
+                    <ui:Toggle name="wireframe-toggle" text="Wire" />
+                    <ui:Toggle name="panel-colors-toggle" text="Panels" />
+                    <ui:Toggle name="seams-toggle" text="Seam" />
+                    <ui:Toggle name="normals-toggle" text="Normals" />
+                    <ui:Toggle name="thickness-toggle" text="Thick" />
+                    <ui:Button name="frame-preview-button" text="Frame" />
+                </ui:VisualElement>
+                <ui:VisualElement name="preview-host" class="preview-host" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="authoring-pane" class="authoring-pane">
+            <ui:VisualElement name="tab-toolbar" class="tab-toolbar">
+                <ui:Button name="panels-tab" text="Panels" class="tab-button active-tab" />
+                <ui:Button name="operations-tab" text="Operations" class="tab-button" />
+                <ui:Button name="seams-tab" text="Seams" class="tab-button" />
+                <ui:Button name="diagnostics-tab" text="Diagnostics" class="tab-button" />
+                <ui:Button name="bake-tab" text="Bake" class="tab-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="tab-content" class="tab-content" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="status-bar" class="status-bar">
+            <ui:Label name="status-label" text="Select or create a FoldCanvas source." />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
