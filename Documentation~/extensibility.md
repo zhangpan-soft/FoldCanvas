@@ -53,6 +53,21 @@ assembly that defines them.
 See the complete compiling template under
 [`Samples~/OperationExtension`](../Samples~/OperationExtension/README.md).
 
+## Trusted-code boundary
+
+The registry is a capability boundary for the mesh context supplied by
+FoldCanvas, not a security sandbox. An executor is ordinary trusted managed
+code loaded into the Unity process. It cannot mutate topology through
+`FoldCanvasOperationExecutionContext`, but malicious code could independently
+use other Unity, .NET, file, process, or network APIs available to its assembly.
+
+Do not load an untrusted native extension assembly. Review its source and
+dependencies, pin its version, and use a separate restricted process when
+hostile-code containment is required. FoldCanvas rollback protects compiler
+geometry from a failed position operation; it cannot roll back arbitrary side
+effects performed outside the context. See the full
+[M11 production-readiness evidence contract](production-readiness.md).
+
 ## Sample gallery
 
 `Samples~/Gallery/gallery.json` uses format `foldcanvas-gallery`, version `1`.

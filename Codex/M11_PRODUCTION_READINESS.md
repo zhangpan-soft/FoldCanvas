@@ -103,3 +103,15 @@ release reaches users.
 - glTF, FBX, USD, Blender, or runtime filesystem/network integration
 - publishing `1.0.0` or an external marketplace package
 - supporting Unity versions that have not been run in hosted evidence
+
+## Implementation status
+
+Implementation through work packages A-D and local verification step 10 is
+complete on `codex/m11-production-readiness`. The final deterministic archive
+passed all 401 package Edit Mode tests under Unity `6000.3.20f1`; two separate
+clean hosts resolved that archive from their own `Library/PackageCache` and
+each passed its consumer-owned test with identical stable evidence.
+
+Step 11 remains open: commit and push the exact implementation, open the PR,
+verify hosted repository and Unity jobs plus every required artifact, record a
+maintainer audit, and merge only if the exact PR head has no blocking finding.

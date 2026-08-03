@@ -6,6 +6,27 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [0.1.0-preview.19] - 2026-08-03
+
+### Added
+
+- Deterministic clean-host generator that installs the built UPM `.tgz` into a
+  fresh Unity `6000.3.20f1` project and compiles consumer-owned code through
+  only the public `FoldCanvas.Runtime` assembly
+- Consumer proof report containing package-resolution, source, full geometry,
+  OBJ, diagnostic, count, and Unity-version evidence, with validators that
+  reject missing XML, logs, lock files, archive resolution, or incomplete tests
+- Two-install comparison gate requiring distinct PackageCache paths and
+  identical stable evidence from independent Unity hosts
+- Compiled public Runtime API signature manifest with 796 ordinal signatures,
+  an SHA-256 digest, actionable added/removed diff tests, and exclusion of
+  internal, Editor, and `UnityEditor` types
+- Six-case production corpus covering planar artwork, the Strict closed cup,
+  explicit sphere gores, the Strict cyclic torus, a registered native wave,
+  and stable `FC3011` expected failure across Basic/Standard/Strict validation
+- Bilingual compatibility, migration, production evidence, native-extension
+  trust, release-blocker, and issue-triage documentation
+
 ### Changed
 
 - M10 was maintainer-audited and merged through PR #9; the active roadmap now
@@ -14,6 +35,25 @@ The format follows Keep a Changelog principles, and package versions follow sema
 - Governance now records the delegated autonomous maintenance cadence and the
   required transparent maintainer-audit, CI, escalation, and issue-priority
   gates
+- Unity CI now uploads the production-corpus report and performs two clean
+  archive installations in addition to the complete package Edit Mode suite
+- Package version advanced to `0.1.0-preview.19`
+
+### Verified
+
+- Unity `6000.3.20f1` passed the focused M11 API/corpus suite with 7/7 tests,
+  the complete packaged M00-M11 suite with 401/401 tests, and two independent
+  local `.tgz` consumer installations with 1/1 test each and matching stable
+  geometry/OBJ evidence
+- Repository validation, deterministic archive comparison, M11 clean-install
+  contract tests, JSON parsing, and `git diff --check` passed during
+  implementation
+
+### Not included
+
+- No geometry equation, topology operation, FoldScript `0.1` semantic, CSG,
+  bevel, subdivision, smoothing, remesh, runtime file/network behavior,
+  marketplace publication, or `1.0.0` release was added
 
 ## [0.1.0-preview.18] - 2026-08-03
 

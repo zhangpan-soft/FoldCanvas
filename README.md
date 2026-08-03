@@ -32,8 +32,8 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 The repository currently contains the **M05 spherical-surface compiler, M06
 Editor authoring workspace, M07 geometry validator, M08 FoldScript
-interchange/repair boundary, M09 cyclic-topology proof, and M10 bounded
-extension/release ecosystem**:
+interchange/repair boundary, M09 cyclic-topology proof, M10 bounded
+extension/release ecosystem, and M11 production-readiness evidence layer**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -112,6 +112,12 @@ extension/release ecosystem**:
 - A versioned sample gallery and compiling custom-operation template
 - Deterministic dependency-free OBJ export, maintained performance evidence,
   and byte-reproducible allowlisted UPM release archives
+- Two independent clean Unity archive installations with consumer-owned public-
+  API compilation, mandatory XML/log/resolution reports, and matching stable
+  geometry and OBJ evidence
+- A compiled public Runtime API signature baseline plus a six-case production
+  corpus spanning Basic, Standard, Strict, valid closed surfaces, a registered
+  extension, and stable expected failure
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
@@ -185,6 +191,16 @@ remain derived. FoldScript `0.1` still rejects unknown operations. See the
 [M10 extensibility contract](Documentation~/extensibility.md) and
 [operation template](Samples~/OperationExtension/README.md).
 
+M11 qualifies the distributable archive rather than trusting only the local
+repository host. Two generated Unity projects independently install the same
+`.tgz`, compile consumer-owned code against public `FoldCanvas.Runtime`, and
+must emit matching package, source, geometry, OBJ, and diagnostic evidence.
+The compiled Runtime API baseline and maintained planar/cup/sphere/torus/wave/
+invalid corpus make compatibility and determinism changes reviewable. Native
+executors are explicitly trusted in-process code, not a security sandbox. See
+[production-readiness evidence](Documentation~/production-readiness.md) and
+the [compatibility policy](Documentation~/compatibility.md).
+
 ## Design principles
 
 1. **The 2D source is authoritative.** Generated meshes are disposable build artifacts.
@@ -234,7 +250,7 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
 
 ## Continuous integration
 
-GitHub Actions runs two independent checks:
+GitHub Actions runs three independent evidence gates:
 
 - `repository-validation` parses repository JSON, checks assembly and runtime
   boundaries, confirms the Schema/native `sampleCount` maximum, and validates
@@ -244,13 +260,18 @@ GitHub Actions runs two independent checks:
   Mode tests, and uploads the NUnit XML plus `Editor.log`, even on failure.
   Live GameCI output is staged below the host-project root so a changing log
   is never imported through the repository-root local UPM package; evidence is
-copied to `artifacts/unity-editmode` only after Unity exits.
+  copied to `artifacts/unity-editmode` only after Unity exits. The artifact also
+  contains the production-corpus report.
+- `unity-clean-install-tests` builds the deterministic `.tgz`, creates two
+  independent hosts, compiles consumer-owned assemblies through public Runtime
+  API, validates each real XML/log/package report, and rejects any difference
+  in stable evidence between the two PackageCache installations.
 
 The separate `Package release` workflow builds the allowlisted UPM archive
 twice, verifies byte identity and version agreement, uploads the `.tgz` plus
 SHA-256 evidence, and publishes only an exact matching pushed version tag.
 
-The Unity job uses GameCI and requires repository Actions secrets
+The Unity jobs use GameCI and require repository Actions secrets
 `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal
 license. License data is never stored in the repository.
 
@@ -266,7 +287,9 @@ During local development, add this to the target project's `Packages/manifest.js
 }
 ```
 
-After the repository is public, it can also be installed by Git URL and tag.
+For release qualification, prefer the immutable `.tgz` artifact or an exact
+version tag. The M11 clean-host gate tests the archive itself; a development
+`file:` checkout is not equivalent release evidence.
 
 ## Repository map
 

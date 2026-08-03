@@ -102,7 +102,8 @@ valid and invalid FoldCanvas sources.
 ## Clean installation
 
 - manifest resolves the freshly built `.tgz`
-- resolved package path is outside the repository checkout
+- Unity reports `LocalTarball` and resolves the package into the generated
+  host's own `Library/PackageCache`, never the repository package root
 - consumer assembly compiles with public references only
 - consumer source compiles twice to identical geometry/OBJ evidence
 - missing archive, resolution fallback, missing XML/log/report, or failed Unity
@@ -126,8 +127,9 @@ valid and invalid FoldCanvas sources.
 
 # Risks and rollback
 
-- **False clean install:** generated host must record the resolved package path
-  and reject any path inside the repository checkout.
+- **False clean install:** generated host records both package source and
+  resolved path, requires `LocalTarball` under its own `Library/PackageCache`,
+  and rejects fallback to the repository package root.
 - **Brittle API snapshots:** normalize generic/nested/array/ref signatures and
   sort ordinally; report signature differences rather than only a hash.
 - **Machine-specific evidence:** topology and text hashes are gates; timings are
@@ -155,6 +157,16 @@ valid and invalid FoldCanvas sources.
 - 2026-08-03: Merged PR #9 and fast-forwarded `main` to merge commit `b67120f`.
 - 2026-08-03: Created `codex/m11-production-readiness`, M11 specification, ADR
   0009, and this execution plan.
+- 2026-08-03: Implemented the clean-archive host generator, consumer-owned API
+  smoke fixture, resolution/evidence validators, and independent two-host
+  evidence comparison.
+- 2026-08-03: Added the 796-signature public Runtime API baseline, six-case
+  production corpus, compatibility and production-readiness documentation,
+  repository gates, and hosted clean-install workflow.
+- 2026-08-03: Built final archive SHA-256
+  `03236479e585eafcf7d57d59cfc442fc6b6f95ef782195a861fbdb94fead842e`;
+  Unity `6000.3.20f1` passed all 401 package Edit Mode tests and both clean
+  consumer hosts passed 1/1 with identical stable evidence.
 
 # Decisions made
 
@@ -171,13 +183,21 @@ valid and invalid FoldCanvas sources.
 
 # Final verification
 
-Pending implementation. Required final evidence:
+Local implementation evidence is complete. Hosted PR evidence and maintainer
+audit remain pending before merge.
 
-- exact Unity Editor version and full package-test totals
-- two clean archive installations and consumer-test totals
-- public API baseline signature count and digest
-- production corpus case count, counts/hashes, and expected-invalid diagnostic
-- repository/release/static results
+- Unity `6000.3.20f1`: 401 passed, 0 failed, 0 skipped, 0 inconclusive
+- two independent archive consumers: 1/1 passed in each host
+- clean pair stable evidence SHA-256:
+  `189b5629700f63029cad05708035d39b878029315f86335eee88ac1dc86e2bf9`
+- public Runtime API: 796 signatures, digest
+  `22f10070f633b216a7ca1eb0721cc6cab1ed792ce1db2a9304faa0dedead47d0`
+- production corpus: six cases, five valid and one expected FC3011 invalid
+- repository validation, clean-project static tests, release-package tests,
+  workflow YAML parsing, and `git diff --check`: passed locally
+
+Remaining hosted evidence:
+
 - hosted workflow run IDs plus XML, Editor log, resolution, consumer, and corpus
   artifact presence
 - foreground evidence only for claims that depend on rendering or interaction

@@ -1,8 +1,8 @@
 {
   "name": "com.foldcanvas.core",
-  "version": "0.1.0-preview.18",
+  "version": "0.1.0-preview.19",
   "displayName": "FoldCanvas",
-  "description": "A deterministic 2D-first Unity surface compiler with explicit topology, bounded operation extensions, canonical FoldScript, derived exporters, and tiered validation.",
+  "description": "A deterministic 2D-first Unity surface compiler with explicit topology, canonical FoldScript, bounded extensions, tiered validation, and clean-install production evidence.",
   "unity": "6000.3",
   "documentationUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/Documentation~/index.md",
   "changelogUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/CHANGELOG.md",

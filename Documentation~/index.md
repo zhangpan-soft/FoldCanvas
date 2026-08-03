@@ -14,6 +14,8 @@
 - [M09 torus and handled-cup topology sample](../Samples~/Topology/README.md)
 - [M10 extension registry, gallery, OBJ, performance, and release contract](extensibility.md)
 - [M10 contributor operation template](../Samples~/OperationExtension/README.md)
+- [M11 clean-install, public API, corpus, trust, and release evidence](production-readiness.md)
+- [Package, Runtime API, Unity, and FoldScript compatibility policy](compatibility.md)
 - [AI integration contract](ai-integration.md)
 - [Roadmap](roadmap.md)
 - [Glossary](glossary.md)

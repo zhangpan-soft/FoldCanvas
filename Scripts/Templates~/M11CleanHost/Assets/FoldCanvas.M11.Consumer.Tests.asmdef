@@ -1,0 +1,21 @@
+{
+  "name": "FoldCanvas.M11.Consumer.Tests",
+  "rootNamespace": "FoldCanvas.M11.Consumer",
+  "references": [
+    "FoldCanvas.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
