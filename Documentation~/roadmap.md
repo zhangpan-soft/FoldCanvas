@@ -281,7 +281,7 @@ derived artifacts.
 
 ## M11: Production-readiness foundation
 
-**Status:** active on `codex/m11-production-readiness`.
+**Status:** maintainer-audited and merged through PR #10 as `b757792`.
 
 **Proof:** a freshly built deterministic UPM archive installs into a generated
 clean Unity host; consumer-owned code compiles through public API only and emits
@@ -301,12 +301,28 @@ package dependency, expose topology mutation, or add runtime file/network I/O.
 
 ## M12: Production asset handoff
 
-**Status:** planned; not active.
+**Status:** active on `codex/m12-production-handoff`.
 
-**Proof direction:** one authored source bundle can be handed to another Unity
-project with appearance assets, canonical FoldScript, validation evidence, and
-derived runtime-ready outputs while retaining exact source ownership and
-rebuild instructions.
+**Proof:** one production cup source exports twice to a byte-identical bounded
+handoff archive, then a second clean Unity project verifies and imports its
+canonical FoldScript and exact PNG before rebuilding matching Mesh, Material,
+Prefab, OBJ, validation evidence, and an ownership receipt.
+
+- deterministic fixed-layout ZIP with canonical manifest and entry hashes
+- canonical FoldScript plus exact portable PNG as the only editable source
+- derived OBJ, compile/validation report, and rebuild instructions
+- strict entry allowlist, byte/count limits, traversal and duplicate rejection
+- exact package/compiler/FoldScript compatibility gate for handoff v1
+- pre-persistence in-memory import, compile, and evidence comparison
+- new-folder-only project persistence with rollback on failure
+- idempotent same-bundle import and refusal to overwrite unowned content
+- one-sided textured runtime Prefab rebuilt by the receiving compiler
+- two-clean-project producer/receiver hosted evidence
+
+M12 does not embed a Unity Mesh as source, preserve project GUIDs, serialize
+native custom operations, migrate across compiler versions, add signing or
+encryption, perform runtime file/network I/O, add geometry behavior, or
+implement M13 robustness/fuzz work.
 
 ## M13: Robustness and scale
 
