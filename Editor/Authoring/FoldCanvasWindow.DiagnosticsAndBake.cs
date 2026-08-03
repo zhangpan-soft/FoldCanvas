@@ -45,6 +45,22 @@ namespace FoldCanvas.Editor
             summary.AddToClassList("section-title");
             root.Add(summary);
 
+            if (result.GeometryValidationReport != null)
+            {
+                FoldCanvasGeometryValidationReport validation =
+                    result.GeometryValidationReport;
+                root.Add(new HelpBox(
+                    $"Geometry validation: {validation.ValidationLevel}; " +
+                    $"components={validation.ComponentCount}, " +
+                    $"open edges={validation.OpenEdgeCount}, " +
+                    $"non-manifold edges={validation.NonManifoldEdgeCount}, " +
+                    $"confirmed intersections=" +
+                    $"{validation.ExactIntersectionPairCount}.",
+                    validation.IsValid
+                        ? HelpBoxMessageType.Info
+                        : HelpBoxMessageType.Error));
+            }
+
             if (result.Diagnostics.Count == 0)
             {
                 root.Add(new HelpBox(
@@ -153,6 +169,58 @@ namespace FoldCanvas.Editor
             {
                 context += (context.Length == 0 ? string.Empty : " · ") +
                     "seam=" + diagnostic.SeamId;
+            }
+
+            if (!string.IsNullOrEmpty(diagnostic.BoundaryId))
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    "boundary=" + diagnostic.BoundaryId;
+            }
+
+            FoldCanvasDiagnosticGeometryContext geometry =
+                diagnostic.GeometryContext;
+            if (geometry == null || !geometry.HasValue)
+            {
+                return context;
+            }
+
+            if (geometry.VertexIndex >= 0)
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    "vertex=" + geometry.VertexIndex;
+            }
+
+            if (geometry.TopologyVertexId >= 0)
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    "topologyVertex=" + geometry.TopologyVertexId;
+            }
+
+            if (geometry.ComponentIndex >= 0)
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    "component=" + geometry.ComponentIndex;
+            }
+
+            if (geometry.TriangleIndex >= 0)
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    "triangle=" + geometry.TriangleIndex;
+            }
+
+            if (geometry.RelatedTriangleIndex >= 0)
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    "relatedTriangle=" +
+                    geometry.RelatedTriangleIndex;
+            }
+
+            if (geometry.EdgeTopologyVertexA >= 0 &&
+                geometry.EdgeTopologyVertexB >= 0)
+            {
+                context += (context.Length == 0 ? string.Empty : " · ") +
+                    $"edge=({geometry.EdgeTopologyVertexA}," +
+                    $"{geometry.EdgeTopologyVertexB})";
             }
 
             return context;

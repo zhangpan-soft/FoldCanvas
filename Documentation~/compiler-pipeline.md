@@ -284,17 +284,28 @@ are not included in the operation-scoped check.
 
 ## Stage 7: validation
 
-- finite coordinates
-- non-zero triangle area
-- consistent winding where expected
-- open-boundary count
-- manifold edge count
-- logical-topology position agreement
-- connected component count
-- signed and absolute component volume
-- duplicate/coincident vertices
-- seam closure error
-- global triangle-triangle self-intersection (reserved; not implemented in M05)
+After all enabled operations and before Unity Mesh creation, M07 validates the
+explicit build buffer according to `compile.validationLevel`:
+
+- Basic: index-buffer structure and bounds, finite positions, collapsed and
+  zero-area triangles, duplicate topology faces, edge incidence, and local
+  winding;
+- Standard: logical-topology position agreement, bow-tie fans, compiled
+  boundary length, executed-Weld closure, closed-component orientation, plus
+  open-boundary and disconnected-component warnings;
+- Strict: deterministic sweep-and-prune candidates followed by exact
+  separating-axis triangle tests for pairs that share no topology vertex.
+
+Fatal checks use stable root-cause precedence and stop their dependent checks.
+Components are ordered by minimum topology ID, edges and triangle pairs are
+lexicographically ordered, and the validator never edits the buffer. Strict
+fails with `FC5019` rather than degrading after 250000 candidates. Confirmed
+overlap returns `FC5018`; broad-phase candidates alone are not errors.
+
+The compiler exposes this evidence through the read-only
+`GeometryValidationReport`. Open sheets and deliberately disconnected assets
+remain valid results, so their Standard diagnostics are warnings. Full details
+are in [M07 geometry validation](geometry-validation.md).
 
 Every successful compile exposes a read-only
 `FoldCanvasClosedVolumeReport`. Open source panels remain valid compile
@@ -333,10 +344,10 @@ surface must pass first. A later Solidify is still allowed and is independently
 validated by the operation-scoped closed-volume contract because its
 inner/outer positions intentionally no longer lie on the original radius.
 
-This report proves the listed topological, radius, frame, and winding
-properties. M05 does not run a global triangle-triangle self-intersection
-test, so closed-sphere validation is not a proof that an arbitrary surface is
-free of every geometric self-intersection.
+The sphere report proves the listed topological, radius, frame, and winding
+properties at its operation-specific stage. It is not by itself a global
+self-intersection proof. A successful final Strict M07 report adds exact
+non-adjacent triangle-intersection evidence over the final build buffer.
 
 ## Stage 8: artifact creation
 

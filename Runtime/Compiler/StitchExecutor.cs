@@ -166,6 +166,11 @@ namespace FoldCanvas
                         }
 
                         buffer.SnapWeldedTopologyPositions();
+                        buffer.AddWeldValidationRecord(
+                            operation.Id,
+                            seam.Id,
+                            correspondence.BoundaryA,
+                            correspondence.BoundaryB);
                     }
                 }
 

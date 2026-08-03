@@ -12,7 +12,7 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M05 implements planar `rectangle` and `disk`/ellipse compilation,
+> M07 implements planar `rectangle` and `disk`/ellipse compilation,
 > `rigidTransform`, edge-aligned rigid-crease `fold`, rectangle `roll`,
 > explicit rectangle `sphericalWrap`, deterministic `weld`/`bridge` Stitch,
 > and `solidify` through the Unity
@@ -531,7 +531,7 @@ not receive hidden internal walls.
 |---|---:|:---:|---|
 | `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for explicit Weld and coincidence checks. It does not implicitly weld geometry. |
 | `recalculateNormals` | boolean | yes | Derive Unity mesh normals after geometry compilation. |
-| `validationLevel` | enum | yes | `"basic"`, `"standard"`, or `"strict"`; higher levels add more expensive validation when implemented. |
+| `validationLevel` | enum | yes | `"basic"`, `"standard"`, or `"strict"`; the exact cumulative contracts are defined below. |
 | `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative full-compile safety limit covering panel tessellation, Stitch additions, and Solidify additions. C# default: `1,000,000`. |
 | `maxGeneratedTriangles` | integer ≥ 1 | no | Cumulative full-compile safety limit covering panel tessellation, Stitch additions, and Solidify additions. C# default: `2,000,000`. |
 
@@ -539,6 +539,24 @@ Every geometry-producing operation preflights and reserves its exact additions,
 while `MeshBuildBuffer` remains the final hard limit. Budget or arithmetic
 overflow returns a stable diagnostic and rolls back the failing operation.
 Limits are errors, not automatic simplification targets.
+
+Validation levels are cumulative:
+
+- `basic` always checks complete/in-range triangle indices, finite positions,
+  collapsed or zero-area triangles, duplicate topology faces, non-manifold
+  logical edges, and local edge-winding conflicts;
+- `standard` additionally checks logical-position consistency, bow-tie fans,
+  compiled boundary length, executed-Weld closure, and closed-component
+  orientation. Intentional open boundaries and disconnected parts are
+  warnings, not automatic failure;
+- `strict` additionally runs deterministic broad-phase and exact
+  triangle-triangle intersection tests for pairs that do not share a logical
+  topology vertex. Exceeding the fixed candidate budget is an error, never an
+  implicit downgrade.
+
+The final geometry validator reports but never repairs. It does not flip,
+delete, stitch, thicken, smooth, or remesh derived geometry. See
+[M07 geometry validation](geometry-validation.md).
 
 ## 8. Determinism and failure behavior
 

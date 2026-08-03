@@ -144,6 +144,13 @@ Stitch or Solidify addition. Geometry-producing operations reserve before
 mutation and use rollback transactions; the build buffer remains the hard
 enforcement boundary.
 
+M07 runs one final read-only geometry validator over that build buffer before
+Unity Mesh creation. Basic structural safety is always available; Standard
+adds topology, boundary, executed-Weld, component, and orientation evidence;
+Strict adds deterministic broad-phase and exact non-adjacent triangle
+intersection tests. The resulting `GeometryValidationReport` and localized
+diagnostic context are derived evidence and never mutate source or geometry.
+
 ## 4. Coordinate conventions
 
 - Unity world coordinates are left-handed as used by Unity transforms.
@@ -176,7 +183,8 @@ enforcement boundary.
 The M04.1 corner/volume records and M05 spherical-surface/sphere-report records
 are read-only derived metadata. Editor wireframe, section, seam, pole, stretch,
 and radius-error Meshes may visualize them, but they never become source
-geometry or feed back into compilation.
+geometry or feed back into compilation. M07 component, seam, and intersection
+reports follow the same read-only rule.
 
 M05 derives spherical components only from enabled SphericalWrap panels joined
 by Stitch-selected seams whose two endpoints are spherical. Component
@@ -185,8 +193,9 @@ formed, any Stitch-selected seam with either endpoint in a component touches
 that component. The compiler freezes its report after the last touching Stitch
 and before a Solidify that touches that component. Solidify may build a later
 shell but cannot replace this zero-thickness proof. The report proves the
-documented topology, radius, frame, and winding invariants; it does not run a
-global triangle-triangle self-intersection test.
+documented topology, radius, frame, and winding invariants at that stage. It
+does not itself run a global triangle-triangle self-intersection test; a final
+successful Strict M07 report supplies that separate final-buffer evidence.
 
 Operation order is a source invariant: every enabled SphericalWrap targeting a
 selected seam endpoint must occur strictly before that Stitch. Source preflight

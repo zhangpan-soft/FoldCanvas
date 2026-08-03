@@ -8,6 +8,48 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.15] - 2026-08-03
+
+### Added
+
+- M07 cumulative Basic, Standard, and Strict final-geometry validation with a
+  read-only `GeometryValidationReport`
+- Stable diagnostics for invalid/incomplete triangle indices, duplicate
+  topology faces, open boundaries, winding conflicts, disconnected geometry,
+  executed-Weld gaps, bow-tie vertices, topology-position conflicts, inverted
+  closed components, exact self-intersections, candidate-budget overflow, and
+  degenerate compiled boundaries
+- Read-only boundary, render/logical vertex, component, triangle-pair, and
+  logical-edge diagnostic context for Editor navigation and future source
+  repair tools
+- Deterministic sweep-and-prune candidate generation and exact separating-axis
+  triangle tests, including coplanar axes and a hard 250000-pair budget
+- Adversarial fixtures and 28 M07 Edit Mode tests covering structural roots,
+  topology and seam evidence, validation levels, determinism, non-mutation,
+  self-intersecting roll/thickness cases, and valid cup/sphere regressions
+
+### Changed
+
+- The compiler now validates the explicit final build buffer before freezing
+  compiled data or creating a Unity Mesh
+- Executed Weld correspondence is retained transactionally for final seam-gap
+  verification; failed Stitch transactions discard that evidence
+- The M06 Diagnostics tab displays the selected validation level, component,
+  open/non-manifold edge, and confirmed-intersection summary
+- Package version advanced to `0.1.0-preview.15`
+
+### Verified
+
+- Unity `6000.3.20f1` passed all 281 Edit Mode tests, including 28 M07
+  adversarial, level-gating, determinism, and false-positive regressions
+- Repository validation and `git diff --check` passed
+
+### Not included
+
+- No automatic repair, Bevel, subdivision, smoothing, remeshing, Mesh cleanup,
+  collision-aware thickness adjustment, M08 FoldScript import/AI loop, or M09
+  non-trivial topology operation was added
+
 ## [0.1.0-preview.14] - 2026-07-31
 
 ### Added

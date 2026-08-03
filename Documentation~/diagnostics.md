@@ -9,7 +9,10 @@ Every diagnostic contains:
 - message
 - optional panel ID
 - optional seam ID
+- optional boundary ID
 - optional operation ID/index
+- optional read-only geometry context: render vertex, logical topology vertex,
+  component, triangle pair, or logical topology edge
 - ordered, copied, read-only structured numeric values
 - ordered, copied, read-only repair suggestions
 
@@ -43,6 +46,7 @@ compiler stage and source order.
 - `FC0003 DuplicateOperationId`
 - `FC0004 EmptyPanelId`
 - `FC0005 InvalidCompileLimits`
+- `FC0006 InvalidValidationLevel`
 - `FC1001 InvalidPanelDimensions`
 - `FC1002 InvalidTessellation`
 - `FC1003 CanvasRectOutOfRange`
@@ -101,6 +105,19 @@ compiler stage and source order.
 - `FC5005 GeneratedVertexLimitExceeded`
 - `FC5006 GeneratedTriangleLimitExceeded`
 - `FC5007 GeometryBudgetOverflow`
+- `FC5008 InvalidTriangleIndex`
+- `FC5009 IncompleteTriangleIndexBuffer`
+- `FC5010 DuplicateTriangle`
+- `FC5011 OpenTopologyBoundary`
+- `FC5012 InconsistentWinding`
+- `FC5013 DisconnectedGeometry`
+- `FC5014 SeamClosureMismatch`
+- `FC5015 BowTieTopologyVertex`
+- `FC5016 TopologyPositionConflict`
+- `FC5017 InvertedClosedComponent`
+- `FC5018 SelfIntersection`
+- `FC5019 StrictValidationBudgetExceeded`
+- `FC5020 DegenerateCompiledBoundary`
 - `FC6001 SphericalWrapTargetMissing`
 - `FC6002 UnsupportedSphericalWrapPanelShape`
 - `FC6003 NonFiniteSphericalWrapParameter`
@@ -156,38 +173,49 @@ exhaustion with ordered `currentUsed`, `requestedAdditional`, and
 that attempts to exceed its exact reservation. Budget failures roll back the
 failing Stitch or Solidify transaction and return no partial Mesh.
 
+`FC5008`-`FC5020` are the M07 final-geometry diagnostics. Structural root
+causes stop later checks, so an invalid index, duplicate face, or non-manifold
+edge does not create a cascade. `FC5011` and `FC5013` are warnings because an
+intentional sheet or multi-part asset is valid. `FC5014` rechecks only Weld
+seams actually executed by Stitch. `FC5018` is an exact Strict-level
+non-adjacent triangle intersection, not a broad-phase guess. `FC5019` stops
+when the deterministic broad phase exceeds 250000 candidate pairs rather than
+silently omitting exact tests. See
+[M07 geometry validation](geometry-validation.md) for ordering and evidence.
+
 ## Validation levels
 
 ### Basic
 
-- source references
-- finite numbers
-- index bounds
-- non-zero triangles
+- complete triangle index triples and in-range indices
+- finite generated positions
+- non-collapsed logical triangles and non-zero geometric area
+- duplicate topology triangles
+- non-manifold logical edges and local edge-winding conflicts
 
 ### Standard
 
 Adds:
 
-- open boundaries
-- manifold edge counts
-- seam closure distance
-- duplicate vertices
+- logical-topology position agreement and bow-tie vertex fans
+- compiled-boundary length
+- executed Weld seam closure distance
+- inward orientation of closed components
+- open-boundary and disconnected-component warnings
 
 ### Strict
 
 Adds expensive checks:
 
-- global triangle-triangle self-intersection (planned, not implemented in M05)
-- shell thickness collision
-- orientation consistency across components
-- topology expectations
+- deterministic sweep-and-prune broad phase
+- exact non-adjacent triangle-triangle intersection tests
+- a hard candidate-pair budget that fails instead of degrading silently
 
-The current sphere validator proves component topology, manifold edge
+The sphere-specific report still proves component topology, manifold edge
 incidence, Euler characteristic, pole identities, frame/radius agreement, and
-winding. It does not perform global triangle-triangle self-intersection
-detection, so `IsClosedSphere` must not be described as a universal no-self-
-intersection proof.
+winding at its documented operation stage. `IsClosedSphere` alone is not a
+universal no-self-intersection claim. A later successful Strict M07 report
+adds final-buffer triangle-intersection evidence.
 
 ## Failure philosophy
 

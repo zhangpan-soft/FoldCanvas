@@ -1,260 +1,260 @@
 # Goal
 
-Deliver M06 on `codex/m06-editor-workspace`: a Unity UI Toolkit authoring
-workspace that lets a non-modeler create the established FoldCanvas cup from
-an empty source asset without code edits or direct vertex manipulation.
-
-The branch is stacked from verified M05 head `46aa02f` while PR #4 remains
-open. M06 work may proceed, but neither PR #4 nor this branch is merged by this
-plan without a separate human approval.
+Deliver M07 on `codex/m07-geometry-validator`: a deterministic geometry
+validation stage that converts malformed or self-intersecting generated
+geometry into stable, localized diagnostics suitable for a human author and a
+future provider-neutral AI repair loop.
 
 # User-visible proof
 
-The Editor command `Tools > FoldCanvas > Open Authoring Workspace` opens one
-owned window with:
+The existing FoldCanvas authoring workspace compiles intentionally broken
+fixtures and displays one clear primary diagnostic for each defect, including
+its available source and geometry context. A valid panel, cup, and sphere still
+compile through the unchanged source-to-derived-Mesh pipeline.
 
-- a left 2D appearance-canvas viewport;
-- a right interactive 3D derived preview;
-- asset, panel, operation, seam, diagnostic, and bake controls;
-- a documented blank-asset-to-cup walkthrough requiring no code edits.
-
-The walkthrough must create a rectangle wall and disk bottom, identify their
-standard boundaries, add explicit Place/Roll/Stitch/Solidify operations,
-resolve any diagnostics in the same window, preview the result in solid and
-debug modes, and save a baked derived asset.
+The proof includes fixtures for invalid indices, non-finite coordinates,
+zero-area and duplicate triangles, a bow-tie vertex, inverted winding, an open
+seam, a zero-length boundary, self-intersecting rolled surfaces, and intersecting
+thickness shells.
 
 # Scope
 
-## Workspace shell
+## Validation report
 
-- Unity UI Toolkit `EditorWindow` with persistent splitter proportions.
-- Source-asset selector and explicit Create New action.
-- Modular 2D canvas, 3D preview, source inspector, operation timeline, seam
-  editor, diagnostics, and bake sections.
-- Clear dirty, compiling, valid, invalid, and baked states.
+- add one read-only geometry-validation report to `FoldCanvasCompileResult`;
+- report the executed level and deterministic counts for vertices, triangles,
+  topology edges, components, seams, candidates, and confirmed intersections;
+- retain stable evidence records for components and confirmed triangle pairs;
+- expose no mutable Mesh or repair API.
 
-## 2D canvas tools
+## Structured diagnostics
 
-- zoom centered on the cursor and bounded pan;
-- appearance canvas display using FoldCanvas UV convention;
-- rectangle and disk panel creation;
-- selection, naming, canvas-rect numeric editing, and drag handles;
-- standard boundary highlighting and selected seam endpoint highlighting;
-- deterministic visual ordering derived from source list order.
+- preserve existing `FC5001`-`FC5007` behavior where it already names the
+  correct root cause;
+- add stable FC5xxx codes for incomplete/invalid index buffers, duplicate
+  triangles, open topology, inconsistent winding, disconnected components,
+  seam closure, bow-tie vertices, topology-position conflicts, inverted closed
+  components, strict self-intersection, degenerate compiled boundaries, and a
+  bounded strict-check budget;
+- extend diagnostic context with optional vertex, topology-vertex, component,
+  triangle-pair, and topology-edge identities;
+- keep structured values in deterministic key order.
 
-## Source editing
+## Validation levels
 
-- serialized edits with Undo/Redo for every authoritative source mutation;
-- explicit forms for supported M06 cup operations rather than raw JSON or
-  direct Mesh editing;
-- operation reorder, enable/disable, target selection, and operation-specific
-  fields;
-- seam creation, endpoint boundary selection, mode selection, and removal;
-- stable generated IDs that are visible and editable before references exist.
+- `Basic` runs structural safety, finite coordinates, index range, collapsed
+  topology, zero area, duplicate triangles, non-manifold incidence, and
+  orientation-conflict checks;
+- `Standard` adds open-boundary/component evidence, seam closure, boundary
+  length, bow-tie vertex fans, topology-position consistency, connectivity, and
+  closed-component orientation;
+- `Strict` adds deterministic sweep-and-prune broad phase and exact
+  triangle-triangle intersection confirmation;
+- lower levels never run higher-level expensive checks.
 
-## Preview and diagnostics
+## Editor proof
 
-- debounced compile after source changes, never once per repaint;
-- stale compile requests ignored through a monotonically increasing revision;
-- disposable preview Mesh/material ownership with deterministic replacement;
-- local preview orbit, frame result, solid/wireframe/panel-color/seam/normal/
-  thickness views, and diagnostic focus;
-- compile diagnostics shown in deterministic order with structured context;
-- selection synchronization between panels, seams, diagnostics, and preview.
-
-## Bake
-
-- explicit user-triggered bake using existing compiler output;
-- no automatic asset saving from preview compilation;
-- saved Mesh/prefab remains derived and carries a source reference where the
-  current data model supports it;
-- failed compilation cannot overwrite the last valid bake.
+- show geometry context in the existing Diagnostics tab;
+- show validation-level and report-count evidence without introducing a second
+  authoring model;
+- preserve diagnostic focus for panel/operation/seam source context.
 
 # Non-goals
 
-- direct editing of generated vertices, triangles, UVs, normals, or topology;
-- geometry-semantic changes to Fold, Roll, Stitch, Solidify, or SphericalWrap;
-- a node graph or operation DAG;
-- third-party graph/editor/UI dependencies;
-- automatic image segmentation, AI generation, or provider integration;
-- runtime/player authoring;
-- M07 self-intersection or broken-geometry validation;
-- M08 JSON importer/exporter and AI repair loop;
-- bevel, subdivision, smoothing, remesh, or mesh cleanup;
-- merging PR #4 or this branch without explicit human approval.
+- automatic repair, vertex welding, remesh, cleanup, decimation, smoothing,
+  subdivision, bevel, or collision resolution;
+- changing Fold, Roll, Stitch, Solidify, or SphericalWrap geometry semantics;
+- global continuous-collision detection or animation-time validation;
+- treating intentional open geometry as a compile error solely because it is
+  open; Standard reports it as localized warning evidence;
+- M08 JSON round-trip, AI adapter, or repair-payload orchestration;
+- M09 handles, torus, cyclic topology, or multiple-hole panel domains.
 
 # Files expected to change
 
 - `CURRENT_TASK.md`
 - `Docs/Plans/active-plan.md`
-- `Editor/FoldCanvasAuthoringWindow.cs`
-- Editor-only UI/controller/view-model helpers under `Editor/Authoring/`
-- modular UXML/USS resources under `Editor/Authoring/UI/`
-- Editor assembly definitions only if required by new Editor tests/resources
-- `Tests/Editor/M06AuthoringWorkspaceTests.cs`
-- `Documentation~/authoring-workspace.md`
-- `Documentation~/roadmap.md`
-- `README.md`, `README.zh-CN.md`, `CHANGELOG.md`, and `package.json`
+- `Runtime/Diagnostics/FoldCanvasDiagnostic.cs`
+- `Runtime/Compiler/FoldCanvasGeometryValidator.cs`
+- `Runtime/Compiler/FoldCanvasCompileResult.cs`
+- `Runtime/Compiler/FoldCanvasCompiler.cs`
+- `Runtime/Compiler/MeshBuildBuffer.cs`
+- `Runtime/Compiler/StitchExecutor.cs`
+- `Runtime/Compiler/FoldCanvasGeometryTolerances.cs`
+- `Runtime/Compiler/FoldCanvasSourceValidator.cs`
+- `Editor/Authoring/FoldCanvasWindow.DiagnosticsAndBake.cs`
+- `Tests/Editor/M07GeometryValidatorTests.cs`
+- `Tests/Editor/Fixtures/M07AdversarialGeometryFixtures.cs`
+- relevant bilingual documentation, `README.md`, `README.zh-CN.md`,
+  `CHANGELOG.md`, and `package.json`
 
-The inventory step may refine this list before implementation. Runtime files
-change only if an existing public source-editing primitive is genuinely
-missing and the decision is recorded first.
+The inventory may narrow this list. Any additional file is recorded in the
+progress log before final submission.
 
 # Geometry invariants
 
 - The 2D appearance canvas, panels, named boundaries, seams, and ordered
-  operations remain the only authoritative editable geometry source.
-- Preview and baked Meshes are compiler outputs and never feed source edits.
-- M00-M05 coordinate systems, UV preservation, boundary order, winding,
-  tolerance, geometry-budget, and diagnostic contracts remain unchanged.
-- Rectangle boundaries remain `uMin/uMax` bottom-to-top and `vMin/vMax`
-  left-to-right. Disk `perimeter` remains counter-clockwise from panel front.
-- The 2D viewport maps normalized canvas UV with visual origin at the lower
-  left after accounting for UI Toolkit's top-left screen coordinates.
-- UI list order is source list order. No dictionary or scene-discovery order
-  may affect source mutation, compilation, or diagnostic display.
-- Stitch remains terminal for each selected panel until topology-group
-  deformation propagation is implemented.
-- Invalid edits produce or expose diagnostics; the workspace never silently
-  substitutes approximate geometry.
+  operations remain authoritative. Validation consumes generated geometry but
+  never mutates it.
+- Identical source/settings/compiler version produce identical report values,
+  diagnostic order, diagnostic context, and confirmed intersection-pair order.
+- All edge incidence uses `TopologyVertexId`, not raw render indices, so UV and
+  provenance splits do not create false cracks.
+- A topology edge is the ordered-independent pair `(minId,maxId)`. Orientation
+  is recorded from the directed triangle edge relative to that order.
+- Triangle and component identities use source index order. Components are
+  sorted by minimum topology vertex ID before assigning component indices.
+- Existing source UVs, vertex/index order, boundary order, winding, weld
+  tolerance, and geometry-budget behavior are unchanged.
+- Strict self-intersection ignores triangle pairs sharing a topology vertex,
+  because they are adjacent surface incidence rather than global crossings.
+- Broad-phase pairs are sorted lexicographically by triangle indices before
+  exact testing. Exact evidence uses the same order.
+- An intentional open sheet may remain a successful compile; its open-edge and
+  open-boundary evidence is a Standard warning. Non-manifold, inconsistent,
+  inverted closed, or intersecting geometry is an error.
+- No validator stage performs a repair or substitutes approximate geometry.
 
 # Implementation steps
 
-1. Create the stacked M06 branch, switch the active task, and record UI/source/
-   preview ownership contracts before implementation.
-2. Inventory existing source definitions, custom inspectors, sample creators,
-   compiler entry points, bake paths, and Editor tests. Reuse them instead of
-   duplicating geometry logic.
-3. Add the UI Toolkit window shell, source asset lifecycle, panel/operation/
-   seam list selection model, and an Edit Mode smoke test.
-4. Add the 2D canvas transform and rectangle/disk creation/editing with
-   Undo/Redo, selection, naming, numeric fields, handles, and boundaries.
-5. Add operation forms and deterministic timeline editing for the operations
-   needed by the cup proof.
-6. Add seam endpoint pairing, mode editing, endpoint highlight, and validation
-   of references before mutation.
-7. Add debounced deterministic compilation, owned derived preview resources,
-   orbit/frame/debug overlays, and diagnostic navigation.
-8. Add explicit Bake controls that save only a successful compiler result and
-   preserve the source as authority.
-9. Add Edit Mode coverage for idempotent window/preview ownership, serialized
-   mutations, Undo/Redo, debounce behavior, no leaked derived objects, stable
-   diagnostics, blank-to-cup workflow, and bake refusal on failure.
-10. Write the manual blank-asset-to-cup walkthrough and validate it in a live
-    Unity window using the solid and textured cup views.
-11. Run tracked JSON parsing, assembly checks, repository validation,
-    `git diff --check`, the complete Edit Mode suite, and live Editor proof.
-12. Update package version/changelog, commit, push, and open a non-merged M06
-    review PR with explicit dependency on PR #4 if it is still unmerged.
+1. Merge the accepted M05/M06 stack, create the isolated M07 branch, and lock
+   level/ordering/no-repair contracts.
+2. Inventory existing compiler validation, topology metadata, seam execution,
+   closed-volume evidence, diagnostics, and Editor presentation.
+3. Add immutable geometry-context and validation-report types without removing
+   existing diagnostic fields or codes.
+4. Record executed Weld seam sample pairs in the build buffer so final closure
+   validation can identify seam and operation without reconstructing topology.
+5. Implement staged Basic and Standard validation with deterministic category
+   precedence and root-cause suppression.
+6. Implement bounded Strict broad phase and exact triangle intersection,
+   excluding topology-adjacent pairs and sorting all evidence.
+7. Integrate the report before Mesh creation, preserve source/operation errors,
+   and keep valid open sheets successful.
+8. Extend the M06 Diagnostics/Bake view with geometry context and report counts.
+9. Add adversarial fixture builders and Edit Mode tests for every required
+   defect, level gating, determinism, no-repair, and valid legacy assets.
+10. Update field reference, pipeline, diagnostics, roadmap, architecture,
+    bilingual README, package version, and newest-first changelog.
+11. Run repository validation, JSON/YAML parsing, assembly/runtime isolation,
+    `git diff --check`, the targeted M07 suite, and the complete Edit Mode suite.
+12. Inspect diagnostics in a live Unity window, then commit, push, and create a
+    non-auto-merged M07 review PR.
 
 # Test matrix
 
-## Window and ownership
+## Structural and Basic
 
-- `OpenWorkspace_TwiceReusesOneWindow`
-- `WorkspacePreview_IsEditorOnlyAndOwned`
-- `WorkspaceSolidView_UsesOneSidedDiagnosticMaterial`
-- `WorkspaceRecompile_ReplacesAndDestroysDerivedMesh`
-- `WorkspaceClose_CleansPreviewResources`
-- `Workspace_DoesNotModifyMainCamera`
+- `InvalidTriangleIndex_ReturnsStableDiagnosticWithoutThrow`
+- `IncompleteTriangleIndexBuffer_ReturnsStableDiagnostic`
+- `NonFiniteVertex_ReturnsLocalizedStableDiagnostic`
+- `ZeroAreaTriangle_ReturnsLocalizedStableDiagnostic`
+- `DuplicateFace_ReturnsDuplicateTriangleWithoutNonManifoldFlood`
+- `NonManifoldEdge_ReturnsSortedEdgeContext`
+- `InvertedFace_ReturnsInconsistentWinding`
 
-## Source and Undo
+## Standard
 
-- `CreateRectanglePanel_RecordsUndoAndStableId`
-- `CreateDiskPanel_RecordsUndoAndStableId`
-- `RenamePanel_UndoRedoRestoresReferences`
-- `EditCanvasRect_UndoRedoRestoresExactValues`
-- `CanvasZoom_KeepsSourcePointUnderCursor`
-- `CanvasPan_IsBoundedToKeepCanvasVisible`
-- `ReorderOperation_IsDeterministicAndUndoable`
-- `CreateSeam_UsesNamedBoundaryReferencesAndUndo`
+- `BowTieVertex_ReturnsTopologyVertexContext`
+- `OpenSeam_ReturnsWarningAndKeepsIntentionalSheetSuccessful`
+- `ZeroLengthBoundary_ReturnsStableBoundaryDiagnostic`
+- `DisconnectedComponents_ReturnStableComponentEvidence`
+- `WeldSeamClosureGap_ReturnsSeamAndOperationContext`
+- `TopologyPositionConflict_ReturnsStableDiagnostic`
+- `InvertedClosedComponent_ReturnsStableDiagnostic`
+- `BasicLevel_DoesNotEmitStandardDiagnostics`
 
-## Compilation and diagnostics
+## Strict
 
-- `SourceChange_DebouncesCompileInsteadOfRepainting`
-- `NewerRevision_DiscardsStalePreviewResult`
-- `InvalidSource_ShowsStableOrderedDiagnostics`
-- `DiagnosticFocus_SelectsPanelOrOperationContext`
-- `FailedCompile_PreservesNoPreviewMesh`
+- `SelfIntersectingRoll_ReturnsConfirmedTrianglePair`
+- `ThicknessOverlap_ReturnsConfirmedTrianglePair`
+- `StrictLevel_ReportsBroadPhaseAndExactCounts`
+- `StrictCandidateBudgetExceeded_ReturnsStableDiagnostic`
+- `StandardLevel_DoesNotRunExactIntersection`
+- `TopologyAdjacentTriangles_AreNotSelfIntersections`
+- `StrictValidation_IsDeterministicAcrossRepeatedRuns`
 
-## Cup workflow
+## Regression and integration
 
-- `BlankAsset_ToCupSource_CompilesWithoutCodeEdits`
-- `WorkspaceCup_HasClosedVolumeEvidence`
-- `BakeValidCup_CreatesDerivedMeshWithoutChangingSource`
-- `BakeInvalidCup_DoesNotOverwriteExistingBake`
+- `GeometryValidator_DoesNotMutateInputBuffer`
+- `GeometryValidationReport_CollectionsAreReadOnly`
+- `ValidRectangle_BasicStillCompiles`
+- `ValidProductionCup_StrictHasNoConfirmedIntersection`
+- `ValidSphere_StrictHasNoConfirmedIntersection`
+- `InvalidValidationLevel_ReturnsStableSourceDiagnostic`
+- all pre-existing M00-M06 tests remain enabled and unchanged.
 
 # Risks and rollback
 
-- **UI Toolkit test fragility:** keep source mutations and preview orchestration
-  in testable Editor controllers; reserve pixel behavior for manual proof.
-- **SerializedReference operation editing:** use managed-reference-aware
-  serialized APIs and tests; do not rebuild operation objects during repaint.
-- **Undo reference breakage:** mutate stable IDs and dependent references in one
-  Undo group, or reject an unsafe rename with a diagnostic.
-- **Preview leaks:** centralize temporary Mesh/material ownership and destroy
-  with `DestroyImmediate` on replacement, close, and assembly reload.
-- **Compile storms:** revision-based debounce schedules at most one compile for
-  the latest state and unregisters callbacks when the window closes.
-- **Stacked-branch drift:** keep M06 commits isolated after `46aa02f`; after PR
-  #4 merge, rebase or retarget without rewriting accepted M05 behavior.
-- Rollback is a branch deletion or reverting isolated M06 commits. Existing
-  user-created untracked scenes and test evidence remain untouched.
+- **False self-intersections:** skip topology-adjacent triangle pairs, use a
+  tolerance-scaled SAT test, and keep exact pair fixtures for coplanar and
+  non-coplanar cases.
+- **Strict performance:** use deterministic X-axis sweep-and-prune, bound exact
+  candidates, and emit an explicit diagnostic instead of hanging or silently
+  skipping work.
+- **Intentional open assets:** open/disconnected evidence is Warning at Standard
+  so a valid sheet remains usable.
+- **Diagnostic regressions:** retain existing FC5001/FC5002/FC5003 meanings for
+  current root causes and stop lower-confidence stages after fatal structural
+  errors.
+- **Dictionary nondeterminism:** sort edge keys, component representatives,
+  seam records, candidate pairs, and evidence before report/diagnostic output.
+- Rollback is reverting the isolated M07 commit. Generated Meshes remain
+  disposable, and user-owned untracked Unity scenes/results remain untouched.
 
 # Progress log
 
-- 2026-07-31: User explicitly directed development to continue with M06.
-- 2026-07-31: Confirmed PR #4 remains open and created stacked branch
-  `codex/m06-editor-workspace` from verified M05 head `46aa02f` without merging.
-- 2026-07-31: Locked M06 source-authority, UI Toolkit, Undo, debounce, preview
-  ownership, diagnostics, and bake contracts before implementation.
-- 2026-07-31: Implemented the UI Toolkit split workspace, panel/operation/seam
-  forms, cursor-centered 2D editing, owned debug preview, diagnostics, and
-  valid-only Bake workflow.
-- 2026-07-31: M06 targeted Unity Edit Mode suite passed 23/23, including the
-  controller-authored blank-to-closed-cup and protected-bake proofs.
-- 2026-07-31: Unity `6000.3.20f1` full Edit Mode suite passed 253/253 with zero
-  failures, skips, or inconclusive results. Repository validation, tracked JSON
-  parsing, and `git diff --check` also passed.
-- 2026-07-31: Live Metal Editor inspection loaded the production cup in the
-  M06 window (2,972 vertices, 5,120 triangles, zero errors/warnings), then
-  verified Panels, Operations, Seams, Diagnostics, Bake, logical wireframe,
-  seam, normal, thickness, textured, and one-sided solid views. Bake reported
-  one component with zero open and non-manifold edges.
+- 2026-08-03: User authorized merging and continuing development.
+- 2026-08-03: Merged PR #4 into `main`, retargeted PR #5 from the merged M05
+  branch to `main`, verified its one-commit/38-file M06 diff and green checks,
+  then merged PR #5.
+- 2026-08-03: Fast-forwarded local `main` to `f5c8116` and created
+  `codex/m07-geometry-validator` while preserving all existing untracked Unity
+  scenes and test evidence.
+- 2026-08-03: Read the M07 milestone, current architecture, relevant ADRs, and
+  inventoried existing compiler, topology, closed-volume, seam, diagnostic,
+  and Editor validation surfaces.
+- 2026-08-03: Added the immutable final-geometry report and context, staged
+  Basic/Standard/Strict validator, transactional executed-Weld evidence,
+  Diagnostics-tab summary, and 28 adversarial/regression tests.
+- 2026-08-03: Unity `6000.3.20f1` passed the targeted M07 suite `28/28` and the
+  complete Edit Mode suite `281/281`; repository validation and
+  `git diff --check` passed.
+- 2026-08-03: Refreshed the live Unity package and inspected the M06
+  Diagnostics tab on the production cup. It displayed Basic, one component,
+  zero open/non-manifold edges, zero confirmed intersections, and the existing
+  valid 2972-vertex/5120-triangle preview.
 
 # Decisions made
 
-- M06 proceeds as a stacked branch because M05 merge authorization was not
-  explicit. This preserves progress without changing `main` or PR #4.
-- The workspace edits only authoritative FoldCanvas source. Derived preview and
-  bake objects never become an alternative source representation.
-- A controller layer will separate serialized mutations and compilation from
-  UI Toolkit rendering so Edit Mode tests can validate behavior without relying
-  on screenshots.
-- M06 reuses existing deterministic compiler diagnostics and geometry reports;
-  it does not add M07 validation semantics.
+- M07 is a report-and-diagnostic stage inside the existing deterministic
+  compiler, not a Mesh postprocessor.
+- Basic retains current fatal safety behavior. Standard adds author-facing
+  topology/seam evidence. Strict is the only level that performs global
+  triangle-pair intersection work.
+- Diagnostic category precedence suppresses cascades: structural defects stop
+  topology analysis; degenerate/duplicate faces stop edge analysis; fatal
+  topology defects stop strict intersection.
+- Open and disconnected geometry are evidence, not inherently invalid, because
+  FoldCanvas supports intentional sheets and multi-part assets.
+- Executed Weld seam pairs are recorded during Stitch rather than recomputed by
+  a validator that could accidentally subdivide or mutate boundaries.
+- Exact self-intersection uses deterministic triangle SAT with additional
+  coplanar in-plane axes after sweep-and-prune broad phase.
 
 # Final verification
 
-Implementation and local validation are complete. Review/hosted evidence must
-distinguish:
-
-- repository/static validation;
-- complete Unity Edit Mode test results and XML/log locations;
-- live-window blank-asset-to-cup walkthrough;
-- solid/textured/debug preview inspection;
-- manual Undo/Redo and bake checks;
-- any remaining limitations.
-
-Local evidence:
-
-- Unity XML: `Project~/TestResults/M06AuthoringFullFinal2.xml`
-- Unity log: `Project~/TestResults/M06AuthoringFullFinal2-Editor.log`
-- Unity result: 253 passed, 0 failed, 0 skipped, 0 inconclusive
-- targeted M06 result: 23 passed, 0 failed, 0 skipped, 0 inconclusive
-- repository validation: passed
-- tracked/source JSON parsing: passed
-- `git diff --check`: passed
-- live Editor proof: passed for the existing production-cup source and all
-  M06 primary/debug panels; the documented blank-source walkthrough remains a
-  required human review exercise before merge
+- Targeted M07: `28 passed, 0 failed, 0 skipped, 0 inconclusive`.
+- Complete Edit Mode: `281 passed, 0 failed, 0 skipped, 0 inconclusive`.
+- Unity: `6000.3.20f1 (c9ba695d4f07)`.
+- Local XML: temporary isolated host
+  `TestResults/m07-full-results.xml`; Editor log:
+  `Project~/M07FullTestRun.log` beneath the same temporary host.
+- `python3 Scripts/validate_repository.py`: passed.
+- `git diff --check`: passed.
+- Live Diagnostics-tab inspection passed; evidence was saved outside the
+  repository at `/tmp/FoldCanvas-M07-Diagnostics-2026-08-03.jpg`.
+- Hosted GitHub Actions/artifacts remain to be recorded after opening the
+  review PR.
+- M08, M09, automatic repair, Bevel, subdivision, smoothing, remesh, and Mesh
+  cleanup were not implemented.

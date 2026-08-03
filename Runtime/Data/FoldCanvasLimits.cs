@@ -9,5 +9,7 @@ namespace FoldCanvas
         public const int MinimumStitchSampleCount = 0;
 
         public const int MaximumStitchSampleCount = 8192;
+
+        public const int MaximumStrictValidationCandidatePairs = 250000;
     }
 }

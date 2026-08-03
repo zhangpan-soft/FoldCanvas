@@ -7,6 +7,7 @@
 - [FoldScript specification](foldscript-spec.md)
 - [Compiler pipeline](compiler-pipeline.md)
 - [Diagnostics and validation](diagnostics.md)
+- [M07 geometry validation levels and report](geometry-validation.md)
 - [Editor workflow](editor-workflow.md)
 - [M06 authoring workspace and blank-to-cup proof](authoring-workspace.md)
 - [AI integration contract](ai-integration.md)
