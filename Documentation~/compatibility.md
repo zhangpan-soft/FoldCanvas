@@ -9,7 +9,7 @@ separate contracts.
 
 | Surface | Current contract | Qualification |
 |---|---|---|
-| UPM package | `0.1.0-preview.19` | deterministic `.tgz` archive |
+| UPM package | `0.1.0-preview.20` | deterministic `.tgz` archive |
 | FoldScript | `0.1` | bounded reader and canonical writer |
 | Unity package minimum | `6000.3` | declared by `package.json` |
 | Unity production evidence | `6000.3.20f1` | repository tests and two clean archive installs |
@@ -57,6 +57,22 @@ asset containing one requires its defining assembly and an explicit registry
 for each compile. A future portable extension codec needs a separately
 versioned schema; opaque payload fallback is not allowed.
 
+## Production handoff v1
+
+The M12 `.foldcanvas.zip` contract is versioned independently as
+`com.foldcanvas.handoff` version `1`. A receiver accepts it only when package,
+compiler, and FoldScript `0.1` versions exactly match the installed package. It
+does not attempt forward or backward migration.
+
+Portable v1 source is exactly one canonical FoldScript document and one PNG.
+Native custom operations, multiple canvases, non-PNG appearance formats, Unity
+GUID preservation, signing, and migration are unsupported. The receiver
+regenerates project-local GUIDs and derived outputs; the logical asset ID plus
+source, appearance, and evidence hashes provide portable identity. Any future
+handoff version requires an ADR, schema, fixtures, deterministic converter or
+stable rejection path, and producer/receiver evidence. See
+[Production handoff](production-handoff.md).
+
 ## Upgrade procedure
 
 For every package upgrade:
@@ -79,3 +95,7 @@ FoldCanvas 仍处于预览期，但不会把破坏性变化藏在普通提交里
 FoldScript 目前只支持 `0.1`，未知版本会稳定拒绝，不能猜测解析。当前真正跑过完整
 证据的 Unity 版本是 `6000.3.20f1`；`package.json` 中的 `6000.3` 是最低声明，
 不等于每个补丁版本都已被生产验收。
+
+M12 交付包 v1 同样采用严格版本合同：接收方的 package、compiler 和 FoldScript
+版本必须完全一致。跨项目只保留逻辑资产 ID 和内容哈希，Unity GUID 由接收项目重新
+生成；Mesh、OBJ、材质、Prefab 和回执都是可重建派生产物。

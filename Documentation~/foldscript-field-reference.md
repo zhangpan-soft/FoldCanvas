@@ -650,3 +650,27 @@ property order and invariant number formatting, and preserves only explicit
 top-level `extensions` metadata. See
 [FoldScript 0.1 runtime and Editor workflow](foldscript-runtime.md) and
 [Diagnostics and validation](diagnostics.md).
+
+## 9. Production handoff source semantics
+
+FoldScript remains the construction source inside an M12 handoff archive. The
+exporter canonicalizes the document with one bundle-relative canvas reference:
+
+```json
+"canvas": {
+  "appearance": "appearance.png"
+}
+```
+
+That reference resolves to the archive's exact PNG bytes on detached import and
+to the receiver-owned PNG beside `source.foldcanvas.json` after persistence.
+All panel, seam, operation, compile-setting, unit, ID, order, UV, and provenance
+semantics in this field reference remain unchanged. The handoff manifest does
+not add hidden geometry instructions, and the archived OBJ is never parsed back
+into FoldScript.
+
+Handoff v1 requires canonical FoldScript `0.1` and rejects native custom
+operations because their C# definition and contributor assembly are not
+representable in this schema. Manifest, evidence, receipt, texture, and payload
+field definitions are documented in
+[Production handoff](production-handoff.md).

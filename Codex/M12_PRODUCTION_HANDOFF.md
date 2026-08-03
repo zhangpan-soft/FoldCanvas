@@ -77,8 +77,9 @@ contributor assembly dependency.
 ## Import contract
 
 - Import treats the archive as untrusted and enforces archive bytes, entry
-  count, per-entry bytes, total expanded bytes, exact names, ordinal uniqueness,
-  no directories, no links, and no absolute/backslash/dot/traversal paths.
+  count, per-entry bytes, total expanded bytes, decoded canvas pixels, exact
+  names, ordinal uniqueness, no directories, no links, and no absolute/
+  backslash/dot/traversal paths.
 - It validates manifest structure, exact format/package/compiler/FoldScript
   compatibility, entry length/hash, canonical FoldScript, PNG decode/dimensions,
   and evidence structure before any `Assets/` write.
@@ -128,6 +129,17 @@ structured deterministic fields where numeric representation applies.
   archive, source, geometry, OBJ, diagnostics, texture, validation, and
   closed-volume claims agree.
 
+## Implementation status
+
+The Editor implementation now provides deterministic export, bounded detached
+verification, receipt-owned import/rebuild, one-sided runtime outputs, schema,
+production fixture, Authoring/menu entry points, and independent clean-project
+CI. Unity `6000.3.20f1` passes 30/30 focused M12 tests and 431/431 complete
+package tests. Final `.20` clean producer and receiver projects pass 1/1 each
+with complete matching evidence, and a foreground receiver proof shows the
+editable source beside its rebuilt closed runtime Prefab. M12 remains active
+until the PR's hosted jobs/artifacts and maintainer audit are complete.
+
 ## Tests
 
 - export twice is byte-identical and source/appearance state is unchanged
@@ -144,7 +156,7 @@ structured deterministic fields where numeric representation applies.
   before persistence
 - incompatible format/package/compiler/FoldScript versions fail stably
 - importer failure leaves no partial destination folder
-- all 401 M00-M11 tests remain enabled
+- all 401 M00-M11 tests remain enabled alongside the M12 suite
 
 ## Non-goals
 

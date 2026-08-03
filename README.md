@@ -32,8 +32,9 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 The repository currently contains the **M05 spherical-surface compiler, M06
 Editor authoring workspace, M07 geometry validator, M08 FoldScript
-interchange/repair boundary, M09 cyclic-topology proof, M10 bounded
-extension/release ecosystem, and M11 production-readiness evidence layer**:
+interchange/repair boundary, M09 cyclic-topology proof, M10 bounded extension
+ecosystem, M11 production-readiness evidence, and M12 source-first production
+handoff**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -118,6 +119,17 @@ extension/release ecosystem, and M11 production-readiness evidence layer**:
 - A compiled public Runtime API signature baseline plus a six-case production
   corpus spanning Basic, Standard, Strict, valid closed surfaces, a registered
   extension, and stable expected failure
+- Deterministic fixed-layout `.foldcanvas.zip` export whose authoritative
+  entries are canonical FoldScript and exact PNG bytes, with derived OBJ and
+  complete compile/validation evidence
+- Bounded untrusted handoff import with exact-version, path, link, size, hash,
+  PNG, detached-compile, and evidence gates before any project persistence
+- Receipt-owned editable source, one-sided textured Material, Mesh, and runtime
+  Prefab creation; same-archive import is idempotent and derived outputs rebuild
+  from the received 2D source
+- Independent clean producer/receiver Unity projects that transfer only the
+  archive and require matching source, geometry, OBJ, diagnostics, validation,
+  closed-volume, receipt, and package evidence
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
@@ -201,6 +213,13 @@ executors are explicitly trusted in-process code, not a security sandbox. See
 [production-readiness evidence](Documentation~/production-readiness.md) and
 the [compatibility policy](Documentation~/compatibility.md).
 
+M12 turns that qualified package into a source-ownership handoff workflow.
+`Tools > FoldCanvas > Handoff` exports one deterministic archive, imports it
+only after bounded detached verification, and rebuilds receipt-owned runtime
+outputs from the receiver's editable FoldCanvas source. Mesh, OBJ, Prefab, and
+receipt remain derived; project GUIDs are receiver-owned. See the
+[production handoff contract](Documentation~/production-handoff.md).
+
 ## Design principles
 
 1. **The 2D source is authoritative.** Generated meshes are disposable build artifacts.
@@ -247,10 +266,15 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
    `Tools > FoldCanvas > Open Sample Gallery` for the versioned manifest and
    `Tools > FoldCanvas > Create M10 Ecosystem Proof` for the registered wave,
    solid one-sided view, registry report, and deterministic OBJ proof.
+7. Select a valid source and use
+   `Tools > FoldCanvas > Handoff > Export Selected Source...` to create a
+   `.foldcanvas.zip`. In a receiver project, use `Import Archive...` into one
+   new `Assets/` child folder, then `Rebuild Selected Import` to regenerate the
+   receipt-owned runtime outputs from source.
 
 ## Continuous integration
 
-GitHub Actions runs three independent evidence gates:
+GitHub Actions runs four independent evidence gates:
 
 - `repository-validation` parses repository JSON, checks assembly and runtime
   boundaries, confirms the Schema/native `sampleCount` maximum, and validates
@@ -266,6 +290,10 @@ GitHub Actions runs three independent evidence gates:
   independent hosts, compiles consumer-owned assemblies through public Runtime
   API, validates each real XML/log/package report, and rejects any difference
   in stable evidence between the two PackageCache installations.
+- `unity-production-handoff-tests` builds the same `.tgz`, creates isolated
+  producer and receiver projects, transfers only the handoff ZIP, verifies
+  source-driven import/rebuild, compares evidence, and uploads both XML files,
+  Editor logs, archive, canonical source, receipt, and proof reports.
 
 The separate `Package release` workflow builds the allowlisted UPM archive
 twice, verifies byte identity and version agreement, uploads the `.tgz` plus
@@ -330,8 +358,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M08 | FoldScript import/export and AI feedback loop — implemented and merged |
 | M09 | Handle cup, torus, boundary spans, and non-trivial topology — implemented and merged |
 | M10 | Explicit extensions, gallery, OBJ, performance, and reproducible package release — merged through PR #9 |
-| M11 | Clean archive installation, consumer API proof, compatibility baseline, and production corpus — active |
-| M12 | Portable production asset handoff — planned |
+| M11 | Clean archive installation, consumer API proof, compatibility baseline, and production corpus — merged through PR #10 |
+| M12 | Portable source-first production handoff — active implementation and verification |
 | M13 | Bounded robustness, scale, and long-running regression evidence — planned |
 | M14 | Public API/FoldScript freeze and 1.0 release-candidate gates — planned |
 

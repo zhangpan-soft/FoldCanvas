@@ -332,6 +332,79 @@ namespace FoldCanvas.Editor
                 "never saves automatically, and an invalid source cannot " +
                 "overwrite the last valid bake.",
                 HelpBoxMessageType.Info));
+
+            Label handoffTitle = new Label("Production Handoff");
+            handoffTitle.AddToClassList("section-title");
+            root.Add(handoffTitle);
+            Button handoff = new Button(ExportCurrentHandoff)
+            {
+                text = "Export Source-First Handoff...",
+                name = "export-handoff-button"
+            };
+            handoff.SetEnabled(canBake);
+            root.Add(handoff);
+            root.Add(new HelpBox(
+                "The handoff archive contains canonical FoldScript and the " +
+                "exact PNG as authoritative source. OBJ, validation evidence, " +
+                "Mesh, Material, and Prefab remain derived and rebuildable.",
+                HelpBoxMessageType.Info));
+        }
+
+        private void ExportCurrentHandoff()
+        {
+            FoldCanvasAsset source = controller?.Source;
+            if (source == null)
+            {
+                if (statusLabel != null)
+                {
+                    statusLabel.text =
+                        "Select a source before exporting a handoff.";
+                }
+
+                return;
+            }
+
+            string fileName = string.IsNullOrWhiteSpace(
+                    source.SourceMetadata.AssetId)
+                ? "FoldCanvasAsset.foldcanvas"
+                : source.SourceMetadata.AssetId + ".foldcanvas";
+            string destination = EditorUtility.SaveFilePanel(
+                "Export FoldCanvas production handoff",
+                string.Empty,
+                fileName,
+                "zip");
+            if (string.IsNullOrWhiteSpace(destination))
+            {
+                return;
+            }
+
+            if (!destination.EndsWith(
+                    ".foldcanvas.zip",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                destination = destination.EndsWith(
+                    ".zip",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? destination.Substring(0, destination.Length - 4) +
+                        ".foldcanvas.zip"
+                    : destination + ".foldcanvas.zip";
+            }
+
+            FoldCanvasHandoffExportResult result =
+                FoldCanvasHandoffExporter.Export(
+                    source,
+                    new FoldCanvasHandoffExportOptions
+                    {
+                        DestinationPath = destination,
+                    });
+            if (statusLabel != null)
+            {
+                statusLabel.text = result.Success
+                    ? "Handoff exported: " + result.ArchiveSha256
+                    : result.Diagnostics.Count > 0
+                        ? result.Diagnostics[0].ToString()
+                        : "Handoff export failed.";
+            }
         }
 
         private void BakeCurrentSource()

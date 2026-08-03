@@ -127,6 +127,19 @@ owned `EditorOnly` root. The gallery reads a bounded package manifest; the
 performance command writes only a derived report under `Library/`. None of
 these actions edits generated topology or modifies `Camera.main`.
 
+M12 adds the source-first production handoff commands:
+
+- `Tools > FoldCanvas > Handoff > Export Selected Source...`
+- `Tools > FoldCanvas > Handoff > Import Archive...`
+- `Tools > FoldCanvas > Handoff > Rebuild Selected Import`
+
+The Authoring workspace Bake tab also exposes
+`Export Source-First Handoff...` for the current valid source. Export creates a
+deterministic `.foldcanvas.zip`; Import validates and recompiles it before
+owning one new explicit `Assets/` folder; Rebuild regenerates only the
+receipt-owned Mesh, one-sided textured Material, and Prefab from the received
+2D source. See [Production handoff](production-handoff.md).
+
 ## Authoring actions
 
 - create rectangle and disk panels
@@ -141,6 +154,9 @@ these actions edits generated topology or modifies `Camera.main`.
 - import canonical FoldScript into an explicit editable source asset
 - export the selected source as canonical FoldScript
 - copy a provider-neutral diagnostic repair payload
+- export the current valid source as a portable source-first handoff
+- import a validated handoff into one new explicit `Assets/` folder
+- rebuild receipt-owned runtime outputs from the received source
 
 ## Preview rules
 
@@ -161,5 +177,8 @@ these actions edits generated topology or modifies `Camera.main`.
 - source-reference/hash and compiler-version bake metadata remain a later
   data-model task; the M06 Mesh is still explicitly derived from its separate
   source asset
+- M12 handoff imports record source, appearance, geometry, OBJ, archive, and
+  compiler identity in a separate receipt; this does not make ordinary M06
+  Bake assets receipt-owned
 - never write into package-cache folders
 - never write outside the Unity project

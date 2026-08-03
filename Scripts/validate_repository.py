@@ -123,6 +123,16 @@ required = [
     "Scripts/test_clean_install_project.py",
     "Scripts/Templates~/M11CleanHost/Assets/FoldCanvas.M11.Consumer.Tests.asmdef",
     "Scripts/Templates~/M11CleanHost/Assets/M11CleanInstallConsumerTests.cs",
+    "Schema/foldcanvas-handoff.schema.json",
+    "Documentation~/production-handoff.md",
+    "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+    "Scripts/create_handoff_proof_projects.py",
+    "Scripts/compare_handoff_evidence.py",
+    "Scripts/test_handoff_proof.py",
+    "Scripts/Templates~/M12Handoff/Producer/Assets/FoldCanvas.M12.HandoffProducer.Tests.asmdef",
+    "Scripts/Templates~/M12Handoff/Producer/Assets/M12HandoffProducerTests.cs",
+    "Scripts/Templates~/M12Handoff/Receiver/Assets/FoldCanvas.M12.HandoffReceiver.Tests.asmdef",
+    "Scripts/Templates~/M12Handoff/Receiver/Assets/M12HandoffReceiverTests.cs",
 ]
 for relative in required:
     if not (ROOT / relative).exists():
@@ -194,6 +204,42 @@ for constant_name, schema_value in m08_schema_limits.items():
     if runtime_value is not None and schema_value != runtime_value:
         errors.append(
             f"Schema value for {constant_name} must match FoldCanvasLimits"
+        )
+
+handoff_schema = read_json("Schema/foldcanvas-handoff.schema.json")
+handoff_properties = handoff_schema.get("properties", {})
+if (
+    handoff_properties.get("format", {}).get("const")
+    != "com.foldcanvas.handoff"
+    or handoff_properties.get("version", {}).get("const") != "1"
+    or handoff_properties.get("foldScriptVersion", {}).get("const") != "0.1"
+):
+    errors.append("M12 handoff schema format/version/FoldScript contract is invalid")
+handoff_payloads = handoff_properties.get("payloads", {})
+if (
+    handoff_payloads.get("minItems") != 5
+    or handoff_payloads.get("maxItems") != 5
+    or len(handoff_payloads.get("prefixItems", [])) != 5
+    or handoff_payloads.get("items") is not False
+):
+    errors.append("M12 handoff schema must lock five ordered payloads")
+
+handoff_documentation = (
+    ROOT / "Documentation~" / "production-handoff.md"
+).read_text(encoding="utf-8")
+for required_handoff_text in (
+    "source.foldcanvas.json",
+    "appearance.png",
+    "geometrySha256",
+    "handoff-receipt.json",
+    "Tools > FoldCanvas > Handoff",
+    "FC9301",
+    "256 MiB",
+):
+    if required_handoff_text not in handoff_documentation:
+        errors.append(
+            "M12 production handoff documentation is missing: "
+            + required_handoff_text
         )
 
 version_source = (
@@ -467,6 +513,8 @@ if "python3 Scripts/test_release_package.py" not in repository_workflow:
     errors.append("Repository checks must validate deterministic release archives")
 if "python3 Scripts/test_clean_install_project.py" not in repository_workflow:
     errors.append("Repository checks must validate M11 clean-install contracts")
+if "python3 Scripts/test_handoff_proof.py" not in repository_workflow:
+    errors.append("Repository checks must validate M12 handoff contracts")
 
 for required_fragment in [
     "artifacts/m11-clean-host-a",
@@ -478,6 +526,22 @@ for required_fragment in [
     if required_fragment not in unity_workflow:
         errors.append(
             "Unity workflow is missing M11 production evidence: "
+            f"{required_fragment}"
+        )
+
+for required_fragment in [
+    "unity-production-handoff-tests:",
+    "Scripts/create_handoff_proof_projects.py",
+    "FoldCanvas Production Handoff Producer",
+    "FoldCanvas Production Handoff Receiver",
+    "Scripts/compare_handoff_evidence.py",
+    "production-cup.foldcanvas.zip",
+    "handoff-receipt.json",
+    "unity-production-handoff-results-and-evidence",
+]:
+    if required_fragment not in unity_workflow:
+        errors.append(
+            "Unity workflow is missing M12 handoff evidence: "
             f"{required_fragment}"
         )
 
@@ -498,6 +562,24 @@ if not isinstance(sample_appearance, str) or not (
         "BootstrapPanel FoldScript example must reference an appearance file "
         "inside its sample folder"
     )
+
+m12_sample_path = (
+    ROOT
+    / "Samples~"
+    / "BootstrapPanel"
+    / "m12-production-cup.foldcanvas.json"
+)
+m12_sample = read_json(
+    "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json"
+)
+m12_appearance = m12_sample.get("canvas", {}).get("appearance")
+if (
+    m12_sample.get("assetId") != "m12-production-cup"
+    or m12_sample.get("compile", {}).get("validationLevel") != "strict"
+    or not isinstance(m12_appearance, str)
+    or not (m12_sample_path.parent / m12_appearance).is_file()
+):
+    errors.append("M12 production cup source/PNG proof fixture is invalid")
 
 markdown_link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 for markdown_path in repository_files("*.md"):

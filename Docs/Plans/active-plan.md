@@ -232,6 +232,35 @@ folder is created.
   ready, merged it as `b757792`, and fast-forwarded local `main`.
 - 2026-08-03: Created `codex/m12-production-handoff`, ADR 0010, the M12
   specification, roadmap contract, and this execution plan.
+- 2026-08-03: Implemented canonical manifest/evidence/receipt contracts,
+  deterministic ZIP32 Store export, bounded untrusted import, detached evidence
+  verification, receipt-owned persistence/rebuild, one-sided runtime Prefab,
+  Authoring/menu actions, schema, production cup fixture, and FC9301-FC9312.
+- 2026-08-03: Added clean producer/receiver project generators and hosted
+  handoff workflow. A local independent transfer proved source-driven import and
+  rebuild with matching source, PNG, geometry, OBJ, diagnostics, validation,
+  closed-volume, receipt, and archive evidence.
+- 2026-08-04: Unity `6000.3.20f1` passed 30/30 focused M12 tests, including
+  source non-mutation, atomic failure, exact versions, PNG mismatch, tampering,
+  decoded-pixel limits, rollback, collision, and raw missing/extra/duplicate/
+  traversal/link/path ZIP rejection.
+- 2026-08-04: The complete package suite passed 431/431 with zero failures,
+  skips, or inconclusive results in a graphics-capable clean host. Repository
+  validation, static handoff proof, deterministic release packaging, Python
+  compilation, and `git diff --check` also passed.
+- 2026-08-04: The `.20` release archive was byte-reproducible. Independent
+  producer and receiver projects each passed 1/1 test from the same local
+  tarball, resolved distinct PackageCache roots, and matched complete source/
+  appearance/geometry/OBJ/diagnostic/validation/closed-volume evidence. The
+  exact final-head package digest remains PR/hosted evidence rather than
+  self-referential package content.
+- 2026-08-04: The transferred handoff archive had SHA-256
+  `a82b3391621604667e98f8f078b44c7da94741115802158d08e7f5a6641591cd`.
+  A foreground receiver window showed the editable source beside its rebuilt
+  runtime Prefab and reported 2,972 render vertices, 2,562 topology vertices,
+  5,120 triangles, one closed component, and zero open edges. Temporary proof
+  assets were moved out of `Project~`; the user's scratch scene was not saved
+  or changed.
 
 # Decisions made
 
@@ -250,7 +279,9 @@ folder is created.
 
 # Final verification
 
-Planning is complete. Required implementation evidence:
+Implementation and local verification are complete. Remaining release-gate
+evidence is the M12 PR head, green hosted jobs/artifacts, recorded maintainer
+audit, and merge result. Required final evidence:
 
 - exact M12 head, package version, archive format, and deterministic SHA
 - focused M12 and full package Edit Mode totals under Unity `6000.3.20f1`

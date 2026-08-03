@@ -1,0 +1,22 @@
+{
+  "name": "FoldCanvas.M12.HandoffProducer.Tests",
+  "rootNamespace": "FoldCanvas.M12Proof",
+  "references": [
+    "FoldCanvas.Runtime",
+    "FoldCanvas.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

@@ -324,6 +324,10 @@ native custom operations, migrate across compiler versions, add signing or
 encryption, perform runtime file/network I/O, add geometry behavior, or
 implement M13 robustness/fuzz work.
 
+The exact archive fields, ownership receipt, limits, Editor actions, and
+source-driven rebuild path are documented in
+[Production handoff](production-handoff.md).
+
 ## M13: Robustness and scale
 
 **Status:** planned; not active.
