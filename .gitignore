@@ -34,6 +34,11 @@ Thumbs.db
 sysinfo.txt
 *.stackdump
 
+# Python tooling cache
+__pycache__/
+__pycache__.meta
+*.py[cod]
+
 # Generated FoldCanvas artifacts in host project
 Project~/Assets/FoldCanvasGenerated/
 Project~/Assets/FoldCanvasGenerated.meta

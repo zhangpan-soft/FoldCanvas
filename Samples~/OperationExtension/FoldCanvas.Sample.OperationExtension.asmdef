@@ -1,0 +1,16 @@
+{
+  "name": "FoldCanvas.Sample.OperationExtension",
+  "rootNamespace": "FoldCanvas.Samples.OperationExtension",
+  "references": [
+    "FoldCanvas.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

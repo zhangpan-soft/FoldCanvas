@@ -92,6 +92,11 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   UV 属性接缝仍保留各自二维来源的渲染顶点
 - 杯把使用普通矩形条、刚体定位、两次网格对齐 Fold、两个杯口边界区间 Weld
   和最终 Solidify，与杯体形成单一闭合连通体，不使用导入 Mesh 或布尔运算
+- 每次编译显式传入的贡献者操作注册表；自定义操作只能修改一个现有面板的有限
+  顶点位置，失败完整回滚，不能改三角形、拓扑、边界、UV、来源或几何预算
+- 带版本且有输入上限的样例 Gallery，以及可直接编译的自定义操作模板
+- 确定性 OBJ 文本导出、固定场景性能证据、字节可复现且仅包含白名单内容的 UPM
+  发布压缩包
 - Edit Mode 测试
 - 完整架构、FoldScript 规格、路线图与 Codex 分阶段提示词
 
@@ -140,6 +145,13 @@ M09 用可审查的二维源证明非平凡环状拓扑。`ToroidalWrap` 只负�
 Stitch 与最终 Solidify 生成。Mesh 仍可随时删除重编，完整说明见
 [《M09 非平凡拓扑样例》](Samples~/Topology/README.md)。
 
+M10 在不暴露内部拓扑缓冲的前提下开放一个受限贡献入口：调用方只为本次编译
+显式注册原生自定义操作，扩展只能改一个现有面板的有限位置。UV、来源、三角形、
+边界、逻辑拓扑和几何预算全部保持不变。Gallery、OBJ、性能报告和发布包仍是可
+重建派生产物；FoldScript `0.1` 仍拒绝未知操作。完整合同见
+[《M10 扩展与生态》](Documentation~/extensibility.md)，可编译模板见
+[OperationExtension](Samples~/OperationExtension/README.md)。
+
 ## 七条项目宪法
 
 1. **二维源文件拥有最高权威。** Mesh 可以删除并重新生成。
@@ -181,7 +193,10 @@ Stitch 与最终 Solidify 生成。Mesh 仍可随时删除重编，完整说明�
    FoldCanvas 自己拥有，不会修改项目已有 MainCamera。执行
    `Tools > FoldCanvas > Create M09 Topology Proof` 可查看由二维矩形、显式
    双周期 Weld 生成的环面，以及由折叠矩形条和杯口边界区间生成的闭合把手杯；
-   同时提供纹理、单面纯色、逻辑线框、二维源画布和拓扑报告视图。
+   同时提供纹理、单面纯色、逻辑线框、二维源画布和拓扑报告视图。执行
+   `Tools > FoldCanvas > Open Sample Gallery` 可查看版本化样例清单；执行
+   `Tools > FoldCanvas > Create M10 Ecosystem Proof` 可查看显式注册的波形曲面、
+   单面纯色结果、注册信息和确定性 OBJ 证据。
 
 ## 持续集成
 
@@ -194,6 +209,9 @@ GitHub Actions 包含两个独立检查：
   成功或失败都会上传 NUnit XML 与 `Editor.log`。GameCI 运行中的文件先写入
   宿主项目根目录下的非导入区域，避免持续变化的日志通过仓库根 UPM 包触发
   Unity 重复导入；Unity 退出后才复制到 `artifacts/unity-editmode`。
+
+独立的 `Package release` 工作流会构建两次 UPM 白名单压缩包并校验字节一致、
+版本一致，上传 `.tgz` 和 SHA-256；只有与包版本精确匹配的已推送标签才会发布。
 
 Unity CI 使用 GameCI。Unity Personal 授权需要在仓库 Actions Secrets 中配置
 `UNITY_LICENSE`、`UNITY_EMAIL`、`UNITY_PASSWORD`，许可证信息不会写入仓库。

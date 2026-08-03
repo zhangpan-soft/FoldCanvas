@@ -136,8 +136,7 @@ diagnostic milestone.
 
 ## M05: Sphere gores
 
-**Status:** implemented on `codex/m05-spherical-wrap`; awaiting human audit
-before merge or `CURRENT_TASK.md` advancement.
+**Status:** implemented, human-audited, and merged.
 
 **Proof:** eight explicit rectangular 2D gores reconstruct one closed outward
 sphere with preserved artwork, bounded radial error, one logical north pole,
@@ -220,7 +219,7 @@ repair, import binary geometry, or change M00-M07 geometry semantics.
 
 ## M09: Non-trivial topology
 
-**Status:** implemented on `codex/m09-topology`; awaiting human audit.
+**Status:** human-approved and merged through PR #8 as `7be4117`.
 
 **Proof:** one command creates two editable 2D sources and derived Unity views:
 a rectangular parameter panel mapped into a torus whose two cycles close only
@@ -250,14 +249,37 @@ spans, seam graph, and ordered operations remain source; Meshes remain derived.
 
 ## M10: Extensibility and ecosystem
 
-- operation registration model
-- sample/gallery format
-- contributor operation template
-- performance baselines
-- package release automation
-- optional exporters
+**Status:** implemented on `codex/m10-extensibility`; awaiting human audit.
 
-## Deliberate non-goals before M09
+**Proof:** one Editor command compiles an ordinary 2D rectangle through a
+contributor-defined wave operation in a separate assembly, using an explicit
+per-compile registry, then displays textured and one-sided solid results and
+exports the same immutable compiled data to deterministic OBJ.
+
+- explicit per-compile operation registry with stable descriptor order and no
+  global/reflection discovery
+- single-panel position-only execution context preserving source UV,
+  provenance, triangle order, boundaries, topology, and geometry budget
+- pre-tessellation target validation plus complete position rollback for
+  failed, non-finite, or throwing extensions
+- versioned bounded sample-gallery manifest, JSON Schema, and Editor browser
+- compiling contributor wave-operation template in a Runtime-only sample
+  assembly
+- deterministic dependency-free OBJ text export with an Editor asset-path
+  adapter
+- maintained planar, Roll, and registered-wave performance evidence whose
+  timing never affects geometry
+- byte-reproducible allowlisted UPM archive, SHA-256 evidence, and tag-gated
+  GitHub release workflow
+- owned EditorOnly ecosystem proof that never reads or modifies `Camera.main`
+
+M10 does not expose topology/triangle/boundary/budget mutation, invent a custom
+FoldScript `0.1` codec, add global registration, introduce a new geometry
+family, add CSG/bevel/remesh, export glTF/FBX/USD, or perform runtime file or
+network I/O. Meshes, OBJ, gallery views, reports, and release archives remain
+derived artifacts.
+
+## Deliberate product non-goals
 
 - photorealistic PBR inference
 - arbitrary text/image to universal 3D

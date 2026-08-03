@@ -12,6 +12,8 @@
 - [Editor workflow](editor-workflow.md)
 - [M06 authoring workspace and blank-to-cup proof](authoring-workspace.md)
 - [M09 torus and handled-cup topology sample](../Samples~/Topology/README.md)
+- [M10 extension registry, gallery, OBJ, performance, and release contract](extensibility.md)
+- [M10 contributor operation template](../Samples~/OperationExtension/README.md)
 - [AI integration contract](ai-integration.md)
 - [Roadmap](roadmap.md)
 - [Glossary](glossary.md)

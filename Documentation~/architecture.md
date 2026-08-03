@@ -39,6 +39,8 @@ Contains only Unity-runtime-safe code:
 - deterministic compiler stages
 - diagnostics
 - low-level validation
+- explicit per-compile position-operation registration
+- bounded gallery parsing and deterministic OBJ text export
 
 It must not reference `UnityEditor` or a render pipeline.
 
@@ -52,6 +54,7 @@ Contains:
 - bake and save workflows
 - preview object management
 - import/export adapters
+- sample-gallery, performance-baseline, and release-proof adapters
 
 M08's Editor adapter is the only package layer that reads/writes FoldScript
 files or uses `AssetDatabase`. It accepts explicit normalized project paths,
@@ -150,6 +153,7 @@ MVP operation family:
 - toroidal-wrap an explicit parameter panel
 - stitch seam
 - solidify/thicken
+- explicitly registered single-panel position deformation
 
 ### Compile settings
 
@@ -160,6 +164,13 @@ One compile-scoped `GeometryBudget` covers panel tessellation and every later
 Stitch or Solidify addition. Geometry-producing operations reserve before
 mutation and use rollback transactions; the build buffer remains the hard
 enforcement boundary.
+
+M10 may additionally receive one explicit `FoldCanvasOperationRegistry` for
+that compile. The compiler snapshots its descriptors in ordinal stable-type-ID
+order before tessellation. Registered operations can replace only finite
+positions on one preflight-resolved existing panel; the public context cannot
+mutate triangles, topology, boundaries, source coordinates, UVs, provenance,
+or the geometry budget. Omitting the registry remains the default M00-M09 path.
 
 M07 runs one final read-only geometry validator over that build buffer before
 Unity Mesh creation. Basic structural safety is always available; Standard
@@ -254,6 +265,8 @@ For identical:
 - appearance dimensions
 - compile settings
 - compiler version
+- explicit operation-registry snapshot and deterministic executor behavior,
+  when a custom native operation is present
 
 FoldCanvas must emit identical:
 
@@ -299,14 +312,21 @@ Unlit rendering is the reference proof. PBR maps, tangent generation, material c
 
 ## 8. Extension points
 
-Long-term extension points include:
+M10 activates one bounded extension point: a caller constructs a registry and
+passes it to one compile. There is no global mutable registry, assembly scan,
+reflection discovery, scene lookup, or registration-order execution. A custom
+native operation is a `SerializeReference` definition with
+`FoldOperationType.Custom`; its exact CLR type must have one registered
+executor. Preflight resolves one panel before tessellation, operations still
+run in authored source order, and unsuccessful/non-finite/throwing execution
+restores every changed position and returns no Mesh.
 
-- panel tessellators
-- operations
-- seam solvers
-- validators
-- field channels
-- exporters
-- AI provider adapters
+The gallery manifest, OBJ output, performance report, and release archive are
+derived ecosystem artifacts. They do not become geometry source. FoldScript
+`0.1` deliberately has no opaque custom-operation payload, so native custom
+assets require their contributor assembly.
 
-An extension must consume and produce explicit geometry data. Hidden scene state is forbidden.
+Future extension points may include topology-safe tessellators, seam solvers,
+validators, field channels, richer exporters, and external AI provider
+adapters. Each needs an explicit trust boundary and versioned contract. Hidden
+scene state is forbidden.

@@ -1,0 +1,46 @@
+{
+  "format": "foldcanvas-gallery",
+  "version": "1",
+  "entries": [
+    {
+      "id": "bootstrap-panel",
+      "title": "Bootstrap panel and production cup",
+      "description": "Planar UV preservation and the production-safe decorated cup canvas.",
+      "samplePath": "Samples~/BootstrapPanel",
+      "foldScriptPath": "Samples~/BootstrapPanel/gpt-cup.future-example.foldcanvas.json",
+      "appearancePath": "Samples~/BootstrapPanel/M04ProductionCupCanvas.png",
+      "proofMenuPath": "Tools/FoldCanvas/Create M04 Production Cup Proof",
+      "minimumPackageVersion": "0.1.0-preview.1",
+      "tags": ["panel", "cup", "uv"]
+    },
+    {
+      "id": "sphere-gores",
+      "title": "Explicit gore sphere",
+      "description": "Eight authored two-dimensional gores mapped and welded into one validated spherical surface.",
+      "samplePath": "Samples~/Sphere",
+      "foldScriptPath": "Samples~/Sphere/sphere-golden.foldcanvas.json",
+      "appearancePath": "Samples~/Sphere/sphere-canvas.png",
+      "proofMenuPath": "Tools/FoldCanvas/Create Sphere Proof",
+      "minimumPackageVersion": "0.1.0-preview.13",
+      "tags": ["sphere", "stitch", "validation"]
+    },
+    {
+      "id": "cyclic-topology",
+      "title": "Torus and handled cup",
+      "description": "Explicit cyclic Weld seams, boundary spans, a torus, and a closed handled-cup volume.",
+      "samplePath": "Samples~/Topology",
+      "proofMenuPath": "Tools/FoldCanvas/Create M09 Topology Proof",
+      "minimumPackageVersion": "0.1.0-preview.17",
+      "tags": ["torus", "handle", "topology"]
+    },
+    {
+      "id": "operation-extension",
+      "title": "Contributor operation template",
+      "description": "A bounded custom position operation registered explicitly for one compiler invocation.",
+      "samplePath": "Samples~/OperationExtension",
+      "proofMenuPath": "Tools/FoldCanvas/Create M10 Ecosystem Proof",
+      "minimumPackageVersion": "0.1.0-preview.18",
+      "tags": ["extension", "registry", "contributor"]
+    }
+  ]
+}

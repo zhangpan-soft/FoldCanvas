@@ -32,7 +32,8 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 The repository currently contains the **M05 spherical-surface compiler, M06
 Editor authoring workspace, M07 geometry validator, M08 FoldScript
-interchange/repair boundary, and M09 cyclic-topology proof**:
+interchange/repair boundary, M09 cyclic-topology proof, and M10 bounded
+extension/release ecosystem**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -106,6 +107,11 @@ interchange/repair boundary, and M09 cyclic-topology proof**:
 - An editor-generated handled cup whose ordinary rectangular strip is placed,
   folded twice, welded to two top-rim spans, and Solidified into one closed
   connected volume
+- An explicit per-compile contributor operation registry with position-only,
+  single-panel mutation, deterministic preflight, and complete rollback
+- A versioned sample gallery and compiling custom-operation template
+- Deterministic dependency-free OBJ export, maintained performance evidence,
+  and byte-reproducible allowlisted UPM release archives
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
@@ -170,6 +176,15 @@ final Solidify. The torus and handled cup both retain source UV/provenance and
 must pass deterministic logical-topology tests. See the
 [M09 topology sample guide](Samples~/Topology/README.md).
 
+M10 opens one deliberately narrow contributor boundary without exposing the
+compiler's topology buffer. A native custom operation is registered explicitly
+for one compile and may replace only finite positions on one existing panel;
+UVs, provenance, triangles, boundaries, topology, and geometry budget remain
+unchanged. Gallery views, OBJ files, performance reports, and release archives
+remain derived. FoldScript `0.1` still rejects unknown operations. See the
+[M10 extensibility contract](Documentation~/extensibility.md) and
+[operation template](Samples~/OperationExtension/README.md).
+
 ## Design principles
 
 1. **The 2D source is authoritative.** Generated meshes are disposable build artifacts.
@@ -212,7 +227,10 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
    UV-stretch view, radius-error view, and validation report. Use
    `Tools > FoldCanvas > Create M09 Topology Proof` for the explicit two-cycle
    torus and folded-strip handled cup with textured, one-sided solid, logical-
-   wireframe, source-canvas, and topology-report views.
+   wireframe, source-canvas, and topology-report views. Use
+   `Tools > FoldCanvas > Open Sample Gallery` for the versioned manifest and
+   `Tools > FoldCanvas > Create M10 Ecosystem Proof` for the registered wave,
+   solid one-sided view, registry report, and deterministic OBJ proof.
 
 ## Continuous integration
 
@@ -226,7 +244,11 @@ GitHub Actions runs two independent checks:
   Mode tests, and uploads the NUnit XML plus `Editor.log`, even on failure.
   Live GameCI output is staged below the host-project root so a changing log
   is never imported through the repository-root local UPM package; evidence is
-  copied to `artifacts/unity-editmode` only after Unity exits.
+copied to `artifacts/unity-editmode` only after Unity exits.
+
+The separate `Package release` workflow builds the allowlisted UPM archive
+twice, verifies byte identity and version agreement, uploads the `.tgz` plus
+SHA-256 evidence, and publishes only an exact matching pushed version tag.
 
 The Unity job uses GameCI and requires repository Actions secrets
 `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal
@@ -283,7 +305,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M06 | Split 2D canvas / 3D preview editor — implemented and merged |
 | M07 | Manifold, inversion, seam, and exact intersection validators — implemented and merged |
 | M08 | FoldScript import/export and AI feedback loop — implemented and merged |
-| M09 | Handle cup, torus, boundary spans, and non-trivial topology — implemented on review branch |
+| M09 | Handle cup, torus, boundary spans, and non-trivial topology — implemented and merged |
+| M10 | Explicit extensions, gallery, OBJ, performance, and reproducible package release — implemented on review branch |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

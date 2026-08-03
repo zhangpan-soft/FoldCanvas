@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-performance-baselines-1.schema.json",
+  "title": "FoldCanvas Performance Baselines",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "unityVersion", "scenarios"],
+  "properties": {
+    "format": { "const": "foldcanvas-performance-baselines" },
+    "version": { "const": "1" },
+    "unityVersion": { "type": "string", "minLength": 1 },
+    "scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "warmupIterations",
+          "measuredIterations",
+          "expectedVertices",
+          "expectedTriangles",
+          "maximumMedianMilliseconds"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "warmupIterations": { "type": "integer", "minimum": 0, "maximum": 20 },
+          "measuredIterations": { "type": "integer", "minimum": 1, "maximum": 100 },
+          "expectedVertices": { "type": "integer", "minimum": 1 },
+          "expectedTriangles": { "type": "integer", "minimum": 1 },
+          "maximumMedianMilliseconds": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    }
+  }
+}

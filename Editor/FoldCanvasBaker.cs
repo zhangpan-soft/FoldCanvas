@@ -14,8 +14,25 @@ namespace FoldCanvas.Editor
             out Mesh savedMesh,
             out FoldCanvasCompileResult compileResult)
         {
+            return BakeMesh(
+                source,
+                outputFolder,
+                null,
+                out savedMesh,
+                out compileResult);
+        }
+
+        public static bool BakeMesh(
+            FoldCanvasAsset source,
+            string outputFolder,
+            FoldCanvasOperationRegistry operationRegistry,
+            out Mesh savedMesh,
+            out FoldCanvasCompileResult compileResult)
+        {
             savedMesh = null;
-            compileResult = FoldCanvasCompiler.Compile(source);
+            compileResult = FoldCanvasCompiler.Compile(
+                source,
+                operationRegistry);
             if (!compileResult.Success)
             {
                 return false;

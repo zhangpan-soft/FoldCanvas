@@ -23,6 +23,11 @@ The machine-readable constraints live in
 > unavailable. Unknown operations and unknown fields outside `extensions`
 > return stable diagnostics rather than degrading silently.
 
+> M10 native operation registration does not add a JSON operation type. A
+> contributor-defined `SerializeReference` operation requires its assembly and
+> an explicit per-compile registry; unknown FoldScript `0.1` operations still
+> return `FC7004`.
+
 ## 1. Global conventions
 
 | Convention | Definition |

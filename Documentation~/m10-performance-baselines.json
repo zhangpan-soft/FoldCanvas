@@ -1,0 +1,31 @@
+{
+  "format": "foldcanvas-performance-baselines",
+  "version": "1",
+  "unityVersion": "6000.3.20f1",
+  "scenarios": [
+    {
+      "id": "planar-grid-64x32",
+      "warmupIterations": 1,
+      "measuredIterations": 5,
+      "expectedVertices": 2145,
+      "expectedTriangles": 4096,
+      "maximumMedianMilliseconds": 2000
+    },
+    {
+      "id": "full-roll-64x8",
+      "warmupIterations": 1,
+      "measuredIterations": 5,
+      "expectedVertices": 585,
+      "expectedTriangles": 1024,
+      "maximumMedianMilliseconds": 2000
+    },
+    {
+      "id": "registered-wave-48x24",
+      "warmupIterations": 1,
+      "measuredIterations": 5,
+      "expectedVertices": 1225,
+      "expectedTriangles": 2304,
+      "maximumMedianMilliseconds": 2000
+    }
+  ]
+}

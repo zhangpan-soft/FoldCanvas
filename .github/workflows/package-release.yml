@@ -1,0 +1,59 @@
+name: Package release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-package:
+    name: Deterministic UPM package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Validate repository
+        run: python3 Scripts/validate_repository.py
+
+      - name: Validate deterministic release archive
+        run: python3 Scripts/test_release_package.py
+
+      - name: Build release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_args=()
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag_args=(--tag "$GITHUB_REF_NAME")
+          fi
+          python3 Scripts/build_release_package.py \
+            --output artifacts/package "${tag_args[@]}"
+
+      - name: Upload package and digest
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: foldcanvas-upm-package
+          path: |
+            artifacts/package/*.tgz
+            artifacts/package/*.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish matching tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            artifacts/package/*.tgz \
+            artifacts/package/*.sha256 \
+            --verify-tag \
+            --generate-notes \
+            --title "FoldCanvas $GITHUB_REF_NAME"

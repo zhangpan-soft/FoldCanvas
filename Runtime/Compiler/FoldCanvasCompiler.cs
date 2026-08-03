@@ -8,6 +8,13 @@ namespace FoldCanvas
     {
         public static FoldCanvasCompileResult Compile(FoldCanvasAsset asset)
         {
+            return Compile(asset, null);
+        }
+
+        public static FoldCanvasCompileResult Compile(
+            FoldCanvasAsset asset,
+            FoldCanvasOperationRegistry operationRegistry)
+        {
             FoldCanvasCompileResult result = new FoldCanvasCompileResult();
             if (asset == null)
             {
@@ -20,6 +27,16 @@ namespace FoldCanvas
 
             FoldCanvasSourceValidator.Validate(asset, result);
             ValidateOperationIds(asset, result);
+            FoldCanvasExtensionOperationPlan extensionOperationPlan = null;
+            if (!result.HasErrors())
+            {
+                extensionOperationPlan =
+                    FoldCanvasExtensionOperationPlan.Build(
+                        asset,
+                        operationRegistry,
+                        result);
+            }
+
             Dictionary<string, SphericalTessellationHint>
                 sphericalTessellationHints = null;
             SphereValidationPlan sphereValidationPlan = null;
@@ -101,7 +118,8 @@ namespace FoldCanvas
                             asset,
                             buffer,
                             result,
-                            sphereValidationPlan);
+                            sphereValidationPlan,
+                            extensionOperationPlan);
                     }
                 }
                 catch (GeometryBudgetExceededException exception)
@@ -245,7 +263,8 @@ namespace FoldCanvas
             FoldCanvasAsset asset,
             MeshBuildBuffer buffer,
             FoldCanvasCompileResult result,
-            SphereValidationPlan sphereValidationPlan)
+            SphereValidationPlan sphereValidationPlan,
+            FoldCanvasExtensionOperationPlan extensionOperationPlan)
         {
             HashSet<string> stitchedPanelIds =
                 new HashSet<string>(StringComparer.Ordinal);
@@ -408,6 +427,31 @@ namespace FoldCanvas
                         solidify,
                         buffer,
                         result))
+                    {
+                        return;
+                    }
+
+                    continue;
+                }
+
+                if (extensionOperationPlan.TryGetTargetPanelId(
+                        i,
+                        out string extensionPanelId))
+                {
+                    if (RejectPostStitchDeformation(
+                        extensionPanelId,
+                        operation.Id,
+                        stitchedPanelIds,
+                        result))
+                    {
+                        return;
+                    }
+
+                    if (!extensionOperationPlan.TryExecute(
+                            i,
+                            operation,
+                            buffer,
+                            result))
                     {
                         return;
                     }

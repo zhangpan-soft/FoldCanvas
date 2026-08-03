@@ -23,3 +23,5 @@ State the active milestone and confirm that later milestones were not implemente
 - [ ] no new dependency, or an ADR is included
 - [ ] generated Mesh remains a derived artifact
 - [ ] AI/provider code is outside the core
+- [ ] custom operations use an explicit per-compile registry with no global discovery
+- [ ] exports and gallery views remain derived artifacts

@@ -111,6 +111,22 @@ The text report records the closed-sphere result and key counts. Re-running the
 proof reuses the same root, children, baked assets, and one owned camera,
 including when they are inactive. It never reads or modifies `Camera.main`.
 
+M09 adds `Tools > FoldCanvas > Create M09 Topology Proof` for the explicit
+two-cycle torus and folded-strip handled cup. M10 adds:
+
+- `Tools > FoldCanvas > Open Sample Gallery`
+- `Tools > FoldCanvas > Create M10 Ecosystem Sample`
+- `Tools > FoldCanvas > Create M10 Ecosystem Proof`
+- `Tools > FoldCanvas > Run M10 Performance Baselines`
+
+The M10 proof compiles a native custom operation from the Editor assembly only
+because the command supplies its explicit registry. It shows textured and
+one-sided solid derived surfaces, writes deterministic OBJ under the generated
+asset folder, and displays type ID/count/digest evidence in one inactive-aware
+owned `EditorOnly` root. The gallery reads a bounded package manifest; the
+performance command writes only a derived report under `Library/`. None of
+these actions edits generated topology or modifies `Camera.main`.
+
 ## Authoring actions
 
 - create rectangle and disk panels

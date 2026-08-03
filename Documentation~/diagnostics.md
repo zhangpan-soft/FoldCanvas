@@ -40,6 +40,9 @@ compiler stage and source order.
 | FC6xxx | spherical mapping and closed-sphere validation |
 | FC7xxx | FoldScript interchange, path safety, and repair responses |
 | FC8xxx | boundary spans and toroidal mapping |
+| FC90xx | explicit operation registration and transactional execution |
+| FC91xx | sample-gallery manifest validation |
+| FC92xx | deterministic text export validation |
 
 ## Initial codes
 
@@ -159,10 +162,26 @@ compiler stage and source order.
 - `FC8009 InsufficientToroidalTessellation`
 - `FC8010 ToroidalWindingFailed`
 - `FC8011 InvalidToroidalWrapDirection`
+- `FC9001 UnregisteredExtensionOperation`
+- `FC9002 InvalidExtensionRegistration`
+- `FC9003 DuplicateExtensionRegistration`
+- `FC9004 ExtensionOperationTargetMissing`
+- `FC9005 ExtensionOperationValidationFailed`
+- `FC9006 ExtensionOperationExecutionFailed`
+- `FC9007 ExtensionOperationInvalidMutation`
+- `FC9008 ExtensionOperationException`
+- `FC9101 MalformedGalleryManifest`
+- `FC9102 UnsupportedGalleryVersion`
+- `FC9103 InvalidGalleryEntry`
+- `FC9104 DuplicateGalleryEntryId`
+- `FC9201 ExportInputMissing`
+- `FC9202 InvalidExportOptions`
+- `FC9203 InvalidExportGeometry`
 
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
-deformation propagation exists, a later RigidTransform, Fold, Roll, or
-SphericalWrap or ToroidalWrap may not target a panel selected by an earlier Stitch. Solidify
+deformation propagation exists, a later RigidTransform, Fold, Roll,
+SphericalWrap, ToroidalWrap, or registered position operation may not target a
+panel selected by an earlier Stitch. Solidify
 may follow because it consumes complete welded topology groups. Source
 preflight also returns `FC2010` when a Stitch-selected endpoint's enabled
 SphericalWrap is not strictly earlier than that Stitch. This form carries
@@ -200,6 +219,16 @@ non-congruent/non-planar current embeddings, insufficient full-turn source
 segments, a surface whose emitted winding cannot be made consistently
 tube-outward, or an invalid native direction enum. These diagnostics never
 substitute a primitive torus or silently close coincident parameter boundaries.
+
+`FC9001`-`FC9008` guard M10's native extension boundary. A custom operation
+must be explicitly registered for the current compile under a valid unique
+stable ID and exact definition type, pass preflight, and resolve one existing
+panel. Failed, non-finite, or throwing execution is rolled back before the
+diagnostic escapes and no Mesh is returned. `FC9101`-`FC9104` reject malformed,
+unknown-version, unsafe, or duplicate gallery metadata before the Editor can
+invoke a declared proof action. `FC9201`-`FC9203` reject absent compiled data,
+invalid options, or structurally invalid immutable geometry; export never
+repairs or mutates the input.
 
 `FC2014` enforces the shared JSON/native `sampleCount` maximum of `8192`.
 `FC5005` and `FC5006` report cumulative generated vertex or triangle budget
