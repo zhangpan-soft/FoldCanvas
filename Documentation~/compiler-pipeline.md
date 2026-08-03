@@ -21,6 +21,15 @@ Validate:
 - existing panel and boundary references
 - finite numeric parameters
 - operation ordering prerequisites
+- native and JSON seam `sampleCount` inside the shared `[0,8192]` contract
+
+One `GeometryBudget` is created for the compile. Panel tessellation, Stitch
+boundary subdivision and Bridge triangles, and Solidify shell/rim geometry
+all consume the same cumulative vertex and triangle limits. Each
+geometry-producing operation computes its exact additional counts and reserves
+them before mutation; the build buffer also guards every vertex and triangle
+append. Failed operation transactions restore vertices, triangles, topology,
+panel boundaries, spherical-surface membership, and budget usage.
 
 ## Stage 2: panel tessellation
 
@@ -118,6 +127,55 @@ Explicit-radius Roll emits an ordered structured
 `stretchRatio`. Diagnostic value and repair-suggestion lists are copied,
 read-only, and deterministic.
 
+### M05 current-frame SphericalWrap
+
+`SphericalWrap` is a deformation of one explicit rectangle parameter panel,
+not a request to generate a sphere. Before mapping, the compiler verifies the
+complete current panel is one finite, non-degenerate, congruent planar
+embedding and resolves:
+
+```text
+CurrentOrigin
+CurrentU
+CurrentV
+CurrentNormal = normalize(cross(CurrentU, CurrentV))
+```
+
+Prior translation, rotation, and unit reflection are retained. Metric-changing
+scale, shear, axis collapse, or earlier non-planarity returns
+`FC6010 UnsupportedSphericalEmbedding` and no Mesh.
+
+For normalized source coordinates, `wrapDirection` selects which axis supplies
+longitude and which supplies latitude. The mapped position is:
+
+```text
+P = CurrentOrigin
+  + radius * cos(latitude) * cos(longitude) * CurrentU
+  + radius * sin(latitude)                  * CurrentV
+  + radius * cos(latitude) * sin(longitude) * CurrentNormal
+```
+
+M05 accepts latitude endpoints only inside `[-90, 90]` and at most one signed
+longitude turn. The panel's authored `PanelGrid` segment counts remain the
+sampling contract. If both latitude endpoints are poles, at least two latitude
+segments are required so a non-pole row exists.
+
+Pole topology is decided during tessellation. `Merge` emits one render pole
+per panel fan. `KeepFan` retains one render copy per adjacent longitude cell
+for UV/provenance continuity while assigning every copy the same logical
+topology identity. No later vertex-collapse or mesh-cleanup stage is used.
+Pole classification is scale-aware: an endpoint must satisfy both the small
+angular deviation check and
+`radius * angularDeviationRadians <= compile.weldEpsilon`. Exact `+/-90`
+degrees always has zero deviation. A near-pole latitude on a very large sphere
+therefore remains an ordinary ring instead of being silently collapsed.
+
+Each panel's first non-degenerate triangle determines whether its indices must
+be reversed; every emitted triangle is then checked for positive radial dot
+product. The compiler stores immutable frame, range, pole, source, radius, and
+area-stretch metadata for seam projection, validation, and Editor
+visualization.
+
 ## Stage 4: explicit seam resolution
 
 Seam definitions are declarative source records. Their presence alone does not
@@ -129,9 +187,10 @@ ID list. M04 processes each selected seam as follows:
 3. parameterize each boundary by normalized current-space cumulative arc
    length
 4. retain the sorted union of both authored breakpoint sets
-5. when `sampleCount > 0`, add a uniform minimum-density parameter grid
-6. insert every missing sample by splitting its boundary edge and exactly one
-   adjacent source-surface triangle
+5. when `sampleCount > 0`, add a uniform minimum-density parameter grid;
+   native and JSON inputs share the maximum value `8192`
+6. sort all missing parameters, build triangle-edge adjacency once, and split
+   each affected boundary segment as one deterministic triangle fan
 7. interpolate current position, immutable source position, UV0, panel
    ownership, and deterministic provenance
 8. for `Weld`, require every pair within `compile.weldEpsilon`, union logical
@@ -139,21 +198,47 @@ ID list. M04 processes each selected seam as follows:
 9. for `Bridge`, emit a consistently wound strip without unioning the two
    boundary topology sets
 
+When a selected boundary belongs to a spherical surface, inserted samples
+retain the interpolated immutable source coordinate and UV but recompute their
+current position through that panel's recorded spherical evaluator. Meridian
+boundary distances use exact spherical arc length. This prevents unequal
+sample counts from leaving new vertices on straight chords inside the sphere,
+and it preserves the authored minimum/maximum longitude side even where both
+sides meet at an exact pole.
+
 Topology and manifold validation use `TopologyVertexId`; raw render indices are
 not a reliable topological oracle at attribute seams. `Hinge` and `KeepOpen`
 remain declarative. `FitTargetBoundary` returns one dedicated
 `FC3016 UnsupportedFitTargetBoundary`.
 
 Seams are processed in the Stitch operation's listed order. A later seam may
-therefore consume the closed-loop topology created by an earlier seam.
+therefore consume the closed-loop topology created by an earlier seam. The
+complete Stitch operation is transactional: if any selected seam fails,
+earlier seams from that same operation are rolled back.
+
+Before component planning or tessellation, every Stitch-selected seam must
+resolve to one non-empty seam ID. Both endpoint panel IDs and boundary IDs must
+be non-empty, each panel must exist, and each boundary must be a built-in
+boundary of that panel shape. Invalid native references return `FC2001`,
+`FC2003`, `FC2004`, or `FC2008`; component planning independently guards all
+string dictionary keys as defense in depth.
 
 ### Terminal-Stitch ordering
 
 Until shared topology groups participate in deformation propagation, the
 compiler treats every panel selected by a Stitch as position-final. A later
-`RigidTransform`, `Fold`, or `Roll` targeting any such panel fails with
+`RigidTransform`, `Fold`, `Roll`, or `SphericalWrap` targeting any such panel fails with
 `FC2010 StitchMustBeTerminalForSelectedPanels` and returns no Mesh. Operations
 on unrelated panels remain legal.
+
+The same terminal contract is preflighted in the forward direction before
+panel tessellation: when a selected seam endpoint has an enabled
+`SphericalWrap`, its operation index must be strictly less than the selecting
+Stitch index. A violation returns `FC2010` with
+`sphericalWrapOperationIndex` and `stitchOperationIndex`; neither
+`StitchExecutor` nor sphere validation runs. Component planning independently
+requires the last touching Stitch to be later than the maximum member-wrap
+index, so bypassing source preflight still cannot schedule an early report.
 
 `Solidify` is not a post-Stitch per-panel deformation. It consumes the complete
 final stitched topology in Stage 5 and must construct both shell sides and
@@ -209,13 +294,49 @@ are not included in the operation-scoped check.
 - signed and absolute component volume
 - duplicate/coincident vertices
 - seam closure error
-- self-intersection when enabled
+- global triangle-triangle self-intersection (reserved; not implemented in M05)
 
 Every successful compile exposes a read-only
 `FoldCanvasClosedVolumeReport`. Open source panels remain valid compile
 results, but their report has `IsClosedVolume = false`. A cup produced by
 Solidify must have `IsSingleClosedVolume = true`. This bounded M04.1 report
 does not claim global self-intersection detection or mesh repair.
+
+Enabled `SphericalWrap` panels form a spherical component only through seams
+selected by enabled Stitch operations where both seam endpoints are spherical
+panels. These are component-forming seams. After formation, every Stitch whose
+selected seam has either endpoint in a component is component-touching,
+including a Bridge or Weld to an ordinary panel. Each component is validated
+immediately after its last touching Stitch and before the first Solidify that
+selects any panel in that component. A Solidify on unrelated panels neither
+triggers nor suppresses the check. A Solidify ordered before the component's
+last touching Stitch returns
+`FC6016 SphereValidationRequiredBeforeSolidify`.
+
+The compiler stores one read-only report per component in `SphereReports`.
+`SphereReport` remains a compatibility view of the first report. Every report
+records the component ID, ordered panel and SphericalWrap operation IDs,
+validation stage, validation operation ID, and operation index. The
+pre-Solidify zero-thickness evidence is never overwritten by a later shell
+report. Each component must satisfy:
+
+- one connected spherical component
+- zero open, non-manifold, orientation-conflict, and isolated logical vertices
+- Euler characteristic `V - E + F = 2`
+- one logical north pole and one logical south pole
+- zero inward triangles and one consistent center/radius frame
+- maximum radial error within the centralized absolute-plus-relative tolerance
+
+Failure returns `FC6014 SphereValidationFailed` and no Mesh. Solidify cannot
+turn an open spherical surface into acceptable M05 evidence: the original
+surface must pass first. A later Solidify is still allowed and is independently
+validated by the operation-scoped closed-volume contract because its
+inner/outer positions intentionally no longer lie on the original radius.
+
+This report proves the listed topological, radius, frame, and winding
+properties. M05 does not run a global triangle-triangle self-intersection
+test, so closed-sphere validation is not a proof that an arbitrary surface is
+free of every geometric self-intersection.
 
 ## Stage 8: artifact creation
 
@@ -229,9 +350,11 @@ The runtime compiler returns an in-memory result. Editor code may save:
 
 Editor saving must not change geometry output.
 
-Configured cumulative vertex and triangle limits are validated before panel
-tessellation. Requests that exceed either limit return `FC1007` without
-allocating partial geometry.
+Configured cumulative vertex and triangle limits cover the full compile, not
+only panel tessellation. Unsafe source tessellation returns `FC1007`;
+operation-level overages return `FC5005`, `FC5006`, or `FC5007`. No partial
+Mesh is returned and the failing operation transaction does not retain partial
+geometry or consumed budget.
 
 ## Stage 9: feedback loop
 

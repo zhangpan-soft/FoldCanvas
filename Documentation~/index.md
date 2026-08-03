@@ -1,7 +1,7 @@
 # FoldCanvas package documentation
 
 - [立项背景 / Why FoldCanvas exists](project-background.md)
-- [FoldScript JSON 字段与 `roll` 定义](foldscript-field-reference.md)
+- [FoldScript JSON 字段与 `roll` / `sphericalWrap` 定义](foldscript-field-reference.md)
 - [Architecture](architecture.md)
 - [Geometry model](geometry-model.md)
 - [FoldScript specification](foldscript-spec.md)

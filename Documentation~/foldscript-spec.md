@@ -135,6 +135,36 @@ M03 Circular Roll accepts only `-360 <= angleDegrees <= 360`; larger
 multi-turn, spiral, or layered requests require a future operation. A complete
 turn also requires at least three source segments in the selected direction.
 
+### Spherical wrap
+
+```json
+{
+  "id": "wrap-gore-00",
+  "type": "sphericalWrap",
+  "panel": "gore-00",
+  "radius": 0.5,
+  "latitudeRange": [-90.0, 90.0],
+  "longitudeRange": [-180.0, -135.0],
+  "wrapDirection": "longitudeAlongU",
+  "poleMode": "merge",
+  "subdivisionMode": "panelGrid"
+}
+```
+
+M05 applies this mapping to an already-authored rectangle panel in its current
+congruent planar frame. It does not allocate a hidden sphere template. Multiple
+gore panels become one sphere only when their declared longitude boundaries
+are selected by a later `stitch` operation. Exact pole rows are constructed as
+fan topology before deformation, and any seam samples inserted later are
+evaluated from their immutable 2D source coordinates through the same
+spherical mapping.
+
+The importable complete example is
+[`Samples~/Sphere/sphere-golden.foldcanvas.json`](../Samples~/Sphere/sphere-golden.foldcanvas.json).
+Its eight explicit panels cover adjacent 45-degree longitude ranges, share one
+radius and current frame, and Weld eight ordered side seams into one validated
+closed sphere.
+
 ### Solidify
 
 ```json

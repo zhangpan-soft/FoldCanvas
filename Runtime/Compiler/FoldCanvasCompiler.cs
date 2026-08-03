@@ -18,19 +18,96 @@ namespace FoldCanvas
                 return result;
             }
 
-            FoldCanvasSourceValidator.ValidatePanels(asset, result);
+            FoldCanvasSourceValidator.Validate(asset, result);
             ValidateOperationIds(asset, result);
+            Dictionary<string, SphericalTessellationHint>
+                sphericalTessellationHints = null;
+            SphereValidationPlan sphereValidationPlan = null;
+            if (!result.HasErrors())
+            {
+                TryBuildSphericalTessellationHints(
+                    asset,
+                    result,
+                    out sphericalTessellationHints);
+            }
+
+            if (!result.HasErrors())
+            {
+                sphereValidationPlan =
+                    SphereValidationPlan.Build(asset);
+            }
 
             MeshBuildBuffer buffer = null;
             if (!result.HasErrors())
             {
-                buffer = new MeshBuildBuffer();
-                for (int i = 0; i < asset.Panels.Count; i++)
+                FoldCanvasCompileSettings settings =
+                    asset.CompileSettings;
+                int maxVertices = settings != null
+                    ? settings.MaxGeneratedVertices
+                    : FoldCanvasCompileSettings
+                        .DefaultMaxGeneratedVertices;
+                int maxTriangles = settings != null
+                    ? settings.MaxGeneratedTriangles
+                    : FoldCanvasCompileSettings
+                        .DefaultMaxGeneratedTriangles;
+                float positionTolerance = settings != null
+                    ? settings.WeldEpsilon
+                    : FoldCanvasCompileSettings
+                        .DefaultWeldEpsilon;
+                buffer = new MeshBuildBuffer(
+                    maxVertices,
+                    maxTriangles,
+                    positionTolerance);
+                try
                 {
-                    PanelTessellator.Append(asset.Panels[i], buffer);
-                }
+                    for (int i = 0; i < asset.Panels.Count; i++)
+                    {
+                        PanelDefinition panel = asset.Panels[i];
+                        SphericalTessellationHint? sphericalHint = null;
+                        if (sphericalTessellationHints.TryGetValue(
+                                panel.Id,
+                                out SphericalTessellationHint resolvedHint))
+                        {
+                            sphericalHint = resolvedHint;
+                        }
 
-                ExecuteOperations(asset, buffer, result);
+                        FoldCanvasSourceValidator.TryEstimateGeometry(
+                            panel,
+                            out long panelVertices,
+                            out long panelTriangles);
+                        if (!buffer.TryBeginGeometryOperation(
+                                panelVertices,
+                                panelTriangles,
+                                panel.Id,
+                                "PanelTessellation",
+                                result,
+                                out GeometryOperationScope panelScope))
+                        {
+                            break;
+                        }
+
+                        using (panelScope)
+                        {
+                            PanelTessellator.Append(
+                                panel,
+                                buffer,
+                                sphericalHint);
+                        }
+                    }
+
+                    if (!result.HasErrors())
+                    {
+                        ExecuteOperations(
+                            asset,
+                            buffer,
+                            result,
+                            sphereValidationPlan);
+                    }
+                }
+                catch (GeometryBudgetExceededException exception)
+                {
+                    result.Add(exception.Diagnostic);
+                }
             }
 
             if (!result.HasErrors())
@@ -54,11 +131,82 @@ namespace FoldCanvas
             result.ClosedVolumeReport =
                 FoldCanvasClosedVolumeValidator.Analyze(
                     result.CompiledData);
+            if (result.SphereReport == null)
+            {
+                result.AddSphereReport(
+                    FoldCanvasSphereValidator.Analyze(
+                        result.CompiledData));
+            }
+
             result.Mesh = UnityMeshConverter.Create(
                 result.CompiledData,
                 meshName,
                 recalculateNormals);
             return result;
+        }
+
+        internal static void AddSphereValidationDiagnostic(
+            FoldCanvasCompileResult result,
+            FoldCanvasSphereReport report)
+        {
+            result.Add(new FoldCanvasDiagnostic(
+                FoldCanvasDiagnosticCodes.SphereValidationFailed,
+                FoldCanvasDiagnosticSeverity.Error,
+                $"Spherical component '{report.ComponentId}' did not compile into one closed outward sphere at stage {report.ValidationStage}.",
+                report.PanelIds.Count > 0
+                    ? report.PanelIds[0]
+                    : null,
+                report.ValidationOperationId,
+                values: new[]
+                {
+                    new FoldCanvasDiagnosticValue(
+                        "validationStage",
+                        (int)report.ValidationStage),
+                    new FoldCanvasDiagnosticValue(
+                        "validationOperationIndex",
+                        report.ValidationOperationIndex),
+                    new FoldCanvasDiagnosticValue(
+                        "sphericalPanelCount",
+                        report.SphericalPanelCount),
+                    new FoldCanvasDiagnosticValue(
+                        "connectedComponentCount",
+                        report.ConnectedComponentCount),
+                    new FoldCanvasDiagnosticValue(
+                        "openEdgeCount",
+                        report.OpenEdgeCount),
+                    new FoldCanvasDiagnosticValue(
+                        "nonManifoldEdgeCount",
+                        report.NonManifoldEdgeCount),
+                    new FoldCanvasDiagnosticValue(
+                        "orientationConflictEdgeCount",
+                        report.OrientationConflictEdgeCount),
+                    new FoldCanvasDiagnosticValue(
+                        "isolatedTopologyVertexCount",
+                        report.IsolatedTopologyVertexCount),
+                    new FoldCanvasDiagnosticValue(
+                        "eulerCharacteristic",
+                        report.EulerCharacteristic),
+                    new FoldCanvasDiagnosticValue(
+                        "northPoleTopologyCount",
+                        report.NorthPoleTopologyCount),
+                    new FoldCanvasDiagnosticValue(
+                        "southPoleTopologyCount",
+                        report.SouthPoleTopologyCount),
+                    new FoldCanvasDiagnosticValue(
+                        "inwardTriangleCount",
+                        report.InwardTriangleCount),
+                    new FoldCanvasDiagnosticValue(
+                        "inconsistentFrameCount",
+                        report.InconsistentFrameCount),
+                    new FoldCanvasDiagnosticValue(
+                        "maximumRadiusError",
+                        report.MaximumRadiusError,
+                        "m"),
+                    new FoldCanvasDiagnosticValue(
+                        "radiusTolerance",
+                        report.RadiusTolerance,
+                        "m")
+                }));
         }
 
         private static void ValidateOperationIds(
@@ -92,7 +240,8 @@ namespace FoldCanvas
         private static void ExecuteOperations(
             FoldCanvasAsset asset,
             MeshBuildBuffer buffer,
-            FoldCanvasCompileResult result)
+            FoldCanvasCompileResult result,
+            SphereValidationPlan sphereValidationPlan)
         {
             HashSet<string> stitchedPanelIds =
                 new HashSet<string>(StringComparer.Ordinal);
@@ -164,6 +313,29 @@ namespace FoldCanvas
                     continue;
                 }
 
+                if (operation is
+                    SphericalWrapOperationDefinition sphericalWrap)
+                {
+                    if (RejectPostStitchDeformation(
+                        sphericalWrap.PanelId,
+                        sphericalWrap.Id,
+                        stitchedPanelIds,
+                        result))
+                    {
+                        return;
+                    }
+
+                    if (!SphericalWrapExecutor.TryExecute(
+                        sphericalWrap,
+                        buffer,
+                        result))
+                    {
+                        return;
+                    }
+
+                    continue;
+                }
+
                 if (operation is StitchOperationDefinition stitch)
                 {
                     if (!StitchExecutor.TryExecute(
@@ -183,11 +355,28 @@ namespace FoldCanvas
                         stitchedPanelIds.Add(selectedPanelIds[panelIndex]);
                     }
 
+                    if (!sphereValidationPlan.TryValidateAfterOperation(
+                            i,
+                            buffer,
+                            result))
+                    {
+                        return;
+                    }
+
                     continue;
                 }
 
                 if (operation is SolidifyOperationDefinition solidify)
                 {
+                    if (!sphereValidationPlan.TryValidateBeforeSolidify(
+                            i,
+                            solidify,
+                            buffer,
+                            result))
+                    {
+                        return;
+                    }
+
                     if (!SolidifyExecutor.TryExecute(
                         solidify,
                         buffer,
@@ -206,6 +395,172 @@ namespace FoldCanvas
                     operationId: operation.Id));
                 return;
             }
+
+            sphereValidationPlan.TryValidateRemaining(
+                buffer,
+                result);
+        }
+
+        private static bool TryBuildSphericalTessellationHints(
+            FoldCanvasAsset asset,
+            FoldCanvasCompileResult result,
+            out Dictionary<string, SphericalTessellationHint> hints)
+        {
+            hints = new Dictionary<string, SphericalTessellationHint>(
+                StringComparer.Ordinal);
+            for (int operationIndex = 0;
+                operationIndex < asset.Operations.Count;
+                operationIndex++)
+            {
+                if (!(asset.Operations[operationIndex] is
+                        SphericalWrapOperationDefinition sphericalWrap) ||
+                    !sphericalWrap.Enabled)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(
+                        sphericalWrap.PanelId))
+                {
+                    result.Add(new FoldCanvasDiagnostic(
+                        FoldCanvasDiagnosticCodes
+                            .SphericalWrapTargetMissing,
+                        FoldCanvasDiagnosticSeverity.Error,
+                        "SphericalWrap panelId must be non-empty and reference an existing panel.",
+                        sphericalWrap.PanelId,
+                        sphericalWrap.Id));
+                    return false;
+                }
+
+                if (hints.ContainsKey(sphericalWrap.PanelId))
+                {
+                    result.Add(new FoldCanvasDiagnostic(
+                        FoldCanvasDiagnosticCodes
+                            .DuplicateSphericalWrapTarget,
+                        FoldCanvasDiagnosticSeverity.Error,
+                        "M05 supports one enabled SphericalWrap operation per panel.",
+                        sphericalWrap.PanelId,
+                        sphericalWrap.Id));
+                    return false;
+                }
+
+                if (HasUnsupportedPreWrapDeformation(
+                    asset,
+                    operationIndex,
+                    sphericalWrap.PanelId))
+                {
+                    result.Add(new FoldCanvasDiagnostic(
+                        FoldCanvasDiagnosticCodes
+                            .UnsupportedSphericalEmbedding,
+                        FoldCanvasDiagnosticSeverity.Error,
+                        "Only RigidTransform may position a panel before SphericalWrap in M05. Prior Fold, Roll, Solidify, or SphericalWrap is unsupported.",
+                        sphericalWrap.PanelId,
+                        sphericalWrap.Id));
+                    return false;
+                }
+
+                bool validHintContract =
+                    sphericalWrap.WrapDirection ==
+                        SphericalWrapDirection.LongitudeAlongU ||
+                    sphericalWrap.WrapDirection ==
+                        SphericalWrapDirection.LongitudeAlongV;
+                validHintContract &=
+                    sphericalWrap.PoleMode == SphericalPoleMode.Merge ||
+                    sphericalWrap.PoleMode ==
+                        SphericalPoleMode.KeepFan;
+                validHintContract &=
+                    sphericalWrap.SubdivisionMode ==
+                        SphericalSubdivisionMode.PanelGrid;
+                validHintContract &=
+                    FiniteMath.IsFinite(
+                        sphericalWrap.LatitudeRange);
+                hints.Add(
+                    sphericalWrap.PanelId,
+                    validHintContract
+                        ? new SphericalTessellationHint(
+                            sphericalWrap.WrapDirection,
+                            sphericalWrap.PoleMode,
+                            SphericalWrapExecutor.IsPole(
+                                sphericalWrap.LatitudeRange.x,
+                                sphericalWrap.Radius,
+                                GetPositionTolerance(asset)),
+                            SphericalWrapExecutor.IsPole(
+                                sphericalWrap.LatitudeRange.y,
+                                sphericalWrap.Radius,
+                                GetPositionTolerance(asset)))
+                        : default);
+            }
+
+            return true;
+        }
+
+        private static float GetPositionTolerance(
+            FoldCanvasAsset asset)
+        {
+            return asset.CompileSettings != null
+                ? asset.CompileSettings.WeldEpsilon
+                : FoldCanvasCompileSettings.DefaultWeldEpsilon;
+        }
+
+        private static bool HasUnsupportedPreWrapDeformation(
+            FoldCanvasAsset asset,
+            int sphericalWrapIndex,
+            string panelId)
+        {
+            for (int i = 0; i < sphericalWrapIndex; i++)
+            {
+                FoldOperationDefinition previous = asset.Operations[i];
+                if (previous == null || !previous.Enabled)
+                {
+                    continue;
+                }
+
+                if (previous is FoldLineOperationDefinition fold &&
+                    string.Equals(
+                        fold.PanelId,
+                        panelId,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                if (previous is RollOperationDefinition roll &&
+                    string.Equals(
+                        roll.PanelId,
+                        panelId,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                if (previous is
+                        SphericalWrapOperationDefinition earlierWrap &&
+                    string.Equals(
+                        earlierWrap.PanelId,
+                        panelId,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                if (previous is SolidifyOperationDefinition solidify)
+                {
+                    for (int panelIndex = 0;
+                        panelIndex < solidify.PanelIds.Count;
+                        panelIndex++)
+                    {
+                        if (string.Equals(
+                            solidify.PanelIds[panelIndex],
+                            panelId,
+                            StringComparison.Ordinal))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static bool RejectPostStitchDeformation(

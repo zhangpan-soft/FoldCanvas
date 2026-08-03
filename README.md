@@ -30,7 +30,7 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 
 ## Status
 
-The repository currently contains the **M04 Stitch and Solidify compiler**:
+The repository currently contains the **M05 spherical-surface compiler**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -54,15 +54,30 @@ The repository currently contains the **M04 Stitch and Solidify compiler**:
   components, winding conflicts, and signed/absolute volume
 - Automatically derived outer/inner hard-corner segments over emitted
   Solidify vertices
+- Explicit rectangular spherical-gore panels mapped through a documented
+  current local frame, with radius, latitude, longitude, direction, pole, and
+  subdivision fields
+- Deterministic spherical pole topology, curved-surface seam subdivision,
+  outward winding, and closed-sphere validation with Euler characteristic and
+  bounded radial error
+- Component-scoped pre-Solidify sphere reports, so unrelated Stitch or
+  Solidify operations cannot trigger, suppress, or replace a sphere proof
+- One cumulative geometry budget across panel tessellation, Stitch
+  subdivision/bridges, and Solidify shell/rim generation
 - An editor-generated six-region canvas that compiles into a textured box
 - An editor-generated thick cup whose wall seam and bottom perimeter are
   welded, whose inner corner remains connected, and whose top rim is closed
+- An editor-generated eight-gore 2D canvas that reconstructs one closed sphere
+  while preserving readable source artwork and independent UV charts
 - Deterministic diagnostics and validation
 - Mesh baking tools for the Unity Editor
 - Edit-mode tests
 - Architecture, FoldScript, roadmap, and Codex task prompts
 
-The first public proof target is a cup whose base and wall artwork live on one 2D canvas and compile into a closed, thickened 3D object.
+The first public proof target was a cup whose base and wall artwork live on one
+2D canvas and compile into a closed, thickened 3D object. M05 extends the same
+source-first contract to a closed sphere assembled from eight explicit 2D
+gore panels.
 
 M04 keeps M03 Circular Roll's one-turn and congruent-planar-frame contracts.
 Its seam solver retains both boundaries' normalized breakpoints, performs real
@@ -71,6 +86,20 @@ chains. Solidify consumes the final stitched topology, creates outer and inner
 shells, and rims only true open boundaries. Until shared-topology deformation
 propagation exists, Stitch is terminal for later position deformation on every
 panel it selected.
+
+M05 does not call a sphere generator. Each rectangle is tessellated from its
+authored 2D domain, mapped by `SphericalWrap` in its current congruent planar
+frame, and joined only by the declared seam graph and terminal `Stitch`. Exact
+pole samples are represented explicitly, inserted seam samples are
+re-evaluated on the spherical map, and the final logical topology must report
+one component, no open/non-manifold edges, outward winding, Euler
+characteristic 2, one north pole, one south pole, and bounded radius error.
+Only spherical-to-spherical seams form a component, but any later Stitch seam
+with either endpoint in that component delays its report. The report is frozen
+after the last touching Stitch and before a Solidify touching the component.
+Every selected spherical endpoint must be wrapped before its Stitch; invalid
+order fails before tessellation and cannot emit a premature sphere report.
+It does not perform global triangle-triangle self-intersection detection.
 
 ## Design principles
 
@@ -108,7 +137,28 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
    and bleed-safe thick-cup proof with four owned validation cameras. Use
    `Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof` for the
    texture-free solid, logical-wireframe, section, and inner/outer-corner
-   validation hierarchy.
+   validation hierarchy. Use
+   `Tools > FoldCanvas > Create Sphere Proof` for the M05 2D-gore source,
+   textured and one-sided solid spheres, logical wireframe, seam/pole overlays,
+   UV-stretch view, radius-error view, and validation report.
+
+## Continuous integration
+
+GitHub Actions runs two independent checks:
+
+- `repository-validation` parses repository JSON, checks assembly and runtime
+  boundaries, confirms the Schema/native `sampleCount` maximum, and validates
+  documentation links and version metadata.
+- `unity-editmode-tests` opens the tracked `Project~` host in Unity
+  `6000.3.20f1`, compiles Runtime, Editor, and Tests assemblies, runs all Edit
+  Mode tests, and uploads the NUnit XML plus `Editor.log`, even on failure.
+  Live GameCI output is staged below the host-project root so a changing log
+  is never imported through the repository-root local UPM package; evidence is
+  copied to `artifacts/unity-editmode` only after Unity exits.
+
+The Unity job uses GameCI and requires repository Actions secrets
+`UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal
+license. License data is never stored in the repository.
 
 ## Install in another Unity project
 
@@ -157,7 +207,7 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M02 | Fold six decorated rectangle panels into a box — complete |
 | M03 | Roll a decorated wall into a cylindrical cup — complete |
 | M04 | General seam resampling/bridging, shell thickness, and M04.1 closed-volume proof — implemented |
-| M05 | Compile sphere gores into a closed sphere |
+| M05 | Compile explicit 2D sphere gores into a validated closed sphere — implemented |
 | M06 | Split 2D canvas / 3D preview editor |
 | M07 | Manifold, inversion, seam, and intersection validators |
 | M08 | FoldScript import/export and AI feedback loop |

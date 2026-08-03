@@ -69,7 +69,38 @@ Examples:
 
 Spatial coincidence does not create topology automatically. Only explicit seam rules may weld source boundaries.
 
-## 6. Thickness
+## 6. Spherical parameter surfaces
+
+M05 represents a sphere as an atlas of explicit 2D rectangle domains. Each
+panel carries immutable source position and canvas UV, while
+`SphericalWrap` supplies the map from one normalized panel axis to longitude
+and the other to latitude:
+
+```text
+P(lambda, phi) =
+  Center
+  + r cos(phi) cos(lambda) CurrentU
+  + r sin(phi)             CurrentV
+  + r cos(phi) sin(lambda) CurrentNormal
+```
+
+The map may stretch the 2D metric; this is expected for a spherical atlas and
+is exposed as derived area-stretch metadata. It does not erase the 2D domain.
+
+A geometric pole is one logical topology identity even when several render
+vertices are needed to retain distinct UV or provenance samples. `Merge`
+chooses one render sample per panel fan. `KeepFan` retains one render copy per
+adjacent longitude cell but unions their `TopologyVertexId`. Neighboring panel
+poles become the one final north/south identity only through explicit Weld
+seams.
+
+Boundary subdivision on a curved panel interpolates immutable source
+coordinates and UV, then re-evaluates the surface map. Linear interpolation of
+current 3D positions would create a chord and violate the radius contract.
+There is no post-generation pole collapse, remesh, or automatic topology
+repair.
+
+## 7. Thickness
 
 A surface is conceptually zero-thickness. `Solidify` creates a shell:
 
@@ -109,7 +140,7 @@ closed component =
 This proves a closed, consistently oriented triangle shell. It is deliberately
 separate from future robust global self-intersection analysis.
 
-## 7. UV preservation invariant
+## 8. UV preservation invariant
 
 For each generated vertex originating from panel sample `(u,v)`:
 
@@ -124,7 +155,7 @@ deterministic provenance ID for every compiled vertex. Later duplication or
 welding stages must preserve or deliberately combine those identifiers rather
 than inferring origin from current 3D proximity.
 
-## 8. Boundary parameterization
+## 9. Boundary parameterization
 
 Each boundary is sampled and ordered. For stitching:
 
@@ -141,7 +172,12 @@ Boundary count equality must never be assumed. Existing boundary breakpoints
 must not be discarded merely to force an exact count, because their source UV
 and provenance remain part of the authored surface.
 
-## 9. Numerical tolerances
+For a recorded spherical meridian boundary, cumulative distance is evaluated
+as exact spherical arc length. Any inserted current position is evaluated from
+its source coordinate through the spherical map, so correspondence density
+cannot pull the boundary inside the sphere.
+
+## 10. Numerical tolerances
 
 The compiler must centralize tolerances:
 
@@ -155,6 +191,6 @@ self-intersection epsilon
 
 Do not scatter magic epsilon values across operations.
 
-## 10. Derived normals
+## 11. Derived normals
 
 The user does not author normal maps in the core workflow. Geometric normals are derived after topology-affecting operations. An Unlit material can ignore them, but geometry validation and optional lighting still need consistent winding and normals.

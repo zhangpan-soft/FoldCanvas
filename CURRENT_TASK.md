@@ -1,39 +1,40 @@
 # Current task
 
-Execute **M04: Boundary resampling, reusable stitching, and solidify**.
+Execute **M05: Sphere gores and spherical surface reconstruction**.
 
 Authoritative task file:
-[`Codex/M04_STITCH_SOLIDIFY.md`](Codex/M04_STITCH_SOLIDIFY.md)
+[`Codex/M05_SPHERE_GORES.md`](Codex/M05_SPHERE_GORES.md)
 
-M03 passed human audit and was merged through PR
-[#1](https://github.com/zhangpan-soft/FoldCanvas/pull/1) into `main` at merge
-commit `c7b1e61`. The accepted PR head `96d1688` is retained in that history.
-Acceptance evidence is Unity `6000.3.20f1`, 103/103 Edit Mode tests, and a live
-owned preview proving readable exterior artwork, explicit wall closure, an
-explicit wall-to-bottom Weld, 1,281 logical topology vertices, exactly 64 open
-top-rim edges, and zero measured seam gap.
+M04 and M04.1 passed human audit and were merged through PR
+[#3](https://github.com/zhangpan-soft/FoldCanvas/pull/3) into `main` at merge
+commit `ef36808`. The accepted implementation heads `ecb0791` and `b78772f`
+remain in that history. Acceptance evidence is Unity `6000.3.20f1`, 152/152
+Edit Mode tests, a one-component closed-volume report, zero open or
+non-manifold logical edges, and texture-free solid, wireframe, and section
+proofs.
 
-M04 must prioritize visible and topological correctness of reusable seam
-processing, thickness, inner walls, and rim generation. Until topology-group
-deformation propagation exists, Stitch is terminal for every panel selected by
-that Stitch: no later `RigidTransform`, `Fold`, or `Roll` may target those
-panels. `Solidify` is the downstream whole-topology shell-construction stage,
-not a per-panel deformation.
+M05 implementation occurs on `codex/m05-spherical-wrap`. It must prove that
+explicit 2D spherical panels, ordered source boundaries, `SphericalWrap`,
+the existing seam graph, Weld, and the deterministic compiler can reconstruct
+one closed sphere while preserving source UV, canvas coordinates, provenance,
+and outward winding.
 
-PR
-[#2](https://github.com/zhangpan-soft/FoldCanvas/pull/2) passed human audit and
-was merged into `main` at merge commit `1644090` before M04 geometry
-implementation began. Implementation remains on
-`feat/m04-stitch-solidify`; this task file stays on M04 until the new geometry,
-tests, production canvas, and live four-view proof pass review.
+PR #4 is in its hardening review gate. Before human approval it must also
+prove component-scoped pre-Solidify sphere validation, a single cumulative
+Panel/Stitch/Solidify geometry budget with rollback, native asset and
+scale-aware pole defenses, three-pass golden determinism, and a real Unity
+Edit Mode GitHub Actions job that uploads test XML and Editor logs.
 
-The active package iteration is **M04.1 Closed Volume Validation**: expose a
-deterministic closed-volume report, automatically derived outer/inner
-wall-bottom corner evidence, and Editor-only solid, logical-wireframe, and
-section proofs for a separate Cup ClosedVolume example. This remains M04 and
-does not authorize bevel, subdivision, smoothing, mesh cleanup, M05, or later
-milestones.
+The generated sphere Mesh remains a derived artifact. Do not use a Unity
+Sphere primitive, UV Sphere, Icosphere, imported sphere Mesh, fixed precomputed
+sphere vertices, or an automatic mesh-repair/cleanup stage as the generation
+path.
 
-Do not reopen M03 for additional defensive parameter validation. Do not begin
-M05 or later milestones until M04 acceptance criteria pass and this file is
-deliberately advanced.
+M05 must not implement Bevel, Subdivision surface smoothing, Remesh, Mesh
+Cleanup, arbitrary topology repair, or M06. Keep `CURRENT_TASK.md` on M05
+until the full diff, complete Edit Mode suite, topology/radius report, and
+actual Unity sphere proof pass human audit.
+
+M05 topology/radius/winding validation does not include global
+triangle-triangle self-intersection detection. That limitation must remain
+explicit in documentation and review claims.

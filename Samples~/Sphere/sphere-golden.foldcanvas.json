@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "0.1",
+  "assetId": "m05-explicit-gore-sphere",
+  "displayName": "M05 Explicit Gore Sphere",
+  "units": "meter",
+  "canvas": {
+    "appearance": "sphere-canvas.png",
+    "width": 2048,
+    "height": 1024
+  },
+  "panels": [
+    {
+      "id": "gore-00",
+      "shape": "rectangle",
+      "canvasRect": [0, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-01",
+      "shape": "rectangle",
+      "canvasRect": [0.125, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-02",
+      "shape": "rectangle",
+      "canvasRect": [0.25, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-03",
+      "shape": "rectangle",
+      "canvasRect": [0.375, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-04",
+      "shape": "rectangle",
+      "canvasRect": [0.5, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-05",
+      "shape": "rectangle",
+      "canvasRect": [0.625, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-06",
+      "shape": "rectangle",
+      "canvasRect": [0.75, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    },
+    {
+      "id": "gore-07",
+      "shape": "rectangle",
+      "canvasRect": [0.875, 0, 0.125, 1],
+      "physicalSize": [0.3926990817, 1.5707963268],
+      "tessellation": { "uSegments": 4, "vSegments": 16 }
+    }
+  ],
+  "seams": [
+    {
+      "id": "seam-00",
+      "a": { "panel": "gore-00", "boundary": "uMax" },
+      "b": { "panel": "gore-01", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-01",
+      "a": { "panel": "gore-01", "boundary": "uMax" },
+      "b": { "panel": "gore-02", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-02",
+      "a": { "panel": "gore-02", "boundary": "uMax" },
+      "b": { "panel": "gore-03", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-03",
+      "a": { "panel": "gore-03", "boundary": "uMax" },
+      "b": { "panel": "gore-04", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-04",
+      "a": { "panel": "gore-04", "boundary": "uMax" },
+      "b": { "panel": "gore-05", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-05",
+      "a": { "panel": "gore-05", "boundary": "uMax" },
+      "b": { "panel": "gore-06", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-06",
+      "a": { "panel": "gore-06", "boundary": "uMax" },
+      "b": { "panel": "gore-07", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    },
+    {
+      "id": "seam-07",
+      "a": { "panel": "gore-07", "boundary": "uMax" },
+      "b": { "panel": "gore-00", "boundary": "uMin" },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 0
+    }
+  ],
+  "operations": [
+    {
+      "id": "wrap-00",
+      "type": "sphericalWrap",
+      "panel": "gore-00",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [-180, -135],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-01",
+      "type": "sphericalWrap",
+      "panel": "gore-01",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [-135, -90],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-02",
+      "type": "sphericalWrap",
+      "panel": "gore-02",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [-90, -45],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-03",
+      "type": "sphericalWrap",
+      "panel": "gore-03",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [-45, 0],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-04",
+      "type": "sphericalWrap",
+      "panel": "gore-04",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [0, 45],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-05",
+      "type": "sphericalWrap",
+      "panel": "gore-05",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [45, 90],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-06",
+      "type": "sphericalWrap",
+      "panel": "gore-06",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [90, 135],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "wrap-07",
+      "type": "sphericalWrap",
+      "panel": "gore-07",
+      "radius": 0.5,
+      "latitudeRange": [-90, 90],
+      "longitudeRange": [135, 180],
+      "wrapDirection": "longitudeAlongU",
+      "poleMode": "merge",
+      "subdivisionMode": "panelGrid"
+    },
+    {
+      "id": "stitch-sphere",
+      "type": "stitch",
+      "seams": [
+        "seam-00",
+        "seam-01",
+        "seam-02",
+        "seam-03",
+        "seam-04",
+        "seam-05",
+        "seam-06",
+        "seam-07"
+      ]
+    }
+  ],
+  "compile": {
+    "weldEpsilon": 0.00001,
+    "recalculateNormals": true,
+    "validationLevel": "strict",
+    "maxGeneratedVertices": 1000000,
+    "maxGeneratedTriangles": 2000000
+  }
+}

@@ -63,6 +63,42 @@ The wireframe, section, and corner line Meshes are disposable inspection
 artifacts. They are not mesh cleanup, subdivision, smoothing, or editable
 source.
 
+M05 adds:
+
+- `Tools > FoldCanvas > Create Sphere Sample`
+- `Tools > FoldCanvas > Create Sphere Proof`
+- `Tools > FoldCanvas > M05 Sphere View > Overview | Textured Sphere |
+  Wireframe and Seams | UV Stretch | Radius Error`
+
+The proof creates or reuses one inactive-aware `EditorOnly` root:
+
+```text
+FoldCanvas Sphere Root
+├── Source Canvas Preview
+├── Generated Sphere
+├── Solid Validation
+├── Wireframe Debug
+├── Seam Debug
+├── Pole Debug
+├── UV Stretch Debug
+├── Radius Error Debug
+├── Validation Report
+└── Preview Camera
+```
+
+The source preview displays the authoritative 2048 x 1024 eight-gore canvas.
+Every sphere and debug Mesh is derived by compiling the matching
+`FoldCanvasAsset`; no Unity sphere primitive or fixed sphere Mesh is created.
+`Solid Validation` uses a texture-free one-sided material so outward winding
+cannot be hidden by `Cull Off`. Wireframe edges use logical topology, while
+seam and pole overlays are separately derived from source boundary and
+spherical metadata. UV-stretch and radius-error colors are debug attributes,
+not source edits.
+
+The text report records the closed-sphere result and key counts. Re-running the
+proof reuses the same root, children, baked assets, and one owned camera,
+including when they are inactive. It never reads or modifies `Camera.main`.
+
 ## Authoring actions
 
 Planned actions:

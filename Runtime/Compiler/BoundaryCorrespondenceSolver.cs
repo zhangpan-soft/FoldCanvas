@@ -55,14 +55,13 @@ namespace FoldCanvas
                 return false;
             }
 
-            if (seam.SampleCount < 0)
-            {
-                AddSampleCountDiagnostic(
+            if (!ValidateSampleCount(
                     seam,
                     operationId,
                     boundaryA.VertexIndices.Count,
                     boundaryB.VertexIndices.Count,
-                    result);
+                    result))
+            {
                 return false;
             }
 
@@ -108,15 +107,10 @@ namespace FoldCanvas
                 return false;
             }
 
-            List<float> parameters = new List<float>();
-            AddParameters(parameters, pathA.Parameters);
-            AddParameters(parameters, pathB.Parameters);
-            AddUniformParameters(
-                parameters,
-                seam.SampleCount,
-                pathA.IsClosed);
-            parameters.Sort();
-            RemoveNearDuplicateParameters(parameters);
+            List<float> parameters = BuildCommonParameters(
+                pathA,
+                pathB,
+                seam.SampleCount);
 
             if (!TryEnsureParameters(
                     panelA,
@@ -146,6 +140,117 @@ namespace FoldCanvas
                 samplesA,
                 samplesB,
                 pathA.IsClosed);
+            return true;
+        }
+
+        public static bool TryEstimateAdditionalGeometry(
+            SeamDefinition seam,
+            string operationId,
+            MeshBuildBuffer buffer,
+            FoldCanvasCompileResult result,
+            out long additionalVertices,
+            out long additionalTriangles)
+        {
+            additionalVertices = 0L;
+            additionalTriangles = 0L;
+            if (!TryResolveBoundary(
+                    seam.A,
+                    seam.Id,
+                    operationId,
+                    buffer,
+                    result,
+                    out PanelBuildRecord panelA,
+                    out BoundaryBuildRecord boundaryA) ||
+                !TryResolveBoundary(
+                    seam.B,
+                    seam.Id,
+                    operationId,
+                    buffer,
+                    result,
+                    out PanelBuildRecord panelB,
+                    out BoundaryBuildRecord boundaryB))
+            {
+                return false;
+            }
+
+            if (!ValidateSampleCount(
+                    seam,
+                    operationId,
+                    boundaryA.VertexIndices.Count,
+                    boundaryB.VertexIndices.Count,
+                    result))
+            {
+                return false;
+            }
+
+            if (!TryBuildPath(
+                    panelA,
+                    boundaryA,
+                    false,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath pathA) ||
+                !TryBuildPath(
+                    panelB,
+                    boundaryB,
+                    seam.ReverseB,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath pathB))
+            {
+                return false;
+            }
+
+            if (pathA.IsClosed != pathB.IsClosed)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes
+                        .StitchBoundaryClosureMismatch,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Stitch boundaries must both be open chains or both be closed loops.",
+                    operationId: operationId,
+                    seamId: seam.Id));
+                return false;
+            }
+
+            List<float> parameters = BuildCommonParameters(
+                pathA,
+                pathB,
+                seam.SampleCount);
+            try
+            {
+                checked
+                {
+                    additionalVertices =
+                        CountMissingParameters(pathA, parameters) +
+                        CountMissingParameters(pathB, parameters);
+                    additionalTriangles = additionalVertices;
+                    if (seam.Mode == SeamMode.Bridge)
+                    {
+                        long segmentCount = pathA.IsClosed
+                            ? parameters.Count
+                            : parameters.Count - 1L;
+                        additionalTriangles +=
+                            2L * segmentCount;
+                    }
+                }
+            }
+            catch (OverflowException)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes
+                        .GeometryBudgetOverflow,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Stitch geometry preflight overflowed its count representation.",
+                    operationId: operationId,
+                    seamId: seam.Id));
+                return false;
+            }
+
             return true;
         }
 
@@ -186,47 +291,85 @@ namespace FoldCanvas
             FoldCanvasCompileResult result,
             out List<int> samples)
         {
-            samples = new List<int>(parameters.Count);
-            for (int i = 0; i < parameters.Count; i++)
+            samples = null;
+            if (!TryBuildPath(
+                    panel,
+                    boundary,
+                    reverse,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath path))
             {
-                if (!TryBuildPath(
-                        panel,
-                        boundary,
-                        reverse,
-                        buffer,
-                        seam,
-                        operationId,
-                        result,
-                        out BoundaryPath path))
-                {
-                    return false;
-                }
+                return false;
+            }
 
-                float parameter = parameters[i];
-                if (TryFindExistingSample(
-                    path,
-                    parameter,
-                    out int existingVertex))
+            int[] sampleIndices = new int[parameters.Count];
+            List<BoundarySampleInsertion>[] insertionsBySegment =
+                new List<BoundarySampleInsertion>[
+                    path.CumulativeLengths.Length - 1];
+            for (int parameterIndex = 0;
+                parameterIndex < parameters.Count;
+                parameterIndex++)
+            {
+                float parameter = parameters[parameterIndex];
+                int existingIndex =
+                    FindExistingSampleIndex(path, parameter);
+                if (existingIndex >= 0)
                 {
-                    samples.Add(existingVertex);
+                    sampleIndices[parameterIndex] =
+                        path.OrderedIndices[existingIndex];
                     continue;
                 }
 
-                if (!TryInsertSample(
+                int segmentIndex =
+                    FindSegmentIndex(path, parameter);
+                List<BoundarySampleInsertion> segmentInsertions =
+                    insertionsBySegment[segmentIndex];
+                if (segmentInsertions == null)
+                {
+                    segmentInsertions =
+                        new List<BoundarySampleInsertion>();
+                    insertionsBySegment[segmentIndex] =
+                        segmentInsertions;
+                }
+
+                segmentInsertions.Add(
+                    new BoundarySampleInsertion(
+                        parameterIndex,
+                        parameter));
+            }
+
+            TriangleAdjacencyIndex adjacency =
+                new TriangleAdjacencyIndex(buffer);
+            for (int segmentIndex = 0;
+                segmentIndex < insertionsBySegment.Length;
+                segmentIndex++)
+            {
+                List<BoundarySampleInsertion> segmentInsertions =
+                    insertionsBySegment[segmentIndex];
+                if (segmentInsertions == null)
+                {
+                    continue;
+                }
+
+                if (!TryInsertSegmentSamples(
                         path,
-                        parameter,
+                        segmentIndex,
+                        segmentInsertions,
                         buffer,
+                        adjacency,
                         seam,
                         operationId,
                         result,
-                        out int insertedVertex))
+                        sampleIndices))
                 {
                     return false;
                 }
-
-                samples.Add(insertedVertex);
             }
 
+            samples = new List<int>(sampleIndices);
             return true;
         }
 
@@ -277,9 +420,25 @@ namespace FoldCanvas
                     next = segment + 1;
                 }
 
-                Vector3 from = buffer.Vertices[ordered[segment]].Position;
-                Vector3 to = buffer.Vertices[ordered[next]].Position;
-                float length = Vector3.Distance(from, to);
+                MeshBuildVertex fromVertex =
+                    buffer.Vertices[ordered[segment]];
+                MeshBuildVertex toVertex =
+                    buffer.Vertices[ordered[next]];
+                float length;
+                if (!buffer.TryGetSphericalWrap(
+                        panel.PanelIndex,
+                        out SphericalWrapBuildRecord sphericalWrap) ||
+                    !sphericalWrap.TryEvaluateBoundaryArcLength(
+                        boundary.Id,
+                        fromVertex.SourcePosition,
+                        toVertex.SourcePosition,
+                        out length))
+                {
+                    length = Vector3.Distance(
+                        fromVertex.Position,
+                        toVertex.Position);
+                }
+
                 if (!FiniteMath.IsFinite(length))
                 {
                     AddZeroLengthDiagnostic(
@@ -330,50 +489,73 @@ namespace FoldCanvas
             return true;
         }
 
-        private static bool TryFindExistingSample(
+        private static int FindExistingSampleIndex(
             BoundaryPath path,
-            float parameter,
-            out int vertexIndex)
+            float parameter)
         {
-            for (int i = 0; i < path.Parameters.Length; i++)
+            int low = 0;
+            int high = path.Parameters.Length - 1;
+            while (low <= high)
             {
-                if (Mathf.Abs(path.Parameters[i] - parameter) <=
-                    ParameterTolerance)
+                int middle = low + ((high - low) / 2);
+                float difference =
+                    path.Parameters[middle] - parameter;
+                if (Mathf.Abs(difference) <= ParameterTolerance)
                 {
-                    vertexIndex = path.OrderedIndices[i];
-                    return true;
+                    return middle;
+                }
+
+                if (difference < 0f)
+                {
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
                 }
             }
 
-            vertexIndex = -1;
-            return false;
+            return -1;
         }
 
-        private static bool TryInsertSample(
+        private static int FindSegmentIndex(
             BoundaryPath path,
-            float parameter,
-            MeshBuildBuffer buffer,
-            SeamDefinition seam,
-            string operationId,
-            FoldCanvasCompileResult result,
-            out int insertedVertex)
+            float parameter)
         {
-            insertedVertex = -1;
             float targetDistance = parameter * path.TotalLength;
             int segmentCount = path.CumulativeLengths.Length - 1;
-            int segmentIndex = segmentCount - 1;
-            for (int i = 0; i < segmentCount; i++)
+            int low = 0;
+            int high = segmentCount - 1;
+            while (low < high)
             {
+                int middle = low + ((high - low) / 2);
                 if (targetDistance <
-                    path.CumulativeLengths[i + 1] -
+                    path.CumulativeLengths[middle + 1] -
                     FoldCanvasGeometryTolerances
                         .MinimumStitchBoundaryLength)
                 {
-                    segmentIndex = i;
-                    break;
+                    high = middle;
+                }
+                else
+                {
+                    low = middle + 1;
                 }
             }
 
+            return low;
+        }
+
+        private static bool TryInsertSegmentSamples(
+            BoundaryPath path,
+            int segmentIndex,
+            IReadOnlyList<BoundarySampleInsertion> insertions,
+            MeshBuildBuffer buffer,
+            TriangleAdjacencyIndex adjacency,
+            SeamDefinition seam,
+            string operationId,
+            FoldCanvasCompileResult result,
+            int[] sampleIndices)
+        {
             int nextIndex = path.RepeatedTerminal
                 ? segmentIndex + 1
                 : (segmentIndex + 1) % path.OrderedIndices.Count;
@@ -388,136 +570,213 @@ namespace FoldCanvas
                 path.CumulativeLengths[segmentIndex + 1] -
                 path.CumulativeLengths[segmentIndex];
             if (segmentLength <=
-                FoldCanvasGeometryTolerances.MinimumStitchBoundaryLength)
-            {
-                AddSubdivisionDiagnostic(
-                    path,
-                    seam,
-                    operationId,
-                    parameter,
-                    result);
-                return false;
-            }
-
-            if (!TryFindUniqueIncidentTriangle(
-                    buffer,
+                FoldCanvasGeometryTolerances.MinimumStitchBoundaryLength ||
+                !adjacency.TryGetUnique(
                     fromIndex,
                     toIndex,
-                    out int triangleOffset,
-                    out int orientedFrom,
-                    out int orientedTo,
-                    out int thirdVertex))
+                    out TriangleEdgeOccurrence occurrence))
             {
                 AddSubdivisionDiagnostic(
                     path,
                     seam,
                     operationId,
-                    parameter,
+                    insertions[0].Parameter,
                     result);
                 return false;
             }
 
-            float alpha =
-                (targetDistance -
-                    path.CumulativeLengths[segmentIndex]) /
-                segmentLength;
             MeshBuildVertex from = buffer.Vertices[fromIndex];
             MeshBuildVertex to = buffer.Vertices[toIndex];
-            insertedVertex = buffer.AddVertex(
-                Vector3.LerpUnclamped(from.Position, to.Position, alpha),
-                Vector2.LerpUnclamped(
+            List<int> insertedVertices =
+                new List<int>(insertions.Count);
+            SphericalWrapBuildRecord sphericalWrap = null;
+            buffer.TryGetSphericalWrap(
+                path.Panel.PanelIndex,
+                out sphericalWrap);
+            for (int i = 0; i < insertions.Count; i++)
+            {
+                BoundarySampleInsertion insertion = insertions[i];
+                float targetDistance =
+                    insertion.Parameter * path.TotalLength;
+                float alpha =
+                    (targetDistance -
+                        path.CumulativeLengths[segmentIndex]) /
+                    segmentLength;
+                Vector2 sourcePosition = Vector2.LerpUnclamped(
                     from.SourcePosition,
                     to.SourcePosition,
-                    alpha),
-                Vector2.LerpUnclamped(
+                    alpha);
+                Vector2 sourceUv = Vector2.LerpUnclamped(
                     from.SourceUv,
                     to.SourceUv,
-                    alpha),
-                path.Panel.PanelIndex);
+                    alpha);
+                Vector3 currentPosition = Vector3.LerpUnclamped(
+                    from.Position,
+                    to.Position,
+                    alpha);
+                if (sphericalWrap != null)
+                {
+                    sourcePosition =
+                        sphericalWrap.InterpolateBoundarySourcePosition(
+                            path.Boundary.Id,
+                            from.SourcePosition,
+                            to.SourcePosition,
+                            alpha);
+                    sourceUv =
+                        sphericalWrap.EvaluateSourceUv(sourcePosition);
+                    currentPosition =
+                        sphericalWrap.Evaluate(sourcePosition);
+                    if (!FiniteMath.IsFinite(currentPosition))
+                    {
+                        result.Add(new FoldCanvasDiagnostic(
+                            FoldCanvasDiagnosticCodes
+                                .NonFiniteSphericalWrapParameter,
+                            FoldCanvasDiagnosticSeverity.Error,
+                            "Spherical seam subdivision produced a non-finite mapped position.",
+                            path.Panel.PanelId,
+                            operationId,
+                            seam.Id));
+                        return false;
+                    }
+                }
 
-            buffer.Triangles[triangleOffset] = orientedFrom;
-            buffer.Triangles[triangleOffset + 1] = insertedVertex;
-            buffer.Triangles[triangleOffset + 2] = thirdVertex;
-            buffer.Triangles.Add(insertedVertex);
-            buffer.Triangles.Add(orientedTo);
-            buffer.Triangles.Add(thirdVertex);
+                int insertedVertex = buffer.AddVertex(
+                    currentPosition,
+                    sourcePosition,
+                    sourceUv,
+                    path.Panel.PanelIndex);
+                sphericalWrap?.RegisterSurfaceVertex(insertedVertex);
+                insertedVertices.Add(insertedVertex);
+                sampleIndices[insertion.ParameterIndex] =
+                    insertedVertex;
+            }
 
-            InsertIntoAuthoredBoundary(
+            List<int> orientedChain =
+                new List<int>(insertedVertices.Count + 2);
+            bool sameOrientation =
+                occurrence.From == fromIndex &&
+                occurrence.To == toIndex;
+            if (sameOrientation)
+            {
+                orientedChain.Add(fromIndex);
+                orientedChain.AddRange(insertedVertices);
+                orientedChain.Add(toIndex);
+            }
+            else
+            {
+                orientedChain.Add(toIndex);
+                for (int i = insertedVertices.Count - 1; i >= 0; i--)
+                {
+                    orientedChain.Add(insertedVertices[i]);
+                }
+
+                orientedChain.Add(fromIndex);
+            }
+
+            adjacency.ReplaceTriangle(
+                occurrence.TriangleOffset,
+                orientedChain[0],
+                orientedChain[1],
+                occurrence.Third);
+            for (int i = 1; i < orientedChain.Count - 1; i++)
+            {
+                adjacency.AppendTriangle(
+                    orientedChain[i],
+                    orientedChain[i + 1],
+                    occurrence.Third);
+            }
+
+            InsertChainIntoAuthoredBoundary(
                 path.Boundary.VertexIndices,
                 fromIndex,
                 toIndex,
-                insertedVertex,
+                insertedVertices,
                 path.Boundary.IsClosed);
             return true;
         }
 
-        private static bool TryFindUniqueIncidentTriangle(
-            MeshBuildBuffer buffer,
-            int first,
-            int second,
-            out int triangleOffset,
-            out int orientedFrom,
-            out int orientedTo,
-            out int thirdVertex)
-        {
-            triangleOffset = -1;
-            orientedFrom = -1;
-            orientedTo = -1;
-            thirdVertex = -1;
-            int matches = 0;
-            for (int offset = 0;
-                offset < buffer.Triangles.Count;
-                offset += 3)
-            {
-                int a = buffer.Triangles[offset];
-                int b = buffer.Triangles[offset + 1];
-                int c = buffer.Triangles[offset + 2];
-                int[] triangle = { a, b, c };
-                for (int edge = 0; edge < 3; edge++)
-                {
-                    int from = triangle[edge];
-                    int to = triangle[(edge + 1) % 3];
-                    if (!((from == first && to == second) ||
-                        (from == second && to == first)))
-                    {
-                        continue;
-                    }
-
-                    matches++;
-                    triangleOffset = offset;
-                    orientedFrom = from;
-                    orientedTo = to;
-                    thirdVertex = triangle[(edge + 2) % 3];
-                }
-            }
-
-            return matches == 1;
-        }
-
-        private static void InsertIntoAuthoredBoundary(
+        private static void InsertChainIntoAuthoredBoundary(
             List<int> indices,
-            int first,
-            int second,
-            int inserted,
+            int pathFrom,
+            int pathTo,
+            IReadOnlyList<int> insertedPathOrder,
             bool explicitlyClosed)
         {
             for (int i = 0; i < indices.Count - 1; i++)
             {
-                if ((indices[i] == first && indices[i + 1] == second) ||
-                    (indices[i] == second && indices[i + 1] == first))
+                if (indices[i] == pathFrom &&
+                    indices[i + 1] == pathTo)
                 {
-                    indices.Insert(i + 1, inserted);
+                    InsertRange(
+                        indices,
+                        i + 1,
+                        insertedPathOrder,
+                        false);
+                    return;
+                }
+
+                if (indices[i] == pathTo &&
+                    indices[i + 1] == pathFrom)
+                {
+                    InsertRange(
+                        indices,
+                        i + 1,
+                        insertedPathOrder,
+                        true);
                     return;
                 }
             }
 
-            if (explicitlyClosed &&
-                ((indices[indices.Count - 1] == first &&
-                    indices[0] == second) ||
-                 (indices[indices.Count - 1] == second &&
-                    indices[0] == first)))
+            if (!explicitlyClosed)
             {
-                indices.Add(inserted);
+                return;
+            }
+
+            int last = indices.Count - 1;
+            if (indices[last] == pathFrom && indices[0] == pathTo)
+            {
+                InsertRange(
+                    indices,
+                    indices.Count,
+                    insertedPathOrder,
+                    false);
+            }
+            else if (
+                indices[last] == pathTo &&
+                indices[0] == pathFrom)
+            {
+                InsertRange(
+                    indices,
+                    indices.Count,
+                    insertedPathOrder,
+                    true);
+            }
+        }
+
+        private static void InsertRange(
+            List<int> indices,
+            int insertionIndex,
+            IReadOnlyList<int> insertedPathOrder,
+            bool reverse)
+        {
+            if (!reverse)
+            {
+                for (int i = 0; i < insertedPathOrder.Count; i++)
+                {
+                    indices.Insert(
+                        insertionIndex + i,
+                        insertedPathOrder[i]);
+                }
+
+                return;
+            }
+
+            for (int i = insertedPathOrder.Count - 1; i >= 0; i--)
+            {
+                indices.Insert(
+                    insertionIndex +
+                        (insertedPathOrder.Count - 1 - i),
+                    insertedPathOrder[i]);
             }
         }
 
@@ -529,6 +788,79 @@ namespace FoldCanvas
             {
                 destination.Add(source[i]);
             }
+        }
+
+        private static List<float> BuildCommonParameters(
+            BoundaryPath pathA,
+            BoundaryPath pathB,
+            int sampleCount)
+        {
+            List<float> parameters = new List<float>();
+            AddParameters(parameters, pathA.Parameters);
+            AddParameters(parameters, pathB.Parameters);
+            AddUniformParameters(
+                parameters,
+                sampleCount,
+                pathA.IsClosed);
+            parameters.Sort();
+            RemoveNearDuplicateParameters(parameters);
+            return parameters;
+        }
+
+        private static long CountMissingParameters(
+            BoundaryPath path,
+            IReadOnlyList<float> parameters)
+        {
+            long missing = 0L;
+            int existingIndex = 0;
+            for (int parameterIndex = 0;
+                parameterIndex < parameters.Count;
+                parameterIndex++)
+            {
+                float parameter = parameters[parameterIndex];
+                while (existingIndex < path.Parameters.Length &&
+                    path.Parameters[existingIndex] <
+                        parameter - ParameterTolerance)
+                {
+                    existingIndex++;
+                }
+
+                bool exists =
+                    existingIndex < path.Parameters.Length &&
+                    Mathf.Abs(
+                        path.Parameters[existingIndex] -
+                        parameter) <= ParameterTolerance;
+                if (!exists)
+                {
+                    missing++;
+                }
+            }
+
+            return missing;
+        }
+
+        private static bool ValidateSampleCount(
+            SeamDefinition seam,
+            string operationId,
+            int boundaryACount,
+            int boundaryBCount,
+            FoldCanvasCompileResult result)
+        {
+            if (seam.SampleCount >=
+                    FoldCanvasLimits.MinimumStitchSampleCount &&
+                seam.SampleCount <=
+                    FoldCanvasLimits.MaximumStitchSampleCount)
+            {
+                return true;
+            }
+
+            AddSampleCountDiagnostic(
+                seam,
+                operationId,
+                boundaryACount,
+                boundaryBCount,
+                result);
+            return false;
         }
 
         private static void AddUniformParameters(
@@ -621,13 +953,11 @@ namespace FoldCanvas
             int boundaryBCount,
             FoldCanvasCompileResult result)
         {
-            result.Add(new FoldCanvasDiagnostic(
-                FoldCanvasDiagnosticCodes.StitchSampleCountMismatch,
-                FoldCanvasDiagnosticSeverity.Error,
-                "Stitch sampleCount cannot be negative.",
-                operationId: operationId,
-                seamId: seam.Id,
-                values: new[]
+            bool isBelowMinimum =
+                seam.SampleCount <
+                FoldCanvasLimits.MinimumStitchSampleCount;
+            List<FoldCanvasDiagnosticValue> values =
+                new List<FoldCanvasDiagnosticValue>
                 {
                     new FoldCanvasDiagnosticValue(
                         "boundaryACount",
@@ -638,7 +968,245 @@ namespace FoldCanvas
                     new FoldCanvasDiagnosticValue(
                         "requestedSampleCount",
                         seam.SampleCount)
-                }));
+                };
+            if (!isBelowMinimum)
+            {
+                values.Add(new FoldCanvasDiagnosticValue(
+                    "maximumSampleCount",
+                    FoldCanvasLimits.MaximumStitchSampleCount));
+            }
+
+            result.Add(new FoldCanvasDiagnostic(
+                isBelowMinimum
+                    ? FoldCanvasDiagnosticCodes
+                        .StitchSampleCountMismatch
+                    : FoldCanvasDiagnosticCodes
+                        .StitchSampleCountOutOfRange,
+                FoldCanvasDiagnosticSeverity.Error,
+                $"Stitch sampleCount must be between {FoldCanvasLimits.MinimumStitchSampleCount} and {FoldCanvasLimits.MaximumStitchSampleCount}.",
+                operationId: operationId,
+                seamId: seam.Id,
+                values: values));
+        }
+
+        private readonly struct BoundarySampleInsertion
+        {
+            public BoundarySampleInsertion(
+                int parameterIndex,
+                float parameter)
+            {
+                ParameterIndex = parameterIndex;
+                Parameter = parameter;
+            }
+
+            public int ParameterIndex { get; }
+
+            public float Parameter { get; }
+        }
+
+        private readonly struct TriangleEdgeKey :
+            IEquatable<TriangleEdgeKey>
+        {
+            public TriangleEdgeKey(int first, int second)
+            {
+                Minimum = Math.Min(first, second);
+                Maximum = Math.Max(first, second);
+            }
+
+            private int Minimum { get; }
+
+            private int Maximum { get; }
+
+            public bool Equals(TriangleEdgeKey other)
+            {
+                return
+                    Minimum == other.Minimum &&
+                    Maximum == other.Maximum;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return
+                    obj is TriangleEdgeKey other &&
+                    Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (Minimum * 397) ^ Maximum;
+                }
+            }
+        }
+
+        private readonly struct TriangleEdgeOccurrence
+        {
+            public TriangleEdgeOccurrence(
+                int triangleOffset,
+                int from,
+                int to,
+                int third)
+            {
+                TriangleOffset = triangleOffset;
+                From = from;
+                To = to;
+                Third = third;
+            }
+
+            public int TriangleOffset { get; }
+
+            public int From { get; }
+
+            public int To { get; }
+
+            public int Third { get; }
+        }
+
+        private sealed class TriangleAdjacencyIndex
+        {
+            private readonly MeshBuildBuffer buffer;
+
+            private readonly Dictionary<
+                TriangleEdgeKey,
+                List<TriangleEdgeOccurrence>> occurrences =
+                    new Dictionary<
+                        TriangleEdgeKey,
+                        List<TriangleEdgeOccurrence>>();
+
+            public TriangleAdjacencyIndex(MeshBuildBuffer buffer)
+            {
+                this.buffer = buffer;
+                for (int offset = 0;
+                    offset < buffer.Triangles.Count;
+                    offset += 3)
+                {
+                    AddTriangle(offset);
+                }
+            }
+
+            public bool TryGetUnique(
+                int first,
+                int second,
+                out TriangleEdgeOccurrence occurrence)
+            {
+                if (occurrences.TryGetValue(
+                        new TriangleEdgeKey(first, second),
+                        out List<TriangleEdgeOccurrence> matches) &&
+                    matches.Count == 1)
+                {
+                    occurrence = matches[0];
+                    return true;
+                }
+
+                occurrence = default;
+                return false;
+            }
+
+            public void ReplaceTriangle(
+                int offset,
+                int first,
+                int second,
+                int third)
+            {
+                RemoveTriangle(offset);
+                buffer.Triangles[offset] = first;
+                buffer.Triangles[offset + 1] = second;
+                buffer.Triangles[offset + 2] = third;
+                AddTriangle(offset);
+            }
+
+            public void AppendTriangle(
+                int first,
+                int second,
+                int third)
+            {
+                int offset = buffer.Triangles.Count;
+                buffer.Triangles.Add(first);
+                buffer.Triangles.Add(second);
+                buffer.Triangles.Add(third);
+                AddTriangle(offset);
+            }
+
+            private void AddTriangle(int offset)
+            {
+                int first = buffer.Triangles[offset];
+                int second = buffer.Triangles[offset + 1];
+                int third = buffer.Triangles[offset + 2];
+                AddOccurrence(new TriangleEdgeOccurrence(
+                    offset,
+                    first,
+                    second,
+                    third));
+                AddOccurrence(new TriangleEdgeOccurrence(
+                    offset,
+                    second,
+                    third,
+                    first));
+                AddOccurrence(new TriangleEdgeOccurrence(
+                    offset,
+                    third,
+                    first,
+                    second));
+            }
+
+            private void AddOccurrence(
+                TriangleEdgeOccurrence occurrence)
+            {
+                TriangleEdgeKey key = new TriangleEdgeKey(
+                    occurrence.From,
+                    occurrence.To);
+                if (!occurrences.TryGetValue(
+                        key,
+                        out List<TriangleEdgeOccurrence> matches))
+                {
+                    matches = new List<TriangleEdgeOccurrence>();
+                    occurrences.Add(key, matches);
+                }
+
+                matches.Add(occurrence);
+            }
+
+            private void RemoveTriangle(int offset)
+            {
+                int first = buffer.Triangles[offset];
+                int second = buffer.Triangles[offset + 1];
+                int third = buffer.Triangles[offset + 2];
+                RemoveOccurrence(
+                    new TriangleEdgeKey(first, second),
+                    offset);
+                RemoveOccurrence(
+                    new TriangleEdgeKey(second, third),
+                    offset);
+                RemoveOccurrence(
+                    new TriangleEdgeKey(third, first),
+                    offset);
+            }
+
+            private void RemoveOccurrence(
+                TriangleEdgeKey key,
+                int triangleOffset)
+            {
+                if (!occurrences.TryGetValue(
+                        key,
+                        out List<TriangleEdgeOccurrence> matches))
+                {
+                    return;
+                }
+
+                for (int i = matches.Count - 1; i >= 0; i--)
+                {
+                    if (matches[i].TriangleOffset == triangleOffset)
+                    {
+                        matches.RemoveAt(i);
+                    }
+                }
+
+                if (matches.Count == 0)
+                {
+                    occurrences.Remove(key);
+                }
+            }
         }
 
         private sealed class BoundaryPath

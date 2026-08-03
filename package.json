@@ -1,8 +1,8 @@
 {
   "name": "com.foldcanvas.core",
-  "version": "0.1.0-preview.8",
+  "version": "0.1.0-preview.13",
   "displayName": "FoldCanvas",
-  "description": "A deterministic 2D-first surface compiler for Unity with preserved artwork, seam processing, shell thickness, and closed-volume validation.",
+  "description": "A deterministic 2D-first surface compiler for Unity with preserved artwork, seam processing, shell thickness, closed-volume validation, and explicit spherical surface reconstruction.",
   "unity": "6000.3",
   "documentationUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/Documentation~/index.md",
   "changelogUrl": "https://github.com/zhangpan-soft/FoldCanvas/blob/main/CHANGELOG.md",
@@ -23,6 +23,11 @@
       "displayName": "Bootstrap Panel",
       "description": "A minimal source asset demonstrating planar panel compilation and canvas UV preservation.",
       "path": "Samples~/BootstrapPanel"
+    },
+    {
+      "displayName": "Explicit Gore Sphere",
+      "description": "Eight authored 2D gore panels mapped and welded into one validated closed sphere without a sphere primitive.",
+      "path": "Samples~/Sphere"
     }
   ]
 }

@@ -54,6 +54,17 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   miter，内壳反向绕序，并且只在真实开放边生成侧壁
 - 一张含六个不同区域的二维画布可以编译成带图案盒体
 - 杯壁侧缝和杯底圆周真实拓扑焊接；加厚后内角连续，杯口 rim 完整闭合
+- 明确声明的矩形二维球瓣可通过 `SphericalWrap` 的半径、经纬范围、方向、
+  极点与细分字段映射到球面
+- 球面接缝插点会重新执行球面公式，极点拥有明确逻辑拓扑，最终用欧拉特征、
+  边关联、绕序和半径误差验证真正闭合
+- 只有球面到球面的接缝用于形成组件；任何一端命中该组件的后续 Stitch 都会推迟
+  报告，组件只在最后一个触碰 Stitch 之后、相关 Solidify 之前独立生成报告
+- 所选球面端点必须先执行 SphericalWrap、再执行 Stitch；非法顺序会在面板离散前
+  返回 `FC2010`，不会生成提前或过期的球面报告
+- 面板离散、Stitch 插点/Bridge 与 Solidify 内外壳/rim 共用同一份累计几何预算
+- 一张包含 `NORTH`、`FOLDCANVAS`、`SOUTH`、赤道与球瓣编号的二维画布，
+  可以在不调用 Unity 球体原语的情况下重建为闭合球体
 - 稳定的编译诊断与确定性验证
 - Unity Editor Mesh 烘焙工具
 - Edit Mode 测试
@@ -66,6 +77,16 @@ M04 保留 M03 Circular Roll 的一圈限制与全等平面框架合同，并已
 生成悬空点，而会拆分相邻源三角形并插值二维坐标和 UV。Stitch 之后，在共享
 拓扑变形传播实现前，不能再单独移动其已选择面板；Solidify 可以在 Stitch
 之后消费完整焊接拓扑。
+
+M05 不是新增一个“球体生成器”。八个矩形球瓣先从二维源域确定性离散，再在
+各自当前全等平面框架中执行 `SphericalWrap`，最后只依据显式 Seam Graph 和
+终端 `Stitch` 焊接。接缝新增采样点会重新落在球面公式上，而不是停留在球内
+弦线上；最终必须满足单一连通分量、零开放边、零非流形边、向外绕序、欧拉
+示性数 2，以及南北极各一个逻辑拓扑点。
+这份零厚度报告会在组件最后一个触碰 Stitch 后、任何命中该组件的 Solidify
+之前固定下来。球面到普通面板的 Bridge/Weld 也属于触碰操作，不能保留更早的
+旧报告。M05 当前不执行全局 triangle-triangle 自相交检测，因此闭球报告不
+等于对任意几何“绝无自交”的完整证明。
 
 ## 七条项目宪法
 
@@ -101,7 +122,26 @@ M04 保留 M03 Circular Roll 的一圈限制与全等平面框架合同，并已
    零厚度演示样例；执行
    `Tools > FoldCanvas > Create M04 Production Cup Proof` 可创建纯色与
    防渗色纹理两种厚杯证明，以及外观、精确侧面、内部、底部四个独立相机。
-   所有证明相机均由 FoldCanvas 自己拥有，不会修改项目已有 MainCamera。
+   执行 `Tools > FoldCanvas > Create M04.1 Closed Volume Cup Proof` 可查看
+   无贴图闭合体、逻辑线框、截面与内外硬角；执行
+   `Tools > FoldCanvas > Create Sphere Proof` 可查看 M05 二维球瓣、纹理球、
+   单面纯材质球、接缝/极点、UV 拉伸、半径误差与闭合报告。所有证明相机均由
+   FoldCanvas 自己拥有，不会修改项目已有 MainCamera。
+
+## 持续集成
+
+GitHub Actions 包含两个独立检查：
+
+- `repository-validation` 解析 JSON，检查程序集与 Runtime 边界、Schema 和
+  C# 原生 `sampleCount` 上限一致性、文档链接及版本元数据；
+- `unity-editmode-tests` 用 Unity `6000.3.20f1` 打开仓库自带的 `Project~`
+  宿主，真实编译 Runtime、Editor、Tests 程序集并运行全部 Edit Mode 测试，
+  成功或失败都会上传 NUnit XML 与 `Editor.log`。GameCI 运行中的文件先写入
+  宿主项目根目录下的非导入区域，避免持续变化的日志通过仓库根 UPM 包触发
+  Unity 重复导入；Unity 退出后才复制到 `artifacts/unity-editmode`。
+
+Unity CI 使用 GameCI。Unity Personal 授权需要在仓库 Actions Secrets 中配置
+`UNITY_LICENSE`、`UNITY_EMAIL`、`UNITY_PASSWORD`，许可证信息不会写入仓库。
 
 ## 交给 Codex
 

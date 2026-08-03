@@ -123,6 +123,7 @@ MVP operation family:
 - rigid transform
 - fold around a 2D line
 - roll a panel along U or V
+- spherical-wrap an explicit parameter panel
 - stitch seam
 - solidify/thicken
 
@@ -131,6 +132,10 @@ MVP operation family:
 Include tolerances, normal mode, output naming, validation level, and cumulative
 generated-vertex/triangle safety limits. Compiler behavior must not depend on
 editor selection, locale, frame time, random state, or object discovery.
+One compile-scoped `GeometryBudget` covers panel tessellation and every later
+Stitch or Solidify addition. Geometry-producing operations reserve before
+mutation and use rollback transactions; the build buffer remains the hard
+enforcement boundary.
 
 ## 4. Coordinate conventions
 
@@ -145,10 +150,42 @@ editor selection, locale, frame time, random state, or object discovery.
 - M04.1 freezes paired outer/inner hard-corner segments and a closed-volume
   report over logical topology, connected components, edge incidence, winding,
   and oriented volume.
+- M05 `SphericalWrap` accepts only a finite, non-degenerate, congruent planar
+  embedding. It resolves `CurrentOrigin`, unit `CurrentU`, unit `CurrentV`, and
+  `CurrentNormal = normalize(cross(CurrentU, CurrentV))` from the complete
+  current panel, preserving prior translation, rotation, or unit reflection.
+- With longitude `lambda`, latitude `phi`, and radius `r`, M05 evaluates
+  `CurrentOrigin + r*cos(phi)*cos(lambda)*CurrentU +
+  r*sin(phi)*CurrentV + r*cos(phi)*sin(lambda)*CurrentNormal`. Direction
+  selects whether source U or V supplies longitude; it does not replace the
+  current frame with world axes.
+- Spherical triangles are wound so their geometric normal has a positive dot
+  product with the radial direction. Exact pole rows are emitted as explicit
+  fan topology before deformation, never collapsed by cleanup afterward.
+- Near-pole canonicalization must satisfy both angular tolerance and
+  `radius * angularDeviationRadians <= weldEpsilon`; scale cannot turn a
+  spatially large ring into one logical pole.
 
-The M04.1 corner and volume records are read-only derived metadata. Editor
-wireframe and section Meshes may visualize them, but they never become source
+The M04.1 corner/volume records and M05 spherical-surface/sphere-report records
+are read-only derived metadata. Editor wireframe, section, seam, pole, stretch,
+and radius-error Meshes may visualize them, but they never become source
 geometry or feed back into compilation.
+
+M05 derives spherical components only from enabled SphericalWrap panels joined
+by Stitch-selected seams whose two endpoints are spherical. Component
+formation and component modification are separate: after components are
+formed, any Stitch-selected seam with either endpoint in a component touches
+that component. The compiler freezes its report after the last touching Stitch
+and before a Solidify that touches that component. Solidify may build a later
+shell but cannot replace this zero-thickness proof. The report proves the
+documented topology, radius, frame, and winding invariants; it does not run a
+global triangle-triangle self-intersection test.
+
+Operation order is a source invariant: every enabled SphericalWrap targeting a
+selected seam endpoint must occur strictly before that Stitch. Source preflight
+rejects the opposite order before tessellation, and component planning refuses
+to schedule validation unless the last touching Stitch is later than every
+member wrap.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 

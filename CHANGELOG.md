@@ -8,6 +8,187 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.13] - 2026-07-31
+
+### Fixed
+
+- GameCI now writes its live Edit Mode XML and Editor log beneath the host
+  project root, outside Unity-imported `Assets` and `Packages`
+- CI no longer exposes a continuously changing Editor log through the
+  repository-root `com.foldcanvas.core` package, preventing Unity's
+  infinite-import-loop error across the Editor workflow fixture
+- The post-Unity normalization step now resolves the real GameCI output,
+  copies it to stable `test-results.xml` and `Editor.log` names, and rejects
+  missing or empty evidence
+
+### Changed
+
+- Repository validation locks the non-imported GameCI staging path and the
+  action output used by evidence normalization
+- Package version advanced to `0.1.0-preview.13`
+
+### Not included
+
+- No M05 geometry, seam lifecycle, sphere validation, test assertion, or M06
+  behavior was changed
+
+## [0.1.0-preview.12] - 2026-07-31
+
+### Added
+
+- Deterministic source preflight for every enabled SphericalWrap dependency of
+  a Stitch-selected seam endpoint
+- Regression coverage for a component-forming Stitch before all wraps, a
+  Stitch between member wraps, a cross-type Stitch before a wrap, deterministic
+  ordering diagnostics, and the valid Wrap-to-Stitch-to-Solidify sequence
+- `UNITY_SERIAL` forwarding for GameCI serial-license activation while
+  preserving the existing Personal-license `UNITY_LICENSE` path
+
+### Fixed
+
+- A Stitch can no longer execute or trigger sphere validation before all
+  enabled SphericalWrap operations targeting its selected panels
+- `SphereValidationPlan` independently refuses to schedule a component when
+  its last touching Stitch is not later than every member wrap
+- Invalid Wrap/Stitch order now returns `FC2010` before tessellation and never
+  emits `FC6014 SphereValidationFailed` or a premature sphere report
+
+### Changed
+
+- Package version advanced to `0.1.0-preview.12`
+
+### Not included
+
+- No Seam lifecycle, last-touching-Stitch, spherical mapping, topology repair,
+  or M06 architecture was replaced
+
+## [0.1.0-preview.11] - 2026-07-31
+
+### Added
+
+- Stable source validation for every Stitch-selected seam ID, endpoint panel
+  ID, endpoint boundary ID, referenced panel, and referenced built-in boundary
+- Regression coverage for default/null/empty/whitespace/missing seam
+  references and sphere-to-ordinary Bridge/Weld lifecycle changes
+
+### Fixed
+
+- Default or malformed `BoundaryReference` values no longer reach a null-key
+  `Dictionary.TryGetValue` call in `SphereValidationPlan.Build`
+- Spherical component reports are now generated after the last Stitch whose
+  selected seam touches the component, preventing a later cross-type Stitch
+  from leaving an earlier closed report
+- Solidify cannot consume sphere evidence captured before a later
+  component-touching Stitch
+
+### Changed
+
+- Component-forming seams and component-touching Stitches are documented as
+  separate deterministic planning passes
+- Package version advanced to `0.1.0-preview.11`
+
+### Not included
+
+- No M05 mapping, pole, tessellation, geometry-budget, or topology-repair
+  architecture was replaced, and no M06 behavior was added
+
+## [0.1.0-preview.10] - 2026-07-30
+
+### Added
+
+- Component-scoped `SphereReports` with ordered panel/wrap identities,
+  validation stage, operation ID, and operation index
+- One cumulative `GeometryBudget` for panel tessellation, Stitch
+  subdivision/Bridge geometry, and Solidify shell/rim geometry, backed by
+  build-buffer hard limits and operation rollback
+- Native ScriptableObject `sampleCount` validation using the same `8192`
+  maximum as the JSON Schema
+- Scale-aware pole classification using angular deviation, sphere radius, and
+  the configured positional tolerance
+- Three-pass golden-sphere deterministic hash coverage and independent
+  open/closed multi-component regression cases
+- A real Unity `6000.3.20f1` Edit Mode GitHub Actions job that uploads NUnit
+  results and the Editor log
+
+### Fixed
+
+- Unrelated Solidify no longer suppresses zero-thickness sphere validation,
+  and unrelated Stitch no longer triggers it
+- An open spherical component cannot use a later Solidify shell to bypass its
+  required pre-Solidify validation
+- Stitch correspondence now batches sorted insertions with cached edge
+  adjacency instead of rescanning every triangle for each sample
+- Null, empty, whitespace, and missing spherical panel references return
+  stable diagnostics instead of dictionary-key exceptions
+- Budget or later seam failure rolls back a complete Stitch/Solidify
+  transaction without retaining partial geometry or consumed budget
+
+### Changed
+
+- Package version advanced to `0.1.0-preview.10`
+- Closed-sphere documentation now states that M05 proves topology,
+  manifoldness, radius, frame, poles, and winding, but does not run global
+  triangle-triangle self-intersection detection
+- Repository checks now enforce Schema/native sample-limit consistency,
+  Unity workflow presence, and package-version/CHANGELOG consistency
+
+### Not included
+
+- Global triangle-triangle self-intersection detection, Bevel, subdivision,
+  smoothing, Remesh, Mesh Cleanup, automatic topology repair, and M06 remain
+  intentionally unimplemented
+
+## [0.1.0-preview.9] - 2026-07-30
+
+### Added
+
+- `SphericalWrapOperationDefinition` with explicit radius, latitude and
+  longitude ranges, U/V direction, pole mode, and panel-grid subdivision
+- Deterministic current-frame spherical mapping that preserves source
+  positions, canvas UVs, panel ownership, provenance, ordered boundaries, and
+  outward winding
+- Pole-aware tessellation with `Merge` and `KeepFan` render policies backed by
+  one logical north-pole and one logical south-pole identity
+- Curved seam subdivision that re-evaluates inserted source samples on their
+  spherical map instead of leaving chord points inside the requested radius
+- Read-only spherical-surface metadata and `FoldCanvasSphereReport` validation
+  for radius error, edge incidence, orientation, components, Euler
+  characteristic, and pole topology
+- Stable M05 diagnostics `FC6001` through `FC6015`
+- An importable eight-gore FoldScript and deterministic 2048 x 1024 source
+  canvas with visible `NORTH`, `FOLDCANVAS`, `SOUTH`, equator, and gore markers
+- An idempotent package-owned `EditorOnly` proof with source canvas, textured
+  sphere, texture-free one-sided solid, logical wireframe, seam and pole
+  overlays, UV-stretch and radius-error views, validation report, and owned
+  preview camera
+
+### Changed
+
+- Terminal-Stitch ordering also rejects a later per-panel `SphericalWrap`
+  until shared-topology deformation propagation exists
+- The package status, schema, architecture, compiler pipeline, field reference,
+  geometry model, diagnostics, editor workflow, and roadmap now define the M05
+  spherical reconstruction contract
+- Package version advanced to `0.1.0-preview.9`, with the explicit-gore sphere
+  exposed as an importable Package Manager sample
+
+### Verified
+
+- The golden asset derives one closed outward sphere from eight explicit 2D
+  panels: 616 render vertices, 482 logical topology vertices, 960 triangles,
+  1,440 logical edges, Euler characteristic 2, zero open or non-manifold
+  edges, and one logical topology identity at each pole
+- The measured maximum radial error is `0 m` for the golden asset; unequal seam
+  sampling also remains on the requested spherical radius
+- Unity `6000.3.20f1` passed all 174 Edit Mode tests and rendered the textured,
+  one-sided solid, wireframe/seam, UV-stretch, and radius-error proof views
+
+### Not included
+
+- Unity Sphere/UV Sphere/Icosphere generation, imported or fixed sphere
+  meshes, automatic topology repair, bevel, subdivision, remesh, mesh cleanup,
+  and M06 remain intentionally unimplemented
+
 ## [0.1.0-preview.8] - 2026-07-30
 
 ### Added

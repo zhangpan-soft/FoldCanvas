@@ -13,10 +13,17 @@ namespace FoldCanvas
         private readonly ReadOnlyCollection<FoldCanvasClosedVolumeReport>
             readOnlySolidifyClosedVolumeReports;
 
+        private readonly List<FoldCanvasSphereReport> sphereReports =
+            new List<FoldCanvasSphereReport>();
+
+        private readonly ReadOnlyCollection<FoldCanvasSphereReport>
+            readOnlySphereReports;
+
         public FoldCanvasCompileResult()
         {
             readOnlySolidifyClosedVolumeReports =
                 solidifyClosedVolumeReports.AsReadOnly();
+            readOnlySphereReports = sphereReports.AsReadOnly();
         }
 
         public Mesh Mesh { get; internal set; }
@@ -28,6 +35,15 @@ namespace FoldCanvas
             get;
             internal set;
         }
+
+        public FoldCanvasSphereReport SphereReport
+        {
+            get;
+            private set;
+        }
+
+        public IReadOnlyList<FoldCanvasSphereReport> SphereReports =>
+            readOnlySphereReports;
 
         public IReadOnlyList<FoldCanvasClosedVolumeReport>
             SolidifyClosedVolumeReports =>
@@ -65,6 +81,20 @@ namespace FoldCanvas
             FoldCanvasClosedVolumeReport report)
         {
             solidifyClosedVolumeReports.Add(report);
+        }
+
+        internal void AddSphereReport(FoldCanvasSphereReport report)
+        {
+            if (report == null)
+            {
+                throw new System.ArgumentNullException(nameof(report));
+            }
+
+            sphereReports.Add(report);
+            if (SphereReport == null)
+            {
+                SphereReport = report;
+            }
         }
 
         internal bool HasErrors()

@@ -12,9 +12,10 @@ The machine-readable constraints live in
 [`../Schema/foldcanvas.schema.json`](../Schema/foldcanvas.schema.json).
 
 > **Implementation status:** FoldScript `0.1` is a versioned draft contract.
-> M04 implements planar `rectangle` and `disk`/ellipse compilation,
+> M05 implements planar `rectangle` and `disk`/ellipse compilation,
 > `rigidTransform`, edge-aligned rigid-crease `fold`, rectangle `roll`,
-> deterministic `weld`/`bridge` Stitch, and `solidify` through the Unity
+> explicit rectangle `sphericalWrap`, deterministic `weld`/`bridge` Stitch,
+> and `solidify` through the Unity
 > `FoldCanvasAsset` representation. Seam declarations remain inert until
 > selected by Stitch. JSON import/export, `hinge`, `keepOpen`, and later
 > operations remain unavailable. A schema-valid JSON file is not a claim that
@@ -153,7 +154,7 @@ A seam declares topology intent between two ordered boundaries:
 | `seams[].b` | boundary ref | yes | Second ordered boundary. |
 | `seams[].mode` | enum | yes | `"weld"`, `"bridge"`, `"hinge"`, or `"keepOpen"`. |
 | `seams[].reverseB` | boolean | yes | Reverse B's sample order before matching it to A. |
-| `seams[].sampleCount` | integer ≥ 0 | yes | Minimum correspondence density. `0` uses the union of existing normalized breakpoints; a positive value also adds a uniform parameter grid. Existing samples are never discarded, so the final count may be larger. |
+| `seams[].sampleCount` | integer 0–8192 | yes | Minimum correspondence density. `0` uses the union of existing normalized breakpoints; a positive value also adds a uniform parameter grid. Existing samples are never discarded, so the final count may be larger. The same maximum is enforced for JSON and native ScriptableObject assets. |
 
 Seam modes:
 
@@ -366,7 +367,100 @@ contracts.
 读取执行前的最终几何，只接受与源矩形全等的平面嵌入；平移、旋转和单位镜像
 可以通过，改变平面内度量的缩放、剪切、轴塌缩和非平面结果会返回稳定诊断。
 
-### 6.4 `stitch`
+### 6.4 `sphericalWrap` — implemented in M05
+
+`sphericalWrap` maps one explicit rectangular 2D parameter panel onto a
+spherical patch. It is a deformation rule; it does not create a sphere,
+invent seam topology, or call a Unity primitive.
+
+| Field | Type | Required | Meaning |
+|---|---:|:---:|---|
+| `panel` | ID | yes | Rectangle parameter panel to map. |
+| `radius` | positive number | yes | Sphere radius in document units, measured from the resolved `CurrentOrigin`. |
+| `latitudeRange` | `[number,number]` | yes | Signed latitude endpoints in degrees. Each endpoint is inside `[-90,90]`; the span must be nonzero. |
+| `longitudeRange` | `[number,number]` | yes | Signed longitude endpoints in degrees. Each endpoint is inside `[-360,360]`, the span must be nonzero, and its magnitude may not exceed 360 degrees. |
+| `wrapDirection` | enum | yes | `"longitudeAlongU"` maps source U to longitude and V to latitude; `"longitudeAlongV"` swaps those parameter roles. |
+| `poleMode` | enum | yes | `"merge"` emits one render pole per panel fan. `"keepFan"` retains one render pole copy per adjacent longitude cell while assigning all copies one logical topology identity. |
+| `subdivisionMode` | enum | yes | M05 accepts only `"panelGrid"` and uses the panel's authored segment counts. |
+
+Before mapping, the complete current panel must still be a congruent,
+non-degenerate planar embedding. The compiler resolves:
+
+```text
+CurrentOrigin = current position corresponding to source (0,0)
+CurrentU      = unit current direction of increasing source X/U
+CurrentV      = unit current direction of increasing source Y/V
+CurrentNormal = normalize(cross(CurrentU, CurrentV))
+```
+
+Translation, rotation, and a unit reflection are preserved. In-plane
+metric-changing scale, shear, collapse, or a prior non-planar deformation
+returns `FC6010 UnsupportedSphericalEmbedding`.
+
+Let `longitudeT` and `latitudeT` be selected by `wrapDirection` and linearly
+interpolate the authored angular ranges. With radians `lambda` and `phi`:
+
+```text
+currentPosition =
+    CurrentOrigin
+    + radius * cos(phi) * cos(lambda) * CurrentU
+    + radius * sin(phi)               * CurrentV
+    + radius * cos(phi) * sin(lambda) * CurrentNormal
+```
+
+The compiler chooses triangle index orientation from the actual mapped frame
+and then verifies every triangle faces radially outward. It does not rely on a
+two-sided material.
+
+An exact `-90` or `+90` endpoint changes tessellation before deformation.
+`merge` uses one source/UV sample at the midpoint of that panel's pole edge.
+`keepFan` retains a render sample per adjacent longitude cell so UV/provenance
+splits survive, but unions those copies to one `TopologyVertexId`. A panel that
+spans both poles needs at least two authored latitude segments so at least one
+non-pole row exists. Pole topology is never repaired by collapsing a generated
+mesh afterward.
+
+Near-pole classification also depends on scale. Besides the angular tolerance,
+the spatial arc deviation must satisfy
+`radius * angularDeviationRadians <= compile.weldEpsilon`. Exact poles have
+zero deviation. A latitude that looks numerically close to `+/-90` on a
+radius-`1e9` sphere remains a normal ring when its spatial radius is larger
+than the configured tolerance.
+
+Neighboring gores remain separate until an explicit `stitch` selects their
+side seams. If unequal correspondence inserts a new point, the source
+coordinate and UV are interpolated, but current 3D position is recomputed
+through this spherical formula. It therefore remains on `radius` rather than a
+straight chord. A complete stitched zero-thickness sphere must pass the M05
+sphere report: one component, no open/non-manifold/orientation-conflict or
+isolated topology, Euler characteristic 2, one north pole, one south pole,
+outward winding, consistent frame, and bounded radius error.
+
+Spherical components are formed only by Stitch-selected seams whose two
+endpoints target enabled `sphericalWrap` panels. Formation is followed by a
+separate touching pass: any selected seam with either endpoint in a component,
+including a Bridge or Weld to an ordinary panel, delays validation until that
+Stitch completes. Each component is validated after its last touching Stitch
+and before any Solidify that selects that component. Selected seam IDs,
+endpoint panel IDs, endpoint boundary IDs, panels, and boundaries must all
+resolve before planning. Unrelated Stitch or Solidify operations do not affect
+this lifecycle. `SphereReports` preserves one staged report per component;
+`SphereReport` remains the first-report compatibility view. Solidify cannot
+replace the pre-Solidify proof. This validation does not include global
+triangle-triangle self-intersection detection.
+
+For every selected seam endpoint with an enabled `sphericalWrap`,
+`sphericalWrap` must appear earlier in the ordered operation list than the
+selecting `stitch`. The strict comparison is
+`sphericalWrapOperationIndex < stitchOperationIndex`; `FC2010` is returned
+before tessellation when it is false.
+
+中文摘要：`sphericalWrap` 只把明确声明的矩形二维球瓣映射到当前局部球面，
+不会凭空生成球体。二维源坐标和 UV 保留；极点在离散阶段明确处理；球瓣之间
+只有经过 Seam Graph 与 `stitch` 才会焊接。新增接缝采样点重新执行球面公式，
+不会落在球内弦线上。
+
+### 6.5 `stitch`
 
 | Field | Type | Meaning |
 |---|---:|---|
@@ -378,9 +472,11 @@ Seam declarations remain inert until selected here.
 M04 parameterizes both ordered boundaries by normalized current-space arc
 length. It retains the union of authored breakpoints and, when
 `sampleCount > 0`, adds a uniform minimum-density grid. Missing samples are
-inserted by subdividing the corresponding boundary edge and adjacent source
-triangle; current position, source position, UV0, panel ownership, and
-provenance are interpolated. No free-floating sample is permitted.
+sorted and inserted with one cached edge-adjacency pass, subdividing the
+corresponding boundary segment and adjacent source triangle; current position,
+source position, UV0, panel ownership, and provenance are interpolated. No
+free-floating sample is permitted. The complete Stitch is transactional, so a
+failure in a later selected seam restores earlier changes from that operation.
 
 Weld requires paired positions within `compile.weldEpsilon` and assigns one
 deterministic `TopologyVertexId`. Separate render vertices remain legal when
@@ -389,11 +485,13 @@ an open topological edge. Bridge emits a strip from the same paired samples
 without unioning them. `hinge` and `keepOpen` execution remain unsupported.
 
 Until topology-group deformation propagation exists, a later
-`rigidTransform`, `fold`, or `roll` cannot target any panel selected by an
-earlier Stitch. It returns `FC2010` and no Mesh. Solidify is allowed after
-Stitch because it consumes complete logical topology groups.
+`rigidTransform`, `fold`, `roll`, or `sphericalWrap` cannot target any panel
+selected by an earlier Stitch. It returns `FC2010` and no Mesh. Solidify is
+allowed after Stitch because it consumes complete logical topology groups.
+The compiler also detects the same invalid order by looking forward before
+tessellation, so an early Stitch cannot trigger a premature sphere report.
 
-### 6.5 `solidify` — implemented in M04
+### 6.6 `solidify` — implemented in M04
 
 Creates thickness from one or more zero-thickness panels after requested seam
 operations.
@@ -434,10 +532,12 @@ not receive hidden internal walls.
 | `weldEpsilon` | positive number | yes | Physical distance tolerance, after unit conversion, for explicit Weld and coincidence checks. It does not implicitly weld geometry. |
 | `recalculateNormals` | boolean | yes | Derive Unity mesh normals after geometry compilation. |
 | `validationLevel` | enum | yes | `"basic"`, `"standard"`, or `"strict"`; higher levels add more expensive validation when implemented. |
-| `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative pre-allocation safety limit. C# default: `1,000,000`. |
-| `maxGeneratedTriangles` | integer ≥ 1 | no | Cumulative pre-allocation safety limit. C# default: `2,000,000`. |
+| `maxGeneratedVertices` | integer ≥ 1 | no | Cumulative full-compile safety limit covering panel tessellation, Stitch additions, and Solidify additions. C# default: `1,000,000`. |
+| `maxGeneratedTriangles` | integer ≥ 1 | no | Cumulative full-compile safety limit covering panel tessellation, Stitch additions, and Solidify additions. C# default: `2,000,000`. |
 
-M01 rejects an unsafe tessellation request before allocating partial geometry.
+Every geometry-producing operation preflights and reserves its exact additions,
+while `MeshBuildBuffer` remains the final hard limit. Budget or arithmetic
+overflow returns a stable diagnostic and rolls back the failing operation.
 Limits are errors, not automatic simplification targets.
 
 ## 8. Determinism and failure behavior

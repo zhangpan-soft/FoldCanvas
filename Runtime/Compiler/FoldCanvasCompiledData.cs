@@ -212,6 +212,8 @@ namespace FoldCanvas
         private readonly ReadOnlyCollection<FoldCanvasCompiledPanel> panels;
         private readonly ReadOnlyCollection<FoldCanvasCompiledCornerSegment>
             cornerSegments;
+        private readonly ReadOnlyCollection<
+            FoldCanvasCompiledSphericalSurface> sphericalSurfaces;
 
         private readonly int topologyVertexCount;
 
@@ -220,7 +222,9 @@ namespace FoldCanvas
             IReadOnlyList<int> sourceTriangleIndices,
             IReadOnlyList<FoldCanvasCompiledPanel> sourcePanels,
             IReadOnlyList<FoldCanvasCompiledCornerSegment>
-                sourceCornerSegments)
+                sourceCornerSegments,
+            IReadOnlyList<FoldCanvasCompiledSphericalSurface>
+                sourceSphericalSurfaces)
         {
             if (sourceVertices == null)
             {
@@ -241,6 +245,12 @@ namespace FoldCanvas
             {
                 throw new ArgumentNullException(
                     nameof(sourceCornerSegments));
+            }
+
+            if (sourceSphericalSurfaces == null)
+            {
+                throw new ArgumentNullException(
+                    nameof(sourceSphericalSurfaces));
             }
 
             FoldCanvasCompiledVertex[] copiedVertices =
@@ -271,10 +281,21 @@ namespace FoldCanvas
                 copiedCornerSegments[i] = sourceCornerSegments[i];
             }
 
+            FoldCanvasCompiledSphericalSurface[] copiedSphericalSurfaces =
+                new FoldCanvasCompiledSphericalSurface[
+                    sourceSphericalSurfaces.Count];
+            for (int i = 0; i < sourceSphericalSurfaces.Count; i++)
+            {
+                copiedSphericalSurfaces[i] =
+                    sourceSphericalSurfaces[i];
+            }
+
             vertices = Array.AsReadOnly(copiedVertices);
             triangleIndices = Array.AsReadOnly(copiedTriangleIndices);
             panels = Array.AsReadOnly(copiedPanels);
             cornerSegments = Array.AsReadOnly(copiedCornerSegments);
+            sphericalSurfaces =
+                Array.AsReadOnly(copiedSphericalSurfaces);
 
             bool[] seenTopologyVertices = new bool[copiedVertices.Length];
             int uniqueTopologyVertices = 0;
@@ -307,6 +328,9 @@ namespace FoldCanvas
 
         public IReadOnlyList<FoldCanvasCompiledCornerSegment>
             CornerSegments => cornerSegments;
+
+        public IReadOnlyList<FoldCanvasCompiledSphericalSurface>
+            SphericalSurfaces => sphericalSurfaces;
 
         public int TopologyVertexCount => topologyVertexCount;
 

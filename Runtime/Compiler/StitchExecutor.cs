@@ -28,6 +28,8 @@ namespace FoldCanvas
                 ? asset.CompileSettings.WeldEpsilon
                 : FoldCanvasCompileSettings.DefaultWeldEpsilon;
 
+            List<SeamDefinition> seams =
+                new List<SeamDefinition>(operation.SeamIds.Count);
             for (int i = 0; i < operation.SeamIds.Count; i++)
             {
                 string seamId = operation.SeamIds[i];
@@ -41,6 +43,7 @@ namespace FoldCanvas
                     return false;
                 }
 
+                seams.Add(seam);
                 AddPanelId(selectedPanelIds, seam.A.PanelId);
                 AddPanelId(selectedPanelIds, seam.B.PanelId);
 
@@ -56,70 +59,117 @@ namespace FoldCanvas
                     return false;
                 }
 
-                if (!BoundaryCorrespondenceSolver.TryCreate(
-                    seam,
-                    operation.Id,
-                    buffer,
-                    result,
-                    out SeamCorrespondence correspondence))
-                {
-                    return false;
-                }
+            }
 
-                if (seam.Mode == SeamMode.Bridge)
+            using (MeshBuildBufferTransaction transaction =
+                buffer.BeginTransaction())
+            {
+                for (int i = 0; i < seams.Count; i++)
                 {
-                    AppendBridge(correspondence, buffer);
-                    continue;
-                }
+                    SeamDefinition seam = seams[i];
+                    if (!BoundaryCorrespondenceSolver
+                        .TryEstimateAdditionalGeometry(
+                            seam,
+                            operation.Id,
+                            buffer,
+                            result,
+                            out long seamVertices,
+                            out long seamTriangles))
+                    {
+                        return false;
+                    }
 
-                int commonCount = correspondence.BoundaryA.Count;
-                float maximumGap = 0f;
-                for (int sample = 0; sample < commonCount; sample++)
-                {
-                    Vector3 positionA =
-                        buffer.Vertices[
-                            correspondence.BoundaryA[sample]].Position;
-                    Vector3 positionB =
-                        buffer.Vertices[
-                            correspondence.BoundaryB[sample]].Position;
-                    maximumGap = Mathf.Max(
-                        maximumGap,
-                        Vector3.Distance(positionA, positionB));
-                }
+                    if (!buffer.TryBeginGeometryOperation(
+                            seamVertices,
+                            seamTriangles,
+                            operation.Id,
+                            "Stitch",
+                            result,
+                            out GeometryOperationScope geometryScope))
+                    {
+                        return false;
+                    }
 
-                if (maximumGap > weldEpsilon)
-                {
-                    result.Add(new FoldCanvasDiagnostic(
-                        FoldCanvasDiagnosticCodes.StitchPositionMismatch,
-                        FoldCanvasDiagnosticSeverity.Error,
-                        "Stitch boundary samples exceed the configured weld epsilon.",
-                        operationId: operation.Id,
-                        seamId: seam.Id,
-                        values: new[]
+                    using (geometryScope)
+                    {
+                        if (!BoundaryCorrespondenceSolver.TryCreate(
+                            seam,
+                            operation.Id,
+                            buffer,
+                            result,
+                            out SeamCorrespondence correspondence))
                         {
-                            new FoldCanvasDiagnosticValue(
-                                "maximumGap",
+                            return false;
+                        }
+
+                        if (seam.Mode == SeamMode.Bridge)
+                        {
+                            AppendBridge(correspondence, buffer);
+                            continue;
+                        }
+
+                        int commonCount =
+                            correspondence.BoundaryA.Count;
+                        float maximumGap = 0f;
+                        for (int sample = 0;
+                            sample < commonCount;
+                            sample++)
+                        {
+                            Vector3 positionA =
+                                buffer.Vertices[
+                                    correspondence
+                                        .BoundaryA[sample]].Position;
+                            Vector3 positionB =
+                                buffer.Vertices[
+                                    correspondence
+                                        .BoundaryB[sample]].Position;
+                            maximumGap = Mathf.Max(
                                 maximumGap,
-                                "m"),
-                            new FoldCanvasDiagnosticValue(
-                                "weldEpsilon",
-                                weldEpsilon,
-                                "m"),
-                            new FoldCanvasDiagnosticValue(
-                                "sampleCount",
-                                commonCount)
-                        }));
-                    return false;
+                                Vector3.Distance(
+                                    positionA,
+                                    positionB));
+                        }
+
+                        if (maximumGap > weldEpsilon)
+                        {
+                            result.Add(new FoldCanvasDiagnostic(
+                                FoldCanvasDiagnosticCodes
+                                    .StitchPositionMismatch,
+                                FoldCanvasDiagnosticSeverity.Error,
+                                "Stitch boundary samples exceed the configured weld epsilon.",
+                                operationId: operation.Id,
+                                seamId: seam.Id,
+                                values: new[]
+                                {
+                                    new FoldCanvasDiagnosticValue(
+                                        "maximumGap",
+                                        maximumGap,
+                                        "m"),
+                                    new FoldCanvasDiagnosticValue(
+                                        "weldEpsilon",
+                                        weldEpsilon,
+                                        "m"),
+                                    new FoldCanvasDiagnosticValue(
+                                        "sampleCount",
+                                        commonCount)
+                                }));
+                            return false;
+                        }
+
+                        for (int sample = 0;
+                            sample < commonCount;
+                            sample++)
+                        {
+                            buffer.UnionTopology(
+                                correspondence.BoundaryA[sample],
+                                correspondence.BoundaryB[sample]);
+                        }
+
+                        buffer.SnapWeldedTopologyPositions();
+                    }
                 }
 
-                for (int sample = 0; sample < commonCount; sample++)
-                {
-                    buffer.UnionTopology(
-                        correspondence.BoundaryA[sample],
-                        correspondence.BoundaryB[sample]);
-                }
-
-                buffer.SnapWeldedTopologyPositions();
+                transaction.Commit();
             }
 
             return true;
