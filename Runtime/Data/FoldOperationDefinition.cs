@@ -12,7 +12,8 @@ namespace FoldCanvas
         Stitch = 3,
         Solidify = 4,
         SphericalWrap = 5,
-        ToroidalWrap = 6
+        ToroidalWrap = 6,
+        Custom = 1000
     }
 
     [Serializable]

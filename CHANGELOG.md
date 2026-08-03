@@ -8,6 +8,57 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.18] - 2026-08-03
+
+### Added
+
+- Explicit per-compile `FoldCanvasOperationRegistry` for contributor-defined,
+  single-panel position operations without global discovery or mutable
+  topology access
+- Transactional extension preflight/execution contexts that preserve source
+  positions, UVs, provenance, triangle order, boundary records, topology IDs,
+  and geometry-budget usage
+- Stable `FC9001`-`FC9008` extension, `FC9101`-`FC9104` gallery, and
+  `FC9201`-`FC9203` exporter diagnostics
+- Versioned sample-gallery manifest, JSON Schema, Editor gallery window, and a
+  compiling contributor wave-operation template
+- Dependency-free deterministic OBJ text export over immutable compiled data,
+  plus an Editor helper that writes only to normalized project asset paths
+- Three maintained Editor compilation baselines with deterministic geometry
+  hashes and a derived JSON performance report
+- Reproducible UPM `.tgz` builder with normalized archive metadata, SHA-256
+  evidence, deterministic archive tests, and tag-gated GitHub release workflow
+- Owned Editor-only M10 ecosystem proof showing a custom registered wave
+  surface, source artwork, solid one-sided rendering, registry identity, and
+  deterministic OBJ digest
+- Focused M10 registry, rollback, gallery, OBJ, performance, contributor API,
+  and owned-proof Edit Mode tests
+
+### Changed
+
+- `FoldCanvasCompiler.Compile` now has an explicit registry overload; the
+  original overload remains the unchanged no-extension path
+- `FoldCanvasBaker` can receive the same explicit registry for Editor proof and
+  contributor workflows
+- Repository checks now validate the gallery, performance baselines,
+  contributor asmdef, release workflow, and byte-identical release archives
+- Package version advanced to `0.1.0-preview.18`
+
+### Verified
+
+- Unity `6000.3.20f1` compiled Runtime, Editor, and Tests, passed the focused
+  M10 suite with 34/34 tests, and passed the complete M00-M10 suite with
+  394/394 tests
+- Repository validation, deterministic release archive comparison, JSON
+  parsing, Runtime/Editor isolation, and `git diff --check` passed during
+  implementation
+
+### Not included
+
+- No public topology/triangle/boundary/budget mutation, global registration,
+  reflection discovery, custom FoldScript `0.1` codec, new geometry family,
+  CSG, bevel, remesh, glTF/FBX, or runtime file/network service was added
+
 ## [0.1.0-preview.17] - 2026-08-03
 
 ### Added

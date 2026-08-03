@@ -20,6 +20,13 @@ M09 extends the same operation and seam forms with `ToroidalWrap` and optional
 normalized boundary-reference spans. It does not create a parallel topology
 editor: the 2D viewport remains the source view and the 3D view remains derived.
 
+M10 does not inject contributor operations into the workspace through global
+discovery. A native custom source is compiled only when its caller supplies an
+explicit registry. Use `Tools > FoldCanvas > Open Sample Gallery` to inspect
+maintained samples and `Tools > FoldCanvas > Create M10 Ecosystem Proof` for
+the registered wave example. The proof owns its EditorOnly hierarchy and OBJ
+output; neither changes the workspace's source/preview contract.
+
 ## Source and preview contract
 
 - The `FoldCanvasAsset`, appearance canvas, panels, seams, and ordered
@@ -118,3 +125,5 @@ Bake，失败结果不会覆盖上一次有效 Mesh。上面的杯子步骤完�
 规则完成，不直接编辑顶点，保持“二维源资产 + 几何规则 = 三维结果”的项目原则。
 M09 继续复用同一工作区：Seam 端点可启用归一化边界区间，Operations 可直接编辑
 `ToroidalWrap` 的主/次半径、角度范围和方向；这些字段仍属于二维源资产。
+M10 不通过全局扫描把第三方操作偷偷塞进工作区；原生自定义源必须由调用方为本次
+编译显式传入 Registry。Gallery、波形证明和 OBJ 都是独立、可重建的派生证据。

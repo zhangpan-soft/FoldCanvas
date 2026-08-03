@@ -129,6 +129,21 @@ namespace FoldCanvas
         public const string InsufficientToroidalTessellation = "FC8009";
         public const string ToroidalWindingFailed = "FC8010";
         public const string InvalidToroidalWrapDirection = "FC8011";
+        public const string UnregisteredExtensionOperation = "FC9001";
+        public const string InvalidExtensionRegistration = "FC9002";
+        public const string DuplicateExtensionRegistration = "FC9003";
+        public const string ExtensionOperationTargetMissing = "FC9004";
+        public const string ExtensionOperationValidationFailed = "FC9005";
+        public const string ExtensionOperationExecutionFailed = "FC9006";
+        public const string ExtensionOperationInvalidMutation = "FC9007";
+        public const string ExtensionOperationException = "FC9008";
+        public const string MalformedGalleryManifest = "FC9101";
+        public const string UnsupportedGalleryVersion = "FC9102";
+        public const string InvalidGalleryEntry = "FC9103";
+        public const string DuplicateGalleryEntryId = "FC9104";
+        public const string ExportInputMissing = "FC9201";
+        public const string InvalidExportOptions = "FC9202";
+        public const string InvalidExportGeometry = "FC9203";
     }
 
     public sealed class FoldCanvasDiagnosticValue

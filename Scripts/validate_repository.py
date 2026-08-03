@@ -108,6 +108,12 @@ required = [
     "Documentation~/architecture.md",
     "Schema/foldcanvas.schema.json",
     ".github/workflows/unity-tests.yml",
+    ".github/workflows/package-release.yml",
+    "Scripts/build_release_package.py",
+    "Scripts/test_release_package.py",
+    "Samples~/Gallery/gallery.json",
+    "Schema/foldcanvas-gallery.schema.json",
+    "Documentation~/m10-performance-baselines.json",
 ]
 for relative in required:
     if not (ROOT / relative).exists():
@@ -228,6 +234,9 @@ for required_pattern in [
     "[Tt]emp/",
     "[Oo]bj/",
     "[Ll]ogs/",
+    "__pycache__/",
+    "__pycache__.meta",
+    "*.py[cod]",
     "Project~/Assets/FoldCanvasGenerated/",
     "Project~/Assets/FoldCanvasSamples/",
 ]:
@@ -238,6 +247,123 @@ if (ROOT / "Samples~.meta").exists():
     errors.append(
         "Samples~.meta must not exist because Unity hides tilde-suffixed package folders"
     )
+
+operation_sample_asmdef = read_json(
+    "Samples~/OperationExtension/FoldCanvas.Sample.OperationExtension.asmdef"
+)
+if operation_sample_asmdef.get("references") != ["FoldCanvas.Runtime"]:
+    errors.append(
+        "The contributor operation sample must reference only FoldCanvas.Runtime"
+    )
+
+gallery = read_json("Samples~/Gallery/gallery.json")
+if gallery.get("format") != "foldcanvas-gallery" or gallery.get("version") != "1":
+    errors.append("Gallery manifest format/version must remain foldcanvas-gallery/1")
+gallery_entries = gallery.get("entries")
+if not isinstance(gallery_entries, list) or not (1 <= len(gallery_entries) <= 128):
+    errors.append("Gallery manifest must contain between 1 and 128 entries")
+    gallery_entries = []
+gallery_ids: set[str] = set()
+editor_menu_source = "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in sorted((ROOT / "Editor").rglob("*.cs"))
+)
+for index, entry in enumerate(gallery_entries):
+    if not isinstance(entry, dict):
+        errors.append(f"Gallery entry {index} must be an object")
+        continue
+    entry_id = entry.get("id")
+    if not isinstance(entry_id, str) or not re.fullmatch(
+        r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*", entry_id
+    ):
+        errors.append(f"Gallery entry {index} has an invalid id")
+    elif entry_id in gallery_ids:
+        errors.append(f"Gallery entry ID is duplicated: {entry_id}")
+    else:
+        gallery_ids.add(entry_id)
+
+    for path_key in ["samplePath", "foldScriptPath", "appearancePath"]:
+        value = entry.get(path_key)
+        if value is None and path_key != "samplePath":
+            continue
+        if not isinstance(value, str) or not value.startswith("Samples~/"):
+            errors.append(f"Gallery entry {index} has invalid {path_key}")
+            continue
+        pure_path = pathlib.PurePosixPath(value)
+        if ".." in pure_path.parts or "." in pure_path.parts or not (ROOT / value).exists():
+            errors.append(
+                f"Gallery entry {index} {path_key} must resolve inside Samples~: {value}"
+            )
+
+    proof_menu = entry.get("proofMenuPath")
+    if proof_menu is not None:
+        if not isinstance(proof_menu, str) or not proof_menu.startswith(
+            "Tools/FoldCanvas/"
+        ):
+            errors.append(f"Gallery entry {index} has invalid proofMenuPath")
+        elif f'MenuItem("{proof_menu}"' not in editor_menu_source:
+            errors.append(
+                f"Gallery proof menu is not implemented: {proof_menu}"
+            )
+
+expected_gallery_ids = {
+    "bootstrap-panel",
+    "sphere-gores",
+    "cyclic-topology",
+    "operation-extension",
+}
+if gallery_ids != expected_gallery_ids:
+    errors.append(
+        "Canonical gallery entries must cover bootstrap, sphere, topology, and extension proofs"
+    )
+
+performance_baselines = read_json(
+    "Documentation~/m10-performance-baselines.json"
+)
+if (
+    performance_baselines.get("format")
+    != "foldcanvas-performance-baselines"
+    or performance_baselines.get("version") != "1"
+    or performance_baselines.get("unityVersion") != "6000.3.20f1"
+):
+    errors.append("M10 performance baseline format/version/Unity must remain locked")
+performance_scenarios = performance_baselines.get("scenarios")
+if not isinstance(performance_scenarios, list) or len(performance_scenarios) != 3:
+    errors.append("M10 must retain its three maintained performance scenarios")
+else:
+    scenario_ids = [scenario.get("id") for scenario in performance_scenarios]
+    if scenario_ids != [
+        "planar-grid-64x32",
+        "full-roll-64x8",
+        "registered-wave-48x24",
+    ]:
+        errors.append("M10 performance scenario order or identity changed")
+
+release_workflow = (
+    ROOT / ".github" / "workflows" / "package-release.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "workflow_dispatch:",
+    'tags:',
+    'python3 Scripts/test_release_package.py',
+    'python3 Scripts/build_release_package.py',
+    'actions/upload-artifact@',
+    'if-no-files-found: error',
+    "gh release create",
+    "--verify-tag",
+    "secrets.GITHUB_TOKEN",
+]:
+    if required_fragment not in release_workflow:
+        errors.append(
+            "Package release workflow is missing required configuration: "
+            f"{required_fragment}"
+        )
+
+repository_workflow = (
+    ROOT / ".github" / "workflows" / "repository-checks.yml"
+).read_text(encoding="utf-8")
+if "python3 Scripts/test_release_package.py" not in repository_workflow:
+    errors.append("Repository checks must validate deterministic release archives")
 
 sample_document_path = (
     ROOT

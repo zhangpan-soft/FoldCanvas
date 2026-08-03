@@ -17,6 +17,12 @@ operation types documented here, canonical output is deterministic, and
 corrected AI output must re-enter the same importer and compiler. See
 [FoldScript 0.1 runtime and Editor workflow](foldscript-runtime.md).
 
+M10 native operation registration does not extend this JSON grammar. A custom
+`SerializeReference` definition requires its contributor assembly and an
+explicit registry for that compile. Unknown JSON operation types still return
+`FC7004`; portable custom codecs require a future schema version and ADR rather
+than an opaque payload in `0.1`.
+
 ## 1. Goals
 
 - readable enough for humans to review

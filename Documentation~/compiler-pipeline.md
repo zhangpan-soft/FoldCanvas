@@ -40,6 +40,15 @@ them before mutation; the build buffer also guards every vertex and triangle
 append. Failed operation transactions restore vertices, triangles, topology,
 panel boundaries, spherical-surface membership, and budget usage.
 
+When a native source contains a custom operation, M10 snapshots the explicitly
+supplied registry and builds an extension plan during this stage, still before
+tessellation. Registration is matched by exact definition type. The executor's
+preflight must validate its parameters and resolve exactly one existing target
+panel. Missing registration, invalid registration, rejected validation,
+missing target, or a thrown preflight returns `FC9001`-`FC9008` evidence and no
+geometry. No registry is discovered globally, and the ordinary no-registry
+M00-M09 path is unchanged.
+
 ## Stage 2: panel tessellation
 
 Each panel tessellator emits:
@@ -214,6 +223,21 @@ Full-turn minimum and maximum boundary positions may coincide, but their
 render vertices and topology IDs remain separate. Stage 4 closes each cycle
 only when an explicit Stitch-selected Weld seam requests it.
 
+### M10 registered position operation
+
+A registered custom operation executes at its authored list position through
+the plan frozen before Stage 2. The execution context exposes ordered current
+panel vertices plus read-only source position, source UV, panel ownership, and
+provenance. Its only mutation is finite replacement of a position belonging to
+that one resolved panel.
+
+Before calling the executor, the compiler snapshots every target position. A
+`false` result, emitted error, non-finite/out-of-range mutation, or exception
+restores the complete snapshot. The compiler returns no partial Mesh. Vertex
+and triangle count/order, topology identities, boundaries, UVs, provenance,
+and geometry-budget usage therefore remain unchanged. Registered position
+operations obey the same terminal-Stitch rule as built-in deformations.
+
 ## Stage 4: explicit seam resolution
 
 Seam definitions are declarative source records. Their presence alone does not
@@ -274,7 +298,8 @@ string dictionary keys as defense in depth.
 
 Until shared topology groups participate in deformation propagation, the
 compiler treats every panel selected by a Stitch as position-final. A later
-`RigidTransform`, `Fold`, `Roll`, `SphericalWrap`, or `ToroidalWrap` targeting any such panel fails with
+`RigidTransform`, `Fold`, `Roll`, `SphericalWrap`, `ToroidalWrap`, or a
+registered position operation targeting any such panel fails with
 `FC2010 StitchMustBeTerminalForSelectedPanels` and returns no Mesh. Operations
 on unrelated panels remain legal.
 
@@ -408,6 +433,13 @@ The runtime compiler returns an in-memory result. Editor code may save:
 
 Editor saving must not change geometry output.
 
+M10's Runtime OBJ exporter is another derived-artifact path. It reads only the
+immutable compiled snapshot, emits render positions, source UVs, and triangle
+faces in their existing order, and performs no file I/O. The Editor helper may
+write that text only to a normalized `.obj` path under `Assets/`. Gallery
+views, performance reports under `Library/`, and reproducible UPM archives are
+also derived evidence and never feed back into compilation.
+
 Configured cumulative vertex and triangle limits cover the full compile, not
 only panel tessellation. Unsafe source tessellation returns `FC1007`;
 operation-level overages return `FC5005`, `FC5006`, or `FC5007`. No partial
@@ -420,7 +452,7 @@ M08 copies ordered compiler diagnostics into a provider-neutral repair request:
 
 ```text
 schemaVersion=0.1
-compilerVersion=0.1.0-preview.17
+compilerVersion=0.1.0-preview.18
 assetId=cup
 source=<canonical complete FoldScript>
 diagnostics[0].code=FC3022

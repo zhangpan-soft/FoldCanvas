@@ -1,33 +1,31 @@
 # Current task
 
-Execute **M09: cyclic topology, handle cup, and torus**.
+Execute **M10: extensibility and ecosystem**.
 
 Authoritative task file:
-[`Codex/M09_TOPOLOGY.md`](Codex/M09_TOPOLOGY.md)
+[`Codex/M10_EXTENSIBILITY.md`](Codex/M10_EXTENSIBILITY.md)
 
-M08 PR #7 was human-approved and merged into `main` as `dcc8574`. M09
-development occurs on `codex/m09-topology`, created from that merged commit.
+M09 PR #8 was human-approved and merged into `main` as `7be4117`. M10
+development occurs on `codex/m10-extensibility`, created from that merged
+commit.
 
-M09 proves that FoldCanvas can express deterministic loop topology from its
-authoritative two-dimensional source:
+M10 turns the proven M00-M09 compiler into a bounded contributor platform:
 
-- map one rectangle parameter panel to a toroidal surface through an explicit
-  `ToroidalWrap` operation;
-- close the torus U and V cycles only through declared Weld seams selected by
-  Stitch;
-- add optional normalized, non-wrapping boundary spans so a seam can select a
-  stable sub-chain of an authored boundary;
-- form a cup handle from an ordinary rectangular strip using existing rigid
-  transforms and edge-aligned folds;
-- weld the strip's two attachment boundaries to two cup-rim spans before one
-  final Solidify;
-- prove deterministic topology, UV behavior, radii, manifoldness, and closed
-  volume through Edit Mode tests and visible Unity proof assets.
+- pass an explicit operation registry to one compile without global discovery;
+- allow registered third-party position-only operations to deform exactly one
+  existing panel while preserving UV, provenance, triangles, and topology;
+- publish a versioned sample-gallery manifest and a compiling contributor
+  operation template;
+- export immutable compiled data to deterministic text OBJ without changing
+  the FoldCanvas source or generated Mesh;
+- measure repeatable Editor compilation baselines as derived evidence;
+- build a deterministic UPM release archive and automate tagged GitHub
+  releases.
 
-ADR 0007 defines the M09 topology vocabulary. Generated Meshes remain derived
-artifacts; the 2D canvas, panels, boundary spans, seams, and ordered operations
-remain the editable source.
+ADR 0008 defines the extension trust boundary. FoldCanvas source remains
+authoritative, generated Meshes and exports remain derived, and the default
+compiler behavior stays byte/topology compatible when no registry is supplied.
 
-M09 does not implement arbitrary sweep paths, circular holes in panel
-interiors, Boolean/CSG operations, bevels, subdivision, smoothing, remeshing,
-mesh cleanup, skeletal deformation, or later milestones.
+M10 does not expose topology mutation to extensions, auto-discover assemblies,
+add custom FoldScript operation codecs, add runtime file/network I/O, implement
+glTF/FBX, or add new geometry families.

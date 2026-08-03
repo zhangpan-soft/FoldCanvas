@@ -56,6 +56,18 @@ Every new FoldScript operation needs:
 - documentation and a diagram
 - diagnostic codes for invalid parameters
 
+For a native M10 position-only operation, start from
+`Samples~/OperationExtension` and read
+`Documentation~/extensibility.md`. Register the exact definition type
+explicitly for one compile. Do not add assembly scanning, a global registry,
+an opaque FoldScript `0.1` payload, or access to triangles/topology/boundaries
+through the extension API. A request that needs those capabilities is a core
+architecture proposal and requires an ADR plus a future milestone.
+
+Sample-gallery entries must use the versioned manifest and normalized
+`Samples~/` paths. Optional exporters consume immutable compiled data and keep
+file I/O in the Editor layer.
+
 ## License
 
 By contributing, you agree that your contribution is licensed under Apache License 2.0.
