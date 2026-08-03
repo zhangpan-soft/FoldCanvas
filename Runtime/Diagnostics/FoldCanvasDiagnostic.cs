@@ -144,6 +144,18 @@ namespace FoldCanvas
         public const string ExportInputMissing = "FC9201";
         public const string InvalidExportOptions = "FC9202";
         public const string InvalidExportGeometry = "FC9203";
+        public const string HandoffInputMissing = "FC9301";
+        public const string UnsupportedHandoffVersion = "FC9302";
+        public const string InvalidHandoffManifest = "FC9303";
+        public const string UnsafeHandoffEntry = "FC9304";
+        public const string HandoffIntegrityMismatch = "FC9305";
+        public const string UnsupportedHandoffSource = "FC9306";
+        public const string HandoffCompileFailed = "FC9307";
+        public const string HandoffEvidenceMismatch = "FC9308";
+        public const string HandoffDestinationOccupied = "FC9309";
+        public const string HandoffAssetCreationFailed = "FC9310";
+        public const string HandoffCompatibilityMismatch = "FC9311";
+        public const string HandoffLimitExceeded = "FC9312";
     }
 
     public sealed class FoldCanvasDiagnosticValue

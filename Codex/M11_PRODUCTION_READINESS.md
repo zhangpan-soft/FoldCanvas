@@ -106,12 +106,11 @@ release reaches users.
 
 ## Implementation status
 
-Implementation through work packages A-D and local verification step 10 is
-complete on `codex/m11-production-readiness`. The final deterministic archive
-passed all 401 package Edit Mode tests under Unity `6000.3.20f1`; two separate
-clean hosts resolved that archive from their own `Library/PackageCache` and
-each passed its consumer-owned test with identical stable evidence.
+Complete. PR #10 was maintainer-audited and merged into `main` as `b757792`
+with reviewed head `e1204ff`. Hosted repository run `30812427551` passed all
+static/release gates. Hosted Unity run `30812427595` passed 401/401 package
+Edit Mode tests and two independent 1/1 clean archive installations; required
+XML, Editor logs, production-corpus evidence, manifests, lock files, consumer
+reports, validations, and the pair comparison were downloaded and audited.
 
-Step 11 remains open: commit and push the exact implementation, open the PR,
-verify hosted repository and Unity jobs plus every required artifact, record a
-maintainer audit, and merge only if the exact PR head has no blocking finding.
+M11 added no geometry behavior. Production asset transfer is isolated to M12.

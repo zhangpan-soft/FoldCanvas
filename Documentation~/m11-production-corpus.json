@@ -1,7 +1,7 @@
 {
     "format": "foldcanvas-production-corpus",
     "version": "1",
-    "packageVersion": "0.1.0-preview.19",
+    "packageVersion": "0.1.0-preview.20",
     "foldScriptVersion": "0.1",
     "unityVersion": "6000.3.20f1",
     "baselineSha256": "",

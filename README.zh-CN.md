@@ -97,6 +97,14 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
 - 带版本且有输入上限的样例 Gallery，以及可直接编译的自定义操作模板
 - 确定性 OBJ 文本导出、固定场景性能证据、字节可复现且仅包含白名单内容的 UPM
   发布压缩包
+- 固定六条目、无压缩、时间戳归一化的 `.foldcanvas.zip` 生产交付包；只有规范化
+  FoldScript 与原始 PNG 是源，OBJ 和完整编译/验证报告都是派生证据
+- 把交付包当作不可信输入，在写入 `Assets/` 前完成路径、链接、大小、哈希、版本、
+  PNG 尺寸、内存编译、OBJ 与完整证据比对
+- 接收项目获得可编辑源资产、单面纹理材质、Mesh、运行时 Prefab 和归属回执；
+  同一完整交付包重复导入不写文件，派生产物可从二维源重新生成
+- 两个独立干净 Unity 工程只传递交付 ZIP，并强制比较源、几何、OBJ、诊断、验证、
+  闭合体、回执和包版本证据
 - Edit Mode 测试
 - 完整架构、FoldScript 规格、路线图与 Codex 分阶段提示词
 
@@ -161,6 +169,12 @@ M11 把验收标准从“在仓库自带工程里能运行”提升到“发布�
 [兼容和迁移策略](Documentation~/compatibility.md)。M11 不新增几何类型，也不
 提前发布 1.0。
 
+M12 把已经验证过的包扩展成真正的资产交付流程。`Tools > FoldCanvas > Handoff`
+可以导出确定性的源优先压缩包；接收方先在内存中完成有上限的校验和重新编译，
+然后才创建一个明确的新 `Assets/` 子目录。Mesh、OBJ、Prefab 与回执仍是派生物，
+Unity GUID 归接收项目所有。完整字段、限制、导入和重建步骤见
+[《生产资产交付》](Documentation~/production-handoff.md)。
+
 ## 七条项目宪法
 
 1. **二维源文件拥有最高权威。** Mesh 可以删除并重新生成。
@@ -206,10 +220,15 @@ M11 把验收标准从“在仓库自带工程里能运行”提升到“发布�
    `Tools > FoldCanvas > Open Sample Gallery` 可查看版本化样例清单；执行
    `Tools > FoldCanvas > Create M10 Ecosystem Proof` 可查看显式注册的波形曲面、
    单面纯色结果、注册信息和确定性 OBJ 证据。
+7. 选择一个有效源资产，执行
+   `Tools > FoldCanvas > Handoff > Export Selected Source...` 导出
+   `.foldcanvas.zip`。在接收工程中执行 `Import Archive...` 导入到一个新的
+   `Assets/` 子目录，再用 `Rebuild Selected Import` 从二维源重建回执拥有的
+   Mesh、材质和 Prefab。
 
 ## 持续集成
 
-GitHub Actions 包含三个独立证据门：
+GitHub Actions 包含四个独立证据门：
 
 - `repository-validation` 解析 JSON，检查程序集与 Runtime 边界、Schema 和
   C# 原生 `sampleCount` 上限一致性、文档链接及版本元数据；
@@ -221,6 +240,9 @@ GitHub Actions 包含三个独立证据门：
 - `unity-clean-install-tests` 构建确定性 `.tgz`，创建两个完全独立的宿主工程，
   通过公开 Runtime API 编译消费者程序集，分别校验真实 XML、日志和包解析报告，
   并要求两个 PackageCache 安装产生完全一致的稳定证据。
+- `unity-production-handoff-tests` 使用同一个 `.tgz` 创建互相隔离的生产者和接收者
+  工程，只传递交付 ZIP，验证从源导入/重建并比较完整证据，同时上传两份 XML、
+  Editor 日志、压缩包、规范化源、回执和证明报告。
 
 独立的 `Package release` 工作流会构建两次 UPM 白名单压缩包并校验字节一致、
 版本一致，上传 `.tgz` 和 SHA-256；只有与包版本精确匹配的已推送标签才会发布。

@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-handoff-v1.schema.json",
+  "title": "FoldCanvas production handoff manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "packageVersion",
+    "compilerVersion",
+    "foldScriptVersion",
+    "asset",
+    "canvas",
+    "texture",
+    "payloads"
+  ],
+  "properties": {
+    "format": {
+      "const": "com.foldcanvas.handoff"
+    },
+    "version": {
+      "const": "1"
+    },
+    "packageVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "compilerVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "foldScriptVersion": {
+      "const": "0.1"
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "displayName"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "description": "Decoded PNG dimensions. The width-height product must not exceed 67108864 pixels.",
+      "additionalProperties": false,
+      "required": [
+        "width",
+        "height"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768
+        }
+      }
+    },
+    "texture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "filterMode",
+        "wrapModeU",
+        "wrapModeV",
+        "mipmapEnabled",
+        "sRgbTexture",
+        "alphaIsTransparency",
+        "anisoLevel",
+        "pixelsPerUnit"
+      ],
+      "properties": {
+        "filterMode": {
+          "enum": [
+            "Point",
+            "Bilinear",
+            "Trilinear"
+          ]
+        },
+        "wrapModeU": {
+          "enum": [
+            "Repeat",
+            "Clamp",
+            "Mirror",
+            "MirrorOnce"
+          ]
+        },
+        "wrapModeV": {
+          "enum": [
+            "Repeat",
+            "Clamp",
+            "Mirror",
+            "MirrorOnce"
+          ]
+        },
+        "mipmapEnabled": {
+          "type": "boolean"
+        },
+        "sRgbTexture": {
+          "type": "boolean"
+        },
+        "alphaIsTransparency": {
+          "type": "boolean"
+        },
+        "anisoLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "pixelsPerUnit": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "payloads": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/sourcePayload"
+        },
+        {
+          "$ref": "#/$defs/appearancePayload"
+        },
+        {
+          "$ref": "#/$defs/objPayload"
+        },
+        {
+          "$ref": "#/$defs/evidencePayload"
+        },
+        {
+          "$ref": "#/$defs/readmePayload"
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "payloadBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "role",
+        "byteLength",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "byteLength": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 134217728
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "sourcePayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/payloadBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "source.foldcanvas.json"
+            },
+            "role": {
+              "const": "source"
+            }
+          }
+        }
+      ]
+    },
+    "appearancePayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/payloadBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "appearance.png"
+            },
+            "role": {
+              "const": "appearance"
+            }
+          }
+        }
+      ]
+    },
+    "objPayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/payloadBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "derived/model.obj"
+            },
+            "role": {
+              "const": "derived-obj"
+            }
+          }
+        }
+      ]
+    },
+    "evidencePayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/payloadBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "evidence/compile-report.json"
+            },
+            "role": {
+              "const": "compile-evidence"
+            }
+          }
+        }
+      ]
+    },
+    "readmePayload": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/payloadBase"
+        },
+        {
+          "properties": {
+            "path": {
+              "const": "README.md"
+            },
+            "role": {
+              "const": "instructions"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

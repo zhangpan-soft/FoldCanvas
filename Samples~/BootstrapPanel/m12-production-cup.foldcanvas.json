@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "0.1",
+  "assetId": "m12-production-cup",
+  "displayName": "M12 Production Cup",
+  "units": "meter",
+  "canvas": {
+    "appearance": "M04ProductionCupCanvas.png",
+    "width": 1024,
+    "height": 1024
+  },
+  "panels": [
+    {
+      "id": "wall",
+      "shape": "rectangle",
+      "canvasRect": [0.06, 0.46, 0.88, 0.44],
+      "physicalSize": [0.31415927, 0.12],
+      "tessellation": {
+        "uSegments": 64,
+        "vSegments": 12
+      }
+    },
+    {
+      "id": "bottom",
+      "shape": "disk",
+      "canvasRect": [0.32, 0.02, 0.36, 0.36],
+      "physicalSize": [0.1, 0.1],
+      "tessellation": {
+        "radialSegments": 64,
+        "radialRings": 8
+      }
+    }
+  ],
+  "seams": [
+    {
+      "id": "close-wall",
+      "a": {
+        "panel": "wall",
+        "boundary": "uMin"
+      },
+      "b": {
+        "panel": "wall",
+        "boundary": "uMax"
+      },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 13
+    },
+    {
+      "id": "attach-bottom",
+      "a": {
+        "panel": "wall",
+        "boundary": "vMin"
+      },
+      "b": {
+        "panel": "bottom",
+        "boundary": "perimeter"
+      },
+      "mode": "weld",
+      "reverseB": false,
+      "sampleCount": 64
+    }
+  ],
+  "operations": [
+    {
+      "id": "roll-wall",
+      "type": "roll",
+      "enabled": true,
+      "panel": "wall",
+      "direction": "u",
+      "angleDegrees": 360,
+      "radiusMode": "preserveArcLength",
+      "radius": 0.05,
+      "startAngleDegrees": 180
+    },
+    {
+      "id": "place-bottom",
+      "type": "rigidTransform",
+      "enabled": true,
+      "panel": "bottom",
+      "translation": [0, -0.06, 0],
+      "rotationEuler": [90, 0, 0],
+      "scale": [1, 1, 1]
+    },
+    {
+      "id": "stitch-all",
+      "type": "stitch",
+      "enabled": true,
+      "seams": [
+        "close-wall",
+        "attach-bottom"
+      ]
+    },
+    {
+      "id": "solidify",
+      "type": "solidify",
+      "enabled": true,
+      "targets": [
+        "wall",
+        "bottom"
+      ],
+      "thickness": 0.002,
+      "direction": "inward"
+    }
+  ],
+  "compile": {
+    "weldEpsilon": 0.00001,
+    "recalculateNormals": true,
+    "validationLevel": "strict",
+    "maxGeneratedVertices": 1000000,
+    "maxGeneratedTriangles": 2000000
+  }
+}

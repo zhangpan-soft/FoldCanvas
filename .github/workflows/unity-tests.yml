@@ -266,3 +266,168 @@ jobs:
             artifacts/m11-clean-install-comparison.json
           if-no-files-found: error
           retention-days: 14
+
+  unity-production-handoff-tests:
+    name: Unity 6000.3.20f1 clean producer and receiver handoff
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Build deterministic package archive
+        id: handoff-package
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="artifacts/m12-package"
+          python3 Scripts/build_release_package.py --output "$package_root"
+          mapfile -t archives < <(
+            find "$package_root" -maxdepth 1 -type f -name '*.tgz' \
+              -print | LC_ALL=C sort
+          )
+          if [[ "${#archives[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one FoldCanvas package archive."
+            exit 1
+          fi
+          echo "archive=${archives[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate independent producer and receiver projects
+        run: |
+          set -euo pipefail
+          python3 Scripts/create_handoff_proof_projects.py \
+            --producer artifacts/m12-handoff-producer \
+            --receiver artifacts/m12-handoff-receiver \
+            --package "${{ steps.handoff-package.outputs.archive }}"
+
+      - name: Export production cup in clean producer
+        id: handoff-producer-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m12-handoff-producer
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m12-handoff-producer/CIArtifacts/unity-handoff-producer
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Production Handoff Producer
+
+      - name: Transfer only the handoff archive to receiver
+        run: |
+          set -euo pipefail
+          archive="artifacts/m12-handoff-producer/M12Evidence/production-cup.foldcanvas.zip"
+          test -s "$archive"
+          cp -- \
+            "$archive" \
+            artifacts/m12-handoff-receiver/M12Input/production-cup.foldcanvas.zip
+
+      - name: Import and rebuild in clean receiver
+        id: handoff-receiver-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m12-handoff-receiver
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m12-handoff-receiver/CIArtifacts/unity-handoff-receiver
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Production Handoff Receiver
+
+      - name: Normalize and compare handoff evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          normalize_unity() {
+            local role="$1"
+            local source_root="$2"
+            local fallback="artifacts/m12-handoff-$role/CIArtifacts/unity-handoff-$role"
+            local output="artifacts/m12-handoff/$role"
+            if [[ -z "$source_root" ]]; then
+              source_root="$fallback"
+            fi
+            mkdir -p "$output"
+            if [[ ! -d "$source_root" ]]; then
+              echo "::error::Missing GameCI handoff artifact directory: $source_root"
+              return 1
+            fi
+            mapfile -t xmls < <(
+              find "$source_root" -type f \
+                \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+                -print | LC_ALL=C sort
+            )
+            mapfile -t logs < <(
+              find "$source_root" -type f \
+                \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+                -print | LC_ALL=C sort
+            )
+            test -n "${xmls[0]:-}"
+            test -n "${logs[0]:-}"
+            cp -- "${xmls[0]}" "$output/test-results.xml"
+            cp -- "${logs[0]}" "$output/Editor.log"
+          }
+
+          normalize_unity \
+            producer \
+            "${{ steps.handoff-producer-tests.outputs.artifactsPath }}"
+          normalize_unity \
+            receiver \
+            "${{ steps.handoff-receiver-tests.outputs.artifactsPath }}"
+
+          cp -- \
+            artifacts/m12-handoff-producer/M12Evidence/production-cup.foldcanvas.zip \
+            artifacts/m12-handoff/production-cup.foldcanvas.zip
+          cp -- \
+            artifacts/m12-handoff-producer/M12Evidence/producer-report.json \
+            artifacts/m12-handoff/producer-report.json
+          cp -- \
+            artifacts/m12-handoff-producer/M12Evidence/compile-report.json \
+            artifacts/m12-handoff/compile-report.json
+          cp -- \
+            artifacts/m12-handoff-receiver/M12Evidence/receiver-report.json \
+            artifacts/m12-handoff/receiver-report.json
+          cp -- \
+            artifacts/m12-handoff-receiver/M12Evidence/handoff-receipt.json \
+            artifacts/m12-handoff/handoff-receipt.json
+          cp -- \
+            artifacts/m12-handoff-receiver/M12Evidence/source.foldcanvas.json \
+            artifacts/m12-handoff/source.foldcanvas.json
+
+          python3 Scripts/compare_handoff_evidence.py \
+            --producer artifacts/m12-handoff/producer-report.json \
+            --receiver artifacts/m12-handoff/receiver-report.json \
+            --archive artifacts/m12-handoff/production-cup.foldcanvas.zip \
+            --receipt artifacts/m12-handoff/handoff-receipt.json \
+            --source artifacts/m12-handoff/source.foldcanvas.json \
+            --output artifacts/m12-handoff/comparison.json
+
+          find artifacts/m12-handoff -type f -maxdepth 2 -print0 | \
+            xargs -0 -n1 test -s
+
+      - name: Upload production handoff results and evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: unity-production-handoff-results-and-evidence
+          path: |
+            artifacts/m12-handoff/producer/test-results.xml
+            artifacts/m12-handoff/producer/Editor.log
+            artifacts/m12-handoff/receiver/test-results.xml
+            artifacts/m12-handoff/receiver/Editor.log
+            artifacts/m12-handoff/production-cup.foldcanvas.zip
+            artifacts/m12-handoff/producer-report.json
+            artifacts/m12-handoff/receiver-report.json
+            artifacts/m12-handoff/compile-report.json
+            artifacts/m12-handoff/handoff-receipt.json
+            artifacts/m12-handoff/source.foldcanvas.json
+            artifacts/m12-handoff/comparison.json
+          if-no-files-found: error
+          retention-days: 14

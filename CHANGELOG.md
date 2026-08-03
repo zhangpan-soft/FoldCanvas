@@ -6,6 +6,62 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [0.1.0-preview.20] - 2026-08-04
+
+### Added
+
+- Deterministic source-first `.foldcanvas.zip` export with a fixed six-entry,
+  uncompressed, timestamp-normalized layout containing canonical FoldScript,
+  exact PNG artwork, derived OBJ, complete compile evidence, and rebuild notes
+- Bounded untrusted archive validation for entry count/order/type, traversal,
+  links, ZIP method/metadata, per-entry and total sizes, UTF-8, manifest hashes,
+  decoded PNG pixels, exact package/compiler/FoldScript compatibility, and
+  detached recompilation
+- Receipt-owned import that creates an editable FoldCanvas source, PNG, Mesh,
+  one-sided textured Material, runtime Prefab, and canonical receipt under one
+  explicit new `Assets/` folder, with rollback and same-archive idempotency
+- Source-driven rebuild of receipt-owned derived outputs without reading the
+  archived OBJ or existing Mesh topology as compiler input
+- `FC9301`-`FC9312` production-handoff diagnostics, manifest JSON Schema,
+  Authoring workspace export action, Editor menu export/import/rebuild flows,
+  and a one-sided unlit texture shader
+- Independent clean producer/receiver Unity proof projects plus archive,
+  source, receipt, geometry, OBJ, diagnostic, validation, and closed-volume
+  evidence comparison and mandatory hosted artifacts
+
+### Changed
+
+- Package version advanced to `0.1.0-preview.20`
+- Public Runtime API baseline now includes the reviewed handoff diagnostic
+  constants; Runtime geometry, topology, I/O, and network behavior remain
+  unchanged
+
+### Verified
+
+- Unity `6000.3.20f1` passed 30 focused handoff determinism, source-state,
+  import, rebuild, tamper, unsafe-ZIP, compatibility, collision, and rollback
+  tests
+- The complete graphics-capable clean-host package suite passed 431/431 with
+  zero failures, skips, or inconclusive results
+- Separate final `.20` clean producer and receiver projects passed 1/1 test
+  each from the reproducible release archive; their distinct PackageCache
+  resolutions and production cup source, PNG, closed geometry, OBJ,
+  diagnostics, validation, receipt, and archive SHA evidence matched exactly
+- Foreground receiver proof displayed the editable source, rebuilt runtime
+  Prefab, complete geometry counts, one closed component, and zero open edges
+- The transferred handoff archive SHA-256 was
+  `a82b3391621604667e98f8f078b44c7da94741115802158d08e7f5a6641591cd`
+- Repository validation, deterministic package/static handoff checks, JSON
+  parsing, Python compilation, and `git diff --check` passed during
+  implementation
+
+### Not included
+
+- No Runtime file/network import, geometry equation, topology operation,
+  version migration, native custom-operation codec, GUID transfer, signing,
+  encryption, CSG, bevel, smoothing, remesh, M13/M14 work, or `1.0.0` release
+  was added
+
 ## [0.1.0-preview.19] - 2026-08-03
 
 ### Added

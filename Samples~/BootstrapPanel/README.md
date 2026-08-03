@@ -92,3 +92,25 @@ Its owned `EditorOnly` hierarchy shows:
 Switch between `Overview`, `Wireframe`, and `Section` from
 `Tools > FoldCanvas > M04.1 View`. The proof does not add bevels, subdivision,
 smoothing, or mesh-cleanup postprocessing.
+
+## M12 production handoff fixture
+
+`m12-production-cup.foldcanvas.json` and `M04ProductionCupCanvas.png` are the
+authoritative production-handoff fixture. The FoldScript uses the same exact
+wall/bottom placement, explicit Weld seams, and Strict inward Solidify contract
+as the production cup proof; the canvas uses square wall corners, matching
+weld-edge colors, and disk perimeter bleed.
+
+Import the sample into `Assets/`, import the JSON as an editable source, select
+that source, and use:
+
+```text
+Tools > FoldCanvas > Handoff > Export Selected Source...
+```
+
+The resulting `.foldcanvas.zip` contains canonical source and exact PNG bytes,
+plus derived OBJ and compile evidence. A receiver imports it through
+`Tools > FoldCanvas > Handoff > Import Archive...`. Delete only
+`GeneratedMesh.asset`, `Appearance.mat`, and `Runtime.prefab`, then choose
+`Rebuild Selected Import` to prove that those runtime outputs come from the
+received 2D source rather than the archived OBJ or an edited Mesh.

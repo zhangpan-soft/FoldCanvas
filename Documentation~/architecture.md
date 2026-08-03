@@ -62,6 +62,14 @@ resolves appearances under `Assets/` or `Packages/`, validates a detached
 source before persistence, records Undo when replacing an existing FoldCanvas
 asset, and rejects occupied non-FoldCanvas targets.
 
+M12's production-handoff adapter is also Editor-only. It packages canonical
+FoldScript plus exact PNG bytes as authoritative source, surrounds them with
+derived OBJ and compile evidence, and validates the complete untrusted archive
+in memory before creating one receipt-owned folder under `Assets/`. Import and
+Rebuild compile the received source; archived OBJ, existing Mesh topology,
+Prefab, and receipt never enter the compiler as geometry input. Runtime remains
+free of ZIP, filesystem, network, and `AssetDatabase` behavior.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived
@@ -231,6 +239,12 @@ are read-only derived metadata. Editor wireframe, section, seam, pole, stretch,
 and radius-error Meshes may visualize them, but they never become source
 geometry or feed back into compilation. M07 component, seam, and intersection
 reports follow the same read-only rule.
+
+M12 handoff manifests, compile evidence, OBJ files, receiver Meshes, materials,
+Prefabs, and ownership receipts are the same class of derived artifact. Only
+the canonical `source.foldcanvas.json` and exact `appearance.png` are portable
+source. Logical asset IDs and content hashes cross project boundaries; Unity
+GUIDs and destination paths are receiver-owned.
 
 M05 derives spherical components only from enabled SphericalWrap panels joined
 by Stitch-selected seams whose two endpoints are spherical. Component

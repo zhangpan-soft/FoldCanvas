@@ -452,7 +452,7 @@ M08 copies ordered compiler diagnostics into a provider-neutral repair request:
 
 ```text
 schemaVersion=0.1
-compilerVersion=0.1.0-preview.18
+compilerVersion=0.1.0-preview.20
 assetId=cup
 source=<canonical complete FoldScript>
 diagnostics[0].code=FC3022
@@ -466,3 +466,30 @@ replacement FoldScript JSON. `FoldCanvasRepairCoordinator` sends that response
 back through Stage 0 and every ordinary compile stage; there is no privileged
 patch or geometry-mutation path. M08 does not execute a network request or
 automatically accept a repair.
+
+## Editor production handoff (M12)
+
+Production handoff is outside the Runtime geometry stages:
+
+```text
+FoldCanvasAsset + PNG
+  -> canonical FoldScript + detached compile
+  -> deterministic OBJ + complete evidence
+  -> fixed source-first archive
+  -> bounded receiver validation + detached recompile
+  -> explicit Assets persistence
+```
+
+Export rewrites only the portable appearance reference to `appearance.png`,
+then canonicalizes and compiles that detached source. It hashes complete ordered
+compiled data, diagnostics, final validation, closed-volume evidence, and
+spherical reports rather than trusting counts or Mesh bounds. Archive creation
+uses a temporary file and atomic replacement only after self-validation.
+
+Import checks the six-entry ZIP layout, sizes, links, paths, manifest, exact
+versions, payload hashes, canonical source, decoded PNG dimensions, regenerated
+OBJ, and regenerated evidence before any project write. Persistence then creates
+one new receipt-owned `Assets/` folder. Rebuild starts again from the receiver's
+editable FoldCanvas source and PNG; archived OBJ and existing generated Mesh
+topology remain comparison or output data only. See
+[Production handoff](production-handoff.md).

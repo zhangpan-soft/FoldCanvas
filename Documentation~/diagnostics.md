@@ -177,6 +177,18 @@ compiler stage and source order.
 - `FC9201 ExportInputMissing`
 - `FC9202 InvalidExportOptions`
 - `FC9203 InvalidExportGeometry`
+- `FC9301 HandoffInputMissing`
+- `FC9302 UnsupportedHandoffVersion`
+- `FC9303 InvalidHandoffManifest`
+- `FC9304 UnsafeHandoffEntry`
+- `FC9305 HandoffIntegrityMismatch`
+- `FC9306 UnsupportedHandoffSource`
+- `FC9307 HandoffCompileFailed`
+- `FC9308 HandoffEvidenceMismatch`
+- `FC9309 HandoffDestinationOccupied`
+- `FC9310 HandoffAssetCreationFailed`
+- `FC9311 HandoffCompatibilityMismatch`
+- `FC9312 HandoffLimitExceeded`
 
 `FC2010` enforces the temporary terminal-Stitch contract: until topology-group
 deformation propagation exists, a later RigidTransform, Fold, Roll,
@@ -229,6 +241,16 @@ unknown-version, unsafe, or duplicate gallery metadata before the Editor can
 invoke a declared proof action. `FC9201`-`FC9203` reject absent compiled data,
 invalid options, or structurally invalid immutable geometry; export never
 repairs or mutates the input.
+
+`FC9301`-`FC9312` guard M12's Editor-only production handoff. Missing input,
+unknown archive format/version, malformed canonical JSON, unsafe ZIP layout,
+payload corruption, unsupported source, failed detached compilation, stale
+evidence, occupied destinations, rolled-back persistence, exact-version
+incompatibility, and size limits each return one primary diagnostic. ZIP path,
+link, entry-count/order/method/metadata, and declared-size checks occur before
+payload allocation. Import does not create an `Assets/` folder until canonical
+source, PNG dimensions, regenerated OBJ, and complete compile evidence agree.
+See [Production handoff](production-handoff.md).
 
 `FC2014` enforces the shared JSON/native `sampleCount` maximum of `8192`.
 `FC5005` and `FC5006` report cumulative generated vertex or triangle budget

@@ -16,3 +16,6 @@ jobs:
         run: python3 Scripts/test_release_package.py
       - name: Validate M11 clean-install project and evidence contracts
         run: python3 Scripts/test_clean_install_project.py
+
+      - name: Validate M12 production handoff project and evidence contracts
+        run: python3 Scripts/test_handoff_proof.py
