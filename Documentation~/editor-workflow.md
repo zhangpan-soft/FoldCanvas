@@ -140,6 +140,14 @@ owning one new explicit `Assets/` folder; Rebuild regenerates only the
 receipt-owned Mesh, one-sided textured Material, and Prefab from the received
 2D source. See [Production handoff](production-handoff.md).
 
+M13 adds `Tools > FoldCanvas > Run M13 Robustness Smoke`. The command runs four
+bounded, replayable suites from a fixed generator seed, destroys every derived
+in-memory Mesh, and atomically writes a complete derived report to
+`Library/FoldCanvas/M13RobustnessSmokeReport.json`. The report records exact
+case identities and semantic hashes. Any unexpected result is logged and causes
+the command to fail; it never creates or edits an `Assets/` source, scene
+object, selection, or baked Mesh.
+
 ## Authoring actions
 
 - create rectangle and disk panels
@@ -157,6 +165,8 @@ receipt-owned Mesh, one-sided textured Material, and Prefab from the received
 - export the current valid source as a portable source-first handoff
 - import a validated handoff into one new explicit `Assets/` folder
 - rebuild receipt-owned runtime outputs from the received source
+- run the bounded M13 robustness smoke without persisting generated source or
+  Mesh assets
 
 ## Preview rules
 

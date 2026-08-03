@@ -493,3 +493,26 @@ one new receipt-owned `Assets/` folder. Rebuild starts again from the receiver's
 editable FoldCanvas source and PNG; archived OBJ and existing generated Mesh
 topology remain comparison or output data only. See
 [Production handoff](production-handoff.md).
+
+## Editor robustness evidence (M13)
+
+The initial M13 smoke layer is outside the Runtime geometry stages:
+
+```text
+(generator version, suite, seed, ordinal)
+  -> bounded in-memory FoldCanvasAsset
+  -> canonical FoldScript before compile
+  -> ordinary deterministic compiler
+  -> source/geometry/diagnostic semantic evidence
+  -> destroy derived Mesh and source instance
+  -> complete atomic Library report
+```
+
+The fixed SplitMix64 implementation is repository-owned and independent of
+`System.Random`, Unity random state, execution order, locale, and time. Valid
+cases require finite ordered geometry and source equality; invalid cases require
+one expected root diagnostic and no compiled data or Mesh. An unexpected
+exception is recorded with its replay identity and fails the runner rather than
+being converted into a generic compiler diagnostic. Unity/platform fields are
+environment metadata; package, compiler, FoldScript, generator, source,
+geometry, and ordered diagnostic evidence form the semantic contract.

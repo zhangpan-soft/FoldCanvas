@@ -6,6 +6,33 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+### Added
+
+- Initial M13 deterministic robustness smoke layer with a repository-owned
+  SplitMix64 generator, replay identity `(version, suite, seed, ordinal)`,
+  bounded planar/Roll success and stable Roll/Fold failure suites, complete
+  source/geometry/diagnostic hashes, finite-buffer checks, and source
+  non-mutation evidence
+- Editor menu runner and atomic derived smoke report under `Library/FoldCanvas`,
+  plus six Edit Mode tests for order independence, repeatable semantic digests,
+  finite successful geometry, diagnostic-only failures, and exception/source
+  isolation
+
+### Verified
+
+- Unity `6000.3.20f1` passed all 6 focused M13 generator/smoke tests and the
+  complete 437/437 M00-M13 Edit Mode suite in an independent archive-installed
+  host, with zero failures, skips, or inconclusive results
+- The default 64-case smoke passed 64/64 twice; both runs produced semantic
+  SHA-256 `fad8385cf02227371df0128b213f38e0b7962cf49ea968b3f2109d03b2ac0290`
+  and byte-identical report SHA-256
+  `a0a8a57c29b2bd3a769c87de33d6f6bdbad14422defdd706ef304bd306c1ed9a`
+
+### Not included
+
+- M13 scale boundaries, cancellation/retry, resource envelopes, long-running
+  hosted corpus, package-version advance, M14 freeze, and `1.0.0` remain pending
+
 ## [0.1.0-preview.20] - 2026-08-04
 
 ### Added

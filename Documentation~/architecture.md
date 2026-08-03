@@ -70,6 +70,15 @@ Rebuild compile the received source; archived OBJ, existing Mesh topology,
 Prefab, and receipt never enter the compiler as geometry input. Runtime remains
 free of ZIP, filesystem, network, and `AssetDatabase` behavior.
 
+M13's robustness generator and runner are Editor-only evidence adapters. A
+repository-owned fixed integer algorithm creates bounded in-memory
+`FoldCanvasAsset` cases identified by generator version, suite, seed, and
+ordinal. Every case enters the same compiler as authored source. The runner
+destroys derived Meshes, compares canonical source before and after compilation,
+and atomically replaces only a complete report under the current project's
+`Library/FoldCanvas` folder. Runtime contains no fuzzer, global random state,
+report I/O, or alternate geometry path.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived

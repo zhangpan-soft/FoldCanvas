@@ -216,6 +216,20 @@ report, resource observations, and exact replay identities for failures.
 - 2026-08-04: Created `codex/m13-robustness-scale`, the M13 specification,
   active roadmap status, and this execution plan. No M13 implementation or M14
   release decision was made in the planning commit.
+- 2026-08-04: Began M13 implementation with a fixed SplitMix64 generator and
+  four replayable smoke suites covering planar/Roll success plus the existing
+  FC3022 Roll tessellation and FC3011 off-grid Fold failures. The first report
+  slice hashes canonical source, complete compiled geometry, ordered
+  diagnostics, source-before/source-after state, and finite buffers; raw timing
+  and cancellation are deliberately not part of this slice.
+- 2026-08-04: Unity `6000.3.20f1` passed 6/6 focused M13 tests and 437/437
+  complete package tests in a fresh archive-installed project. The default
+  64-case smoke passed twice with zero unexpected results, semantic SHA-256
+  `fad8385cf02227371df0128b213f38e0b7962cf49ea968b3f2109d03b2ac0290`,
+  and byte-identical report SHA-256
+  `a0a8a57c29b2bd3a769c87de33d6f6bdbad14422defdd706ef304bd306c1ed9a`.
+  Reports resolved under the active project `Library/FoldCanvas`; the user's
+  tracked and untracked `Project~` source/scratch files were not written.
 
 # Decisions made
 
@@ -237,8 +251,10 @@ report, resource observations, and exact replay identities for failures.
 
 # Final verification
 
-Planning is complete; implementation and verification are pending. The final
-M13 audit must record:
+The initial deterministic smoke slice is implemented and locally verified.
+Scale boundaries, cancellation/retry, resource envelopes, hosted long-run
+evidence, package-version advancement, and the final PR audit remain pending.
+The final M13 audit must record:
 
 - exact branch head, package/compiler/FoldScript/generator versions
 - generator algorithm/version, suite IDs, seeds, case counts, and semantic hash
