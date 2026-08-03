@@ -100,7 +100,34 @@ current 3D positions would create a chord and violate the radius contract.
 There is no post-generation pole collapse, remesh, or automatic topology
 repair.
 
-## 7. Thickness
+## 7. Toroidal parameter surfaces
+
+M09 maps one ordinary rectangular panel to a toroidal patch. The source remains
+the rectangle, its canvas UV, radii, signed angle ranges, direction assignment,
+and explicit seam graph; no torus Mesh or primitive is stored as source.
+
+For the resolved current planar frame:
+
+```text
+radial(a) = cos(a) CurrentU + sin(a) CurrentNormal
+P(a,b) = CurrentOrigin
+       + (R + r cos(b)) radial(a)
+       + r sin(b) CurrentV
+```
+
+The analytical tube-outward direction is
+`cos(b) radial(a) + sin(b) CurrentV`. Triangle winding is validated against
+that direction. M09 restricts the surface to `R > r > 0`, one signed turn per
+parameter axis, and at least three authored cells for a full-turn axis.
+
+The parameter domain and topology are deliberately separate. A full-turn map
+makes opposite edge positions coincide but does not union their topology IDs.
+One explicit Weld closes the major cycle and another closes the minor cycle.
+The two sides of each closure retain distinct source UV/render vertices while
+sharing one logical topology identity. A fully stitched torus has one connected
+component, zero open/non-manifold edges, and Euler characteristic `0`.
+
+## 8. Thickness
 
 A surface is conceptually zero-thickness. `Solidify` creates a shell:
 
@@ -140,7 +167,7 @@ closed component =
 This proves a closed, consistently oriented triangle shell. It is deliberately
 separate from future robust global self-intersection analysis.
 
-## 8. UV preservation invariant
+## 9. UV preservation invariant
 
 For each generated vertex originating from panel sample `(u,v)`:
 
@@ -155,29 +182,37 @@ deterministic provenance ID for every compiled vertex. Later duplication or
 welding stages must preserve or deliberately combine those identifiers rather
 than inferring origin from current 3D proximity.
 
-## 9. Boundary parameterization
+## 10. Boundary parameterization
 
 Each boundary is sampled and ordered. For stitching:
 
 1. compute cumulative physical arc length
-2. normalize both boundaries to `[0,1]`
-3. select a common sample count
-4. retain both boundaries' existing normalized breakpoints
-5. add any requested minimum-density parameter grid
-6. split boundary-adjacent surface triangles at missing parameters
-7. respect or reverse orientation as declared
-8. weld or bridge according to seam mode
+2. normalize each complete authored boundary to `[0,1]`
+3. select an optional non-wrapping span before applying orientation
+4. normalize each selected path locally to `[0,1]`
+5. select a common correspondence density
+6. retain both paths' existing normalized breakpoints
+7. add any requested minimum-density parameter grid
+8. split boundary-adjacent surface triangles at missing parameters
+9. respect or reverse B orientation as declared
+10. weld or bridge according to seam mode
 
 Boundary count equality must never be assumed. Existing boundary breakpoints
 must not be discarded merely to force an exact count, because their source UV
 and provenance remain part of the authored surface.
+
+An M09 span is `[startT,endT]` in authored boundary order and satisfies
+`0 <= startT < endT <= 1`. Omission preserves the complete-boundary behavior.
+If either endpoint is spanned, both correspondence paths are open chains.
+Off-grid endpoints are source-surface subdivisions, not detached samples, and
+the complete Stitch remains transactional.
 
 For a recorded spherical meridian boundary, cumulative distance is evaluated
 as exact spherical arc length. Any inserted current position is evaluated from
 its source coordinate through the spherical map, so correspondence density
 cannot pull the boundary inside the sphere.
 
-## 10. Numerical tolerances
+## 11. Numerical tolerances
 
 The compiler must centralize tolerances:
 
@@ -191,6 +226,6 @@ self-intersection epsilon
 
 Do not scatter magic epsilon values across operations.
 
-## 11. Derived normals
+## 12. Derived normals
 
 The user does not author normal maps in the core workflow. Geometric normals are derived after topology-affecting operations. An Unlit material can ignore them, but geometry validation and optional lighting still need consistent winding and normals.

@@ -118,6 +118,13 @@ Standard disk boundary:
 perimeter: counter-clockwise when viewed from the panel front
 ```
 
+M09 boundary references may additionally select one normalized, non-wrapping
+arc-length span `[startT,endT]` in authored order. Omission retains the complete
+boundary. Selection is source intent: it happens before B orientation is
+reversed, and off-grid endpoints are inserted by deterministic subdivision of
+the real boundary-adjacent source triangle. A span never denotes detached
+render points or an implicit cut through a panel interior.
+
 ### Seam
 
 A seam links two named boundaries. It describes topology, not merely spatial proximity.
@@ -140,6 +147,7 @@ MVP operation family:
 - fold around a 2D line
 - roll a panel along U or V
 - spherical-wrap an explicit parameter panel
+- toroidal-wrap an explicit parameter panel
 - stitch seam
 - solidify/thicken
 
@@ -188,6 +196,24 @@ diagnostic context are derived evidence and never mutate source or geometry.
 - Near-pole canonicalization must satisfy both angular tolerance and
   `radius * angularDeviationRadians <= weldEpsilon`; scale cannot turn a
   spatially large ring into one logical pole.
+- M09 `ToroidalWrap` accepts the same finite, congruent, non-degenerate current
+  planar embedding and preserves its translation, rotation, or unit reflection.
+  With major radius `R`, minor radius `r`, major angle `a`, and minor angle `b`:
+
+  ```text
+  radial(a) = cos(a) * CurrentU + sin(a) * CurrentNormal
+  P(a,b) = CurrentOrigin
+         + (R + r*cos(b)) * radial(a)
+         + r*sin(b) * CurrentV
+  ```
+
+  The major parameter may follow U or V. M09 requires `R > r > 0`, at most one
+  signed turn per axis, and at least three source segments for a full-turn
+  axis. Normals face the analytical tube-outward direction.
+- A full ToroidalWrap changes only positions. Coincident minimum/maximum edges
+  remain distinct render and topology samples until an explicit Stitch-selected
+  Weld closes that cycle. A closed torus therefore has two authored closure
+  seams and retains separate source UV copies at both attribute seams.
 
 The M04.1 corner/volume records and M05 spherical-surface/sphere-report records
 are read-only derived metadata. Editor wireframe, section, seam, pole, stretch,
@@ -211,6 +237,12 @@ selected seam endpoint must occur strictly before that Stitch. Source preflight
 rejects the opposite order before tessellation, and component planning refuses
 to schedule validation unless the last touching Stitch is later than every
 member wrap.
+
+The same terminal-Stitch source invariant applies to ToroidalWrap. Every
+enabled ToroidalWrap targeting a selected seam endpoint must occur before its
+Stitch; after a panel participates in Stitch, later per-panel deformation is
+rejected until topology-group deformation propagation exists. Solidify remains
+legal because it consumes the complete selected logical topology.
 
 Every operation document must state how it maps source coordinates to 3D and how it preserves boundary ordering.
 

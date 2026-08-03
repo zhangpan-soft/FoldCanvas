@@ -69,6 +69,10 @@ namespace FoldCanvas
         public string PanelId { get; set; } = string.Empty;
 
         public string BoundaryId { get; set; } = string.Empty;
+
+        public bool UseSpan { get; set; }
+
+        public Vector2 Span { get; set; } = new Vector2(0f, 1f);
     }
 
     public sealed class FoldScriptSeam
@@ -173,6 +177,28 @@ namespace FoldCanvas
 
         public SphericalSubdivisionMode SubdivisionMode { get; set; } =
             SphericalSubdivisionMode.PanelGrid;
+    }
+
+    public sealed class FoldScriptToroidalWrapOperation :
+        FoldScriptOperation
+    {
+        public override FoldOperationType Type =>
+            FoldOperationType.ToroidalWrap;
+
+        public string PanelId { get; set; } = "panel";
+
+        public float MajorRadius { get; set; } = 0.5f;
+
+        public float MinorRadius { get; set; } = 0.15f;
+
+        public Vector2 MajorAngleRange { get; set; } =
+            new Vector2(0f, 360f);
+
+        public Vector2 MinorAngleRange { get; set; } =
+            new Vector2(0f, 360f);
+
+        public ToroidalWrapDirection WrapDirection { get; set; } =
+            ToroidalWrapDirection.MajorAlongU;
     }
 
     public sealed class FoldScriptStitchOperation : FoldScriptOperation

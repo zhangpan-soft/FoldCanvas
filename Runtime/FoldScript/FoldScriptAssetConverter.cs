@@ -189,12 +189,8 @@ namespace FoldCanvas
                 asset.Seams.Add(new SeamDefinition
                 {
                     Id = source.Id,
-                    A = new BoundaryReference(
-                        source.A.PanelId,
-                        source.A.BoundaryId),
-                    B = new BoundaryReference(
-                        source.B.PanelId,
-                        source.B.BoundaryId),
+                    A = ToNativeBoundaryReference(source.A),
+                    B = ToNativeBoundaryReference(source.B),
                     Mode = source.Mode,
                     ReverseB = source.ReverseB,
                     SampleCount = source.SampleCount
@@ -294,12 +290,16 @@ namespace FoldCanvas
                     A = new FoldScriptBoundaryReference
                     {
                         PanelId = source.A.PanelId,
-                        BoundaryId = source.A.BoundaryId
+                        BoundaryId = source.A.BoundaryId,
+                        UseSpan = source.A.UseSpan,
+                        Span = source.A.Span
                     },
                     B = new FoldScriptBoundaryReference
                     {
                         PanelId = source.B.PanelId,
-                        BoundaryId = source.B.BoundaryId
+                        BoundaryId = source.B.BoundaryId,
+                        UseSpan = source.B.UseSpan,
+                        Span = source.B.Span
                     },
                     Mode = source.Mode,
                     ReverseB = source.ReverseB,
@@ -366,6 +366,17 @@ namespace FoldCanvas
                         WrapDirection = sphere.WrapDirection,
                         PoleMode = sphere.PoleMode,
                         SubdivisionMode = sphere.SubdivisionMode
+                    };
+                    break;
+                case FoldScriptToroidalWrapOperation torus:
+                    native = new ToroidalWrapOperationDefinition
+                    {
+                        PanelId = torus.PanelId,
+                        MajorRadius = torus.MajorRadius * lengthScale,
+                        MinorRadius = torus.MinorRadius * lengthScale,
+                        MajorAngleRange = torus.MajorAngleRange,
+                        MinorAngleRange = torus.MinorAngleRange,
+                        WrapDirection = torus.WrapDirection
                     };
                     break;
                 case FoldScriptStitchOperation stitch:
@@ -446,6 +457,17 @@ namespace FoldCanvas
                         SubdivisionMode = sphere.SubdivisionMode
                     };
                     break;
+                case ToroidalWrapOperationDefinition torus:
+                    result = new FoldScriptToroidalWrapOperation
+                    {
+                        PanelId = torus.PanelId,
+                        MajorRadius = torus.MajorRadius * metersToUnit,
+                        MinorRadius = torus.MinorRadius * metersToUnit,
+                        MajorAngleRange = torus.MajorAngleRange,
+                        MinorAngleRange = torus.MinorAngleRange,
+                        WrapDirection = torus.WrapDirection
+                    };
+                    break;
                 case StitchOperationDefinition stitch:
                     FoldScriptStitchOperation scriptStitch =
                         new FoldScriptStitchOperation();
@@ -471,6 +493,19 @@ namespace FoldCanvas
             result.Id = operation.Id;
             result.Enabled = operation.Enabled;
             return result;
+        }
+
+        private static BoundaryReference ToNativeBoundaryReference(
+            FoldScriptBoundaryReference reference)
+        {
+            return reference.UseSpan
+                ? new BoundaryReference(
+                    reference.PanelId,
+                    reference.BoundaryId,
+                    reference.Span)
+                : new BoundaryReference(
+                    reference.PanelId,
+                    reference.BoundaryId);
         }
 
         private static float UnitToMeters(FoldScriptUnit units)

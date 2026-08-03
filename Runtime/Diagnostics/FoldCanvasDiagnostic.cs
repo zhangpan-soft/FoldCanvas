@@ -118,6 +118,17 @@ namespace FoldCanvas
         public const string InvalidFoldScriptReference = "FC7010";
         public const string InvalidRepairResponse = "FC7011";
         public const string DuplicateFoldScriptProperty = "FC7012";
+        public const string InvalidBoundarySpan = "FC8001";
+        public const string ToroidalWrapTargetMissing = "FC8002";
+        public const string UnsupportedToroidalWrapPanelShape = "FC8003";
+        public const string NonFiniteToroidalWrapParameter = "FC8004";
+        public const string InvalidToroidalRadius = "FC8005";
+        public const string CollapsedToroidalRange = "FC8006";
+        public const string UnsupportedToroidalMultiTurn = "FC8007";
+        public const string UnsupportedToroidalEmbedding = "FC8008";
+        public const string InsufficientToroidalTessellation = "FC8009";
+        public const string ToroidalWindingFailed = "FC8010";
+        public const string InvalidToroidalWrapDirection = "FC8011";
     }
 
     public sealed class FoldCanvasDiagnosticValue

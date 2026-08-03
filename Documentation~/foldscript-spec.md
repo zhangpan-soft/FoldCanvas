@@ -10,10 +10,11 @@ Field-by-field semantics, units, formulas, defaults, and implementation status:
 Project motivation and the production problem this format addresses:
 [`project-background.md`](project-background.md).
 
-**Implementation status:** M08 implements this `0.1` document as executable
-Runtime import/export. The bounded reader accepts only the fields and operation
-types documented here, canonical output is deterministic, and corrected AI
-output must re-enter the same importer and compiler. See
+**Implementation status:** M09 implements this `0.1` document as executable
+Runtime import/export over boundary spans and toroidal mapping as well as the
+earlier operation family. The bounded reader accepts only the fields and
+operation types documented here, canonical output is deterministic, and
+corrected AI output must re-enter the same importer and compiler. See
 [FoldScript 0.1 runtime and Editor workflow](foldscript-runtime.md).
 
 ## 1. Goals
@@ -171,6 +172,28 @@ Its eight explicit panels cover adjacent 45-degree longitude ranges, share one
 radius and current frame, and Weld eight ordered side seams into one validated
 closed sphere.
 
+### Toroidal wrap
+
+```json
+{
+  "id": "wrap-torus",
+  "type": "toroidalWrap",
+  "panel": "torus-chart",
+  "majorRadius": 0.60,
+  "minorRadius": 0.18,
+  "majorAngleRange": [0.0, 360.0],
+  "minorAngleRange": [0.0, 360.0],
+  "wrapDirection": "majorAlongU"
+}
+```
+
+M09 maps the authored rectangle in its current congruent planar frame. It
+requires `majorRadius > minorRadius > 0`, at most one signed turn on each axis,
+and at least three source segments for each full-turn direction. The operation
+only changes positions and outward winding. Closing the major and minor cycles
+requires two declared seams selected by a later `stitch`; coincident edge
+positions do not weld automatically.
+
 ### Solidify
 
 ```json
@@ -200,6 +223,28 @@ A zero sample count asks M04 to use the sorted union of both boundaries'
 existing normalized arc-length breakpoints. A positive value additionally adds
 a uniform minimum-density grid. Missing samples are inserted into the actual
 source surfaces; authored breakpoints are never discarded.
+
+M09 may select a normalized non-wrapping sub-chain on either endpoint:
+
+```json
+{
+  "id": "attach-handle-a",
+  "a": { "panel": "handle", "boundary": "vMin" },
+  "b": {
+    "panel": "wall",
+    "boundary": "vMax",
+    "span": [0.0, 0.0416666667]
+  },
+  "mode": "weld",
+  "reverseB": true,
+  "sampleCount": 0
+}
+```
+
+The span is measured by normalized current-space arc length in authored
+boundary order and must satisfy `0 <= startT < endT <= 1`. It is selected before
+`reverseB`; omission preserves the complete-boundary behavior. Off-grid
+endpoints split the real boundary-adjacent source triangle transactionally.
 
 Cup-bottom seam:
 
@@ -310,7 +355,7 @@ example.
 
 ## 7. Versioning
 
-- Any schema version other than exact `"0.1"` is an error in M08.
+- Any schema version other than exact `"0.1"` is an error.
 - Unknown operation types are errors.
 - Unknown fields outside the top-level `extensions` object are errors; required
   fields are never guessed or silently defaulted.
@@ -319,7 +364,7 @@ example.
 
 ## 8. Canonical interchange and safety
 
-The M08 writer emits root properties in this order:
+The canonical writer emits root properties in this order:
 
 ```text
 schemaVersion, assetId, displayName, units, canvas,

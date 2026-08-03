@@ -56,11 +56,12 @@ independent of current locale.
 ## Units
 
 FoldScript may declare `meter`, `centimeter`, or `millimeter`. Physical panel
-sizes, translations, Roll/SphericalWrap radii, Solidify thickness, and physical
-compile tolerances are converted to meters before native compilation. Angles,
-normalized canvas rectangles, normalized Fold lines, counts, IDs, booleans,
-and validation levels are not scaled. Export converts native meter values back
-to the document's retained unit.
+sizes, translations, Roll/SphericalWrap/ToroidalWrap radii, Solidify thickness,
+and physical compile tolerances are converted to meters before native
+compilation. Angles, normalized canvas rectangles, normalized Fold lines,
+normalized boundary spans, counts, IDs, booleans, and validation levels are not
+scaled. Export converts native meter values back to the document's retained
+unit.
 
 ## Untrusted-input boundary
 

@@ -2,7 +2,7 @@ namespace FoldCanvas
 {
     public static class FoldCanvasVersion
     {
-        public const string Package = "0.1.0-preview.16";
+        public const string Package = "0.1.0-preview.17";
 
         public const string Compiler = Package;
     }

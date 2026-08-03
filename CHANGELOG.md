@@ -8,6 +8,51 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 No unreleased changes.
 
+## [0.1.0-preview.17] - 2026-08-03
+
+### Added
+
+- Optional normalized, non-wrapping boundary-reference spans with deterministic
+  off-grid endpoint insertion through adjacent source-triangle subdivision
+- `ToroidalWrap` for explicit rectangular parameter panels, including current-
+  frame mapping, signed major/minor ranges, two axis assignments, outward
+  winding, one-turn limits, and stable `FC8001`-`FC8011` diagnostics
+- FoldScript DTO, bounded decoder, canonical serializer, unit conversion, JSON
+  Schema, and M06 authoring controls for boundary spans and `toroidalWrap`
+- M09 torus proof whose two parameter cycles close only through explicit Weld
+  seams, with Euler characteristic zero and retained UV seam render copies
+- M09 handle-cup proof built from an ordinary rectangular strip, two existing
+  rigid Fold operations, two cup-rim boundary spans, terminal Stitch, and one
+  final Solidify into a closed connected volume
+- Owned Editor-only textured, solid-color, wireframe, source-canvas, camera,
+  and topology-report proof hierarchy plus a package sample guide
+- 32 focused M09 Edit Mode tests plus Editor workflow and authoring regressions
+  for deterministic spans, toroidal mapping, FoldScript, topology, and proof
+  ownership
+
+### Changed
+
+- Boundary correspondence now selects an authored span before applying
+  `reverseB`, treats spanned paths as open chains, and rolls back inserted
+  geometry when a later selected seam fails
+- Terminal-Stitch preflight and execution now include `ToroidalWrap`
+- Package version advanced to `0.1.0-preview.17`
+
+### Verified
+
+- Unity `6000.3.20f1` passed all 360 Edit Mode tests with zero failures,
+  skips, or inconclusive results
+- The M09 proof command compiled both explicit 2D sources and created the
+  derived torus and handled-cup validation hierarchy without Unity primitives
+- Repository validation, JSON parsing, Runtime/Editor assembly isolation, and
+  `git diff --check` passed
+
+### Not included
+
+- No arbitrary sweep path, panel-interior hole, Boolean/CSG operation, implicit
+  proximity weld, multi-turn torus, bevel, subdivision, smoothing, remeshing,
+  Mesh cleanup, runtime network generation, or M10 work was added
+
 ## [0.1.0-preview.16] - 2026-08-03
 
 ### Added

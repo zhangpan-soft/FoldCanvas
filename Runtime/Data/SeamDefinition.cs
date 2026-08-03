@@ -20,15 +20,50 @@ namespace FoldCanvas
         [SerializeField]
         private string boundaryId;
 
+        [SerializeField]
+        private bool useSpan;
+
+        [SerializeField]
+        private Vector2 span;
+
         public BoundaryReference(string panel, string boundary)
         {
             panelId = panel;
             boundaryId = boundary;
+            useSpan = false;
+            span = new Vector2(0f, 1f);
+        }
+
+        public BoundaryReference(
+            string panel,
+            string boundary,
+            Vector2 normalizedSpan)
+        {
+            panelId = panel;
+            boundaryId = boundary;
+            useSpan = true;
+            span = normalizedSpan;
         }
 
         public string PanelId => panelId;
 
         public string BoundaryId => boundaryId;
+
+        /// <summary>
+        /// When true, Stitch selects only <see cref="Span"/> from the
+        /// boundary's authored direction. Omission preserves the complete
+        /// boundary contract.
+        /// </summary>
+        public bool UseSpan => useSpan;
+
+        /// <summary>
+        /// Normalized non-wrapping arc-length interval in authored boundary
+        /// order. The value is meaningful only when <see cref="UseSpan"/> is
+        /// true.
+        /// </summary>
+        public Vector2 Span => useSpan
+            ? span
+            : new Vector2(0f, 1f);
     }
 
     [Serializable]

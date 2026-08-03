@@ -340,6 +340,29 @@ namespace FoldCanvas
                     continue;
                 }
 
+                if (operation is
+                    ToroidalWrapOperationDefinition toroidalWrap)
+                {
+                    if (RejectPostStitchDeformation(
+                        toroidalWrap.PanelId,
+                        toroidalWrap.Id,
+                        stitchedPanelIds,
+                        result))
+                    {
+                        return;
+                    }
+
+                    if (!ToroidalWrapExecutor.TryExecute(
+                        toroidalWrap,
+                        buffer,
+                        result))
+                    {
+                        return;
+                    }
+
+                    continue;
+                }
+
                 if (operation is StitchOperationDefinition stitch)
                 {
                     if (!StitchExecutor.TryExecute(
@@ -541,6 +564,16 @@ namespace FoldCanvas
                         SphericalWrapOperationDefinition earlierWrap &&
                     string.Equals(
                         earlierWrap.PanelId,
+                        panelId,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                if (previous is
+                        ToroidalWrapOperationDefinition toroidalWrap &&
+                    string.Equals(
+                        toroidalWrap.PanelId,
                         panelId,
                         StringComparison.Ordinal))
                 {

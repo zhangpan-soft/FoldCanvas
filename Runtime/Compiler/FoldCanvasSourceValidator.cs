@@ -277,6 +277,8 @@ namespace FoldCanvas
                 BuildPanelLookup(asset);
             Dictionary<string, int> sphericalWrapIndexByPanel =
                 BuildSphericalWrapIndexLookup(asset);
+            Dictionary<string, int> toroidalWrapIndexByPanel =
+                BuildToroidalWrapIndexLookup(asset);
             for (int i = 0; i < asset.Seams.Count; i++)
             {
                 SeamDefinition seam = asset.Seams[i];
@@ -374,8 +376,48 @@ namespace FoldCanvas
                         operationIndex,
                         sphericalWrapIndexByPanel,
                         result);
+                    ValidateToroidalWrapBeforeStitch(
+                        seam.A,
+                        "A",
+                        seam.Id,
+                        stitch.Id,
+                        operationIndex,
+                        toroidalWrapIndexByPanel,
+                        result);
+                    ValidateToroidalWrapBeforeStitch(
+                        seam.B,
+                        "B",
+                        seam.Id,
+                        stitch.Id,
+                        operationIndex,
+                        toroidalWrapIndexByPanel,
+                        result);
                 }
             }
+        }
+
+        private static Dictionary<string, int>
+            BuildToroidalWrapIndexLookup(FoldCanvasAsset asset)
+        {
+            Dictionary<string, int> operationIndexByPanel =
+                new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int operationIndex = 0;
+                operationIndex < asset.Operations.Count;
+                operationIndex++)
+            {
+                if (!(asset.Operations[operationIndex] is
+                        ToroidalWrapOperationDefinition toroidalWrap) ||
+                    !toroidalWrap.Enabled ||
+                    string.IsNullOrWhiteSpace(toroidalWrap.PanelId))
+                {
+                    continue;
+                }
+
+                operationIndexByPanel[toroidalWrap.PanelId] =
+                    operationIndex;
+            }
+
+            return operationIndexByPanel;
         }
 
         private static Dictionary<string, int>
@@ -434,6 +476,44 @@ namespace FoldCanvas
                     new FoldCanvasDiagnosticValue(
                         "sphericalWrapOperationIndex",
                         sphericalWrapOperationIndex),
+                    new FoldCanvasDiagnosticValue(
+                        "stitchOperationIndex",
+                        stitchOperationIndex)
+                }));
+        }
+
+        private static void ValidateToroidalWrapBeforeStitch(
+            BoundaryReference reference,
+            string endpointName,
+            string seamId,
+            string stitchOperationId,
+            int stitchOperationIndex,
+            Dictionary<string, int> toroidalWrapIndexByPanel,
+            FoldCanvasCompileResult result)
+        {
+            string panelId = reference.PanelId;
+            if (string.IsNullOrWhiteSpace(panelId) ||
+                !toroidalWrapIndexByPanel.TryGetValue(
+                    panelId,
+                    out int toroidalWrapOperationIndex) ||
+                toroidalWrapOperationIndex < stitchOperationIndex)
+            {
+                return;
+            }
+
+            result.Add(new FoldCanvasDiagnostic(
+                FoldCanvasDiagnosticCodes
+                    .StitchMustBeTerminalForSelectedPanels,
+                FoldCanvasDiagnosticSeverity.Error,
+                $"ToroidalWrap for Stitch-selected seam endpoint {endpointName} must occur before the Stitch because Stitch is terminal for every selected panel.",
+                panelId,
+                stitchOperationId,
+                seamId,
+                values: new[]
+                {
+                    new FoldCanvasDiagnosticValue(
+                        "toroidalWrapOperationIndex",
+                        toroidalWrapOperationIndex),
                     new FoldCanvasDiagnosticValue(
                         "stitchOperationIndex",
                         stitchOperationIndex)
@@ -571,6 +651,36 @@ namespace FoldCanvas
                     panelId,
                     operationId,
                     seamId));
+                return;
+            }
+
+            if (reference.UseSpan &&
+                (!FiniteMath.IsFinite(reference.Span) ||
+                 reference.Span.x < 0f ||
+                 reference.Span.y > 1f ||
+                 reference.Span.x >= reference.Span.y))
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.InvalidBoundarySpan,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    $"Stitch-selected seam endpoint {endpointName} must use a finite non-wrapping boundary span satisfying 0 <= startT < endT <= 1.",
+                    panelId,
+                    operationId,
+                    seamId,
+                    values: new[]
+                    {
+                        new FoldCanvasDiagnosticValue(
+                            "startT",
+                            FiniteMath.IsFinite(reference.Span.x)
+                                ? reference.Span.x
+                                : 0d),
+                        new FoldCanvasDiagnosticValue(
+                            "endT",
+                            FiniteMath.IsFinite(reference.Span.y)
+                                ? reference.Span.y
+                                : 0d)
+                    },
+                    boundaryId: boundaryId));
             }
         }
 

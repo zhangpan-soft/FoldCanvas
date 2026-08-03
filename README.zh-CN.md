@@ -84,6 +84,14 @@ FoldCanvas 不把 Mesh 当作源文件，而把它视为编译产物：
   FoldScript 重新进入普通导入器和编译器，核心包不依赖模型 SDK 或网络
 - M06 工作区新增 Import JSON、Export JSON、Copy Repair Payload，并提供显式
   资产归属、覆盖 Undo 与失败导入不污染目标的保证
+- BoundaryReference 可选择归一化、非环绕的边界区间；离网格端点会确定性拆分
+  真实的边界相邻源三角形，不会生成悬空渲染点
+- `ToroidalWrap` 可把一个明确的二维矩形参数面板映射为环面曲面，保留当前局部
+  框架、正负主/次角范围、向外绕序，并且只允许显式 Weld 关闭周期
+- 一个二维矩形与两条显式闭合 Seam 可生成欧拉示性数为 0 的闭合环面；两个
+  UV 属性接缝仍保留各自二维来源的渲染顶点
+- 杯把使用普通矩形条、刚体定位、两次网格对齐 Fold、两个杯口边界区间 Weld
+  和最终 Solidify，与杯体形成单一闭合连通体，不使用导入 Mesh 或布尔运算
 - Edit Mode 测试
 - 完整架构、FoldScript 规格、路线图与 Codex 分阶段提示词
 
@@ -125,6 +133,13 @@ M08 把 FoldScript `0.1` 变成真正可执行、可移植的源合同。Runtime
 发网络请求或自动接受修复。完整合同见
 [《M08 FoldScript Runtime 与 Editor 工作流》](Documentation~/foldscript-runtime.md)。
 
+M09 用可审查的二维源证明非平凡环状拓扑。`ToroidalWrap` 只负责把矩形参数域
+映射到环面位置，主环与管环仍必须分别通过声明的 Seam 和 `Stitch` Weld；位置
+重合不会自动改变拓扑。边界引用新增归一化非环绕区间，因此杯把可以继续使用
+普通矩形条，通过既有 RigidTransform、两次 Fold、两个杯口连接区间、终端
+Stitch 与最终 Solidify 生成。Mesh 仍可随时删除重编，完整说明见
+[《M09 非平凡拓扑样例》](Samples~/Topology/README.md)。
+
 ## 七条项目宪法
 
 1. **二维源文件拥有最高权威。** Mesh 可以删除并重新生成。
@@ -163,7 +178,10 @@ M08 把 FoldScript `0.1` 变成真正可执行、可移植的源合同。Runtime
    无贴图闭合体、逻辑线框、截面与内外硬角；执行
    `Tools > FoldCanvas > Create Sphere Proof` 可查看 M05 二维球瓣、纹理球、
    单面纯材质球、接缝/极点、UV 拉伸、半径误差与闭合报告。所有证明相机均由
-   FoldCanvas 自己拥有，不会修改项目已有 MainCamera。
+   FoldCanvas 自己拥有，不会修改项目已有 MainCamera。执行
+   `Tools > FoldCanvas > Create M09 Topology Proof` 可查看由二维矩形、显式
+   双周期 Weld 生成的环面，以及由折叠矩形条和杯口边界区间生成的闭合把手杯；
+   同时提供纹理、单面纯色、逻辑线框、二维源画布和拓扑报告视图。
 
 ## 持续集成
 

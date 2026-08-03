@@ -827,6 +827,12 @@ namespace FoldCanvas.Editor
                         Id = CreateUniqueOperationId("spherical-wrap"),
                         PanelId = panelId
                     };
+                case FoldOperationType.ToroidalWrap:
+                    return new ToroidalWrapOperationDefinition
+                    {
+                        Id = CreateUniqueOperationId("toroidal-wrap"),
+                        PanelId = panelId
+                    };
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type));
             }
@@ -842,7 +848,10 @@ namespace FoldCanvas.Editor
                         oldId,
                         StringComparison.Ordinal))
                 {
-                    seam.A = new BoundaryReference(newId, seam.A.BoundaryId);
+                    seam.A = WithBoundaryTarget(
+                        seam.A,
+                        newId,
+                        seam.A.BoundaryId);
                 }
 
                 if (string.Equals(
@@ -850,7 +859,10 @@ namespace FoldCanvas.Editor
                         oldId,
                         StringComparison.Ordinal))
                 {
-                    seam.B = new BoundaryReference(newId, seam.B.BoundaryId);
+                    seam.B = WithBoundaryTarget(
+                        seam.B,
+                        newId,
+                        seam.B.BoundaryId);
                 }
             }
 
@@ -874,6 +886,12 @@ namespace FoldCanvas.Editor
                     case SphericalWrapOperationDefinition sphericalWrap:
                         sphericalWrap.PanelId = RewriteValue(
                             sphericalWrap.PanelId,
+                            oldId,
+                            newId);
+                        break;
+                    case ToroidalWrapOperationDefinition toroidalWrap:
+                        toroidalWrap.PanelId = RewriteValue(
+                            toroidalWrap.PanelId,
                             oldId,
                             newId);
                         break;
@@ -950,9 +968,24 @@ namespace FoldCanvas.Editor
                         sphericalWrap.PanelId,
                         panelId,
                         StringComparison.Ordinal);
+                case ToroidalWrapOperationDefinition toroidalWrap:
+                    return string.Equals(
+                        toroidalWrap.PanelId,
+                        panelId,
+                        StringComparison.Ordinal);
                 default:
                     return false;
             }
+        }
+
+        private static BoundaryReference WithBoundaryTarget(
+            BoundaryReference source,
+            string panelId,
+            string boundaryId)
+        {
+            return source.UseSpan
+                ? new BoundaryReference(panelId, boundaryId, source.Span)
+                : new BoundaryReference(panelId, boundaryId);
         }
 
         private static string RewriteValue(

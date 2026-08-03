@@ -65,6 +65,20 @@ namespace FoldCanvas
                 return false;
             }
 
+            if (seam.A.UseSpan || seam.B.UseSpan)
+            {
+                return TryCreateSpanCorrespondence(
+                    seam,
+                    operationId,
+                    panelA,
+                    boundaryA,
+                    panelB,
+                    boundaryB,
+                    buffer,
+                    result,
+                    out correspondence);
+            }
+
             if (!TryBuildPath(
                     panelA,
                     boundaryA,
@@ -183,6 +197,21 @@ namespace FoldCanvas
                 return false;
             }
 
+            if (seam.A.UseSpan || seam.B.UseSpan)
+            {
+                return TryEstimateSpanGeometry(
+                    seam,
+                    operationId,
+                    panelA,
+                    boundaryA,
+                    panelB,
+                    boundaryB,
+                    buffer,
+                    result,
+                    out additionalVertices,
+                    out additionalTriangles);
+            }
+
             if (!TryBuildPath(
                     panelA,
                     boundaryA,
@@ -254,6 +283,346 @@ namespace FoldCanvas
             return true;
         }
 
+        private static bool TryCreateSpanCorrespondence(
+            SeamDefinition seam,
+            string operationId,
+            PanelBuildRecord panelA,
+            BoundaryBuildRecord boundaryA,
+            PanelBuildRecord panelB,
+            BoundaryBuildRecord boundaryB,
+            MeshBuildBuffer buffer,
+            FoldCanvasCompileResult result,
+            out SeamCorrespondence correspondence)
+        {
+            correspondence = null;
+            if (!TryBuildPath(
+                    panelA,
+                    boundaryA,
+                    false,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath fullPathA) ||
+                !TryBuildPath(
+                    panelB,
+                    boundaryB,
+                    false,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath fullPathB) ||
+                !TryGetSpan(
+                    seam.A,
+                    "A",
+                    seam,
+                    operationId,
+                    result,
+                    out Vector2 spanA) ||
+                !TryGetSpan(
+                    seam.B,
+                    "B",
+                    seam,
+                    operationId,
+                    result,
+                    out Vector2 spanB))
+            {
+                return false;
+            }
+
+            List<float> localA = BuildSpanBreakpoints(
+                fullPathA,
+                spanA,
+                false);
+            List<float> localB = BuildSpanBreakpoints(
+                fullPathB,
+                spanB,
+                seam.ReverseB);
+            List<float> common = BuildCommonParameters(
+                localA,
+                localB,
+                seam.SampleCount,
+                false);
+
+            if (!TryEnsureSpanParameters(
+                    panelA,
+                    boundaryA,
+                    spanA,
+                    false,
+                    common,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out List<int> samplesA) ||
+                !TryEnsureSpanParameters(
+                    panelB,
+                    boundaryB,
+                    spanB,
+                    seam.ReverseB,
+                    common,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out List<int> samplesB))
+            {
+                return false;
+            }
+
+            correspondence = new SeamCorrespondence(
+                samplesA,
+                samplesB,
+                false);
+            return true;
+        }
+
+        private static bool TryEstimateSpanGeometry(
+            SeamDefinition seam,
+            string operationId,
+            PanelBuildRecord panelA,
+            BoundaryBuildRecord boundaryA,
+            PanelBuildRecord panelB,
+            BoundaryBuildRecord boundaryB,
+            MeshBuildBuffer buffer,
+            FoldCanvasCompileResult result,
+            out long additionalVertices,
+            out long additionalTriangles)
+        {
+            additionalVertices = 0L;
+            additionalTriangles = 0L;
+            if (!TryBuildPath(
+                    panelA,
+                    boundaryA,
+                    false,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath fullPathA) ||
+                !TryBuildPath(
+                    panelB,
+                    boundaryB,
+                    false,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out BoundaryPath fullPathB) ||
+                !TryGetSpan(
+                    seam.A,
+                    "A",
+                    seam,
+                    operationId,
+                    result,
+                    out Vector2 spanA) ||
+                !TryGetSpan(
+                    seam.B,
+                    "B",
+                    seam,
+                    operationId,
+                    result,
+                    out Vector2 spanB))
+            {
+                return false;
+            }
+
+            List<float> localA = BuildSpanBreakpoints(
+                fullPathA,
+                spanA,
+                false);
+            List<float> localB = BuildSpanBreakpoints(
+                fullPathB,
+                spanB,
+                seam.ReverseB);
+            List<float> common = BuildCommonParameters(
+                localA,
+                localB,
+                seam.SampleCount,
+                false);
+
+            try
+            {
+                checked
+                {
+                    additionalVertices =
+                        CountMissingSpanParameters(
+                            fullPathA,
+                            spanA,
+                            false,
+                            common) +
+                        CountMissingSpanParameters(
+                            fullPathB,
+                            spanB,
+                            seam.ReverseB,
+                            common);
+                    additionalTriangles = additionalVertices;
+                    if (seam.Mode == SeamMode.Bridge)
+                    {
+                        additionalTriangles +=
+                            2L * (common.Count - 1L);
+                    }
+                }
+            }
+            catch (OverflowException)
+            {
+                result.Add(new FoldCanvasDiagnostic(
+                    FoldCanvasDiagnosticCodes.GeometryBudgetOverflow,
+                    FoldCanvasDiagnosticSeverity.Error,
+                    "Boundary-span Stitch geometry preflight overflowed its count representation.",
+                    operationId: operationId,
+                    seamId: seam.Id));
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryGetSpan(
+            BoundaryReference reference,
+            string endpointName,
+            SeamDefinition seam,
+            string operationId,
+            FoldCanvasCompileResult result,
+            out Vector2 span)
+        {
+            span = reference.UseSpan
+                ? reference.Span
+                : new Vector2(0f, 1f);
+            if (FiniteMath.IsFinite(span) &&
+                span.x >= 0f &&
+                span.y <= 1f &&
+                span.x < span.y)
+            {
+                return true;
+            }
+
+            result.Add(new FoldCanvasDiagnostic(
+                FoldCanvasDiagnosticCodes.InvalidBoundarySpan,
+                FoldCanvasDiagnosticSeverity.Error,
+                $"Stitch seam endpoint {endpointName} must use a finite non-wrapping boundary span satisfying 0 <= startT < endT <= 1.",
+                reference.PanelId,
+                operationId,
+                seam.Id,
+                values: new[]
+                {
+                    new FoldCanvasDiagnosticValue(
+                        "startT",
+                        FiniteMath.IsFinite(span.x) ? span.x : 0d),
+                    new FoldCanvasDiagnosticValue(
+                        "endT",
+                        FiniteMath.IsFinite(span.y) ? span.y : 0d)
+                },
+                boundaryId: reference.BoundaryId));
+            return false;
+        }
+
+        private static List<float> BuildSpanBreakpoints(
+            BoundaryPath fullPath,
+            Vector2 span,
+            bool reverse)
+        {
+            float spanLength = span.y - span.x;
+            List<float> parameters = new List<float>
+            {
+                0f,
+                1f
+            };
+            for (int i = 0; i < fullPath.Parameters.Length; i++)
+            {
+                float parameter = fullPath.Parameters[i];
+                if (parameter <= span.x + ParameterTolerance ||
+                    parameter >= span.y - ParameterTolerance)
+                {
+                    continue;
+                }
+
+                float local = (parameter - span.x) / spanLength;
+                parameters.Add(reverse ? 1f - local : local);
+            }
+
+            parameters.Sort();
+            RemoveNearDuplicateParameters(parameters);
+            return parameters;
+        }
+
+        private static bool TryEnsureSpanParameters(
+            PanelBuildRecord panel,
+            BoundaryBuildRecord boundary,
+            Vector2 span,
+            bool reverse,
+            IReadOnlyList<float> localParameters,
+            MeshBuildBuffer buffer,
+            SeamDefinition seam,
+            string operationId,
+            FoldCanvasCompileResult result,
+            out List<int> samples)
+        {
+            List<float> globalParameters = new List<float>(
+                localParameters.Count);
+            float spanLength = span.y - span.x;
+            if (!reverse)
+            {
+                for (int i = 0; i < localParameters.Count; i++)
+                {
+                    globalParameters.Add(
+                        span.x + localParameters[i] * spanLength);
+                }
+            }
+            else
+            {
+                for (int i = localParameters.Count - 1; i >= 0; i--)
+                {
+                    globalParameters.Add(
+                        span.y - localParameters[i] * spanLength);
+                }
+            }
+
+            if (!TryEnsureParameters(
+                    panel,
+                    boundary,
+                    false,
+                    globalParameters,
+                    buffer,
+                    seam,
+                    operationId,
+                    result,
+                    out samples))
+            {
+                return false;
+            }
+
+            if (reverse)
+            {
+                samples.Reverse();
+            }
+
+            return true;
+        }
+
+        private static long CountMissingSpanParameters(
+            BoundaryPath fullPath,
+            Vector2 span,
+            bool reverse,
+            IReadOnlyList<float> localParameters)
+        {
+            long missing = 0L;
+            float spanLength = span.y - span.x;
+            for (int i = 0; i < localParameters.Count; i++)
+            {
+                float global = reverse
+                    ? span.y - localParameters[i] * spanLength
+                    : span.x + localParameters[i] * spanLength;
+                if (!HasExistingSample(fullPath, global))
+                {
+                    missing++;
+                }
+            }
+
+            return missing;
+        }
+
         private static bool TryResolveBoundary(
             BoundaryReference reference,
             string seamId,
@@ -314,6 +683,17 @@ namespace FoldCanvas
                 parameterIndex++)
             {
                 float parameter = parameters[parameterIndex];
+                if (path.IsClosed &&
+                    Mathf.Abs(parameter - 1f) <= ParameterTolerance)
+                {
+                    sampleIndices[parameterIndex] =
+                        path.RepeatedTerminal
+                            ? path.OrderedIndices[
+                                path.OrderedIndices.Count - 1]
+                            : path.OrderedIndices[0];
+                    continue;
+                }
+
                 int existingIndex =
                     FindExistingSampleIndex(path, parameter);
                 if (existingIndex >= 0)
@@ -807,36 +1187,52 @@ namespace FoldCanvas
             return parameters;
         }
 
+        private static List<float> BuildCommonParameters(
+            IReadOnlyList<float> parametersA,
+            IReadOnlyList<float> parametersB,
+            int sampleCount,
+            bool isClosed)
+        {
+            List<float> parameters = new List<float>();
+            AddParameters(parameters, parametersA);
+            AddParameters(parameters, parametersB);
+            AddUniformParameters(parameters, sampleCount, isClosed);
+            parameters.Sort();
+            RemoveNearDuplicateParameters(parameters);
+            return parameters;
+        }
+
         private static long CountMissingParameters(
             BoundaryPath path,
             IReadOnlyList<float> parameters)
         {
             long missing = 0L;
-            int existingIndex = 0;
             for (int parameterIndex = 0;
                 parameterIndex < parameters.Count;
                 parameterIndex++)
             {
-                float parameter = parameters[parameterIndex];
-                while (existingIndex < path.Parameters.Length &&
-                    path.Parameters[existingIndex] <
-                        parameter - ParameterTolerance)
-                {
-                    existingIndex++;
-                }
-
-                bool exists =
-                    existingIndex < path.Parameters.Length &&
-                    Mathf.Abs(
-                        path.Parameters[existingIndex] -
-                        parameter) <= ParameterTolerance;
-                if (!exists)
+                if (!HasExistingSample(
+                        path,
+                        parameters[parameterIndex]))
                 {
                     missing++;
                 }
             }
 
             return missing;
+        }
+
+        private static bool HasExistingSample(
+            BoundaryPath path,
+            float parameter)
+        {
+            if (path.IsClosed &&
+                Mathf.Abs(parameter - 1f) <= ParameterTolerance)
+            {
+                return true;
+            }
+
+            return FindExistingSampleIndex(path, parameter) >= 0;
         }
 
         private static bool ValidateSampleCount(
