@@ -139,6 +139,10 @@ select work without reading the full internal milestone history.
   contract, full commit, archive, and public-release checks fail closed.
 - **Community issues become vague backlog:** publish only tasks with user value,
   bounded files/contracts, acceptance, and non-goals; close stale duplicates.
+- **Fork CI either leaks secrets or cannot run Unity:** never send Unity or
+  Actions secrets to fork code. Run only read-only checks on the fork, fail the
+  base-owned trust gate, review the exact diff, and use a maintainer-owned
+  integration PR for privileged Unity evidence.
 - **RC2 bytes drift:** M16 changes only release-excluded files and reruns the
   deterministic package hash check.
 - **User scratch contamination:** stage explicit paths only; never include the
@@ -175,6 +179,18 @@ select work without reading the full internal milestone history.
   `72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`.
   Repository, candidate, public-release, upgrade, clean-install, handoff,
   stable-exit, soak, gate-ledger, JSON/YAML, link, and diff checks pass locally.
+- 2026-08-04: PR #16 exact head `82defcb8` passed 472/472 Edit Mode and all
+  consumer gates, was audited, and merged as `211d55c`; `main` now has strict
+  PR/check/conversation protection with admin enforcement.
+- 2026-08-04: Pre-recruitment audit confirmed GitHub correctly withholds Unity
+  secrets from fork PRs. Began the fail-closed fork intake gate and documented
+  maintainer-owned integration PR path rather than exposing credentials or
+  silently accepting skipped Unity evidence.
+- 2026-08-04: Manual candidate soak `30910305230` passed 472/472 Edit Mode,
+  512/512 robustness, and 5/5 resources, but correctly recorded itself as
+  non-qualifying. Stable evaluation `30910883290` verified 14/14 historical
+  gates and zero release blockers while remaining blocked at 0/2 schedules and
+  under 168 hours.
 - 2026-08-04: Defined external AI agents as fork/PR-only untrusted
   contributors. Moltbook is an optional recruitment surface, never a code or
   credential authority; its separate terms/public identity confirmation remain

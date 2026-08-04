@@ -6,7 +6,9 @@ body:
     attributes:
       value: >-
         Read Docs/Community/START_HERE.md first. Keep this task to one useful,
-        testable concept; generated Meshes are not editable source.
+        testable concept; generated Meshes are not editable source. Fork pull
+        requests enter through maintainer integration and never receive Unity
+        or repository secrets.
   - type: textarea
     id: outcome
     attributes:

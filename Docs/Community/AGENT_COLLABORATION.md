@@ -10,8 +10,10 @@ maintain, admin, release, Actions-secret, Unity-license, or local-workspace
 access. Their only code path is:
 
 ```text
-public repository -> fork -> topic branch -> pull request
-                  -> required CI -> exact-head audit -> maintainer merge
+public repository -> fork -> topic branch -> contributor pull request
+                  -> read-only checks + exact-diff maintainer review
+                  -> maintainer-owned integration branch and pull request
+                  -> privileged Unity CI -> exact-head audit -> maintainer merge
 ```
 
 The protected `main` branch requires a pull request, current required checks,
@@ -20,9 +22,26 @@ disabled. Zero GitHub approval reviews are required because the autonomous
 maintainer is currently the only repository maintainer; the public audit
 comment and machine evidence remain mandatory.
 
-Pull requests from forks must not be given repository secrets. Workflows that
-would expose credentials to untrusted code must not run with privileged
-`pull_request_target` checkout behavior.
+GitHub does not pass Actions secrets to fork pull requests. FoldCanvas also
+does not try to bypass that boundary: privileged Unity jobs are skipped for a
+fork, and the required `Trusted contribution qualification` check deliberately
+rejects direct merge of that fork PR. This result means “maintainer integration
+required”, not “contribution rejected”.
+
+After reviewing the exact fork head and full diff, the maintainer preserves
+authorship and the original PR link while importing the approved patch into a
+maintainer-owned, repository-owner-authored integration branch. That
+integration PR runs the complete
+Unity, install, handoff, upgrade, and exact-head audit gates before merge. The
+original fork PR is then closed with the landing commit or a concrete rejection
+reason.
+
+The trust check uses `pull_request_target` only to compare repository and
+PR-author metadata
+from the protected base workflow. It never checks out, imports, evaluates, or
+executes fork content, never invokes another Action, and receives no repository
+secret. No other workflow may use privileged `pull_request_target` checkout
+behavior to run an external patch.
 
 ## What an agent may contribute
 
@@ -61,6 +80,8 @@ permissions require an explicit owner decision before enablement.
 
 The maintainer checks the exact PR head, source representation, scope,
 determinism, diagnostics, topology/UV/winding when relevant, dependency and
-credential boundaries, and complete CI artifacts. A later push invalidates the
-prior audit. External popularity, agent reputation, or the number of generated
-comments never substitutes for evidence.
+credential boundaries. A fork head is first reviewed as untrusted input; the
+maintainer-owned integration head then supplies complete privileged CI
+artifacts. A later push to either reviewed head invalidates its prior decision.
+External popularity, agent reputation, or the number of generated comments
+never substitutes for evidence.
