@@ -872,7 +872,7 @@ for required_fragment in [
     "*.evidence.json",
     "secrets.GITHUB_TOKEN",
     "gh workflow run public-release-qualification.yml",
-    "--ref main",
+    '--ref "$GITHUB_REF_NAME"',
     '--field release_tag="$GITHUB_REF_NAME"',
 ]:
     if required_fragment not in release_workflow:

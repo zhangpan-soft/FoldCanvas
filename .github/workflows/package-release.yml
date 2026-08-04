@@ -98,6 +98,6 @@ jobs:
         run: |
           set -euo pipefail
           gh workflow run public-release-qualification.yml \
-            --ref main \
+            --ref "$GITHUB_REF_NAME" \
             --field release_tag="$GITHUB_REF_NAME" \
             --repo "$GITHUB_REPOSITORY"

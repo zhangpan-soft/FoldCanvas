@@ -199,7 +199,9 @@ the new package. A machine-readable exit report explains exactly why stable
   `public-release-qualification.yml` with `GITHUB_TOKEN` and `actions: write`.
   GitHub documents `workflow_dispatch` as an allowed workflow-to-workflow
   exception, whereas relying on the `release` event from the same token leaves
-  public qualification silently unstarted.
+  public qualification silently unstarted. The dispatch ref is the exact RC
+  tag, not a potentially later `main`, so workflow code, validation scripts,
+  and public bytes share one reviewed source snapshot.
 
 # Final verification
 
