@@ -25,6 +25,9 @@ The format follows Keep a Changelog principles, and package versions follow sema
 - Package/compiler evidence advanced to `1.0.0-rc.2` before the first packaged
   M15 change so the already published `1.0.0-rc.1` byte identity remains
   immutable
+- hosted upgrade jobs restore runner ownership only on their generated,
+  FoldCanvas-owned temporary host before deleting Unity-derived state written
+  by the GameCI container
 
 ### Validated locally
 

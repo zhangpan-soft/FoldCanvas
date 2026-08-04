@@ -369,6 +369,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # GameCI runs Unity in a container, so its derived project state can
+          # be owned by root on the Linux runner. This host is generated and
+          # marked as FoldCanvas-owned before Unity starts.
+          sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-host
           python3 Scripts/advance_upgrade_proof_project.py \
             --project artifacts/m15-upgrade-host \
             --package "${{ steps.upgrade-input.outputs.candidate_archive }}" \
