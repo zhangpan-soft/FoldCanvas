@@ -2,12 +2,13 @@ name: Package release
 
 on:
   workflow_dispatch:
+  pull_request:
   push:
     tags:
-      - "v*"
+      - "v*-rc.*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-package:
@@ -23,6 +24,9 @@ jobs:
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
 
+      - name: Validate M14 release-candidate contract
+        run: python3 Scripts/test_release_candidate.py
+
       - name: Build release archive
         shell: bash
         run: |
@@ -37,15 +41,30 @@ jobs:
       - name: Upload package and digest
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: foldcanvas-upm-package
+          name: foldcanvas-upm-release-candidate
           path: |
             artifacts/package/*.tgz
             artifacts/package/*.sha256
+            artifacts/package/*.manifest.json
+            artifacts/package/*.evidence.json
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish matching tagged release
-        if: startsWith(github.ref, 'refs/tags/v')
+  publish-prerelease:
+    name: Publish exact RC tag
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download validated release-candidate bundle
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: foldcanvas-upm-release-candidate
+          path: artifacts/package
+
+      - name: Publish matching tagged pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -54,6 +73,10 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             artifacts/package/*.tgz \
             artifacts/package/*.sha256 \
+            artifacts/package/*.manifest.json \
+            artifacts/package/*.evidence.json \
             --verify-tag \
+            --prerelease \
             --generate-notes \
+            --repo "$GITHUB_REPOSITORY" \
             --title "FoldCanvas $GITHUB_REF_NAME"

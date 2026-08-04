@@ -1,0 +1,76 @@
+{
+  "format": "foldcanvas-release-candidate",
+  "version": "1",
+  "packageName": "com.foldcanvas.core",
+  "candidateVersion": "1.0.0-rc.1",
+  "stableRelease": false,
+  "foldScriptVersion": "0.1",
+  "unityMatrix": [
+    {
+      "editorVersion": "6000.3.20f1",
+      "packageUnity": "6000.3",
+      "packageUnityRelease": "20f1",
+      "qualification": "required"
+    }
+  ],
+  "publicRuntimeApi": {
+    "assembly": "FoldCanvas.Runtime",
+    "signatureCount": 808,
+    "sha256": "2880e174fc20861971f1f059807296f5220a08cbb6cfca89f3259083981eb31a"
+  },
+  "foldScriptFixtures": [
+    {
+      "id": "cup-schema",
+      "path": "Schema/gpt-cup.example.foldcanvas.json",
+      "sourceSha256": "f3e0710a0620fe85f99dafca6298af0e37608c6781f20dd790a30645063f8849",
+      "canonicalSha256": "bf9e232b070bbadb1010f74b5e7aacd5fff605764ff9e8a83762dd0882b8d31c"
+    },
+    {
+      "id": "production-cup",
+      "path": "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+      "sourceSha256": "44b3c474784736d5e47d974f94b87c56532db01cffc963330d7ae82b88457fc5",
+      "canonicalSha256": "ff9df3d482f1b73820f026093ef3094b0e17f313ebeb26055129af03c41844ff"
+    },
+    {
+      "id": "sphere-gores",
+      "path": "Samples~/Sphere/sphere-golden.foldcanvas.json",
+      "sourceSha256": "2c23c1239e30cf23bdd44f944cf4cbe76c326ac8f346a1e6d55d9bc177032d74",
+      "canonicalSha256": "01c60837aeb2489950340eb27902e1abceea32db2f6a84b69e5cee4ca41daca4"
+    }
+  ],
+  "productionCorpus": {
+    "formatVersion": "1",
+    "caseIds": [
+      "cyclic-torus",
+      "invalid-off-grid-fold",
+      "planar-artwork",
+      "production-cup",
+      "registered-wave",
+      "sphere-gores"
+    ]
+  },
+  "requiredGates": [
+    "clean-install-a",
+    "clean-install-b",
+    "deterministic-release",
+    "m13-robustness-long-run",
+    "production-corpus",
+    "production-handoff-producer",
+    "production-handoff-receiver",
+    "public-runtime-api",
+    "repository-validation",
+    "unity-editmode"
+  ],
+  "rollback": {
+    "packageVersion": "0.1.0-preview.21",
+    "gitCommit": "d9434be",
+    "sourceAuthority": "2d-canvas-plus-foldscript"
+  },
+  "escalations": [
+    "credentials",
+    "external-marketplace-publication",
+    "irreversible-permissions",
+    "legal-decisions",
+    "paid-services"
+  ]
+}

@@ -130,6 +130,31 @@ single release-candidate manifest must identify every frozen contract and gate.
 - 2026-08-04: Created `codex/m14-release-candidate`, defined the RC contract,
   exact support claim, governance boundary, work packages, tests, and rollback
   before implementation. No final `1.0.0` or marketplace decision was made.
+- 2026-08-04: Implemented `1.0.0-rc.1`, the exact `unityRelease: 20f1`
+  manifest row, frozen 808-signature Runtime API digest, three canonical
+  FoldScript compatibility fixtures, package-contained support/release docs,
+  deterministic file-manifest/RC-evidence sidecars, and an RC-only least-
+  privilege release workflow.
+- 2026-08-04: An independent archive-installed Unity `6000.3.20f1` host passed
+  6/6 focused M14 tests and 466/466 complete package tests with zero failures,
+  skips, or inconclusive results. A deliberately invalid `-nographics` run
+  exposed the Gallery view's real graphics requirement and was not counted;
+  the accepted full run used a graphics-capable Editor.
+- 2026-08-04: Repository, deterministic archive, RC contract, clean-install,
+  handoff, Python compilation, and diff checks passed locally. Hosted PR-head
+  Unity, clean-consumer, handoff, release-bundle, and robustness artifacts
+  remain required before autonomous merge.
+- 2026-08-04: Two independent archive-only consumers passed 1/1 each and
+  matched geometry SHA-256
+  `ef61e45fcabb15cb928a9ab0af0d8bb975f0ce3ae68a832b25305152204566f4`,
+  OBJ SHA-256
+  `19256092d37e2080f1914aaec4f056e26d3ddb48f9b104a8ca33772ab0879822`,
+  and stable-evidence SHA-256
+  `fd4917ec720a1d8388971bd3db23d45b92202297861fe41c4828a85cd2ebc43d`.
+  A clean producer and receiver then passed 1/1 each and matched the transferred
+  source, 2,972 render vertices, 2,562 topology vertices, 5,120 triangles, and
+  one closed volume with comparison evidence SHA-256
+  `94e7880f56977a1cb4f137c39aa824409e7c78e5627048fc8ca74664993d7a21`.
 
 # Decisions made
 
@@ -142,7 +167,11 @@ single release-candidate manifest must identify every frozen contract and gate.
 - Autonomous merge requires a public exact-head audit plus green required
   checks; credentials, legal/paid/permission decisions, and marketplace
   publication still escalate.
+- Release evidence is emitted as `built-unverified`; archive construction never
+  claims that Unity, CI, or maintainer audit already passed.
 
 # Final verification
 
-Pending implementation and hosted evidence.
+Implementation and local evidence are complete. Pending draft PR, hosted
+exact-head evidence, autonomous audit, and merge. No final `1.0.0`, external
+marketplace publication, new geometry, or later milestone was implemented.

@@ -64,6 +64,8 @@ if package.get("name") != "com.foldcanvas.core":
     errors.append("package.json name must remain com.foldcanvas.core")
 if package.get("unity") != "6000.3":
     errors.append("package.json Unity baseline must remain 6000.3 during bootstrap")
+if package.get("unityRelease") != "20f1":
+    errors.append("M14 package.json Unity release must be exactly 20f1")
 if package.get("dependencies"):
     errors.append("The M00 core package must not add package dependencies")
 
@@ -113,6 +115,14 @@ required = [
     ".github/workflows/package-release.yml",
     "Scripts/build_release_package.py",
     "Scripts/test_release_package.py",
+    "Scripts/test_release_candidate.py",
+    "SUPPORT.md",
+    "SECURITY.md",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "Documentation~/release-candidate.md",
+    "Documentation~/m14-release-candidate.json",
+    "Schema/foldcanvas-release-candidate.schema.json",
     "Samples~/Gallery/gallery.json",
     "Schema/foldcanvas-gallery.schema.json",
     "Documentation~/m10-performance-baselines.json",
@@ -543,18 +553,120 @@ else:
     ):
         errors.append("M11 expected-invalid corpus evidence changed")
 
+m14_contract = read_json("Documentation~/m14-release-candidate.json")
+expected_m14_gates = [
+    "clean-install-a",
+    "clean-install-b",
+    "deterministic-release",
+    "m13-robustness-long-run",
+    "production-corpus",
+    "production-handoff-producer",
+    "production-handoff-receiver",
+    "public-runtime-api",
+    "repository-validation",
+    "unity-editmode",
+]
+if (
+    m14_contract.get("format") != "foldcanvas-release-candidate"
+    or m14_contract.get("version") != "1"
+    or m14_contract.get("packageName") != "com.foldcanvas.core"
+    or m14_contract.get("candidateVersion") != package_version
+    or m14_contract.get("stableRelease") is not False
+    or m14_contract.get("foldScriptVersion") != "0.1"
+):
+    errors.append("M14 release-candidate header is invalid")
+if not isinstance(package_version, str) or re.fullmatch(
+    r"1\.0\.0-rc\.[1-9][0-9]*",
+    package_version,
+) is None:
+    errors.append("M14 package version must remain a 1.0.0 release candidate")
+
+m14_unity_matrix = m14_contract.get("unityMatrix")
+if m14_unity_matrix != [
+    {
+        "editorVersion": "6000.3.20f1",
+        "packageUnity": "6000.3",
+        "packageUnityRelease": "20f1",
+        "qualification": "required",
+    }
+]:
+    errors.append("M14 Unity matrix must contain the exact qualified row")
+
+m14_api = m14_contract.get("publicRuntimeApi", {})
+if (
+    m14_api.get("assembly") != public_api.get("assembly")
+    or m14_api.get("signatureCount") != public_api.get("signatureCount")
+    or m14_api.get("sha256") != public_api.get("sha256")
+):
+    errors.append("M14 frozen public Runtime API does not match the compiled baseline")
+
+m14_fixtures = m14_contract.get("foldScriptFixtures")
+m14_fixture_ids: list[str] = []
+if not isinstance(m14_fixtures, list) or not m14_fixtures:
+    errors.append("M14 must retain canonical FoldScript compatibility fixtures")
+else:
+    for fixture in m14_fixtures:
+        if not isinstance(fixture, dict):
+            errors.append("M14 FoldScript fixture must be an object")
+            continue
+        fixture_id = fixture.get("id")
+        fixture_path = fixture.get("path")
+        m14_fixture_ids.append(fixture_id)
+        if not isinstance(fixture_id, str) or not fixture_id:
+            errors.append("M14 FoldScript fixture has an invalid id")
+        if not isinstance(fixture_path, str) or not (ROOT / fixture_path).is_file():
+            errors.append(f"M14 FoldScript fixture is missing: {fixture_path}")
+            continue
+        source_digest = hashlib.sha256((ROOT / fixture_path).read_bytes()).hexdigest()
+        if fixture.get("sourceSha256") != source_digest:
+            errors.append(f"M14 FoldScript source hash drifted: {fixture_id}")
+        canonical_digest = fixture.get("canonicalSha256")
+        if (
+            not isinstance(canonical_digest, str)
+            or re.fullmatch(r"[0-9a-f]{64}", canonical_digest) is None
+            or canonical_digest == "0" * 64
+        ):
+            errors.append(f"M14 FoldScript canonical hash is not frozen: {fixture_id}")
+    if m14_fixture_ids != sorted(set(m14_fixture_ids)):
+        errors.append("M14 FoldScript fixture IDs must be unique and ordinal")
+
+if m14_contract.get("productionCorpus", {}).get("caseIds") != expected_corpus_ids:
+    errors.append("M14 production-corpus identity changed")
+if m14_contract.get("requiredGates") != expected_m14_gates:
+    errors.append("M14 required release gates changed or are not ordinal")
+if m14_contract.get("rollback") != {
+    "packageVersion": "0.1.0-preview.21",
+    "gitCommit": "d9434be",
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+}:
+    errors.append("M14 rollback contract is invalid")
+if m14_contract.get("escalations") != sorted(
+    m14_contract.get("escalations", [])
+):
+    errors.append("M14 escalation list must be ordinal")
+
 release_workflow = (
     ROOT / ".github" / "workflows" / "package-release.yml"
 ).read_text(encoding="utf-8")
 for required_fragment in [
     "workflow_dispatch:",
+    "pull_request:",
     'tags:',
+    '"v*-rc.*"',
     'python3 Scripts/test_release_package.py',
+    'python3 Scripts/test_release_candidate.py',
     'python3 Scripts/build_release_package.py',
     'actions/upload-artifact@',
     'if-no-files-found: error',
     "gh release create",
     "--verify-tag",
+    "--prerelease",
+    "contents: read",
+    "publish-prerelease:",
+    "contents: write",
+    "actions/download-artifact@",
+    "*.manifest.json",
+    "*.evidence.json",
     "secrets.GITHUB_TOKEN",
 ]:
     if required_fragment not in release_workflow:
@@ -572,6 +684,8 @@ if "python3 Scripts/test_clean_install_project.py" not in repository_workflow:
     errors.append("Repository checks must validate M11 clean-install contracts")
 if "python3 Scripts/test_handoff_proof.py" not in repository_workflow:
     errors.append("Repository checks must validate M12 handoff contracts")
+if "python3 Scripts/test_release_candidate.py" not in repository_workflow:
+    errors.append("Repository checks must validate the M14 release candidate")
 
 m13_long_run_workflow = (
     ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"

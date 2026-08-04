@@ -1,2 +1,5 @@
-blank_issues_enabled: true
-contact_links: []
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/zhangpan-soft/FoldCanvas/security/advisories/new
+    about: Report vulnerabilities privately; never include credentials or exploit details in a public issue.

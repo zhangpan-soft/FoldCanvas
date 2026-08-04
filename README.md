@@ -1,6 +1,6 @@
 # FoldCanvas
 
-> **Working title. Pre-alpha.** A 2D-first, deterministic surface compiler for Unity.
+> **Working title. 1.0 release candidate.** A 2D-first, deterministic surface compiler for Unity.
 
 ## Why this project exists
 
@@ -33,8 +33,8 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 The repository currently contains the **M05 spherical-surface compiler, M06
 Editor authoring workspace, M07 geometry validator, M08 FoldScript
 interchange/repair boundary, M09 cyclic-topology proof, M10 bounded extension
-ecosystem, M11 production-readiness evidence, and M12 source-first production
-handoff**:
+ecosystem, M11 production-readiness evidence, M12 source-first production
+handoff, M13 robustness/scale evidence, and the active M14 release candidate**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -220,6 +220,13 @@ outputs from the receiver's editable FoldCanvas source. Mesh, OBJ, Prefab, and
 receipt remain derived; project GUIDs are receiver-owned. See the
 [production handoff contract](Documentation~/production-handoff.md).
 
+M13 adds replayable bounded valid/invalid cases, maintained near-limit assets,
+cancellation/retry isolation, resource envelopes, and a hosted long-run gate.
+M14 freezes those accepted semantics as `1.0.0-rc.1`, qualifies exactly Unity
+`6000.3.20f1`, and adds deterministic per-file release evidence, support,
+security, issue, audit, and rollback gates. See the
+[release-candidate guide](Documentation~/release-candidate.md).
+
 ## Design principles
 
 1. **The 2D source is authoritative.** Generated meshes are disposable build artifacts.
@@ -296,8 +303,10 @@ GitHub Actions runs four independent evidence gates:
   Editor logs, archive, canonical source, receipt, and proof reports.
 
 The separate `Package release` workflow builds the allowlisted UPM archive
-twice, verifies byte identity and version agreement, uploads the `.tgz` plus
-SHA-256 evidence, and publishes only an exact matching pushed version tag.
+twice, verifies byte identity and version agreement, uploads the `.tgz`,
+SHA-256, per-file manifest, and candidate evidence, and publishes only an exact
+matching pushed RC tag as a GitHub pre-release. Stable `1.0.0` is not published
+by the M14 workflow.
 
 The Unity jobs use GameCI and require repository Actions secrets
 `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal
@@ -360,8 +369,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M10 | Explicit extensions, gallery, OBJ, performance, and reproducible package release — merged through PR #9 |
 | M11 | Clean archive installation, consumer API proof, compatibility baseline, and production corpus — merged through PR #10 |
 | M12 | Portable source-first production handoff — merged through PR #11 |
-| M13 | Bounded robustness, scale, interruption/retry, and long-running regression evidence — active |
-| M14 | Public API/FoldScript freeze and 1.0 release-candidate gates — planned |
+| M13 | Bounded robustness, scale, interruption/retry, and long-running regression evidence — merged through PR #12 |
+| M14 | Public API/FoldScript freeze and `1.0.0-rc.1` gates — active |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

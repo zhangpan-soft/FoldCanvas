@@ -28,6 +28,11 @@ A geometry pull request should explain:
 
 Screenshots are useful, but they never replace mesh assertions.
 
+Every merge records an audit against the exact pull-request head. A later push
+invalidates the earlier decision. Required repository, Unity, archive,
+clean-install, and milestone-specific checks must be green with real evidence;
+a workflow that did not start Unity is not a passing Unity check.
+
 ## Coding conventions
 
 - C# public APIs use PascalCase.
