@@ -18,6 +18,8 @@
 - [M12 source-first production archive, import, receipt, and rebuild contract](production-handoff.md)
 - [Package, Runtime API, Unity, and FoldScript compatibility policy](compatibility.md)
 - [M14 release-candidate install, evidence, troubleshooting, and rollback guide](release-candidate.md)
+- [M15 public release asset, clean-consumer, upgrade, and stable-exit contract](m15-public-distribution.json)
+- [M15 stable-release exit report JSON Schema](../Schema/foldcanvas-stable-exit.schema.json)
 - [AI integration contract](ai-integration.md)
 - [Roadmap](roadmap.md)
 - [Glossary](glossary.md)

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-stable-exit.schema.json",
+  "title": "FoldCanvas stable-release exit report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "targetVersion",
+    "candidateVersion",
+    "candidateTag",
+    "candidateCommit",
+    "evaluatedAt",
+    "status",
+    "blockers",
+    "soakHours",
+    "minimumSoakHours",
+    "qualifyingScheduledLongRuns",
+    "minimumScheduledLongRuns",
+    "openReleaseBlockerCount",
+    "satisfiedGateCount",
+    "requiredGateCount",
+    "inputSha256"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-stable-exit-report" },
+    "version": { "const": "1" },
+    "targetVersion": { "const": "1.0.0" },
+    "candidateVersion": { "const": "1.0.0-rc.2" },
+    "candidateTag": { "const": "v1.0.0-rc.2" },
+    "candidateCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "evaluatedAt": { "type": "string", "format": "date-time" },
+    "status": { "enum": ["blocked", "ready"] },
+    "blockers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "soakHours": { "type": "number", "minimum": 0 },
+    "minimumSoakHours": { "type": "integer", "minimum": 168 },
+    "qualifyingScheduledLongRuns": { "type": "integer", "minimum": 0 },
+    "minimumScheduledLongRuns": { "type": "integer", "minimum": 2 },
+    "openReleaseBlockerCount": { "type": "integer", "minimum": 0 },
+    "satisfiedGateCount": { "type": "integer", "minimum": 0 },
+    "requiredGateCount": { "type": "integer", "minimum": 1 },
+    "inputSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

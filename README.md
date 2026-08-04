@@ -222,9 +222,11 @@ receipt remain derived; project GUIDs are receiver-owned. See the
 
 M13 adds replayable bounded valid/invalid cases, maintained near-limit assets,
 cancellation/retry isolation, resource envelopes, and a hosted long-run gate.
-M14 freezes those accepted semantics as `1.0.0-rc.1`, qualifies exactly Unity
-`6000.3.20f1`, and adds deterministic per-file release evidence, support,
-security, issue, audit, and rollback gates. See the
+M14 froze those accepted semantics as immutable `1.0.0-rc.1`. M15 advances
+packaged distribution work to `1.0.0-rc.2`, qualifies exactly Unity
+`6000.3.20f1`, and adds public GitHub asset verification, two public-archive
+consumers, source-first upgrade evidence, and a fail-closed stable-exit gate.
+See the
 [release-candidate guide](Documentation~/release-candidate.md).
 
 ## Design principles
@@ -281,7 +283,8 @@ FoldCanvas does **not** claim that every curved surface can be flattened isometr
 
 ## Continuous integration
 
-GitHub Actions runs four independent evidence gates:
+GitHub Actions runs independent repository, package, consumer, handoff, and
+public-distribution evidence gates:
 
 - `repository-validation` parses repository JSON, checks assembly and runtime
   boundaries, confirms the Schema/native `sampleCount` maximum, and validates
@@ -306,7 +309,12 @@ The separate `Package release` workflow builds the allowlisted UPM archive
 twice, verifies byte identity and version agreement, uploads the `.tgz`,
 SHA-256, per-file manifest, and candidate evidence, and publishes only an exact
 matching pushed RC tag as a GitHub pre-release. Stable `1.0.0` is not published
-by the M14 workflow.
+by the RC workflow. After publication, `Public release qualification` downloads
+the exact public assets, verifies their GitHub/checksum/manifest/archive/evidence
+identity, installs the downloaded `.tgz` into two more clean Unity hosts, and
+repeats a source-only upgrade from the rollback package. Its stable-exit
+snapshot remains blocked until the seven-day/two-scheduled-run/audit gate is
+genuinely complete.
 
 The Unity jobs use GameCI and require repository Actions secrets
 `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` for a Unity Personal
@@ -370,7 +378,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M11 | Clean archive installation, consumer API proof, compatibility baseline, and production corpus — merged through PR #10 |
 | M12 | Portable source-first production handoff — merged through PR #11 |
 | M13 | Bounded robustness, scale, interruption/retry, and long-running regression evidence — merged through PR #12 |
-| M14 | Public API/FoldScript freeze and `1.0.0-rc.1` gates — active |
+| M14 | Public API/FoldScript freeze and immutable `1.0.0-rc.1` — merged and published through PR #13 |
+| M15 | Public release assets, source-first upgrade, and `1.0.0-rc.2` exit gates — active |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

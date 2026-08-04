@@ -13,7 +13,7 @@ namespace FoldCanvas.Tests
 {
     public sealed class M14ReleaseCandidateTests
     {
-        private const string CandidateVersion = "1.0.0-rc.1";
+        private const string CandidateVersion = "1.0.0-rc.2";
         private const string QualifiedUnityVersion = "6000.3.20f1";
 
         [Test]
@@ -32,16 +32,8 @@ namespace FoldCanvas.Tests
             Assert.That(package.unityRelease, Is.EqualTo("20f1"));
             Assert.That(contract.candidateVersion, Is.EqualTo(CandidateVersion));
             Assert.That(contract.stableRelease, Is.False);
-            Assert.That(contract.unityMatrix, Has.Length.EqualTo(1));
-            Assert.That(
-                contract.unityMatrix[0].editorVersion,
-                Is.EqualTo(QualifiedUnityVersion));
-            Assert.That(
-                contract.unityMatrix[0].packageUnity,
-                Is.EqualTo(package.unity));
-            Assert.That(
-                contract.unityMatrix[0].packageUnityRelease,
-                Is.EqualTo(package.unityRelease));
+            Assert.That(contract.candidateTag, Is.EqualTo("v" + CandidateVersion));
+            Assert.That(contract.unityVersion, Is.EqualTo(QualifiedUnityVersion));
         }
 
         [Test]
@@ -167,8 +159,12 @@ namespace FoldCanvas.Tests
                 "production-corpus",
                 "production-handoff-producer",
                 "production-handoff-receiver",
+                "public-release-assets",
+                "public-release-consumer-a",
+                "public-release-consumer-b",
                 "public-runtime-api",
                 "repository-validation",
+                "source-upgrade",
                 "unity-editmode",
             };
 
@@ -181,11 +177,36 @@ namespace FoldCanvas.Tests
                 Is.EqualTo(contract.requiredGates.Length));
             Assert.That(
                 contract.rollback.packageVersion,
-                Is.EqualTo("0.1.0-preview.21"));
-            Assert.That(contract.rollback.gitCommit, Is.EqualTo("d9434be"));
+                Is.EqualTo("1.0.0-rc.1"));
+            Assert.That(contract.rollback.tag, Is.EqualTo("v1.0.0-rc.1"));
+            Assert.That(
+                contract.rollback.gitCommit,
+                Is.EqualTo("a8c81e61175dafbc48d1750de7ef6823589517a6"));
             Assert.That(
                 contract.rollback.sourceAuthority,
                 Is.EqualTo("2d-canvas-plus-foldscript"));
+        }
+
+        [Test]
+        public void PriorRelease_Rc1PublicAssetDigestsRemainImmutable()
+        {
+            ReleaseCandidateContract contract = LoadContract(PackageRoot());
+
+            Assert.That(contract.priorRelease.immutable, Is.True);
+            Assert.That(contract.priorRelease.tag, Is.EqualTo("v1.0.0-rc.1"));
+            Assert.That(contract.priorRelease.releaseId, Is.EqualTo(364684802));
+            Assert.That(
+                contract.priorRelease.archiveSha256,
+                Is.EqualTo(
+                    "ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd"));
+            Assert.That(
+                contract.priorRelease.manifestSha256,
+                Is.EqualTo(
+                    "a0b9f19b9b69cace6b430b4546fc67b0f294dadb1efef6f8542b5e53ee5a9aca"));
+            Assert.That(
+                contract.priorRelease.evidenceSha256,
+                Is.EqualTo(
+                    "c9603b475bbfa78300a27b64189188a337ca95ef333c8ad00effa7cf808e3c32"));
         }
 
         private static string PackageRoot()
@@ -201,11 +222,11 @@ namespace FoldCanvas.Tests
             string json = File.ReadAllText(
                 Path.Combine(
                     root,
-                    "Documentation~/m14-release-candidate.json"));
+                    "Documentation~/m15-public-distribution.json"));
             ReleaseCandidateContract contract =
                 JsonUtility.FromJson<ReleaseCandidateContract>(json);
             Assert.That(contract, Is.Not.Null);
-            Assert.That(contract.format, Is.EqualTo("foldcanvas-release-candidate"));
+            Assert.That(contract.format, Is.EqualTo("foldcanvas-public-distribution"));
             Assert.That(contract.version, Is.EqualTo("1"));
             return contract;
         }
@@ -248,21 +269,15 @@ namespace FoldCanvas.Tests
             public string format;
             public string version;
             public string candidateVersion;
+            public string candidateTag;
             public bool stableRelease;
             public string foldScriptVersion;
-            public UnityMatrixRow[] unityMatrix;
+            public string unityVersion;
             public PublicRuntimeApi publicRuntimeApi;
             public FoldScriptFixture[] foldScriptFixtures;
             public string[] requiredGates;
             public Rollback rollback;
-        }
-
-        [Serializable]
-        private sealed class UnityMatrixRow
-        {
-            public string editorVersion;
-            public string packageUnity;
-            public string packageUnityRelease;
+            public PriorRelease priorRelease;
         }
 
         [Serializable]
@@ -285,8 +300,20 @@ namespace FoldCanvas.Tests
         private sealed class Rollback
         {
             public string packageVersion;
+            public string tag;
             public string gitCommit;
             public string sourceAuthority;
+        }
+
+        [Serializable]
+        private sealed class PriorRelease
+        {
+            public string tag;
+            public int releaseId;
+            public string archiveSha256;
+            public string manifestSha256;
+            public string evidenceSha256;
+            public bool immutable;
         }
     }
 }

@@ -6,6 +6,50 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [1.0.0-rc.2] - 2026-08-04
+
+### Added
+
+- M15 public-distribution contract recording the immutable RC1 release assets,
+  exact public RC2 asset allowlist, public-consumer gates, source-first upgrade
+  proof, and fail-closed stable-release soak requirements
+- offline exact-asset verifier, owned two-phase Unity upgrade host, semantic
+  before/after evidence comparison, and stable-exit evaluator with deterministic
+  negative tests
+- hosted pre-release and post-publication upgrade jobs that retain only the
+  authoritative production-cup FoldScript and PNG while replacing PackageCache
+  state, plus a conservative blocked stable-exit snapshot
+
+### Changed
+
+- Package/compiler evidence advanced to `1.0.0-rc.2` before the first packaged
+  M15 change so the already published `1.0.0-rc.1` byte identity remains
+  immutable
+- hosted upgrade jobs restore runner ownership only on their generated,
+  FoldCanvas-owned temporary host before deleting Unity-derived state written
+  by the GameCI container
+
+### Validated locally
+
+- Unity `6000.3.20f1` passed 472/472 complete package Edit Mode tests with a
+  graphics device; the intentionally unsuitable `-nographics` run was not
+  counted as success
+- the same clean Unity project passed 1/1 with `0.1.0-preview.21`, removed only
+  owned derived state, passed 1/1 with `1.0.0-rc.2`, and reproduced identical
+  2D source, geometry, OBJ, diagnostics, topology, validation, and closed-volume
+  evidence
+
+### Pending hosted verification
+
+- Public GitHub release download, two clean public-archive consumers,
+  exact-head CI/audit, RC2 publication, post-publication upgrade repetition,
+  and blocked stable-exit artifact remain required before M15 acceptance
+
+### Not included
+
+- No geometry, topology, FoldScript, dependency, final `1.0.0`, or external
+  marketplace change is included
+
 ## [1.0.0-rc.1] - 2026-08-04
 
 ### Added

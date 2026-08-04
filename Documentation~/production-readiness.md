@@ -17,6 +17,10 @@ A preview or release-candidate build passes these independent rungs:
 7. foreground rendering or interaction checks for any visual claim.
 8. M14 release-candidate contract, per-file archive manifest, support, release,
    and rollback validation.
+9. M15 verification of the exact public GitHub assets plus two clean consumers
+   resolving only the downloaded public archive.
+10. Source-first package-upgrade rehearsal and a fail-closed stable-release
+    soak/issue/run gate.
 
 Passing a lower rung does not replace a higher one. In particular, a Python
 check does not prove C# compilation, a Unity exit code without XML does not
@@ -150,6 +154,53 @@ Only an exact matching `v*-rc.*` tag can use the M14 release workflow, and that
 GitHub release is marked as a pre-release. Stable `1.0.0` and marketplace
 publication remain separate decisions.
 
+RC1 is now immutable public history. PR #13 merged as `a8c81e6`, and
+`v1.0.0-rc.1` carries archive SHA-256
+`ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd`.
+M15 therefore advances packaged changes to RC2 instead of rebuilding different
+bytes under the RC1 version.
+
+## M15 public distribution and upgrade gate
+
+`Scripts/verify_public_release.py` accepts one local directory containing the
+four downloaded public assets plus GitHub release metadata and an exact peeled
+tag commit. It has no network or credential handling. It rejects an incorrect
+repository/tag, draft or non-prerelease state, missing/extra/duplicate/empty
+asset, size or GitHub digest mismatch, stale checksum, unsafe tar member,
+non-normalized metadata, manifest order/count/size/hash drift, stale candidate
+evidence, and any disagreement with the M15 contract. Its report stores stable
+identities only; temporary download URLs are excluded.
+
+The separate `Public release qualification` workflow owns transport. After an
+RC is published, it downloads the public release assets with read-only
+repository permission, runs the verifier, uploads that evidence, and creates
+two independent clean Unity hosts from only the verified public `.tgz`. Each
+host must produce real XML, Editor.log, PackageCache resolution, public API,
+geometry, OBJ, and diagnostic evidence, and the pair must match.
+
+Upgrade evidence starts from canonical FoldScript plus exact PNG bytes,
+discards derived Mesh/OBJ/Material/Prefab/report/receipt state, replaces the
+package, and recompiles. Exact-version handoff incompatibility remains an
+explicit rejection; M15 does not guess migrations or import old generated
+geometry.
+
+`create_upgrade_proof_project.py` creates a new marked host and copies exactly
+two files into `M15Input`. `advance_upgrade_proof_project.py` refuses an
+unmarked host, an unknown baseline, a changed source hash, an extra input, or a
+missing before-phase report. It deletes only that marked host's `Library`,
+`Temp`, `Logs`, `obj`, and package lock before package replacement. Source and
+before-phase evidence are preserved. Real before/after XML and Editor logs are
+validated separately before semantic hashes are compared.
+
+Final `1.0.0` remains blocked until at least 168 hours after the latest RC,
+two distinct scheduled long-run passes on that lineage, no open release
+blocker, a complete public-consumer and upgrade report, and an exact-head audit.
+`evaluate_stable_exit.py` receives an explicit timestamped evidence object; it
+does not read credentials or infer missing runs. Duplicate, pre-publication,
+wrong-commit, failed, skipped, or inconclusive scheduled runs do not qualify.
+The post-publication workflow emits a conservative blocked snapshot first;
+`--require-ready` is reserved for the later stable publication gate.
+
 ## Local commands
 
 Fast checks that do not claim Unity execution:
@@ -158,6 +209,9 @@ Fast checks that do not claim Unity execution:
 python3 Scripts/validate_repository.py
 python3 Scripts/test_release_package.py
 python3 Scripts/test_release_candidate.py
+python3 Scripts/test_public_release.py
+python3 Scripts/test_upgrade_proof.py
+python3 Scripts/test_stable_exit.py
 python3 Scripts/test_clean_install_project.py
 ```
 

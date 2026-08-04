@@ -1,0 +1,143 @@
+{
+  "format": "foldcanvas-public-distribution",
+  "version": "1",
+  "packageName": "com.foldcanvas.core",
+  "candidateVersion": "1.0.0-rc.2",
+  "candidateTag": "v1.0.0-rc.2",
+  "stableRelease": false,
+  "foldScriptVersion": "0.1",
+  "unityVersion": "6000.3.20f1",
+  "publicRuntimeApi": {
+    "assembly": "FoldCanvas.Runtime",
+    "signatureCount": 808,
+    "sha256": "6bcda14a96fd55c5edae33a7da5c5c783978c4a5c7d300eba7dea525200fc8f4"
+  },
+  "foldScriptFixtures": [
+    {
+      "id": "cup-schema",
+      "path": "Schema/gpt-cup.example.foldcanvas.json",
+      "sourceSha256": "f3e0710a0620fe85f99dafca6298af0e37608c6781f20dd790a30645063f8849",
+      "canonicalSha256": "bf9e232b070bbadb1010f74b5e7aacd5fff605764ff9e8a83762dd0882b8d31c"
+    },
+    {
+      "id": "production-cup",
+      "path": "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+      "sourceSha256": "44b3c474784736d5e47d974f94b87c56532db01cffc963330d7ae82b88457fc5",
+      "canonicalSha256": "ff9df3d482f1b73820f026093ef3094b0e17f313ebeb26055129af03c41844ff"
+    },
+    {
+      "id": "sphere-gores",
+      "path": "Samples~/Sphere/sphere-golden.foldcanvas.json",
+      "sourceSha256": "2c23c1239e30cf23bdd44f944cf4cbe76c326ac8f346a1e6d55d9bc177032d74",
+      "canonicalSha256": "01c60837aeb2489950340eb27902e1abceea32db2f6a84b69e5cee4ca41daca4"
+    }
+  ],
+  "productionCorpus": {
+    "formatVersion": "1",
+    "caseIds": [
+      "cyclic-torus",
+      "invalid-off-grid-fold",
+      "planar-artwork",
+      "production-cup",
+      "registered-wave",
+      "sphere-gores"
+    ]
+  },
+  "priorRelease": {
+    "tag": "v1.0.0-rc.1",
+    "mergeCommit": "a8c81e61175dafbc48d1750de7ef6823589517a6",
+    "releaseId": 364684802,
+    "archiveSha256": "ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd",
+    "checksumSha256": "eb835a1cac0ee0c5adb6b99511f6bb93739839543bee1fe0be3cbad989960725",
+    "manifestSha256": "a0b9f19b9b69cace6b430b4546fc67b0f294dadb1efef6f8542b5e53ee5a9aca",
+    "evidenceSha256": "c9603b475bbfa78300a27b64189188a337ca95ef333c8ad00effa7cf808e3c32",
+    "assetCount": 4,
+    "immutable": true
+  },
+  "publicAssets": [
+    "com.foldcanvas.core-1.0.0-rc.2.evidence.json",
+    "com.foldcanvas.core-1.0.0-rc.2.manifest.json",
+    "com.foldcanvas.core-1.0.0-rc.2.tgz",
+    "com.foldcanvas.core-1.0.0-rc.2.tgz.sha256"
+  ],
+  "upgrade": {
+    "fromPackageVersions": [
+      "0.1.0-preview.21",
+      "1.0.0-rc.1"
+    ],
+    "fixture": {
+      "id": "production-cup",
+      "baselinePackageVersion": "0.1.0-preview.21",
+      "baselineGitCommit": "d9434be9e30812fc367004b51cf285281713246b",
+      "sourcePath": "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+      "appearancePath": "Samples~/BootstrapPanel/M04ProductionCupCanvas.png",
+      "inputFileNames": [
+        "M04ProductionCupCanvas.png",
+        "m12-production-cup.foldcanvas.json"
+      ],
+      "sourceRawSha256": "44b3c474784736d5e47d974f94b87c56532db01cffc963330d7ae82b88457fc5",
+      "canonicalSourceSha256": "ff9df3d482f1b73820f026093ef3094b0e17f313ebeb26055129af03c41844ff",
+      "appearanceSha256": "2b9691733e89987d795e9dcbcd857902f6feb7109540d36fded1b481ded1a383",
+      "renderVertices": 2972,
+      "topologyVertices": 2562,
+      "triangles": 5120,
+      "closedVolume": true
+    },
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+    "derivedInputsForbidden": [
+      "material",
+      "mesh",
+      "obj",
+      "prefab",
+      "receipt",
+      "report",
+      "screenshot"
+    ],
+    "unknownVersionsFailClosed": true
+  },
+  "requiredGates": [
+    "clean-install-a",
+    "clean-install-b",
+    "deterministic-release",
+    "m13-robustness-long-run",
+    "production-corpus",
+    "production-handoff-producer",
+    "production-handoff-receiver",
+    "public-release-assets",
+    "public-release-consumer-a",
+    "public-release-consumer-b",
+    "public-runtime-api",
+    "repository-validation",
+    "source-upgrade",
+    "unity-editmode"
+  ],
+  "rollback": {
+    "packageVersion": "1.0.0-rc.1",
+    "tag": "v1.0.0-rc.1",
+    "gitCommit": "a8c81e61175dafbc48d1750de7ef6823589517a6",
+    "sourceAuthority": "2d-canvas-plus-foldscript"
+  },
+  "stableExit": {
+    "targetVersion": "1.0.0",
+    "minimumSoakHours": 168,
+    "minimumScheduledLongRuns": 2,
+    "status": "blocked",
+    "blockers": [
+      "candidate-not-published",
+      "public-release-assets-unverified",
+      "public-consumer-evidence-missing",
+      "source-upgrade-evidence-missing",
+      "minimum-soak-incomplete",
+      "scheduled-long-runs-incomplete",
+      "exact-head-audit-missing",
+      "required-gates-incomplete"
+    ]
+  },
+  "escalations": [
+    "credentials",
+    "external-marketplace-publication",
+    "irreversible-permissions",
+    "legal-decisions",
+    "paid-services"
+  ]
+}

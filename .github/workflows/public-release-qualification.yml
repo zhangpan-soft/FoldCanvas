@@ -1,0 +1,606 @@
+name: Public release qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Exact FoldCanvas RC tag to qualify
+        required: true
+        default: "v1.0.0-rc.2"
+        type: string
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  checks: write
+  issues: read
+
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+
+jobs:
+  verify-public-assets:
+    name: Verify exact public GitHub release assets
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == true
+    runs-on: ubuntu-latest
+    outputs:
+      tag_commit: ${{ steps.identity.outputs.tag_commit }}
+      package_version: ${{ steps.identity.outputs.package_version }}
+      package_sha256: ${{ steps.identity.outputs.package_sha256 }}
+    steps:
+      - name: Check out exact release tag
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
+      - name: Download public release assets and metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/public-release/assets
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'com.foldcanvas.core-*' \
+            --dir artifacts/public-release/assets
+          gh api \
+            "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            > artifacts/public-release/release.json
+
+      - name: Verify public bytes and release identity
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag_commit="$(git rev-parse HEAD)"
+          python3 Scripts/verify_public_release.py \
+            --asset-directory artifacts/public-release/assets \
+            --release-metadata artifacts/public-release/release.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --tag "$RELEASE_TAG" \
+            --tag-commit "$tag_commit" \
+            --output artifacts/public-release/verification.json
+          package_version="$(jq -r '.packageVersion' artifacts/public-release/verification.json)"
+          package_sha256="$(jq -r '.archiveSha256' artifacts/public-release/verification.json)"
+          echo "tag_commit=$tag_commit" >> "$GITHUB_OUTPUT"
+          echo "package_version=$package_version" >> "$GITHUB_OUTPUT"
+          echo "package_sha256=$package_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload verified public release bundle
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: foldcanvas-public-release-assets
+          path: |
+            artifacts/public-release/assets/*
+            artifacts/public-release/release.json
+            artifacts/public-release/verification.json
+          if-no-files-found: error
+          retention-days: 30
+
+  public-release-consumers:
+    name: Unity 6000.3.20f1 public archive consumers
+    needs: verify-public-assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact release tag
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Download verified public release bundle
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: foldcanvas-public-release-assets
+          path: artifacts/public-release-download
+
+      - name: Generate two independent public archive consumers
+        id: public-package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t archives < <(
+            find artifacts/public-release-download -type f -name '*.tgz' \
+              -print | LC_ALL=C sort
+          )
+          if [[ "${#archives[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one downloaded public package archive."
+            exit 1
+          fi
+          archive="${archives[0]}"
+          python3 Scripts/create_clean_install_project.py \
+            --project artifacts/m15-public-host-a \
+            --package "$archive"
+          python3 Scripts/create_clean_install_project.py \
+            --project artifacts/m15-public-host-b \
+            --package "$archive"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Run first public archive consumer
+        id: public-unity-tests-a
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m15-public-host-a
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m15-public-host-a/CIArtifacts/unity-public-release
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Public Release Consumer A
+
+      - name: Run second public archive consumer
+        id: public-unity-tests-b
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m15-public-host-b
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m15-public-host-b/CIArtifacts/unity-public-release
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Public Release Consumer B
+
+      - name: Normalize, validate, and compare public consumer evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          normalize_consumer() {
+            local consumer_id="$1"
+            local source_root="$2"
+            local project_root="artifacts/m15-public-host-$consumer_id"
+            local output_root="artifacts/m15-public-consumer-$consumer_id"
+            if [[ -z "$source_root" ]]; then
+              source_root="$project_root/CIArtifacts/unity-public-release"
+            fi
+            mkdir -p "$output_root"
+            if [[ ! -d "$source_root" ]]; then
+              echo "::error::Public consumer Unity artifacts are missing: $consumer_id"
+              return 1
+            fi
+            mapfile -t xmls < <(
+              find "$source_root" -type f \
+                \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+                -print | LC_ALL=C sort
+            )
+            mapfile -t logs < <(
+              find "$source_root" -type f \
+                \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+                -print | LC_ALL=C sort
+            )
+            test -n "${xmls[0]:-}"
+            test -n "${logs[0]:-}"
+            cp -- "${xmls[0]}" "$output_root/test-results.xml"
+            cp -- "${logs[0]}" "$output_root/Editor.log"
+            cp -- "$project_root/M11Evidence/consumer-report.json" \
+              "$output_root/consumer-report.json"
+            cp -- "$project_root/Packages/manifest.json" \
+              "$output_root/manifest.json"
+            cp -- "$project_root/Packages/packages-lock.json" \
+              "$output_root/packages-lock.json"
+            python3 Scripts/validate_clean_install_evidence.py \
+              --report "$output_root/consumer-report.json" \
+              --manifest "$output_root/manifest.json" \
+              --lock "$output_root/packages-lock.json" \
+              --test-results "$output_root/test-results.xml" \
+              --editor-log "$output_root/Editor.log" \
+              --package-version "${{ needs.verify-public-assets.outputs.package_version }}" \
+              --package-sha256 "${{ needs.verify-public-assets.outputs.package_sha256 }}" \
+              > "$output_root/validation.json"
+          }
+
+          normalize_consumer \
+            a \
+            "${{ steps.public-unity-tests-a.outputs.artifactsPath }}"
+          normalize_consumer \
+            b \
+            "${{ steps.public-unity-tests-b.outputs.artifactsPath }}"
+          python3 Scripts/compare_clean_install_evidence.py \
+            --first artifacts/m15-public-consumer-a/consumer-report.json \
+            --second artifacts/m15-public-consumer-b/consumer-report.json \
+            > artifacts/m15-public-consumer-comparison.json
+          cp -- artifacts/public-release-download/verification.json \
+            artifacts/m15-public-release-verification.json
+
+      - name: Upload public consumer XML, logs, and evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: unity-public-release-consumer-results-and-logs
+          path: |
+            artifacts/m15-public-consumer-a/test-results.xml
+            artifacts/m15-public-consumer-a/Editor.log
+            artifacts/m15-public-consumer-a/consumer-report.json
+            artifacts/m15-public-consumer-a/manifest.json
+            artifacts/m15-public-consumer-a/packages-lock.json
+            artifacts/m15-public-consumer-a/validation.json
+            artifacts/m15-public-consumer-b/test-results.xml
+            artifacts/m15-public-consumer-b/Editor.log
+            artifacts/m15-public-consumer-b/consumer-report.json
+            artifacts/m15-public-consumer-b/manifest.json
+            artifacts/m15-public-consumer-b/packages-lock.json
+            artifacts/m15-public-consumer-b/validation.json
+            artifacts/m15-public-consumer-comparison.json
+            artifacts/m15-public-release-verification.json
+          if-no-files-found: error
+          retention-days: 30
+
+  source-first-upgrade:
+    name: Unity source-first upgrade to public archive
+    needs: verify-public-assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out exact release tag with rollback history
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
+      - name: Download verified public release bundle
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: foldcanvas-public-release-assets
+          path: artifacts/public-release-download
+
+      - name: Build exact rollback package and create owned upgrade host
+        id: upgrade-input
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/m15-source-upgrade
+          baseline_commit="$(
+            jq -r '.upgrade.fixture.baselineGitCommit' \
+              Documentation~/m15-public-distribution.json
+          )"
+          baseline_root="$RUNNER_TEMP/foldcanvas-m15-upgrade-baseline"
+          git worktree add --detach "$baseline_root" "$baseline_commit"
+          python3 "$baseline_root/Scripts/build_release_package.py" \
+            --output "$GITHUB_WORKSPACE/artifacts/m15-upgrade-baseline-package"
+          mapfile -t baseline_archives < <(
+            find artifacts/m15-upgrade-baseline-package \
+              -type f -name '*.tgz' -print | LC_ALL=C sort
+          )
+          mapfile -t candidate_archives < <(
+            find artifacts/public-release-download \
+              -type f -name '*.tgz' -print | LC_ALL=C sort
+          )
+          if [[ "${#baseline_archives[@]}" -ne 1 ]]; then
+            echo "::error::Expected one rollback package archive."
+            exit 1
+          fi
+          if [[ "${#candidate_archives[@]}" -ne 1 ]]; then
+            echo "::error::Expected one verified public candidate archive."
+            exit 1
+          fi
+          baseline_archive="${baseline_archives[0]}"
+          candidate_archive="${candidate_archives[0]}"
+          python3 Scripts/create_upgrade_proof_project.py \
+            --project artifacts/m15-upgrade-host \
+            --package "$baseline_archive" \
+            --source "$baseline_root/Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json" \
+            --appearance "$baseline_root/Samples~/BootstrapPanel/M04ProductionCupCanvas.png"
+          cp -- artifacts/m15-upgrade-host/M15Expected.json \
+            artifacts/m15-source-upgrade/before-expected.json
+          baseline_version="$(jq -r '.packageVersion' artifacts/m15-upgrade-host/M15Expected.json)"
+          baseline_sha256="$(jq -r '.packageSha256' artifacts/m15-upgrade-host/M15Expected.json)"
+          printf '%s  %s\n' \
+            "$(sha256sum artifacts/m15-upgrade-host/M15Input/m12-production-cup.foldcanvas.json | cut -d' ' -f1)" \
+            'm12-production-cup.foldcanvas.json' \
+            > artifacts/m15-source-upgrade/source-inputs.sha256
+          printf '%s  %s\n' \
+            "$(sha256sum artifacts/m15-upgrade-host/M15Input/M04ProductionCupCanvas.png | cut -d' ' -f1)" \
+            'M04ProductionCupCanvas.png' \
+            >> artifacts/m15-source-upgrade/source-inputs.sha256
+          echo "baseline_version=$baseline_version" >> "$GITHUB_OUTPUT"
+          echo "baseline_sha256=$baseline_sha256" >> "$GITHUB_OUTPUT"
+          echo "candidate_archive=$candidate_archive" >> "$GITHUB_OUTPUT"
+
+      - name: Compile authoritative source with rollback package
+        id: upgrade-before-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m15-upgrade-host
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m15-upgrade-host/CIArtifacts/unity-upgrade-before
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Source Upgrade Before
+
+      - name: Normalize and validate rollback evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="${{ steps.upgrade-before-tests.outputs.artifactsPath }}"
+          if [[ -z "$source_root" ]]; then
+            source_root="artifacts/m15-upgrade-host/CIArtifacts/unity-upgrade-before"
+          fi
+          output_root="artifacts/m15-source-upgrade/before"
+          mkdir -p "$output_root"
+          mapfile -t xmls < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t logs < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+          test -n "${xmls[0]:-}"
+          test -n "${logs[0]:-}"
+          cp -- "${xmls[0]}" "$output_root/test-results.xml"
+          cp -- "${logs[0]}" "$output_root/Editor.log"
+          cp -- artifacts/m15-upgrade-host/M15Evidence/before.json \
+            "$output_root/report.json"
+          cp -- artifacts/m15-upgrade-host/Packages/manifest.json \
+            "$output_root/manifest.json"
+          cp -- artifacts/m15-upgrade-host/Packages/packages-lock.json \
+            "$output_root/packages-lock.json"
+          python3 Scripts/validate_upgrade_evidence.py \
+            --phase before \
+            --report "$output_root/report.json" \
+            --manifest "$output_root/manifest.json" \
+            --lock "$output_root/packages-lock.json" \
+            --test-results "$output_root/test-results.xml" \
+            --editor-log "$output_root/Editor.log" \
+            --package-version "${{ steps.upgrade-input.outputs.baseline_version }}" \
+            --package-sha256 "${{ steps.upgrade-input.outputs.baseline_sha256 }}" \
+            > "$output_root/validation.json"
+
+      - name: Replace package and remove only owned derived Unity state
+        shell: bash
+        run: |
+          set -euo pipefail
+          # GameCI runs Unity in a container, so its derived project state can
+          # be owned by root on the Linux runner. This host is generated and
+          # marked as FoldCanvas-owned before Unity starts.
+          sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-host
+          python3 Scripts/advance_upgrade_proof_project.py \
+            --project artifacts/m15-upgrade-host \
+            --package "${{ steps.upgrade-input.outputs.candidate_archive }}" \
+            > artifacts/m15-source-upgrade/transition.json
+          cp -- artifacts/m15-upgrade-host/M15Expected.json \
+            artifacts/m15-source-upgrade/after-expected.json
+
+      - name: Recompile unchanged source with public candidate package
+        id: upgrade-after-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m15-upgrade-host
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m15-upgrade-host/CIArtifacts/unity-upgrade-after
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Source Upgrade After
+
+      - name: Validate and compare candidate upgrade evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="${{ steps.upgrade-after-tests.outputs.artifactsPath }}"
+          if [[ -z "$source_root" ]]; then
+            source_root="artifacts/m15-upgrade-host/CIArtifacts/unity-upgrade-after"
+          fi
+          output_root="artifacts/m15-source-upgrade/after"
+          mkdir -p "$output_root"
+          mapfile -t xmls < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t logs < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+          test -n "${xmls[0]:-}"
+          test -n "${logs[0]:-}"
+          cp -- "${xmls[0]}" "$output_root/test-results.xml"
+          cp -- "${logs[0]}" "$output_root/Editor.log"
+          cp -- artifacts/m15-upgrade-host/M15Evidence/after.json \
+            "$output_root/report.json"
+          cp -- artifacts/m15-upgrade-host/Packages/manifest.json \
+            "$output_root/manifest.json"
+          cp -- artifacts/m15-upgrade-host/Packages/packages-lock.json \
+            "$output_root/packages-lock.json"
+          python3 Scripts/validate_upgrade_evidence.py \
+            --phase after \
+            --report "$output_root/report.json" \
+            --manifest "$output_root/manifest.json" \
+            --lock "$output_root/packages-lock.json" \
+            --test-results "$output_root/test-results.xml" \
+            --editor-log "$output_root/Editor.log" \
+            --package-version "${{ needs.verify-public-assets.outputs.package_version }}" \
+            --package-sha256 "${{ needs.verify-public-assets.outputs.package_sha256 }}" \
+            > "$output_root/validation.json"
+          python3 Scripts/compare_upgrade_evidence.py \
+            --before artifacts/m15-source-upgrade/before/report.json \
+            --after "$output_root/report.json" \
+            --contract Documentation~/m15-public-distribution.json \
+            --output artifacts/m15-source-upgrade/comparison.json
+
+      - name: Upload source-first upgrade XML, logs, and evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: unity-source-first-upgrade-results-and-logs
+          path: |
+            artifacts/m15-source-upgrade/before/test-results.xml
+            artifacts/m15-source-upgrade/before/Editor.log
+            artifacts/m15-source-upgrade/before/report.json
+            artifacts/m15-source-upgrade/before/manifest.json
+            artifacts/m15-source-upgrade/before/packages-lock.json
+            artifacts/m15-source-upgrade/before/validation.json
+            artifacts/m15-source-upgrade/after/test-results.xml
+            artifacts/m15-source-upgrade/after/Editor.log
+            artifacts/m15-source-upgrade/after/report.json
+            artifacts/m15-source-upgrade/after/manifest.json
+            artifacts/m15-source-upgrade/after/packages-lock.json
+            artifacts/m15-source-upgrade/after/validation.json
+            artifacts/m15-source-upgrade/before-expected.json
+            artifacts/m15-source-upgrade/after-expected.json
+            artifacts/m15-source-upgrade/source-inputs.sha256
+            artifacts/m15-source-upgrade/transition.json
+            artifacts/m15-source-upgrade/comparison.json
+          if-no-files-found: error
+          retention-days: 30
+
+  stable-exit-snapshot:
+    name: Emit fail-closed stable-release exit snapshot
+    needs:
+      - verify-public-assets
+      - public-release-consumers
+      - source-first-upgrade
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact release tag
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Download public release identity
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: foldcanvas-public-release-assets
+          path: artifacts/m15-stable-input/public-release
+
+      - name: Download public consumer evidence
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: unity-public-release-consumer-results-and-logs
+          path: artifacts/m15-stable-input/public-consumers
+
+      - name: Download source-upgrade evidence
+        uses: actions/download-artifact@v4.1.8
+        with:
+          name: unity-source-first-upgrade-results-and-logs
+          path: artifacts/m15-stable-input/source-upgrade
+
+      - name: Build conservative release-state input and evaluate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CANDIDATE_COMMIT: ${{ needs.verify-public-assets.outputs.tag_commit }}
+          CANDIDATE_VERSION: ${{ needs.verify-public-assets.outputs.package_version }}
+          ARCHIVE_SHA256: ${{ needs.verify-public-assets.outputs.package_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="artifacts/m15-stable-exit"
+          mkdir -p "$output_root"
+          release_json="$(find artifacts/m15-stable-input/public-release -type f -name release.json -print -quit)"
+          verification_json="$(find artifacts/m15-stable-input/public-release -type f -name verification.json -print -quit)"
+          consumer_comparison="$(find artifacts/m15-stable-input/public-consumers -type f -name m15-public-consumer-comparison.json -print -quit)"
+          upgrade_comparison="$(find artifacts/m15-stable-input/source-upgrade -type f -name comparison.json -print -quit)"
+          test -n "$release_json"
+          test -n "$verification_json"
+          test -n "$consumer_comparison"
+          test -n "$upgrade_comparison"
+          release_published_at="$(jq -r '.published_at' "$release_json")"
+          evaluated_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          verification_sha256="$(sha256sum "$verification_json" | cut -d' ' -f1)"
+          consumer_sha256="$(sha256sum "$consumer_comparison" | cut -d' ' -f1)"
+          upgrade_sha256="$(sha256sum "$upgrade_comparison" | cut -d' ' -f1)"
+          baseline_version="$(jq -r '.baselineVersion' "$upgrade_comparison")"
+          gh api -X GET search/issues \
+            -f q="repo:$GITHUB_REPOSITORY is:issue is:open label:release-blocker" \
+            --jq '[.items[] | {number: .number, state: .state}]' \
+            > "$output_root/open-release-blockers.json"
+          jq -n \
+            --arg candidateVersion "$CANDIDATE_VERSION" \
+            --arg candidateTag "$RELEASE_TAG" \
+            --arg candidateCommit "$CANDIDATE_COMMIT" \
+            --arg releasePublishedAt "$release_published_at" \
+            --arg evaluatedAt "$evaluated_at" \
+            --arg archiveSha256 "$ARCHIVE_SHA256" \
+            --arg verificationSha256 "$verification_sha256" \
+            --arg consumerSha256 "$consumer_sha256" \
+            --arg baselineVersion "$baseline_version" \
+            --arg upgradeSha256 "$upgrade_sha256" \
+            --slurpfile issues "$output_root/open-release-blockers.json" \
+            '{
+              format: "foldcanvas-stable-exit-input",
+              version: "1",
+              candidateVersion: $candidateVersion,
+              candidateTag: $candidateTag,
+              candidateCommit: $candidateCommit,
+              releasePublishedAt: $releasePublishedAt,
+              evaluatedAt: $evaluatedAt,
+              publicRelease: {
+                verified: true,
+                candidateVersion: $candidateVersion,
+                candidateTag: $candidateTag,
+                candidateCommit: $candidateCommit,
+                archiveSha256: $archiveSha256,
+                evidenceSha256: $verificationSha256
+              },
+              publicConsumers: {
+                candidateVersion: $candidateVersion,
+                candidateCommit: $candidateCommit,
+                installations: 2,
+                passed: 2,
+                failed: 0,
+                skipped: 0,
+                inconclusive: 0,
+                evidenceSha256: $consumerSha256
+              },
+              sourceUpgrade: {
+                passed: true,
+                baselineVersion: $baselineVersion,
+                candidateVersion: $candidateVersion,
+                candidateCommit: $candidateCommit,
+                derivedInputCount: 0,
+                evidenceSha256: $upgradeSha256
+              },
+              scheduledLongRuns: [],
+              releaseBlockingIssues: $issues[0],
+              exactHeadAudit: {
+                decision: "missing",
+                candidateCommit: $candidateCommit,
+                recordedAt: $evaluatedAt
+              },
+              satisfiedGates: [
+                "public-release-assets",
+                "public-release-consumer-a",
+                "public-release-consumer-b",
+                "source-upgrade"
+              ]
+            }' > "$output_root/input.json"
+          python3 Scripts/evaluate_stable_exit.py \
+            --input "$output_root/input.json" \
+            --contract Documentation~/m15-public-distribution.json \
+            --output "$output_root/report.json"
+          test "$(jq -r '.status' "$output_root/report.json")" = "blocked"
+
+      - name: Upload stable-exit input and blocked report
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: foldcanvas-stable-exit-snapshot
+          path: |
+            artifacts/m15-stable-exit/input.json
+            artifacts/m15-stable-exit/report.json
+            artifacts/m15-stable-exit/open-release-blockers.json
+          if-no-files-found: error
+          retention-days: 30
