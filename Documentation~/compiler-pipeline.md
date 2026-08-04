@@ -516,3 +516,16 @@ exception is recorded with its replay identity and fails the runner rather than
 being converted into a generic compiler diagnostic. Unity/platform fields are
 environment metadata; package, compiler, FoldScript, generator, source,
 geometry, and ordered diagnostic evidence form the semantic contract.
+
+The maintained M13 Solidify scale fixture starts with a `127 x 63` rectangle
+grid: 8,192 source render vertices and 16,002 source triangles. Existing
+Solidify rules produce 17,904 render vertices, 16,384 logical topology
+vertices, and 32,764 triangles. Those exact configured limits succeed with
+locked geometry SHA-256
+`2045705d501770fc866354e431c58462e1ddee8f278d3fa738ce03b6e24b47b8`.
+Reducing only the vertex or triangle limit by one leaves panel tessellation
+legal but makes Solidify fail with `FC5005` or `FC5006`; no compiled data or
+Mesh is returned. A separate 355-panel, 710-triangle Strict source passes
+ordinary tessellation and deterministically reaches `FC5019` at broad-phase
+candidate pair 250,001. These are lower CI-safe per-case limits and do not
+change FoldCanvas's production defaults.

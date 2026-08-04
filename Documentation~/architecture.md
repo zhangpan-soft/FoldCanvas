@@ -79,6 +79,14 @@ and atomically replaces only a complete report under the current project's
 `Library/FoldCanvas` folder. Runtime contains no fuzzer, global random state,
 report I/O, or alternate geometry path.
 
+Maintained M13 scale fixtures follow the same boundary. Their checked expected
+counts are derived from source tessellation and existing operation equations,
+then verified through the ordinary compiler. Exact configured limits must
+succeed; reducing the relevant limit by one must fail at the geometry-producing
+operation with its stable budget diagnostic and no Mesh. Strict-validation
+scale evidence also starts as ordinary in-memory panels rather than injecting a
+private validation buffer.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived

@@ -230,6 +230,17 @@ report, resource observations, and exact replay identities for failures.
   `a0a8a57c29b2bd3a769c87de33d6f6bdbad14422defdd706ef304bd306c1ed9a`.
   Reports resolved under the active project `Library/FoldCanvas`; the user's
   tracked and untracked `Project~` source/scratch files were not written.
+- 2026-08-04: Added the first maintained M13 scale fixture through the ordinary
+  compiler. A `127 x 63` rectangle plus Solidify produces 17,904 render
+  vertices, 16,384 logical topology vertices, and 32,764 triangles with locked
+  SHA-256 `2045705d501770fc866354e431c58462e1ddee8f278d3fa738ce03b6e24b47b8`.
+  Exact vertex and triangle limits pass; lowering either relevant limit by one
+  returns deterministic `FC5005` or `FC5006` without a Mesh. A separate native
+  355-panel Strict source returns `FC5019` at candidate pair 250,001, and a
+  failed large compile does not change a following small replay. Unity
+  `6000.3.20f1` passed all 7 focused scale/retry tests in an independent
+  archive-installed host, followed by the complete 444/444 M00-M13 Edit Mode
+  suite with zero failures, skips, or inconclusive results.
 
 # Decisions made
 
@@ -248,12 +259,19 @@ report, resource observations, and exact replay identities for failures.
 - Failure replay lives outside project source and cannot become a generated
   Mesh escape hatch. The canonical source remains the only route back into the
   compiler.
+- M13 scale gates use lower explicit per-case caps rather than allocating up to
+  the one-million/two-million production defaults. The fixture first proves its
+  checked final count at the exact cap, then changes only that cap by one so the
+  stable operation-level diagnostic cannot be confused with source
+  tessellation preflight.
 
 # Final verification
 
-The initial deterministic smoke slice is implemented and locally verified.
-Scale boundaries, cancellation/retry, resource envelopes, hosted long-run
-evidence, package-version advancement, and the final PR audit remain pending.
+The initial deterministic smoke slice and the first Solidify/Strict scale,
+repeat, and failure-then-retry slice are implemented and locally verified.
+Additional planar/cup/sphere/torus/Stitch scale fixtures, cancellation and
+atomic-report retry, resource envelopes, hosted long-run evidence,
+package-version advancement, and the final PR audit remain pending.
 The final M13 audit must record:
 
 - exact branch head, package/compiler/FoldScript/generator versions

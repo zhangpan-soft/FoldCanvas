@@ -17,6 +17,10 @@ The format follows Keep a Changelog principles, and package versions follow sema
   plus six Edit Mode tests for order independence, repeatable semantic digests,
   finite successful geometry, diagnostic-only failures, and exception/source
   isolation
+- Maintained `127 x 63` Solidify scale fixture with checked expected counts,
+  a locked geometry hash, exact vertex/triangle budget acceptance, one-over
+  `FC5005`/`FC5006` rejection, a public-compiler Strict candidate-budget
+  fixture, repeated-compile isolation, and large-failure-then-small-retry proof
 
 ### Verified
 
@@ -27,11 +31,19 @@ The format follows Keep a Changelog principles, and package versions follow sema
   SHA-256 `fad8385cf02227371df0128b213f38e0b7962cf49ea968b3f2109d03b2ac0290`
   and byte-identical report SHA-256
   `a0a8a57c29b2bd3a769c87de33d6f6bdbad14422defdd706ef304bd306c1ed9a`
+- Unity `6000.3.20f1` passed 7/7 focused M13 scale and retry tests. The large
+  Solidify fixture emitted 17,904 render vertices, 16,384 logical topology
+  vertices, and 32,764 triangles with geometry SHA-256
+  `2045705d501770fc866354e431c58462e1ddee8f278d3fa738ce03b6e24b47b8`;
+  the Strict fixture stopped deterministically at candidate pair 250,001. The
+  complete archive-installed M00-M13 suite then passed 444/444 with zero
+  failures, skips, or inconclusive results
 
 ### Not included
 
-- M13 scale boundaries, cancellation/retry, resource envelopes, long-running
-  hosted corpus, package-version advance, M14 freeze, and `1.0.0` remain pending
+- Remaining M13 multi-family scale corpus, cancellation/report retry, resource
+  envelopes, long-running hosted corpus, package-version advance, M14 freeze,
+  and `1.0.0` remain pending
 
 ## [0.1.0-preview.20] - 2026-08-04
 
