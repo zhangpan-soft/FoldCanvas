@@ -563,3 +563,13 @@ declared fallback. The selected method and raw min/median/max values are
 reported, but only measurement availability, envelope identity, exact geometry,
 and pass/fail outcomes enter the semantic projection. The report is derived
 evidence and never feeds a Mesh or operation back into compilation.
+
+The M13 hosted long run invokes the complete Edit Mode suite while one
+integration test expands the same four deterministic smoke suites to an
+explicit command-line case count and seed. It writes a complete robustness
+report, extracted replay records, the full resource report, and environment
+linkage into a derived CI directory. The repository validator then cross-checks
+the Unity XML and Editor log, report counts and semantic hashes, exact replay
+coverage, 5/5 resource outcomes, and environment references before artifacts
+are accepted. Missing Unity startup, missing files, an incomplete report, an
+unexpected case without its replay tuple, or any non-green count fails the job.

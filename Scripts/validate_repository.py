@@ -109,6 +109,7 @@ required = [
     "Documentation~/architecture.md",
     "Schema/foldcanvas.schema.json",
     ".github/workflows/unity-tests.yml",
+    ".github/workflows/m13-robustness-long-run.yml",
     ".github/workflows/package-release.yml",
     "Scripts/build_release_package.py",
     "Scripts/test_release_package.py",
@@ -130,6 +131,7 @@ required = [
     "Scripts/create_handoff_proof_projects.py",
     "Scripts/compare_handoff_evidence.py",
     "Scripts/test_handoff_proof.py",
+    "Scripts/validate_m13_long_run_evidence.py",
     "Scripts/Templates~/M12Handoff/Producer/Assets/FoldCanvas.M12.HandoffProducer.Tests.asmdef",
     "Scripts/Templates~/M12Handoff/Producer/Assets/M12HandoffProducerTests.cs",
     "Scripts/Templates~/M12Handoff/Receiver/Assets/FoldCanvas.M12.HandoffReceiver.Tests.asmdef",
@@ -570,6 +572,37 @@ if "python3 Scripts/test_clean_install_project.py" not in repository_workflow:
     errors.append("Repository checks must validate M11 clean-install contracts")
 if "python3 Scripts/test_handoff_proof.py" not in repository_workflow:
     errors.append("Repository checks must validate M12 handoff contracts")
+
+m13_long_run_workflow = (
+    ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "workflow_dispatch:",
+    "schedule:",
+    'cron: "17 3 * * 1"',
+    "game-ci/unity-test-runner@v4.3.1",
+    "projectPath: Project~",
+    "unityVersion: 6000.3.20f1",
+    "testMode: EditMode",
+    "FOLDCANVAS_M13_LONG_CASES_PER_SUITE",
+    "FOLDCANVAS_M13_LONG_SEED_HEX",
+    "foldCanvasM13CasesPerSuite",
+    "foldCanvasM13SeedHex",
+    "foldCanvasM13EvidenceDirectory",
+    "Scripts/validate_m13_long_run_evidence.py",
+    "robustness-report.json",
+    "replay-records.json",
+    "resource-report.json",
+    "environment.json",
+    "test-results.xml",
+    "Editor.log",
+    "if-no-files-found: error",
+]:
+    if required_fragment not in m13_long_run_workflow:
+        errors.append(
+            "M13 long-run workflow is missing required evidence: "
+            f"{required_fragment}"
+        )
 
 for required_fragment in [
     "artifacts/m11-clean-host-a",

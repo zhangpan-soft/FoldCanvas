@@ -34,6 +34,10 @@ The format follows Keep a Changelog principles, and package versions follow sema
   warmup/measurement counts, conservative median time/allocation limits, an
   Editor runner, atomic derived report, measurement-method disclosure, and
   semantic hashing that excludes raw environmental noise
+- Scheduled/manual M13 long-run Unity workflow with explicit bounded case count
+  and seed, complete-suite XML/log proof, canonical robustness and resource
+  reports, environment linkage, exact unexpected-case replay extraction, and a
+  validator that rejects missing, incomplete, stale, or mismatched evidence
 
 ### Verified
 
@@ -66,12 +70,18 @@ The format follows Keep a Changelog principles, and package versions follow sema
   complete archive-installed 458/458 M00-M13 suite with zero failures, skips,
   or inconclusive results. The default one-warmup/three-measurement report
   passed 5/5 reviewed envelopes using the Unity profiler allocation counter;
-  every scenario remained below its 10-second and 512-MiB median ceilings
+  every scenario remained below its 10-second and 512-MiB median ceilings.
+  Hosted Repository run `30877120530` and Unity run `30877120533` were also
+  green, including 458/458 package tests and both clean-host regression jobs
+- An independent archive-installed Unity `6000.3.20f1` host passed 2/2 focused
+  long-run evidence tests, a configured 128/128-case local corpus with 5/5
+  resource envelopes, and the complete 460/460 M00-M13 suite with zero
+  failures, skips, or inconclusive results
 
 ### Not included
 
-- Remaining M13 long-running hosted corpus, package-version advance, M14
-  freeze, and `1.0.0` remain pending
+- Hosted execution of the new M13 long-running corpus, package-version advance,
+  M14 freeze, and `1.0.0` remain pending
 
 ## [0.1.0-preview.20] - 2026-08-04
 

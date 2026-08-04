@@ -273,7 +273,19 @@ report, resource observations, and exact replay identities for failures.
   290.962 ms / 99,468,724 bytes sphere, 143.354 ms / 24,902,865 bytes torus,
   and 64.729 ms / 14,558,998 bytes Stitch. Each reviewed ceiling is 10 seconds
   and 512 MiB, and the selected method was Unity's
-  `GC Allocated In Frame` profiler counter.
+  `GC Allocated In Frame` profiler counter. Commit `78d0a91` then passed hosted
+  Repository run `30877120530` and Unity run `30877120533`; the latter passed
+  458/458 package tests plus both repeated clean-install and production-handoff
+  jobs. Its three uploaded artifact digests were recorded for the final audit.
+- 2026-08-04: Added the separate M13 scheduled/manual hosted workflow, exact
+  command-line case-count/seed configuration, complete robustness/resource/
+  environment evidence, unexpected-case replay extraction, and an independent
+  Python validator that rejects missing or stale XML, log, count, hash, replay,
+  or envelope evidence. An archive-installed local Unity `6000.3.20f1` host
+  passed the 2/2 focused contract tests, a configured 32-per-suite run with
+  128/128 cases and 5/5 resource envelopes, and the complete 460/460 M00-M13
+  suite with zero failures, skips, or inconclusive results. Hosted validation
+  of the new workflow remains required before this slice can close.
 
 # Decisions made
 
@@ -306,8 +318,10 @@ report, resource observations, and exact replay identities for failures.
 
 The deterministic smoke, budget/Strict scale, multi-family scale, repeated
 compile, failure-then-retry, cooperative cancellation/atomic-report, and
-resource-envelope slices are implemented and locally verified. Hosted long-run
-evidence, package-version advancement, and the final PR audit remain pending.
+resource-envelope slices are implemented and locally verified. The long-run
+workflow and artifact validator are implemented and locally verified, but its
+hosted self-test, package-version advancement, and final PR audit remain
+pending.
 The final M13 audit must record:
 
 - exact branch head, package/compiler/FoldScript/generator versions

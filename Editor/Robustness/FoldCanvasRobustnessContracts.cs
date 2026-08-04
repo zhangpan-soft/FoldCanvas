@@ -107,6 +107,60 @@ namespace FoldCanvas.Editor
             new List<FoldCanvasRobustnessCaseResult>();
     }
 
+    [Serializable]
+    public sealed class FoldCanvasRobustnessReplayRecord
+    {
+        public string generatorVersion;
+        public string suiteId;
+        public string seedHex;
+        public int ordinal;
+        public string caseId;
+        public bool expectedSuccess;
+        public string expectedDiagnosticCode;
+        public bool actualSuccess;
+        public string actualFirstErrorCode;
+        public string exceptionType;
+        public string exceptionMessage;
+        public string sourceSha256;
+    }
+
+    [Serializable]
+    public sealed class FoldCanvasRobustnessReplayDocument
+    {
+        public string format = "foldcanvas-robustness-replays";
+        public string version = "1";
+        public string generatorVersion;
+        public string reportSemanticSha256;
+        public int unexpectedCount;
+        public List<FoldCanvasRobustnessReplayRecord> records =
+            new List<FoldCanvasRobustnessReplayRecord>();
+    }
+
+    [Serializable]
+    public sealed class FoldCanvasRobustnessLongRunEnvironment
+    {
+        public string format = "foldcanvas-robustness-long-run-environment";
+        public string version = "1";
+        public string packageVersion;
+        public string compilerVersion;
+        public string foldScriptVersion;
+        public string generatorVersion;
+        public string unityVersion;
+        public string platform;
+        public string operatingSystem;
+        public string processorType;
+        public int processorCount;
+        public int systemMemoryMegabytes;
+        public int casesPerSuite;
+        public int suiteCount;
+        public int caseCount;
+        public string seedHex;
+        public string reportSemanticSha256;
+        public string resourceEnvelopeSha256;
+        public string resourceSemanticSha256;
+        public bool complete;
+    }
+
     internal sealed class FoldCanvasRobustnessGeneratedCase : IDisposable
     {
         public FoldCanvasRobustnessGeneratedCase(

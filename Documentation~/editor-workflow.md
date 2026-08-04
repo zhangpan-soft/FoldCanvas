@@ -163,6 +163,15 @@ are intentionally machine-specific; they do not affect source, geometry, case
 order, or the report's semantic digest. Any unavailable measurement, geometry
 drift, or exceeded envelope fails the command visibly.
 
+The separate `M13 robustness long run` GitHub Actions workflow is scheduled
+weekly and can be started manually with 64, 128, or 256 cases per suite plus an
+explicit 16-hex-digit seed. It runs the complete package Edit Mode suite in
+Unity `6000.3.20f1` and retains `test-results.xml`, `Editor.log`, the robustness
+and resource reports, replay records, environment metadata, and a validator
+summary. The default scheduled run uses 128 cases per suite (512 total). A
+workflow-file change also runs this gate once so changes to the gate prove
+themselves before review.
+
 ## Authoring actions
 
 - create rectangle and disk panels

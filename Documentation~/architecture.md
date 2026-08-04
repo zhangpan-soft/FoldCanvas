@@ -112,6 +112,17 @@ not enter the semantic hash; the reviewed envelope identity and deterministic
 pass/fail outcomes do. This prevents timing noise from changing source or
 geometry identity while still making a gross regression fail explicitly.
 
+The hosted long-run adapter remains in the Editor/Test boundary. Command-line
+configuration selects an explicit bounded cases-per-suite value, fixed seed,
+and derived evidence directory. The same runner emits the canonical robustness
+report; a separate replay document extracts exactly the unexpected cases by
+`(generatorVersion, suiteId, seedHex, ordinal)`; the resource runner emits its
+independent report; and environment metadata links both semantic hashes without
+becoming authoritative source. Every file is evidence only. The scheduled or
+manual workflow must fail if Unity does not produce a fully green XML/log pair,
+if any report is absent or incomplete, or if replay records do not exactly
+cover the unexpected-case set.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived

@@ -126,6 +126,7 @@ rules architecture.
 - `ResourceReport_RawObservationsDoNotChangeSemanticProjection`
 - `ResourceReport_PersistenceFailurePreservesPreviousBytes`
 - `LongRunReport_ContainsReplayIdentityForEveryUnexpectedCase`
+- `HostedLongRun_WritesCompleteEvidenceWhenRequested`
 
 Exact final test names may be split by subsystem, but none of these behaviors
 may be removed or weakened.
