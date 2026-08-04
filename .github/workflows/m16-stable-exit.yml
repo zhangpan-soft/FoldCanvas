@@ -1,0 +1,203 @@
+name: M16 stable exit evaluation
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - M16 candidate soak
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  issues: read
+
+concurrency:
+  group: m16-stable-exit
+  cancel-in-progress: false
+
+jobs:
+  stable-exit:
+    name: Evaluate exact RC2 stable exit
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      (github.event.workflow_run.event == 'schedule' ||
+      github.event.workflow_run.event == 'workflow_dispatch'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current orchestration revision
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate candidate, gate ledger, and reviewed tree identity
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="artifacts/m16-stable-exit"
+          mkdir -p "$output_root"
+          python3 Scripts/validate_active_candidate.py
+          python3 Scripts/validate_release_gate_ledger.py \
+            --output "$output_root/gate-ledger.json"
+
+          source_head="$(jq -r '.sourceHead' "$output_root/gate-ledger.json")"
+          candidate_commit="$(jq -r '.candidateCommit' "$output_root/gate-ledger.json")"
+          source_tree="$(jq -r '.sourceTree' "$output_root/gate-ledger.json")"
+          candidate_tree="$(jq -r '.candidateTree' "$output_root/gate-ledger.json")"
+          git fetch --no-tags origin "$source_head" "$candidate_commit"
+          test "$(git rev-parse "$source_head^{tree}")" = "$source_tree"
+          test "$(git rev-parse "$candidate_commit^{tree}")" = "$candidate_tree"
+          test "$source_tree" = "$candidate_tree"
+
+          jq -c '.runs[]' "$output_root/gate-ledger.json" | \
+            while IFS= read -r expected; do
+              run_id="$(jq -r '.runId' <<< "$expected")"
+              actual="$output_root/run-$run_id.json"
+              gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" > "$actual"
+              test "$(jq -r '.conclusion' "$actual")" = "success"
+              test "$(jq -r '.event' "$actual")" = \
+                "$(jq -r '.event' <<< "$expected")"
+              test "$(jq -r '.head_sha' "$actual")" = \
+                "$(jq -r '.expectedHead' <<< "$expected")"
+              test "$(jq -r '.path' "$actual")" = \
+                "$(jq -r '.workflowPath' <<< "$expected")"
+              jobs="$output_root/jobs-$run_id.json"
+              gh api \
+                "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" \
+                > "$jobs"
+              jq -r '.jobs[].name' "$jobs" | LC_ALL=C sort > "$jobs.actual"
+              jq -r '.jobs[]' <<< "$expected" | LC_ALL=C sort > "$jobs.expected"
+              while IFS= read -r expected_job; do
+                test "$(
+                  jq --arg name "$expected_job" \
+                    '[.jobs[] | select(.name == $name and .conclusion == "success")] | length' \
+                    "$jobs"
+                )" = "1"
+              done < "$jobs.expected"
+            done
+
+      - name: Download reviewed public qualification snapshot
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="artifacts/m16-stable-exit"
+          public_run_id="$(
+            jq -r '.runs[] | select(.workflowPath == ".github/workflows/public-release-qualification.yml") | .runId' \
+              "$output_root/gate-ledger.json"
+          )"
+          test -n "$public_run_id"
+          mkdir -p "$output_root/public-snapshot"
+          gh run download "$public_run_id" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name foldcanvas-stable-exit-snapshot \
+            --dir "$output_root/public-snapshot"
+          test -s "$output_root/public-snapshot/input.json"
+          test -s "$output_root/public-snapshot/report.json"
+
+      - name: Download and aggregate candidate-soak records
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="artifacts/m16-stable-exit"
+          mkdir -p "$output_root/soak-runs"
+          gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow m16-candidate-soak.yml \
+            --status success \
+            --limit 50 \
+            --json databaseId,event \
+            > "$output_root/soak-workflow-runs.json"
+          mapfile -t run_ids < <(
+            jq -r '.[] | select(.event == "schedule" or .event == "workflow_dispatch") | .databaseId' \
+              "$output_root/soak-workflow-runs.json" | sort -n -u
+          )
+          for run_id in "${run_ids[@]}"; do
+            destination="$output_root/soak-runs/$run_id"
+            mkdir -p "$destination"
+            gh run download "$run_id" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "foldcanvas-candidate-soak-$run_id" \
+              --dir "$destination"
+          done
+
+          mapfile -t records < <(
+            find "$output_root/soak-runs" -type f -name soak-run.json \
+              -print | LC_ALL=C sort
+          )
+          arguments=()
+          for record in "${records[@]}"; do
+            arguments+=(--run "$record")
+          done
+          python3 Scripts/aggregate_candidate_soak.py \
+            "${arguments[@]}" \
+            --output "$output_root/soak-aggregate.json"
+
+      - name: Build current stable input and evaluate without weakening gates
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="artifacts/m16-stable-exit"
+          gh api -X GET search/issues \
+            -f q="repo:$GITHUB_REPOSITORY is:issue is:open label:release-blocker" \
+            --jq '[.items[] | {number: .number, state: .state}]' \
+            > "$output_root/open-release-blockers.json"
+          evaluated_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          jq \
+            --arg evaluatedAt "$evaluated_at" \
+            --slurpfile soak "$output_root/soak-aggregate.json" \
+            --slurpfile issues "$output_root/open-release-blockers.json" \
+            --slurpfile ledger "$output_root/gate-ledger.json" \
+            '.evaluatedAt = $evaluatedAt
+             | .scheduledLongRuns = $soak[0].scheduledLongRuns
+             | .releaseBlockingIssues = $issues[0]
+             | .exactHeadAudit = $ledger[0].audit
+             | .satisfiedGates = $ledger[0].satisfiedGates' \
+            "$output_root/public-snapshot/input.json" \
+            > "$output_root/input.json"
+          python3 Scripts/evaluate_stable_exit.py \
+            --input "$output_root/input.json" \
+            --contract Documentation~/m15-public-distribution.json \
+            --output "$output_root/report.json"
+
+          status="$(jq -r '.status' "$output_root/report.json")"
+          blockers="$(jq -r '.blockers | join(", ")' "$output_root/report.json")"
+          {
+            echo "## FoldCanvas RC2 stable exit"
+            echo
+            echo "- Status: \`$status\`"
+            echo "- Soak hours: \`$(jq -r '.soakHours' "$output_root/report.json")\`"
+            echo "- Qualifying scheduled runs: \`$(jq -r '.qualifyingScheduledLongRuns' "$output_root/report.json")\`"
+            echo "- Open release blockers: \`$(jq -r '.openReleaseBlockerCount' "$output_root/report.json")\`"
+            echo "- Satisfied gates: \`$(jq -r '.satisfiedGateCount' "$output_root/report.json")/$(jq -r '.requiredGateCount' "$output_root/report.json")\`"
+            echo "- Blockers: \`${blockers:-none}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload current stable-exit evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: foldcanvas-m16-stable-exit-${{ github.run_id }}
+          path: |
+            artifacts/m16-stable-exit/gate-ledger.json
+            artifacts/m16-stable-exit/run-*.json
+            artifacts/m16-stable-exit/jobs-*.json
+            artifacts/m16-stable-exit/public-snapshot/input.json
+            artifacts/m16-stable-exit/public-snapshot/report.json
+            artifacts/m16-stable-exit/soak-workflow-runs.json
+            artifacts/m16-stable-exit/soak-runs/**/soak-run.json
+            artifacts/m16-stable-exit/soak-aggregate.json
+            artifacts/m16-stable-exit/open-release-blockers.json
+            artifacts/m16-stable-exit/input.json
+            artifacts/m16-stable-exit/report.json
+          if-no-files-found: error
+          retention-days: 30

@@ -141,11 +141,18 @@ explicit owner escalation points.
 
 ## Implementation status
 
-Implementation is active on `codex/m15-public-distribution`, based on M14
-merge `a8c81e61175dafbc48d1750de7ef6823589517a6`. The package is now
-`1.0.0-rc.2`; public-asset, clean-consumer, source-upgrade, stable-exit,
-workflow, schema, documentation, and regression contracts are implemented.
-Local Unity `6000.3.20f1` passed 472/472 package tests and the real
-`0.1.0-preview.21` to RC2 source-only upgrade passed 1/1 before and 1/1 after.
-Hosted exact-head evidence, audit, merge, RC2 publication, public-download
-qualification, and the blocked stable-exit snapshot remain required.
+Completed. Exact head `4729ab93ed37f0bc59546eb3e1b2464f9b310959`
+passed repository, deterministic package, Unity 472/472, two clean consumers,
+production handoff, source-first upgrade, 512/512 robustness, and 5/5 resource
+gates. It was autonomously audited and PR #14 merged as
+`4db988ffac6dad4362d126001e5c9a67081ef2b7`.
+
+Public pre-release `v1.0.0-rc.2` was published from that exact merge. Its
+archive SHA-256 is
+`72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`.
+Run `30898280828` independently verified the public assets, two consumers, and
+source-first upgrade, then correctly reported stable as blocked by soak,
+scheduled-run, audit, and remaining-gate evidence. PR #15 subsequently fixed
+automatic post-publication dispatch and merged as
+`0d06450f1f1f309b605b1e25f1833ef993d2abe7` after 19 checks passed. Stable
+soak and promotion are M16 work; no final `1.0.0` was published in M15.

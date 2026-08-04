@@ -1,0 +1,95 @@
+{
+  "format": "foldcanvas-release-gate-ledger",
+  "version": "1",
+  "candidateVersion": "1.0.0-rc.2",
+  "candidateTag": "v1.0.0-rc.2",
+  "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+  "candidateTree": "14e6be32c406c0622dfcbddaf24d35e9aa6b32a0",
+  "sourceHead": "4729ab93ed37f0bc59546eb3e1b2464f9b310959",
+  "sourceTree": "14e6be32c406c0622dfcbddaf24d35e9aa6b32a0",
+  "audit": {
+    "decision": "approved",
+    "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+    "recordedAt": "2026-08-04T11:43:11Z",
+    "pullRequest": 14,
+    "reviewedHead": "4729ab93ed37f0bc59546eb3e1b2464f9b310959"
+  },
+  "runs": [
+    {
+      "runId": 30896302927,
+      "workflowPath": ".github/workflows/package-release.yml",
+      "event": "pull_request",
+      "expectedHead": "4729ab93ed37f0bc59546eb3e1b2464f9b310959",
+      "jobs": [
+        "Deterministic UPM package"
+      ],
+      "gates": [
+        "deterministic-release"
+      ]
+    },
+    {
+      "runId": 30896302930,
+      "workflowPath": ".github/workflows/repository-checks.yml",
+      "event": "pull_request",
+      "expectedHead": "4729ab93ed37f0bc59546eb3e1b2464f9b310959",
+      "jobs": [
+        "Repository validation"
+      ],
+      "gates": [
+        "repository-validation"
+      ]
+    },
+    {
+      "runId": 30896303932,
+      "workflowPath": ".github/workflows/unity-tests.yml",
+      "event": "pull_request",
+      "expectedHead": "4729ab93ed37f0bc59546eb3e1b2464f9b310959",
+      "jobs": [
+        "Unity 6000.3.20f1 Edit Mode tests",
+        "Unity 6000.3.20f1 repeated clean archive install",
+        "Unity 6000.3.20f1 clean producer and receiver handoff",
+        "Unity 6000.3.20f1 source-first package upgrade"
+      ],
+      "gates": [
+        "clean-install-a",
+        "clean-install-b",
+        "production-corpus",
+        "production-handoff-producer",
+        "production-handoff-receiver",
+        "public-runtime-api",
+        "unity-editmode"
+      ]
+    },
+    {
+      "runId": 30896596624,
+      "workflowPath": ".github/workflows/m13-robustness-long-run.yml",
+      "event": "workflow_dispatch",
+      "expectedHead": "4729ab93ed37f0bc59546eb3e1b2464f9b310959",
+      "jobs": [
+        "Repository validation",
+        "Unity 6000.3.20f1 M13 long run"
+      ],
+      "gates": [
+        "m13-robustness-long-run"
+      ]
+    },
+    {
+      "runId": 30898280828,
+      "workflowPath": ".github/workflows/public-release-qualification.yml",
+      "event": "workflow_dispatch",
+      "expectedHead": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+      "jobs": [
+        "Verify exact public GitHub release assets",
+        "Unity 6000.3.20f1 public archive consumers",
+        "Unity source-first upgrade to public archive",
+        "Emit fail-closed stable-release exit snapshot"
+      ],
+      "gates": [
+        "public-release-assets",
+        "public-release-consumer-a",
+        "public-release-consumer-b",
+        "source-upgrade"
+      ]
+    }
+  ]
+}

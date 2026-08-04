@@ -22,6 +22,12 @@ jobs:
         run: python3 Scripts/test_upgrade_proof.py
       - name: Validate M15 stable-release exit gate
         run: python3 Scripts/test_stable_exit.py
+      - name: Validate M16 active candidate control
+        run: python3 Scripts/test_active_candidate.py
+      - name: Validate M16 candidate soak aggregation
+        run: python3 Scripts/test_candidate_soak.py
+      - name: Validate M16 reviewed release-gate ledger
+        run: python3 Scripts/test_release_gate_ledger.py
       - name: Validate M11 clean-install project and evidence contracts
         run: python3 Scripts/test_clean_install_project.py
 

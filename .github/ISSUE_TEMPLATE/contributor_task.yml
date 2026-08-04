@@ -1,0 +1,58 @@
+name: Contributor task proposal
+description: Propose or claim one bounded, source-first contribution
+labels: [contributor-task]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Read Docs/Community/START_HERE.md first. Keep this task to one useful,
+        testable concept; generated Meshes are not editable source.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User-visible outcome
+      description: What can a user see, compile, diagnose, or understand after this task?
+    validations:
+      required: true
+  - type: dropdown
+    id: lane
+    attributes:
+      label: Contribution lane
+      options:
+        - Source example or geometry challenge
+        - Deterministic test or diagnostic
+        - Documentation
+        - Editor workflow
+        - Core geometry proposal
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source representation or affected contract
+      description: Describe panels, boundaries, seams, operations, fields, or documentation behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance checks
+      description: List deterministic tests, diagnostics, numerical checks, and any visible proof.
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: State what this task deliberately will not implement.
+    validations:
+      required: true
+  - type: checkboxes
+    id: architecture
+    attributes:
+      label: Architecture acknowledgement
+      options:
+        - label: I will keep the 2D canvas plus FoldScript as source and generated Meshes as derived artifacts.
+          required: true
+        - label: I will not add credentials, network services, or dependencies without explicit approval.
+          required: true
