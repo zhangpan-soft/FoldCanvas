@@ -141,6 +141,11 @@ explicit owner escalation points.
 
 ## Implementation status
 
-Planning on `codex/m15-public-distribution`, based on M14 merge
-`a8c81e61175dafbc48d1750de7ef6823589517a6`. No packaged M15 change or RC2
-version advance existed at branch creation.
+Implementation is active on `codex/m15-public-distribution`, based on M14
+merge `a8c81e61175dafbc48d1750de7ef6823589517a6`. The package is now
+`1.0.0-rc.2`; public-asset, clean-consumer, source-upgrade, stable-exit,
+workflow, schema, documentation, and regression contracts are implemented.
+Local Unity `6000.3.20f1` passed 472/472 package tests and the real
+`0.1.0-preview.21` to RC2 source-only upgrade passed 1/1 before and 1/1 after.
+Hosted exact-head evidence, audit, merge, RC2 publication, public-download
+qualification, and the blocked stable-exit snapshot remain required.

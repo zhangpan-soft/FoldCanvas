@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-public-release-verification.schema.json",
+  "title": "FoldCanvas public release verification report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "repository",
+    "tag",
+    "tagCommit",
+    "releaseId",
+    "packageName",
+    "packageVersion",
+    "unityVersion",
+    "foldScriptVersion",
+    "assetCount",
+    "archiveSha256",
+    "checksumSha256",
+    "manifestSha256",
+    "evidenceSha256",
+    "fileCount",
+    "qualified"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-public-release-verification" },
+    "version": { "const": "1" },
+    "repository": { "const": "zhangpan-soft/FoldCanvas" },
+    "tag": { "const": "v1.0.0-rc.2" },
+    "tagCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "releaseId": { "type": "integer", "minimum": 1 },
+    "packageName": { "const": "com.foldcanvas.core" },
+    "packageVersion": { "const": "1.0.0-rc.2" },
+    "unityVersion": { "const": "6000.3.20f1" },
+    "foldScriptVersion": { "const": "0.1" },
+    "assetCount": { "const": 4 },
+    "archiveSha256": { "$ref": "#/$defs/sha256" },
+    "checksumSha256": { "$ref": "#/$defs/sha256" },
+    "manifestSha256": { "$ref": "#/$defs/sha256" },
+    "evidenceSha256": { "$ref": "#/$defs/sha256" },
+    "fileCount": { "type": "integer", "minimum": 1 },
+    "qualified": { "const": true }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

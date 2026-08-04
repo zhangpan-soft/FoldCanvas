@@ -166,6 +166,17 @@ the new package. A machine-readable exit report explains exactly why stable
   asset, upgrade, immutable-version, stable-exit, test, and rollback contracts
   before packaged implementation. No RC2 or stable version change existed at
   plan creation.
+- 2026-08-04: Implemented the exact public-asset verifier, two public consumer
+  workflow, marked source-first upgrade generator/advancer, real Unity evidence
+  validators/comparator, and deterministic stable-exit evaluator. Static
+  repository/release/consumer/handoff/negative validation passes.
+- 2026-08-04: Local Unity `6000.3.20f1` package archive passed 472/472 Edit Mode
+  tests with a graphics device. The first `-nographics` attempt correctly
+  failed the gallery-window visual contract and was not treated as success.
+- 2026-08-04: A clean upgrade host passed 1/1 on exact rollback
+  `0.1.0-preview.21`, removed only its owned derived state, then passed 1/1 on
+  RC2 with identical source, appearance, geometry, OBJ, diagnostic, topology,
+  validation, and single-closed-volume evidence.
 
 # Decisions made
 
@@ -182,8 +193,9 @@ the new package. A machine-readable exit report explains exactly why stable
 
 # Final verification
 
-Planning is complete. Packaged implementation, RC2 version advance, local and
-hosted Unity evidence, exact-head audit, merge, RC2 publication, public-asset
-download, public-consumer proof, and the stable-exit blocked/ready report remain
-pending. No final `1.0.0`, external marketplace publication, new geometry, or
-later milestone was implemented.
+Packaged implementation, RC2 version advance, static validation, local 472/472
+Unity regression, and local source-first upgrade evidence are complete. Hosted
+exact-head CI/audit, merge, RC2 publication, public-asset download, two public
+consumers, repeated public-package upgrade, and the blocked stable-exit snapshot
+remain pending. No final `1.0.0`, external marketplace publication, new
+geometry, or later milestone was implemented.

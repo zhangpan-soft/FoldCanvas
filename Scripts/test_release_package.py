@@ -51,6 +51,7 @@ def main() -> int:
                 "package/Samples~/OperationExtension/README.md",
                 "package/Documentation~/index.md",
                 "package/Documentation~/m14-release-candidate.json",
+                "package/Documentation~/m15-public-distribution.json",
                 "package/Documentation~/release-candidate.md",
                 "package/LICENSE.md",
                 "package/SECURITY.md",
@@ -133,6 +134,10 @@ def main() -> int:
                 != hashlib.sha256(first_manifest.read_bytes()).hexdigest()
                 or evidence.get("publication", {}).get("finalStableRelease")
                 is not False
+                or evidence.get("contract", {}).get("path")
+                != "Documentation~/m15-public-distribution.json"
+                or evidence.get("priorRelease", {}).get("immutable") is not True
+                or evidence.get("stableExit", {}).get("status") != "blocked"
             ):
                 raise AssertionError("Release candidate evidence contract is invalid")
 

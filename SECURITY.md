@@ -4,9 +4,11 @@ FoldCanvas is a local Unity Editor package and currently performs no network req
 
 ## Supported versions
 
-The supported pre-release candidate is `1.0.0-rc.1` on Unity
-`6000.3.20f1`. The rollback preview `0.1.0-preview.21` receives security fixes
-only when required to provide a safe downgrade path.
+The pre-release candidate under qualification is `1.0.0-rc.2` on Unity
+`6000.3.20f1`. Until RC2 public qualification completes, immutable
+`v1.0.0-rc.1` remains the latest published rollback; preview
+`0.1.0-preview.21` receives security fixes only when required to provide a safe
+deeper downgrade path.
 
 ## Report a vulnerability
 

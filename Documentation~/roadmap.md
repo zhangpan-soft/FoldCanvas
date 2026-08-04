@@ -361,7 +361,8 @@ passed 512/512 generated cases and 5/5 resource envelopes; artifact
 
 ## M14: 1.0 release candidate
 
-**Status:** active on `codex/m14-release-candidate`.
+**Status:** autonomously maintainer-audited, merged through PR #13 as
+`a8c81e6`, and published as GitHub pre-release `v1.0.0-rc.1`.
 
 **Proof:** `1.0.0-rc.1` binds one exact supported Unity row, a frozen Runtime API
 and FoldScript contract, deterministic archive/file evidence, clean consumers,
@@ -379,6 +380,44 @@ before a separate final `1.0.0` decision.
 M14 does not add geometry behavior, change FoldScript `0.1`, add dependencies,
 claim untested Unity versions, publish final `1.0.0`, or submit to an external
 marketplace.
+
+Acceptance evidence: reviewed head `7311771a` passed 466/466 Edit Mode tests,
+two 1/1 clean archive consumers, 1/1 producer plus 1/1 receiver handoff,
+512/512 deterministic robustness cases, and 5/5 resource scenarios. Package
+release run `30888055335` published four assets whose archive SHA-256 is
+`ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd`.
+
+## M15: Public distribution and upgrade qualification
+
+**Status:** implementation complete locally on
+`codex/m15-public-distribution`; hosted PR/public-release qualification is
+pending.
+
+**Proof:** the exact public GitHub release assets, rather than a local rebuild
+or CI-internal artifact, verify byte-for-byte and install into two independent
+Unity consumers; authoritative canvas/FoldScript source survives an explicit
+package upgrade while every derived artifact is rebuilt.
+
+- immutable identity lock for the published `1.0.0-rc.1` assets
+- `1.0.0-rc.2` advance before any packaged M15 content changes
+- exact four-asset public release allowlist and GitHub digest verification
+- checksum, per-file manifest, normalized archive, candidate-evidence, tag, and
+  repository identity validation
+- two clean Unity `6000.3.20f1` consumers resolving only the public `.tgz`
+- source-first upgrade rehearsal with no Mesh/OBJ/Prefab/receipt input
+- fail-closed stable-exit contract requiring a seven-day soak, two distinct
+  scheduled long-runs, no release blocker, and exact-head audit
+
+M15 does not add geometry behavior, change FoldScript `0.1`, add dependencies,
+claim another Unity version, publish final `1.0.0`, use generated geometry as
+migration source, or submit to an external marketplace.
+
+Local implementation evidence: Unity `6000.3.20f1` passed 472/472 package Edit
+Mode tests. A separately generated upgrade host passed 1/1 on exact
+`0.1.0-preview.21`, removed only its marked derived state, then passed 1/1 on
+RC2 with identical FoldScript/PNG, geometry, OBJ, diagnostics, topology,
+validation, and single-closed-volume evidence. This does not substitute for the
+post-publication public-asset/consumer/upgrade workflow.
 
 ## Deliberate product non-goals
 

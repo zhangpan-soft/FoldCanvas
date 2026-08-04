@@ -28,7 +28,7 @@ def require(condition: bool, message: str) -> None:
 def main() -> int:
     package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
     contract = json.loads(
-        (ROOT / "Documentation~" / "m14-release-candidate.json").read_text(
+        (ROOT / "Documentation~" / "m15-public-distribution.json").read_text(
             encoding="utf-8"
         )
     )
@@ -43,25 +43,19 @@ def main() -> int:
         )
     )
 
-    require(package["version"] == "1.0.0-rc.1", "M14 candidate version drifted")
+    require(package["version"] == "1.0.0-rc.2", "M15 candidate version drifted")
     require(package["unity"] == "6000.3", "Unity major/minor minimum drifted")
     require(package["unityRelease"] == "20f1", "Unity exact release drifted")
     require(
         contract["candidateVersion"] == package["version"],
         "Contract version mismatch",
     )
-    require(contract["stableRelease"] is False, "M14 must remain a pre-release")
+    require(contract["candidateTag"] == "v" + package["version"], "Tag mismatch")
+    require(contract["stableRelease"] is False, "M15 must remain a pre-release")
     require(contract["foldScriptVersion"] == "0.1", "FoldScript version drifted")
-    require(len(contract["unityMatrix"]) == 1, "M14 must claim one Unity row")
-    unity = contract["unityMatrix"][0]
     require(
-        unity["editorVersion"] == "6000.3.20f1",
+        contract["unityVersion"] == "6000.3.20f1",
         "Qualified Unity row drifted",
-    )
-    require(unity["packageUnity"] == package["unity"], "Unity minimum mismatch")
-    require(
-        unity["packageUnityRelease"] == package["unityRelease"],
-        "Unity release mismatch",
     )
     require(
         public_api["packageVersion"] == package["version"],
@@ -111,21 +105,56 @@ def main() -> int:
     require(
         contract["rollback"]
         == {
-            "packageVersion": "0.1.0-preview.21",
-            "gitCommit": "d9434be",
+            "packageVersion": "1.0.0-rc.1",
+            "tag": "v1.0.0-rc.1",
+            "gitCommit": "a8c81e61175dafbc48d1750de7ef6823589517a6",
             "sourceAuthority": "2d-canvas-plus-foldscript",
         },
         "Rollback contract drifted",
     )
+    require(
+        contract["priorRelease"]
+        == {
+            "tag": "v1.0.0-rc.1",
+            "mergeCommit": "a8c81e61175dafbc48d1750de7ef6823589517a6",
+            "releaseId": 364684802,
+            "archiveSha256": "ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd",
+            "checksumSha256": "eb835a1cac0ee0c5adb6b99511f6bb93739839543bee1fe0be3cbad989960725",
+            "manifestSha256": "a0b9f19b9b69cace6b430b4546fc67b0f294dadb1efef6f8542b5e53ee5a9aca",
+            "evidenceSha256": "c9603b475bbfa78300a27b64189188a337ca95ef333c8ad00effa7cf808e3c32",
+            "assetCount": 4,
+            "immutable": True,
+        },
+        "Published RC1 identity drifted",
+    )
+    require(
+        contract["stableExit"] == {
+            "targetVersion": "1.0.0",
+            "minimumSoakHours": 168,
+            "minimumScheduledLongRuns": 2,
+            "status": "blocked",
+            "blockers": [
+                "candidate-not-published",
+                "public-release-assets-unverified",
+                "public-consumer-evidence-missing",
+                "source-upgrade-evidence-missing",
+                "minimum-soak-incomplete",
+                "scheduled-long-runs-incomplete",
+                "exact-head-audit-missing",
+                "required-gates-incomplete",
+            ],
+        },
+        "Stable exit must remain explicitly blocked",
+    )
 
-    with tempfile.TemporaryDirectory(prefix="foldcanvas-m14-a-") as first_dir:
-        with tempfile.TemporaryDirectory(prefix="foldcanvas-m14-b-") as second_dir:
-            first = build_release_bundle(pathlib.Path(first_dir), "v1.0.0-rc.1")
-            second = build_release_bundle(pathlib.Path(second_dir), "v1.0.0-rc.1")
+    with tempfile.TemporaryDirectory(prefix="foldcanvas-m15-a-") as first_dir:
+        with tempfile.TemporaryDirectory(prefix="foldcanvas-m15-b-") as second_dir:
+            first = build_release_bundle(pathlib.Path(first_dir), "v1.0.0-rc.2")
+            second = build_release_bundle(pathlib.Path(second_dir), "v1.0.0-rc.2")
             for first_path, second_path in zip(first, second):
                 require(
                     first_path.read_bytes() == second_path.read_bytes(),
-                    f"M14 release output is not deterministic: {first_path.name}",
+                    f"M15 release output is not deterministic: {first_path.name}",
                 )
             try:
                 build_release_bundle(pathlib.Path(second_dir), "v1.0.0")
@@ -133,11 +162,20 @@ def main() -> int:
                 pass
             else:
                 raise AssertionError(
-                    "The M14 workflow must reject a final stable 1.0.0 tag"
+                    "The M15 workflow must reject a final stable 1.0.0 tag"
                 )
+            for wrong_tag in ("v1.0.0-rc.1", "v1.0.0-rc.3", "v2.0.0-rc.2"):
+                try:
+                    build_release_bundle(pathlib.Path(second_dir), wrong_tag)
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError(
+                        "The M15 workflow must reject mismatched tag " + wrong_tag
+                    )
 
-    print("M14 release-candidate validation passed.")
-    print("Candidate 1.0.0-rc.1; Unity 6000.3.20f1; FoldScript 0.1.")
+    print("M15 public-distribution candidate validation passed.")
+    print("Candidate 1.0.0-rc.2; Unity 6000.3.20f1; FoldScript 0.1.")
     return 0
 
 

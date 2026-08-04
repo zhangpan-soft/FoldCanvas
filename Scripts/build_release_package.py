@@ -206,7 +206,7 @@ def build_candidate_evidence(
     manifest_path: pathlib.Path,
 ) -> pathlib.Path:
     package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
-    contract_path = ROOT / "Documentation~" / "m14-release-candidate.json"
+    contract_path = ROOT / "Documentation~" / "m15-public-distribution.json"
     contract_bytes = contract_path.read_bytes()
     contract = json.loads(contract_bytes)
     public_api_path = ROOT / "Documentation~" / "public-runtime-api.json"
@@ -227,7 +227,7 @@ def build_candidate_evidence(
         "unity": {
             "packageMinimum": package["unity"],
             "packageRelease": package["unityRelease"],
-            "qualifiedEditorVersion": contract["unityMatrix"][0]["editorVersion"],
+            "qualifiedEditorVersion": contract["unityVersion"],
         },
         "foldScriptVersion": contract["foldScriptVersion"],
         "publicRuntimeApi": {
@@ -239,7 +239,7 @@ def build_candidate_evidence(
             "sha256": sha256_bytes(corpus_bytes),
         },
         "contract": {
-            "path": "Documentation~/m14-release-candidate.json",
+            "path": "Documentation~/m15-public-distribution.json",
             "sha256": sha256_bytes(contract_bytes),
         },
         "archive": {
@@ -252,6 +252,9 @@ def build_candidate_evidence(
         },
         "requiredGates": contract["requiredGates"],
         "rollback": contract["rollback"],
+        "priorRelease": contract["priorRelease"],
+        "upgrade": contract["upgrade"],
+        "stableExit": contract["stableExit"],
         "publication": {
             "githubPrereleaseOnly": True,
             "finalStableRelease": False,

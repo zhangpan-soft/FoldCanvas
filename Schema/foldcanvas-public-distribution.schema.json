@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-public-distribution.schema.json",
+  "title": "FoldCanvas public distribution contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "packageName",
+    "candidateVersion",
+    "candidateTag",
+    "stableRelease",
+    "foldScriptVersion",
+    "unityVersion",
+    "publicRuntimeApi",
+    "foldScriptFixtures",
+    "productionCorpus",
+    "priorRelease",
+    "publicAssets",
+    "upgrade",
+    "requiredGates",
+    "rollback",
+    "stableExit",
+    "escalations"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-public-distribution" },
+    "version": { "const": "1" },
+    "packageName": { "const": "com.foldcanvas.core" },
+    "candidateVersion": { "const": "1.0.0-rc.2" },
+    "candidateTag": { "const": "v1.0.0-rc.2" },
+    "stableRelease": { "const": false },
+    "foldScriptVersion": { "const": "0.1" },
+    "unityVersion": { "const": "6000.3.20f1" },
+    "publicRuntimeApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assembly", "signatureCount", "sha256"],
+      "properties": {
+        "assembly": { "const": "FoldCanvas.Runtime" },
+        "signatureCount": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "foldScriptFixtures": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "sourceSha256", "canonicalSha256"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "sourceSha256": { "$ref": "#/$defs/sha256" },
+          "canonicalSha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "productionCorpus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formatVersion", "caseIds"],
+      "properties": {
+        "formatVersion": { "const": "1" },
+        "caseIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "priorRelease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tag",
+        "mergeCommit",
+        "releaseId",
+        "archiveSha256",
+        "checksumSha256",
+        "manifestSha256",
+        "evidenceSha256",
+        "assetCount",
+        "immutable"
+      ],
+      "properties": {
+        "tag": { "const": "v1.0.0-rc.1" },
+        "mergeCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "releaseId": { "type": "integer", "minimum": 1 },
+        "archiveSha256": { "$ref": "#/$defs/sha256" },
+        "checksumSha256": { "$ref": "#/$defs/sha256" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "evidenceSha256": { "$ref": "#/$defs/sha256" },
+        "assetCount": { "const": 4 },
+        "immutable": { "const": true }
+      }
+    },
+    "publicAssets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "upgrade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fromPackageVersions",
+        "fixture",
+        "sourceAuthority",
+        "derivedInputsForbidden",
+        "unknownVersionsFailClosed"
+      ],
+      "properties": {
+        "fromPackageVersions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "fixture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "baselinePackageVersion",
+            "baselineGitCommit",
+            "sourcePath",
+            "appearancePath",
+            "inputFileNames",
+            "sourceRawSha256",
+            "canonicalSourceSha256",
+            "appearanceSha256",
+            "renderVertices",
+            "topologyVertices",
+            "triangles",
+            "closedVolume"
+          ],
+          "properties": {
+            "id": { "const": "production-cup" },
+            "baselinePackageVersion": { "const": "0.1.0-preview.21" },
+            "baselineGitCommit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "sourcePath": { "type": "string", "minLength": 1 },
+            "appearancePath": { "type": "string", "minLength": 1 },
+            "inputFileNames": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            },
+            "sourceRawSha256": { "$ref": "#/$defs/sha256" },
+            "canonicalSourceSha256": { "$ref": "#/$defs/sha256" },
+            "appearanceSha256": { "$ref": "#/$defs/sha256" },
+            "renderVertices": { "const": 2972 },
+            "topologyVertices": { "const": 2562 },
+            "triangles": { "const": 5120 },
+            "closedVolume": { "const": true }
+          }
+        },
+        "sourceAuthority": { "const": "2d-canvas-plus-foldscript" },
+        "derivedInputsForbidden": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unknownVersionsFailClosed": { "const": true }
+      }
+    },
+    "requiredGates": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageVersion", "tag", "gitCommit", "sourceAuthority"],
+      "properties": {
+        "packageVersion": { "const": "1.0.0-rc.1" },
+        "tag": { "const": "v1.0.0-rc.1" },
+        "gitCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "sourceAuthority": { "const": "2d-canvas-plus-foldscript" }
+      }
+    },
+    "stableExit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targetVersion",
+        "minimumSoakHours",
+        "minimumScheduledLongRuns",
+        "status",
+        "blockers"
+      ],
+      "properties": {
+        "targetVersion": { "const": "1.0.0" },
+        "minimumSoakHours": { "type": "integer", "minimum": 168 },
+        "minimumScheduledLongRuns": { "type": "integer", "minimum": 2 },
+        "status": { "enum": ["blocked", "ready"] },
+        "blockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

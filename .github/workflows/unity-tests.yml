@@ -431,3 +431,217 @@ jobs:
             artifacts/m12-handoff/comparison.json
           if-no-files-found: error
           retention-days: 14
+
+  unity-source-upgrade-tests:
+    name: Unity 6000.3.20f1 source-first package upgrade
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository with rollback history
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Build rollback and current archives, then create upgrade host
+        id: upgrade-input
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/m15-upgrade-pr
+          baseline_commit="$(
+            jq -r '.upgrade.fixture.baselineGitCommit' \
+              Documentation~/m15-public-distribution.json
+          )"
+          baseline_root="$RUNNER_TEMP/foldcanvas-m15-pr-baseline"
+          git worktree add --detach "$baseline_root" "$baseline_commit"
+          python3 "$baseline_root/Scripts/build_release_package.py" \
+            --output "$GITHUB_WORKSPACE/artifacts/m15-upgrade-pr-baseline-package"
+          python3 Scripts/build_release_package.py \
+            --output artifacts/m15-upgrade-pr-candidate-package
+          mapfile -t baseline_archives < <(
+            find artifacts/m15-upgrade-pr-baseline-package \
+              -type f -name '*.tgz' -print | LC_ALL=C sort
+          )
+          mapfile -t candidate_archives < <(
+            find artifacts/m15-upgrade-pr-candidate-package \
+              -type f -name '*.tgz' -print | LC_ALL=C sort
+          )
+          if [[ "${#baseline_archives[@]}" -ne 1 || \
+                "${#candidate_archives[@]}" -ne 1 ]]; then
+            echo "::error::Expected exactly one baseline and candidate archive."
+            exit 1
+          fi
+          python3 Scripts/create_upgrade_proof_project.py \
+            --project artifacts/m15-upgrade-pr-host \
+            --package "${baseline_archives[0]}" \
+            --source "$baseline_root/Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json" \
+            --appearance "$baseline_root/Samples~/BootstrapPanel/M04ProductionCupCanvas.png"
+          cp -- artifacts/m15-upgrade-pr-host/M15Expected.json \
+            artifacts/m15-upgrade-pr/before-expected.json
+          echo "baseline_version=$(jq -r '.packageVersion' artifacts/m15-upgrade-pr-host/M15Expected.json)" \
+            >> "$GITHUB_OUTPUT"
+          echo "baseline_sha256=$(jq -r '.packageSha256' artifacts/m15-upgrade-pr-host/M15Expected.json)" \
+            >> "$GITHUB_OUTPUT"
+          echo "candidate_archive=${candidate_archives[0]}" \
+            >> "$GITHUB_OUTPUT"
+          echo "candidate_version=$(jq -r '.version' package.json)" \
+            >> "$GITHUB_OUTPUT"
+          candidate_sha256="$(
+            sha256sum "${candidate_archives[0]}" | cut -d' ' -f1
+          )"
+          echo "candidate_sha256=$candidate_sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Compile source with rollback package
+        id: upgrade-before-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m15-upgrade-pr-host
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m15-upgrade-pr-host/CIArtifacts/unity-upgrade-before
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Source Upgrade Before Candidate
+
+      - name: Normalize and validate rollback phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="${{ steps.upgrade-before-tests.outputs.artifactsPath }}"
+          if [[ -z "$source_root" ]]; then
+            source_root="artifacts/m15-upgrade-pr-host/CIArtifacts/unity-upgrade-before"
+          fi
+          output_root="artifacts/m15-upgrade-pr/before"
+          mkdir -p "$output_root"
+          mapfile -t xmls < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t logs < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+          test -n "${xmls[0]:-}"
+          test -n "${logs[0]:-}"
+          cp -- "${xmls[0]}" "$output_root/test-results.xml"
+          cp -- "${logs[0]}" "$output_root/Editor.log"
+          cp -- artifacts/m15-upgrade-pr-host/M15Evidence/before.json \
+            "$output_root/report.json"
+          cp -- artifacts/m15-upgrade-pr-host/Packages/manifest.json \
+            "$output_root/manifest.json"
+          cp -- artifacts/m15-upgrade-pr-host/Packages/packages-lock.json \
+            "$output_root/packages-lock.json"
+          python3 Scripts/validate_upgrade_evidence.py \
+            --phase before \
+            --report "$output_root/report.json" \
+            --manifest "$output_root/manifest.json" \
+            --lock "$output_root/packages-lock.json" \
+            --test-results "$output_root/test-results.xml" \
+            --editor-log "$output_root/Editor.log" \
+            --package-version "${{ steps.upgrade-input.outputs.baseline_version }}" \
+            --package-sha256 "${{ steps.upgrade-input.outputs.baseline_sha256 }}" \
+            > "$output_root/validation.json"
+
+      - name: Replace package and clear owned derived state
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Scripts/advance_upgrade_proof_project.py \
+            --project artifacts/m15-upgrade-pr-host \
+            --package "${{ steps.upgrade-input.outputs.candidate_archive }}" \
+            > artifacts/m15-upgrade-pr/transition.json
+          cp -- artifacts/m15-upgrade-pr-host/M15Expected.json \
+            artifacts/m15-upgrade-pr/after-expected.json
+
+      - name: Recompile unchanged source with candidate package
+        id: upgrade-after-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m15-upgrade-pr-host
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m15-upgrade-pr-host/CIArtifacts/unity-upgrade-after
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Source Upgrade Candidate
+
+      - name: Validate and compare candidate phase
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="${{ steps.upgrade-after-tests.outputs.artifactsPath }}"
+          if [[ -z "$source_root" ]]; then
+            source_root="artifacts/m15-upgrade-pr-host/CIArtifacts/unity-upgrade-after"
+          fi
+          output_root="artifacts/m15-upgrade-pr/after"
+          mkdir -p "$output_root"
+          mapfile -t xmls < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t logs < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+          test -n "${xmls[0]:-}"
+          test -n "${logs[0]:-}"
+          cp -- "${xmls[0]}" "$output_root/test-results.xml"
+          cp -- "${logs[0]}" "$output_root/Editor.log"
+          cp -- artifacts/m15-upgrade-pr-host/M15Evidence/after.json \
+            "$output_root/report.json"
+          cp -- artifacts/m15-upgrade-pr-host/Packages/manifest.json \
+            "$output_root/manifest.json"
+          cp -- artifacts/m15-upgrade-pr-host/Packages/packages-lock.json \
+            "$output_root/packages-lock.json"
+          python3 Scripts/validate_upgrade_evidence.py \
+            --phase after \
+            --report "$output_root/report.json" \
+            --manifest "$output_root/manifest.json" \
+            --lock "$output_root/packages-lock.json" \
+            --test-results "$output_root/test-results.xml" \
+            --editor-log "$output_root/Editor.log" \
+            --package-version "${{ steps.upgrade-input.outputs.candidate_version }}" \
+            --package-sha256 "${{ steps.upgrade-input.outputs.candidate_sha256 }}" \
+            > "$output_root/validation.json"
+          python3 Scripts/compare_upgrade_evidence.py \
+            --before artifacts/m15-upgrade-pr/before/report.json \
+            --after "$output_root/report.json" \
+            --contract Documentation~/m15-public-distribution.json \
+            --output artifacts/m15-upgrade-pr/comparison.json
+
+      - name: Upload pre-release source-upgrade evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: unity-source-upgrade-pre-release-results-and-logs
+          path: |
+            artifacts/m15-upgrade-pr/before/test-results.xml
+            artifacts/m15-upgrade-pr/before/Editor.log
+            artifacts/m15-upgrade-pr/before/report.json
+            artifacts/m15-upgrade-pr/before/manifest.json
+            artifacts/m15-upgrade-pr/before/packages-lock.json
+            artifacts/m15-upgrade-pr/before/validation.json
+            artifacts/m15-upgrade-pr/after/test-results.xml
+            artifacts/m15-upgrade-pr/after/Editor.log
+            artifacts/m15-upgrade-pr/after/report.json
+            artifacts/m15-upgrade-pr/after/manifest.json
+            artifacts/m15-upgrade-pr/after/packages-lock.json
+            artifacts/m15-upgrade-pr/after/validation.json
+            artifacts/m15-upgrade-pr/before-expected.json
+            artifacts/m15-upgrade-pr/after-expected.json
+            artifacts/m15-upgrade-pr/transition.json
+            artifacts/m15-upgrade-pr/comparison.json
+          if-no-files-found: error
+          retention-days: 14

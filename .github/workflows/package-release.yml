@@ -24,8 +24,17 @@ jobs:
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
 
-      - name: Validate M14 release-candidate contract
+      - name: Validate current release-candidate contract
         run: python3 Scripts/test_release_candidate.py
+
+      - name: Validate M15 public release verifier
+        run: python3 Scripts/test_public_release.py
+
+      - name: Validate M15 source-first upgrade proof
+        run: python3 Scripts/test_upgrade_proof.py
+
+      - name: Validate M15 stable-release exit gate
+        run: python3 Scripts/test_stable_exit.py
 
       - name: Build release archive
         shell: bash

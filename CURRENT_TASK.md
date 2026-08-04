@@ -44,3 +44,11 @@ marketplace publication remain owner escalation points.
 M15 does not add geometry behavior, change FoldScript semantics, add a package
 dependency, publish final `1.0.0`, claim an untested Unity version, accept a
 generated Mesh as upgrade input, or begin a later milestone.
+
+Current local implementation evidence: Unity `6000.3.20f1` passed 472/472
+package Edit Mode tests. One marked clean host passed 1/1 with exact rollback
+`0.1.0-preview.21`, cleared only owned derived state, then passed 1/1 with RC2
+while reproducing identical source, appearance, geometry, OBJ, diagnostic,
+topology, validation, and single-closed-volume evidence. Hosted PR and public
+release evidence are still required and must not be inferred from this local
+run.
