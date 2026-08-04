@@ -1,177 +1,189 @@
 # Goal
 
-Deliver M14 on `codex/m14-release-candidate`: turn the accepted M00-M13
-compiler into a precisely versioned, frozen, installable, supportable, and
-rollback-safe `1.0.0-rc.1` candidate without changing geometry behavior or the
-2D-source architecture.
+Deliver M15 on `codex/m15-public-distribution`: qualify the exact public
+GitHub release bytes and a source-first upgrade path, then emit a fail-closed
+stable-release exit gate without changing geometry or FoldScript semantics.
 
 # User-visible proof
 
-Build the same candidate twice, inspect matching archive and file-manifest
-digests, install it into independent Unity `6000.3.20f1` consumers, compile the
-maintained source corpus, and retain full hosted XML/log/evidence artifacts. A
-single release-candidate manifest must identify every frozen contract and gate.
+An ordinary consumer downloads the public RC bundle, verifies its checksum and
+every archived file, installs the `.tgz` into two independent Unity
+`6000.3.20f1` projects, and reproduces deterministic Runtime API, geometry,
+OBJ, corpus, and handoff evidence. A separate upgrade rehearsal preserves the
+canonical 2D/FoldScript source while rebuilding every derived artifact under
+the new package. A machine-readable exit report explains exactly why stable
+`1.0.0` is still blocked or ready.
 
 # Scope
 
-- `1.0.0-rc.1` package/compiler evidence version
-- exact Unity `6000.3.20f1` package and hosted support row
-- frozen compiled Runtime API and FoldScript `0.1` compatibility fixtures
-- deterministic per-file release manifest and release-candidate evidence
-- complete license, security, support, install, troubleshooting, and rollback
-  documentation inside the distributable package
-- pull-request dry-run release artifacts and tag-gated publication safeguards
-- complete Unity, clean-install, corpus, handoff, and robustness regression
-- autonomous exact-head maintainer audit and green-check merge
+- close M14 with exact audit, merge, tag, release, and public asset evidence
+- preserve published `1.0.0-rc.1` immutability
+- advance the first packaged M15 iteration to `1.0.0-rc.2`
+- exact public-release asset verification and deterministic report
+- two real clean Unity consumers resolving only the downloaded public archive
+- source-first upgrade rehearsal from the rollback baseline to the current RC
+- stable-release soak/issue/run exit-gate contract
+- full hosted regression and autonomous exact-head audit
 
 # Non-goals
 
 - final `1.0.0` publication or external marketplace submission
 - new geometry behavior, operation, topology mutation, or automatic repair
-- FoldScript schema/semantic changes
+- FoldScript schema/semantic changes or migration guessing
+- use of Mesh, OBJ, Prefab, Material, receipt, report, or screenshot as upgrade
+  source
 - new Runtime filesystem/network behavior or package dependency
 - support claims for an untested Unity version
-- signing, paid registry/service, legal change, or irreversible permissions
+- signing, paid service, legal change, or irreversible permissions
 - later-milestone implementation
 
-# Invariants
+# Files expected to change
 
-- Appearance canvas plus canonical FoldScript remain source; all release
-  bundles, reports, Meshes, OBJ, Prefabs, and screenshots remain derived.
-- Runtime stays deterministic, dependency-free, and free of `UnityEditor`.
-- Public Runtime API and FoldScript behavior cannot drift under a metadata-only
-  release iteration.
-- Every support statement points to real Unity XML/log evidence for the exact
-  Editor version.
-- Missing evidence fails closed. A workflow that did not start Unity is not a
-  passing Unity gate.
-- User `Project~` scratch is never staged or packaged.
+- `CURRENT_TASK.md`
+- `Codex/M15_PUBLIC_DISTRIBUTION.md`
+- `Docs/Plans/active-plan.md`
+- `Documentation~/roadmap.md`
+- `Documentation~/production-readiness.md`
+- `Documentation~/compatibility.md`
+- `Documentation~/m15-public-distribution.json`
+- `Schema/foldcanvas-public-release-evidence.schema.json`
+- `Scripts/` public-release, upgrade, and exit-gate validators
+- `.github/workflows/` public release qualification
+- `Tests/Editor/` M15 contract and upgrade tests
+- package/compiler/API/corpus/changelog version evidence for `1.0.0-rc.2`
+
+# Geometry invariants
+
+- Appearance canvas plus FoldCanvas/FoldScript source remain authoritative;
+  all Meshes and release/upgrade reports remain derived.
+- M15 changes no coordinate equation, winding rule, boundary order, seam
+  topology, tolerance, tessellation, or validation semantics.
+- Identical source/settings/compiler still produce the same ordered geometry,
+  UV, provenance, topology, diagnostics, and reports.
+- Runtime remains free of `UnityEditor`, filesystem, network, release, and
+  migration behavior.
+- Upgrade recompiles source after discarding derived output; it never imports
+  old Mesh vertices or indices.
+- Unsupported version transitions fail explicitly and generate no Mesh.
 
 # Implementation steps
 
-1. Close M13 with exact-head autonomous audit and merge evidence; create the
-   M14 branch, specification, roadmap entry, and active plan.
-2. Inventory package/release workflows, public API/corpus baselines, canonical
-   FoldScript fixtures, legal/security/support docs, and all hosted gates.
-3. Define the machine-readable release-candidate contract and exact Unity
-   support matrix.
-4. Implement deterministic release file-manifest/evidence generation and
-   fail-closed validation; include required distributable governance docs.
-5. Freeze API and FoldScript compatibility evidence, then advance package,
-   compiler, corpus, and changelog versions together to `1.0.0-rc.1`.
-6. Add repository and Unity tests for version, matrix, archive, API,
-   FoldScript, evidence, and rollback contracts.
-7. Update workflows so every PR validates and uploads the complete candidate
-   bundle while tag publication remains exact-version gated.
-8. Run JSON, asmdef, repository, archive, clean-install, handoff, Python, and
+1. Record M14 exact-head audit, merge, tag, public release, and hosted evidence;
+   create the M15 milestone and active plan outside the immutable RC1 package.
+2. Inventory release assets, package builder, clean-host generator, handoff
+   compatibility, API/corpus baselines, upgrade docs, and workflow permissions.
+3. Advance every packaged M15 change together to `1.0.0-rc.2`; add an
+   immutability regression for the published RC1 digest.
+4. Define public-release verification and stable-exit machine-readable
+   contracts plus JSON Schemas before implementing their runners.
+5. Implement a fail-closed public asset verifier with exact allowlist,
+   tag/version, checksum, manifest, archive-entry, evidence, and source-origin
+   checks.
+6. Generate two independent clean hosts from only the verified public archive;
+   validate package resolution, Runtime API usage, geometry/OBJ evidence, XML,
+   Editor logs, and pair equality.
+7. Implement the source-first upgrade rehearsal: preserve canonical source and
+   PNG hashes, remove prior derived outputs, replace the package, recompile,
+   and compare complete semantic evidence.
+8. Implement the stable-exit validator for soak time, distinct scheduled
+   long-runs, issue state, exact-head audit, public consumers, and upgrade
+   evidence. Keep stable publication disabled while incomplete.
+9. Run JSON, asmdef, repository, archive, clean-install, handoff, Python, and
    `git diff --check` validation locally.
-9. Run the complete hosted Unity matrix, clean consumers, handoff, corpus, and
-   bounded robustness evidence; record exact totals and artifact digests.
-10. Open the M14 PR, audit its exact head and issue/check state, record the
-    autonomous maintainer decision, and merge only when every required gate is
-    green.
+10. Run complete hosted Unity, public-consumer, upgrade, handoff, corpus, API,
+    and 512-case/5-resource evidence; record exact totals and artifact digests.
+11. Open the M15 PR, audit the exact head and issue/check state, merge only when
+    every required gate is green, publish RC2, and independently verify the
+    public assets and post-release consumer workflow.
 
 # Test matrix
 
-## Version and freeze
+## Version immutability
 
-- package, compiler, changelog, API, corpus, and RC evidence versions agree
-- exact Unity minimum is `6000.3.20f1`
-- Runtime API signatures and digest equal the frozen baseline
-- canonical FoldScript fixtures remain stable and unknown versions fail closed
+- recorded public RC1 archive/manifest/evidence digests remain unchanged
+- packaged M15 bytes require `1.0.0-rc.2`
+- package, compiler, changelog, API, corpus, and M15 contracts agree
+- tag must exactly equal the package version
 
-## Package and release evidence
+## Public asset verification
 
-- two archives and file manifests are byte-identical
-- every archive entry has deterministic size/hash evidence
-- legal/security/support/release docs are present
-- no `.git`, `.github`, `Project~`, credentials, generated Mesh source, or
-  repository-only plans enter the archive
-- evidence rejects missing, empty, failed, skipped, or inconclusive gates
-- exact tag must equal `v1.0.0-rc.1`
+- exact four-asset allowlist succeeds
+- missing, duplicate, renamed, extra, zero-byte, or mismatched assets fail
+- checksum, GitHub digest, manifest order/count, member size/hash, and evidence
+  linkage all agree
+- traversal, link, forbidden path, stale version, and wrong tag fail closed
+- report contains stable identities but no token or temporary signed URL
 
-## Unity and consumers
+## Unity consumers and upgrade
 
 - complete package suite passes on Unity `6000.3.20f1`
-- two archive-only consumers resolve different PackageCache paths and produce
+- two public-archive consumers use distinct PackageCache paths and reproduce
   identical evidence
-- production corpus, producer/receiver handoff, and bounded robustness gates
-  retain their accepted semantic results
+- source and PNG hashes are identical before and after upgrade
+- no prior Mesh/OBJ/Prefab/Material/receipt becomes compiler input
+- geometry, diagnostics, topology, and validation evidence match the frozen
+  semantics
+- incompatible FoldScript/handoff versions remain stable rejections
 
-## Governance and rollback
+## Stable exit and governance
 
-- issue forms request source, versions, diagnostics, expected invariants, and
-  minimal reproduction
-- security issues route privately
-- rollback identifies the prior package/commit and preserves editable source
-- exact-head audit plus green required checks precede autonomous merge
+- fewer than seven elapsed days fails
+- fewer than two distinct scheduled long-run identities fails
+- duplicate, wrong-commit, failed, skipped, or inconclusive runs fail
+- any open release-blocking issue fails
+- exact-head audit is invalidated by a later commit
+- credentials and external marketplace actions remain out of scope
 
 # Risks and rollback
 
-- **False compatibility claim:** claim only the exact hosted row and make new
-  rows reviewed data changes.
-- **Metadata drift:** one release contract binds package, compiler, API,
-  FoldScript, corpus, Unity, and archive evidence.
-- **A workflow uploads partial evidence:** validators treat missing, skipped,
-  failed, inconclusive, empty, or wrong-version data as failure.
-- **RC mistaken for stable:** use `1.0.0-rc.1`, label it pre-release, and keep
-  final `1.0.0` as a separate explicit decision.
-- **User scratch contamination:** stage explicit paths only and enforce archive
-  allowlists.
-- Rollback is reverting isolated M14 commits and reinstalling the accepted M13
-  `0.1.0-preview.21` archive from merge `d9434be`; authoritative 2D source is
-  recompiled rather than replacing it with retained Meshes.
+- **Same version, different bytes:** bump to RC2 before any packaged change and
+  lock RC1 public digests in tests.
+- **CI artifact mistaken for public distribution:** require GitHub release URL,
+  tag, asset identity, and downloaded digest in separate evidence.
+- **Network flake mistaken for invalid package:** separate bounded transport
+  retries from cryptographic/content validation and preserve the exact error.
+- **Upgrade silently consumes derived geometry:** generate evidence from source
+  hashes and a clean compile after owned derived-output removal.
+- **Premature stable label:** make soak, scheduled runs, issue state, and audit
+  machine-readable fail-closed inputs; M15 cannot publish `1.0.0`.
+- **User scratch contamination:** stage explicit paths only; never include the
+  user's untracked `Project~` files.
+- Rollback is reinstalling immutable `v1.0.0-rc.1` or the M14 rollback
+  `0.1.0-preview.21`, then recompiling authoritative source. Generated artifacts
+  are never rollback input.
 
 # Progress log
 
-- 2026-08-04: Exact-head autonomous audit approved M13 head `461fd792`; hosted
-  repository, Unity, and long-run gates were green. PR #12 merged into `main`
-  as `d9434be` without touching the user's untracked `Project~` scratch.
-- 2026-08-04: Created `codex/m14-release-candidate`, defined the RC contract,
-  exact support claim, governance boundary, work packages, tests, and rollback
-  before implementation. No final `1.0.0` or marketplace decision was made.
-- 2026-08-04: Implemented `1.0.0-rc.1`, the exact `unityRelease: 20f1`
-  manifest row, frozen 808-signature Runtime API digest, three canonical
-  FoldScript compatibility fixtures, package-contained support/release docs,
-  deterministic file-manifest/RC-evidence sidecars, and an RC-only least-
-  privilege release workflow.
-- 2026-08-04: An independent archive-installed Unity `6000.3.20f1` host passed
-  6/6 focused M14 tests and 466/466 complete package tests with zero failures,
-  skips, or inconclusive results. A deliberately invalid `-nographics` run
-  exposed the Gallery view's real graphics requirement and was not counted;
-  the accepted full run used a graphics-capable Editor.
-- 2026-08-04: Repository, deterministic archive, RC contract, clean-install,
-  handoff, Python compilation, and diff checks passed locally. Hosted PR-head
-  Unity, clean-consumer, handoff, release-bundle, and robustness artifacts
-  remain required before autonomous merge.
-- 2026-08-04: Two independent archive-only consumers passed 1/1 each and
-  matched geometry SHA-256
-  `ef61e45fcabb15cb928a9ab0af0d8bb975f0ce3ae68a832b25305152204566f4`,
-  OBJ SHA-256
-  `19256092d37e2080f1914aaec4f056e26d3ddb48f9b104a8ca33772ab0879822`,
-  and stable-evidence SHA-256
-  `fd4917ec720a1d8388971bd3db23d45b92202297861fe41c4828a85cd2ebc43d`.
-  A clean producer and receiver then passed 1/1 each and matched the transferred
-  source, 2,972 render vertices, 2,562 topology vertices, 5,120 triangles, and
-  one closed volume with comparison evidence SHA-256
-  `94e7880f56977a1cb4f137c39aa824409e7c78e5627048fc8ca74664993d7a21`.
+- 2026-08-04: M14 PR #13 exact head `7311771a2907b8ef58851185698ab4d62d91e6b4`
+  passed repository, package, 466/466 Edit Mode, two-clean-install,
+  producer/receiver handoff, 512/512 robustness, and 5/5 resource gates. The
+  autonomous audit was recorded publicly and the PR merged as `a8c81e6`.
+- 2026-08-04: Published `v1.0.0-rc.1` as a GitHub pre-release through run
+  `30888055335`. The public archive digest is
+  `ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd`;
+  release-asset digests match the reviewed candidate bundle.
+- 2026-08-04: Created `codex/m15-public-distribution` and defined the public
+  asset, upgrade, immutable-version, stable-exit, test, and rollback contracts
+  before packaged implementation. No RC2 or stable version change existed at
+  plan creation.
 
 # Decisions made
 
-- M14 emits `1.0.0-rc.1`, not stable `1.0.0`, because all release mechanisms
-  must first prove themselves against an immutable candidate.
-- Only Unity `6000.3.20f1` is qualified; the manifest uses `unityRelease` to
-  avoid implying that every 6000.3 patch has passed.
-- API and FoldScript freeze are compatibility gates, not opportunities to add
-  new behavior.
-- Autonomous merge requires a public exact-head audit plus green required
-  checks; credentials, legal/paid/permission decisions, and marketplace
-  publication still escalate.
-- Release evidence is emitted as `built-unverified`; archive construction never
-  claims that Unity, CI, or maintainer audit already passed.
+- M15 uses `1.0.0-rc.2` for packaged changes because a published version is an
+  immutable byte identity; RC1 will not be rebuilt or overwritten.
+- Public-download proof is a distinct evidence rung above workflow artifacts.
+- Upgrade operates on 2D appearance plus FoldScript source and recompiles from
+  scratch; exact-version handoff rejection remains deliberate.
+- Final stable release is a later milestone after a minimum seven-day RC soak,
+  two distinct scheduled long-run passes, zero open release blocker, and a
+  complete machine-readable exit gate.
+- M15 is a distribution/upgrade qualification milestone, not a geometry
+  feature milestone.
 
 # Final verification
 
-Implementation and local evidence are complete. Pending draft PR, hosted
-exact-head evidence, autonomous audit, and merge. No final `1.0.0`, external
-marketplace publication, new geometry, or later milestone was implemented.
+Planning is complete. Packaged implementation, RC2 version advance, local and
+hosted Unity evidence, exact-head audit, merge, RC2 publication, public-asset
+download, public-consumer proof, and the stable-exit blocked/ready report remain
+pending. No final `1.0.0`, external marketplace publication, new geometry, or
+later milestone was implemented.
