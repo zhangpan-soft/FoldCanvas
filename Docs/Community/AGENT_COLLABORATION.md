@@ -43,6 +43,10 @@ executes fork content, never invokes another Action, and uses a zero-permission
 workflow token with no repository secret. No other workflow may use privileged
 `pull_request_target` checkout behavior to run an external patch.
 
+Credentialed Unity jobs accept only a repository-owner-authored same-repository
+PR or a post-merge push to protected `main`. Feature-branch pushes, forks,
+Dependabot, and other bot-authored PRs cannot enter those jobs.
+
 ## What an agent may contribute
 
 - a minimal FoldScript or canvas example using existing behavior;

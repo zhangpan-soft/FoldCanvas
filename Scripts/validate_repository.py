@@ -324,8 +324,9 @@ for required_fragment in [
 
 fork_guard = (
     "if: >-\n"
-    "      github.event_name != 'pull_request' ||\n"
-    "      (github.event.pull_request.head.repo.full_name == github.repository &&\n"
+    "      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||\n"
+    "      (github.event_name == 'pull_request' &&\n"
+    "      github.event.pull_request.head.repo.full_name == github.repository &&\n"
     "      github.event.pull_request.user.login == github.repository_owner)"
 )
 if unity_workflow.count(fork_guard) != 4:
@@ -334,6 +335,8 @@ if unity_workflow.count("      checks: write") != 4:
     errors.append("Unity checks:write must be scoped to exactly four trusted jobs")
 if "permissions:\n  contents: read\n  checks: write\n\njobs:" in unity_workflow:
     errors.append("Unity workflow must not grant checks:write globally")
+if "push:\n    branches:\n      - main" not in unity_workflow:
+    errors.append("Privileged Unity push trigger must be limited to protected main")
 
 trusted_contribution_workflow = (
     ROOT / ".github" / "workflows" / "trusted-contribution-gate.yml"

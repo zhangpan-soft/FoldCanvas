@@ -143,6 +143,7 @@ select work without reading the full internal milestone history.
   Actions secrets to fork code. Run only read-only checks on the fork, fail the
   base-owned trust gate, review the exact diff, and use a maintainer-owned
   integration PR for privileged Unity evidence.
+  Privileged push execution is limited to post-merge protected `main`.
 - **RC2 bytes drift:** M16 changes only release-excluded files and reruns the
   deterministic package hash check.
 - **User scratch contamination:** stage explicit paths only; never include the
