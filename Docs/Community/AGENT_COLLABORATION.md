@@ -16,6 +16,14 @@ public repository -> fork -> topic branch -> contributor pull request
                   -> privileged Unity CI -> exact-head audit -> maintainer merge
 ```
 
+This fork-only access rule is the primary credential boundary. A workflow
+condition in a pull-request branch is defense in depth, not a security boundary
+against someone who already has repository write access: a writer could change
+that workflow before it runs. FoldCanvas therefore grants no external agent or
+bot collaborator/write access. Before any future non-owner writer is added,
+Unity credentials must first move behind a protected GitHub Environment with an
+owner approval rule or an equivalent base-owned approval mechanism.
+
 The protected `main` branch requires a pull request, current required checks,
 resolved conversations, and a maintainer audit. Force pushes and deletion are
 disabled. Zero GitHub approval reviews are required because the autonomous
@@ -45,7 +53,8 @@ workflow token with no repository secret. No other workflow may use privileged
 
 Credentialed Unity jobs accept only a repository-owner-authored same-repository
 PR or a post-merge push to protected `main`. Feature-branch pushes, forks,
-Dependabot, and other bot-authored PRs cannot enter those jobs.
+Dependabot, and other bot-authored PRs cannot enter those jobs under the current
+fork-only access model.
 
 ## What an agent may contribute
 

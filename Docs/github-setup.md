@@ -29,6 +29,11 @@ After the repository exists, add its URLs to the optional `documentationUrl`, `c
 - Treat fork PRs as untrusted proposals. Do not pass Unity credentials to them;
   review the exact diff and land approved work through a maintainer-owned
   integration PR with full privileged CI.
+- Keep external agents fork-only and do not grant collaborator/write access.
+  Same-repository writers can modify Actions workflows, so job-level author
+  guards are only defense in depth. Before adding a non-owner writer, move
+  Unity credentials behind a protected Environment requiring owner approval or
+  an equivalent base-owned approval gate.
 
 ## Suggested labels
 
