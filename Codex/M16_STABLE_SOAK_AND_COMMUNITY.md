@@ -168,9 +168,14 @@ merged as `211d55c`. `main` is protected and repository metadata plus the
 fork/PR-only agent policy are public. Manual soak run `30910305230` passed
 472/472 Edit Mode, 512/512 robustness, and 5/5 resources while correctly
 recording `qualifiesForStableExit: false`; stable evaluator run `30910883290`
-kept promotion blocked at 0/2 scheduled runs and under 168 hours. Before public
-recruitment, `codex/m16-fork-pr-qualification` closes
-the discovered GitHub fork-secret boundary with a metadata-only trust check,
-fork-safe Unity skip conditions, deterministic static tests, and documented
-maintainer integration PRs. Genuine scheduled runs, starter issues, and the
-168-hour stable decision remain pending. RC2 package bytes stay unchanged.
+kept promotion blocked at 0/2 scheduled runs and under 168 hours. PR #17 exact
+head `77b8adff` passed the same 472-test and consumer ladder, received an
+independent audit, and merged as `df5e13c`. The discovered GitHub fork-secret
+boundary now has a zero-permission metadata trust check, fork-safe Unity skip
+conditions, deterministic negative tests, and a documented maintainer
+integration path. Closed canary PR #18 proved the trust check on exact PR head
+`0d9f48ba`; `main` now requires it alongside the existing six strict checks.
+Repository access is one owner and zero non-owner collaborators. Bounded public
+starter issues #19-#21 are open. Genuine scheduled runs, the 168-hour stable
+decision, and any separately accepted external-platform registration remain
+pending. RC2 package bytes stay unchanged.

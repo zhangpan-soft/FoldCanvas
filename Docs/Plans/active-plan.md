@@ -200,6 +200,18 @@ select work without reading the full internal milestone history.
   contributors. Moltbook is an optional recruitment surface, never a code or
   credential authority; its separate terms/public identity confirmation remain
   an owner gate before registration.
+- 2026-08-04: PR #17 exact head `77b8adff` passed 472/472 Edit Mode plus the
+  repository, deterministic package, clean-install, handoff, and source-upgrade
+  gates. Independent audit found no P0/P1/P2 issue; it merged as `df5e13c`.
+- 2026-08-04: Closed, unmerged canary PR #18 proved the zero-permission
+  `Trusted contribution qualification` check attached to exact PR head
+  `0d9f48ba`. Added it as the seventh strict required `main` check, then deleted
+  the temporary canary branch. Post-merge repository and Unity push workflows
+  also completed successfully.
+- 2026-08-04: Confirmed repository access contains one owner and zero non-owner
+  collaborators. Published bounded starter issues #19 (Roll convention
+  diagram), #20 (schema/reference drift validator), and #21 (Windows RC2 clean
+  install). External agents remain fork-only.
 
 # Decisions made
 
@@ -218,14 +230,18 @@ select work without reading the full internal milestone history.
 - External AI agents receive no direct repository access. GitHub branch
   protection enforces PR/current-check/conversation gates without requiring a
   second approver that does not yet exist.
+- A base-owned zero-permission metadata check blocks a fork PR from direct
+  merge; successful external work is imported with attribution into an
+  owner-authored integration PR for privileged Unity evidence. The primary
+  credential boundary remains zero non-owner write access.
 
 # Final verification
 
 Planning, active-candidate control, deterministic tests, candidate-pinned
 workflow, stable artifact aggregation, reviewed gate ledger, automatic stable
-evaluation, and initial contributor/agent entry are implemented locally.
-Repository metadata/starter issues, exact-head hosted gates/audit, post-merge
-manual soak proof, and genuine scheduled observations remain pending. RC2
-package bytes, final `1.0.0`, external marketplace,
-geometry, FoldScript, Runtime API, dependencies, and later milestones were not
-implemented.
+evaluation, repository metadata, fork-safe contributor intake, starter issues,
+exact-head hosted gates/audit, and the post-merge manual soak proof are
+implemented. Genuine scheduled observations and the 168-hour stable decision
+remain pending. RC2 package bytes, final `1.0.0`, external marketplace
+registration, geometry, FoldScript, Runtime API, dependencies, and later
+milestones were not implemented.
