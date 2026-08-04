@@ -250,6 +250,17 @@ report, resource observations, and exact replay identities for failures.
   all 5 focused cancellation/retry/persistence tests in an independent
   archive-installed host and then passed the complete 449/449 M00-M13 Edit Mode
   suite with zero failures, skips, or inconclusive results.
+- 2026-08-04: Added maintained large fixtures for planar tessellation, a Strict
+  welded and solidified cup, sixteen stitched sphere gores, a Strict doubly
+  welded torus, and unequal boundaries resampled to 1,025 Stitch samples. Each
+  locks complete render/topology/triangle counts and geometry SHA-256 evidence
+  across independent source instances. During the cup probe, thickness greater
+  than the authored wall-row spacing was confirmed to fold the first inner
+  strip back across the next strip; the accepted fixture keeps thickness below
+  that spacing, while a paired Strict test deterministically returns `FC5018`
+  without a Mesh for the invalid case. Unity `6000.3.20f1` passed all 6 focused
+  family-scale tests and the complete 455/455 M00-M13 suite in an independent
+  archive-installed host with zero failures, skips, or inconclusive results.
 
 # Decisions made
 
@@ -276,11 +287,10 @@ report, resource observations, and exact replay identities for failures.
 
 # Final verification
 
-The initial deterministic smoke slice, first Solidify/Strict scale and repeat
-slice, and cooperative cancellation/atomic-report retry slice are implemented
-and locally verified. Additional planar/cup/sphere/torus/Stitch scale fixtures,
-resource envelopes, hosted long-run evidence, package-version advancement, and
-the final PR audit remain pending.
+The deterministic smoke, budget/Strict scale, multi-family scale, repeated
+compile, failure-then-retry, and cooperative cancellation/atomic-report slices
+are implemented and locally verified. Resource envelopes, hosted long-run
+evidence, package-version advancement, and the final PR audit remain pending.
 The final M13 audit must record:
 
 - exact branch head, package/compiler/FoldScript/generator versions

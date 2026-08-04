@@ -25,6 +25,10 @@ The format follows Keep a Changelog principles, and package versions follow sema
   preservation of the last complete report on cancellation or persistence
   failure, byte-stable clean retry evidence, and test-only atomic-write fault
   injection that leaves no partial report or temporary file
+- Locked large planar, Strict closed-cup, closed-sphere, Strict closed-torus,
+  and 1,025-sample Stitch-resampling fixtures with complete render/topology/
+  triangle counts and geometry hashes, plus a dense-cup safety case proving
+  that thickness crossing authored rows returns `FC5018` without a Mesh
 
 ### Verified
 
@@ -46,12 +50,18 @@ The format follows Keep a Changelog principles, and package versions follow sema
   and persistence-failure tests in an independent archive-installed host. The
   complete M00-M13 suite then passed 449/449 with zero failures, skips, or
   inconclusive results
+- Unity `6000.3.20f1` passed all 6 focused multi-family scale tests in an
+  independent archive-installed host. The valid fixtures respectively produced
+  18,432/18,432/36,290 planar, 12,804/12,290/24,576 cup,
+  4,496/3,970/7,936 sphere, 4,753/4,608/9,216 torus, and
+  4,626/3,601/6,848 Stitch render vertices/topology vertices/triangles; the
+  complete M00-M13 suite then passed 455/455 with zero failures, skips, or
+  inconclusive results
 
 ### Not included
 
-- Remaining M13 multi-family scale corpus, resource envelopes, long-running
-  hosted corpus, package-version advance, M14 freeze, and `1.0.0` remain
-  pending
+- Remaining M13 resource envelopes, long-running hosted corpus,
+  package-version advance, M14 freeze, and `1.0.0` remain pending
 
 ## [0.1.0-preview.20] - 2026-08-04
 

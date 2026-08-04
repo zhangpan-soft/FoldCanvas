@@ -111,6 +111,12 @@ rules architecture.
 - `Scale_StrictValidationBudgetReturnsStableDiagnostic`
 - `LargeFailureThenSmallRetryMatchesCleanCompile`
 - `RepeatedCompile_DoesNotLeakGeometryStateOrChangeSource`
+- `Scale_LargePlanarFamilyProducesLockedEvidence`
+- `Scale_LargeCupFamilyProducesClosedLockedEvidence`
+- `Scale_DenseCupThicknessCrossingRowsReturnsStableIntersectionDiagnostic`
+- `Scale_LargeSphereFamilyProducesClosedLockedEvidence`
+- `Scale_LargeTorusFamilyProducesClosedLockedEvidence`
+- `Scale_LargeStitchResamplingProducesLockedEvidence`
 - `RobustnessRun_CancelBetweenCasesLeavesAssetsAndLastReportUnchanged`
 - `RobustnessRun_CancelBeforeReportReplaceLeavesLastReportUnchanged`
 - `RobustnessRun_RetryAfterCancellationMatchesCleanRun`

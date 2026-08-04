@@ -91,6 +91,15 @@ operation with its stable budget diagnostic and no Mesh. Strict-validation
 scale evidence also starts as ordinary in-memory panels rather than injecting a
 private validation buffer.
 
+The maintained family-scale fixtures cover the same authored paths used by a
+large planar grid, a Roll/Weld/Solidify closed cup, a stitched spherical-gore
+component, a doubly welded torus, and unequal-boundary Stitch resampling. Their
+reviewed render/topology/triangle counts and complete geometry hashes are locked.
+The cup fixture also keeps thickness below its authored wall-row spacing. A
+paired Strict case deliberately crosses that spacing and must return `FC5018`
+without a Mesh, because topological closure alone cannot validate a folded-back
+inner wall.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived

@@ -540,3 +540,14 @@ Mesh is returned. A separate 355-panel, 710-triangle Strict source passes
 ordinary tessellation and deterministically reaches `FC5019` at broad-phase
 candidate pair 250,001. These are lower CI-safe per-case limits and do not
 change FoldCanvas's production defaults.
+
+Five additional maintained fixtures exercise scale through distinct existing
+pipelines: planar tessellation, Roll plus multi-Seam Weld plus Solidify, sixteen
+SphericalWrap gores plus Stitch, full-turn ToroidalWrap plus two welded axes,
+and unequal open boundaries resampled to 1,025 Stitch samples. Every fixture is
+compiled twice from independent source instances and locks render vertex,
+logical topology vertex, triangle, finite-buffer, source non-mutation, topology,
+and geometry-hash evidence. The Strict cup fixture uses thickness smaller than
+one authored wall row. Its paired over-thick input crosses later rows, is
+confirmed as a real triangle intersection, and returns `FC5018` with no Mesh;
+the harness does not downgrade that case to Standard validation.
