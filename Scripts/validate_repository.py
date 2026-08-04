@@ -340,7 +340,7 @@ trusted_contribution_workflow = (
 ).read_text(encoding="utf-8")
 for required_fragment in [
     "pull_request_target:",
-    "permissions:\n  contents: read",
+    "permissions: {}",
     "HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}",
     "PR_AUTHOR: ${{ github.event.pull_request.user.login }}",
     "TRUSTED_OWNER: ${{ github.repository_owner }}",

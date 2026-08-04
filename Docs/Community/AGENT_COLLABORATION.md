@@ -39,9 +39,9 @@ reason.
 The trust check uses `pull_request_target` only to compare repository and
 PR-author metadata
 from the protected base workflow. It never checks out, imports, evaluates, or
-executes fork content, never invokes another Action, and receives no repository
-secret. No other workflow may use privileged `pull_request_target` checkout
-behavior to run an external patch.
+executes fork content, never invokes another Action, and uses a zero-permission
+workflow token with no repository secret. No other workflow may use privileged
+`pull_request_target` checkout behavior to run an external patch.
 
 ## What an agent may contribute
 
