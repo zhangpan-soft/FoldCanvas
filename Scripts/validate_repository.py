@@ -1006,6 +1006,8 @@ m16_soak_workflow = (
 ).read_text(encoding="utf-8")
 for required_fragment in [
     'cron: "17 3 * * 1,4"',
+    "permissions:\n  contents: read\n\nconcurrency:",
+    "timeout-minutes: 45\n    permissions:\n      contents: read\n      checks: write",
     "python3 Scripts/validate_active_candidate.py",
     "python3 Scripts/test_active_candidate.py",
     "ref: ${{ env.ACTIVE_CANDIDATE_TAG }}",

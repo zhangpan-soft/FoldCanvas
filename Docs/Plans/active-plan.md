@@ -109,6 +109,8 @@ select work without reading the full internal milestone history.
 - manual event records `qualifiesForStableExit: false`
 - scheduled event records the exact candidate, unique run ID, completion time,
   and evidence digest
+- pull-request candidate validation remains read-only; `checks: write` is
+  scoped only to the non-PR Unity soak job that publishes its check result
 
 ## Stable aggregation
 
