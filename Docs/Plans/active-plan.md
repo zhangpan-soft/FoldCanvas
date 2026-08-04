@@ -177,6 +177,11 @@ the new package. A machine-readable exit report explains exactly why stable
   `0.1.0-preview.21`, removed only its owned derived state, then passed 1/1 on
   RC2 with identical source, appearance, geometry, OBJ, diagnostic, topology,
   validation, and single-closed-volume evidence.
+- 2026-08-04: Exact head `4729ab93ed37f0bc59546eb3e1b2464f9b310959`
+  passed all hosted gates and the recorded maintainer audit, PR #14 merged as
+  `4db988f`, and package run `30898124157` published `v1.0.0-rc.2`. Because a
+  release created with `GITHUB_TOKEN` does not emit a second workflow run, the
+  first public qualification was explicitly dispatched as run `30898280828`.
 
 # Decisions made
 
@@ -190,6 +195,11 @@ the new package. A machine-readable exit report explains exactly why stable
   complete machine-readable exit gate.
 - M15 is a distribution/upgrade qualification milestone, not a geometry
   feature milestone.
+- Package publication will explicitly dispatch
+  `public-release-qualification.yml` with `GITHUB_TOKEN` and `actions: write`.
+  GitHub documents `workflow_dispatch` as an allowed workflow-to-workflow
+  exception, whereas relying on the `release` event from the same token leaves
+  public qualification silently unstarted.
 
 # Final verification
 
