@@ -18,6 +18,13 @@ body:
       label: FoldCanvas version or commit
     validations:
       required: true
+  - type: input
+    id: archive
+    attributes:
+      label: Package commit or archive SHA-256
+      description: Include the immutable source when known; never paste credentials or license data.
+    validations:
+      required: true
   - type: textarea
     id: source
     attributes:
@@ -37,6 +44,13 @@ body:
       label: Actual result and diagnostics
     validations:
       required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal deterministic reproduction
+      description: Include ordered operations, validation level, complete diagnostics, and whether an archive-only clean project reproduces it.
+    validations:
+      required: true
   - type: dropdown
     id: area
     attributes:
@@ -50,6 +64,7 @@ body:
         - Mesh validation
         - Editor baking
         - UI/preview
+        - Package installation/upgrade
         - Unknown
     validations:
       required: true

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-release-candidate.schema.json",
+  "title": "FoldCanvas release candidate contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "packageName",
+    "candidateVersion",
+    "stableRelease",
+    "foldScriptVersion",
+    "unityMatrix",
+    "publicRuntimeApi",
+    "foldScriptFixtures",
+    "productionCorpus",
+    "requiredGates",
+    "rollback",
+    "escalations"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-release-candidate" },
+    "version": { "const": "1" },
+    "packageName": { "const": "com.foldcanvas.core" },
+    "candidateVersion": { "type": "string", "pattern": "^1\\.0\\.0-rc\\.[1-9][0-9]*$" },
+    "stableRelease": { "const": false },
+    "foldScriptVersion": { "const": "0.1" },
+    "unityMatrix": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["editorVersion", "packageUnity", "packageUnityRelease", "qualification"],
+        "properties": {
+          "editorVersion": { "type": "string" },
+          "packageUnity": { "type": "string" },
+          "packageUnityRelease": { "type": "string" },
+          "qualification": { "enum": ["required", "qualified"] }
+        }
+      }
+    },
+    "publicRuntimeApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assembly", "signatureCount", "sha256"],
+      "properties": {
+        "assembly": { "const": "FoldCanvas.Runtime" },
+        "signatureCount": { "type": "integer", "minimum": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "foldScriptFixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "sourceSha256", "canonicalSha256"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 },
+          "sourceSha256": { "$ref": "#/$defs/sha256" },
+          "canonicalSha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "productionCorpus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formatVersion", "caseIds"],
+      "properties": {
+        "formatVersion": { "const": "1" },
+        "caseIds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "requiredGates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageVersion", "gitCommit", "sourceAuthority"],
+      "properties": {
+        "packageVersion": { "const": "0.1.0-preview.21" },
+        "gitCommit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "sourceAuthority": { "const": "2d-canvas-plus-foldscript" }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

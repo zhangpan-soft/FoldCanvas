@@ -2,9 +2,65 @@
 
 All notable changes to FoldCanvas are documented in this file.
 
-The format follows Keep a Changelog principles, and package versions follow semantic versioning while the API is in preview.
+The format follows Keep a Changelog principles, and package versions follow semantic versioning.
 
 ## [Unreleased]
+
+## [1.0.0-rc.1] - 2026-08-04
+
+### Added
+
+- M14 machine-readable release-candidate contract freezing the exact Unity
+  `6000.3.20f1` row, Runtime API digest/signature count, FoldScript `0.1`
+  compatibility fixtures, production-corpus identities, required gates,
+  escalation boundary, and source-driven rollback target
+- Deterministic release sidecars: a sorted per-file size/SHA-256 manifest and
+  candidate evidence tying package, Unity, API, corpus, archive, contract,
+  required gates, and rollback metadata together
+- Package-contained support and release-candidate guides covering install,
+  first compile, issue reproduction, triage priority, troubleshooting, upgrade,
+  and rollback without treating generated Meshes as source
+- M14 Edit Mode compatibility tests and repository validation for exact version,
+  Unity minimum, API freeze, canonical FoldScript fixtures, stable future-
+  version rejection, required gates, and rollback identity
+
+### Changed
+
+- Package/compiler evidence advanced from `0.1.0-preview.21` to
+  `1.0.0-rc.1` without changing Runtime geometry or FoldScript `0.1`
+  semantics
+- `package.json` now adds `unityRelease: 20f1` to the existing `unity: 6000.3`
+  minimum so the manifest identifies the exact tested patch
+- Release workflow now builds on pull requests, uploads archive/checksum/file-
+  manifest/evidence artifacts, accepts only RC tags, and marks any tag-created
+  GitHub release as a pre-release
+- Issue forms, private security routing, pull-request checks, support scope,
+  autonomous exact-head audit, and rollback expectations are explicit
+
+### Verified
+
+- Real Unity `6000.3.20f1` in an independent archive-installed host passed all
+  6 focused M14 release-candidate tests and the complete 466/466 M00-M14 Edit
+  Mode suite with zero failures, skips, or inconclusive results
+- Repository validation, deterministic archive comparison, M14 RC validation,
+  clean-install contract validation, handoff contract validation, Python
+  compilation, and `git diff --check` passed locally
+- Two independent Unity `6000.3.20f1` consumers each passed 1/1 archive-only
+  public-API test and produced identical geometry, OBJ, and stable evidence;
+  clean producer and receiver hosts each passed 1/1 and reproduced the same
+  canonical source, 2,972 render vertices, 2,562 topology vertices, 5,120
+  triangles, and one closed volume from the transferred handoff archive
+
+### Hosted verification pending
+
+- Complete Unity `6000.3.20f1`, two-clean-install, production handoff,
+  production corpus, M13 robustness, and exact-head hosted artifacts must be
+  green before the M14 pull request can merge
+
+### Not included
+
+- Final `1.0.0`, external marketplace publication, new geometry, FoldScript
+  changes, package dependencies, signing, or claims for untested Unity versions
 
 ## [0.1.0-preview.21] - 2026-08-04
 

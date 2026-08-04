@@ -24,6 +24,10 @@ PACKAGE_DIRECTORIES = (
 PACKAGE_FILES = (
     "CHANGELOG.md",
     "CHANGELOG.md.meta",
+    "CODE_OF_CONDUCT.md",
+    "CODE_OF_CONDUCT.md.meta",
+    "CONTRIBUTING.md",
+    "CONTRIBUTING.md.meta",
     "LICENSE.md",
     "LICENSE.md.meta",
     "NOTICE",
@@ -32,6 +36,10 @@ PACKAGE_FILES = (
     "README.md.meta",
     "README.zh-CN.md",
     "README.zh-CN.md.meta",
+    "SECURITY.md",
+    "SECURITY.md.meta",
+    "SUPPORT.md",
+    "SUPPORT.md.meta",
     "Editor.meta",
     "Runtime.meta",
     "Schema.meta",
@@ -66,6 +74,22 @@ def package_version() -> str:
     if f"## [{version}]" not in changelog:
         raise ValueError("CHANGELOG.md lacks the package version heading")
     return version
+
+
+def sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def canonical_json_bytes(value: dict) -> bytes:
+    return (
+        json.dumps(
+            value,
+            ensure_ascii=False,
+            indent=2,
+            separators=(",", ": "),
+        )
+        + "\n"
+    ).encode("utf-8")
 
 
 def collect_package_files() -> list[pathlib.Path]:
@@ -143,6 +167,113 @@ def build_archive(output_directory: pathlib.Path, tag: str | None = None) -> pat
     return archive_path
 
 
+def build_file_manifest(
+    output_directory: pathlib.Path,
+    archive_path: pathlib.Path,
+) -> pathlib.Path:
+    version = package_version()
+    archive_bytes = archive_path.read_bytes()
+    entries = []
+    for path in collect_package_files():
+        relative = path.relative_to(ROOT).as_posix()
+        data = path.read_bytes()
+        entries.append(
+            {
+                "path": f"package/{relative}",
+                "size": len(data),
+                "sha256": sha256_bytes(data),
+            }
+        )
+
+    document = {
+        "format": "foldcanvas-release-file-manifest",
+        "version": "1",
+        "packageName": "com.foldcanvas.core",
+        "packageVersion": version,
+        "archiveFile": archive_path.name,
+        "archiveSha256": sha256_bytes(archive_bytes),
+        "fileCount": len(entries),
+        "files": entries,
+    }
+    path = output_directory / f"com.foldcanvas.core-{version}.manifest.json"
+    path.write_bytes(canonical_json_bytes(document))
+    return path
+
+
+def build_candidate_evidence(
+    output_directory: pathlib.Path,
+    archive_path: pathlib.Path,
+    manifest_path: pathlib.Path,
+) -> pathlib.Path:
+    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    contract_path = ROOT / "Documentation~" / "m14-release-candidate.json"
+    contract_bytes = contract_path.read_bytes()
+    contract = json.loads(contract_bytes)
+    public_api_path = ROOT / "Documentation~" / "public-runtime-api.json"
+    public_api = json.loads(public_api_path.read_text(encoding="utf-8"))
+    corpus_path = ROOT / "Documentation~" / "m11-production-corpus.json"
+    corpus_bytes = corpus_path.read_bytes()
+    corpus = json.loads(corpus_bytes)
+    archive_bytes = archive_path.read_bytes()
+    manifest_bytes = manifest_path.read_bytes()
+
+    document = {
+        "format": "foldcanvas-release-candidate-evidence",
+        "version": "1",
+        "state": "built-unverified",
+        "packageName": package["name"],
+        "packageVersion": package["version"],
+        "stableRelease": False,
+        "unity": {
+            "packageMinimum": package["unity"],
+            "packageRelease": package["unityRelease"],
+            "qualifiedEditorVersion": contract["unityMatrix"][0]["editorVersion"],
+        },
+        "foldScriptVersion": contract["foldScriptVersion"],
+        "publicRuntimeApi": {
+            "signatureCount": public_api["signatureCount"],
+            "sha256": public_api["sha256"],
+        },
+        "productionCorpus": {
+            "caseCount": len(corpus["cases"]),
+            "sha256": sha256_bytes(corpus_bytes),
+        },
+        "contract": {
+            "path": "Documentation~/m14-release-candidate.json",
+            "sha256": sha256_bytes(contract_bytes),
+        },
+        "archive": {
+            "file": archive_path.name,
+            "sha256": sha256_bytes(archive_bytes),
+        },
+        "fileManifest": {
+            "file": manifest_path.name,
+            "sha256": sha256_bytes(manifest_bytes),
+        },
+        "requiredGates": contract["requiredGates"],
+        "rollback": contract["rollback"],
+        "publication": {
+            "githubPrereleaseOnly": True,
+            "finalStableRelease": False,
+            "externalMarketplace": False,
+        },
+    }
+    version = package["version"]
+    path = output_directory / f"com.foldcanvas.core-{version}.evidence.json"
+    path.write_bytes(canonical_json_bytes(document))
+    return path
+
+
+def build_release_bundle(
+    output_directory: pathlib.Path,
+    tag: str | None = None,
+) -> tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
+    archive = build_archive(output_directory, tag)
+    manifest = build_file_manifest(output_directory, archive)
+    evidence = build_candidate_evidence(output_directory, archive, manifest)
+    return archive, manifest, evidence
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Build a deterministic FoldCanvas UPM release archive."
@@ -154,10 +285,15 @@ def main() -> int:
     )
     parser.add_argument("--tag")
     args = parser.parse_args()
-    archive = build_archive(args.output.resolve(), args.tag)
+    archive, manifest, evidence = build_release_bundle(
+        args.output.resolve(),
+        args.tag,
+    )
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
     print(f"Built {archive}")
     print(f"SHA256 {digest}")
+    print(f"File manifest {manifest}")
+    print(f"Candidate evidence {evidence}")
     return 0
 
 

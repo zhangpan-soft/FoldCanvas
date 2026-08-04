@@ -14,6 +14,11 @@ Describe the source canvas/panels and the concrete compiled object.
 
 List Edit Mode tests and manual Unity checks.
 
+- [ ] exact PR head recorded
+- [ ] full Unity XML and Editor.log uploaded
+- [ ] deterministic release-candidate bundle validated
+- [ ] no failed, skipped, or inconclusive required test
+
 ## Scope
 
 State the active milestone and confirm that later milestones were not implemented.
@@ -25,3 +30,9 @@ State the active milestone and confirm that later milestones were not implemente
 - [ ] AI/provider code is outside the core
 - [ ] custom operations use an explicit per-compile registry with no global discovery
 - [ ] exports and gallery views remain derived artifacts
+
+## Release and rollback
+
+- [ ] package/API/FoldScript/Unity compatibility impact is explicit
+- [ ] rollback target preserves the 2D canvas plus FoldScript source
+- [ ] no credentials, paid service, irreversible permission, legal change, or external marketplace publication is hidden in this PR

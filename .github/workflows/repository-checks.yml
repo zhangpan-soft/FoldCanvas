@@ -14,6 +14,8 @@ jobs:
         run: python3 Scripts/validate_repository.py
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
+      - name: Validate M14 release-candidate contract
+        run: python3 Scripts/test_release_candidate.py
       - name: Validate M11 clean-install project and evidence contracts
         run: python3 Scripts/test_clean_install_project.py
 

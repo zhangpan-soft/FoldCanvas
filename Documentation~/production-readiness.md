@@ -15,6 +15,8 @@ A preview or release-candidate build passes these independent rungs:
 5. consumer-owned code compiling through `FoldCanvas.Runtime` public API;
 6. public API baseline and production-corpus comparison;
 7. foreground rendering or interaction checks for any visual claim.
+8. M14 release-candidate contract, per-file archive manifest, support, release,
+   and rollback validation.
 
 Passing a lower rung does not replace a higher one. In particular, a Python
 check does not prove C# compilation, a Unity exit code without XML does not
@@ -129,6 +131,25 @@ External publication, marketplace submission, paid services, credentials,
 legal decisions, and irreversible permission changes remain owner escalation
 points even under autonomous maintenance.
 
+Routine roadmap planning, issue triage, implementation, exact-head audit, and
+green-check pull-request merge are delegated to the autonomous maintainer.
+Every merge decision must identify the exact reviewed head; a later push
+invalidates that decision until the new head is audited.
+
+## M14 candidate bundle
+
+M14 version `1.0.0-rc.1` adds deterministic sidecars next to the `.tgz`: a
+sorted file manifest with the size and SHA-256 of every package entry, and a
+candidate evidence document linking the exact Unity row, FoldScript version,
+compiled Runtime API, production corpus, contract, archive digest, required
+gates, and rollback target. The evidence state is `built-unverified`; it never
+pretends that creating an archive proves hosted Unity or maintainer approval.
+
+Pull requests build and upload the candidate bundle without publishing it.
+Only an exact matching `v*-rc.*` tag can use the M14 release workflow, and that
+GitHub release is marked as a pre-release. Stable `1.0.0` and marketplace
+publication remain separate decisions.
+
 ## Local commands
 
 Fast checks that do not claim Unity execution:
@@ -136,6 +157,7 @@ Fast checks that do not claim Unity execution:
 ```text
 python3 Scripts/validate_repository.py
 python3 Scripts/test_release_package.py
+python3 Scripts/test_release_candidate.py
 python3 Scripts/test_clean_install_project.py
 ```
 

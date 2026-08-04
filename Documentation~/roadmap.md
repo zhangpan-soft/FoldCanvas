@@ -330,7 +330,8 @@ source-driven rebuild path are documented in
 
 ## M13: Robustness and scale
 
-**Status:** active on `codex/m13-robustness-scale`.
+**Status:** autonomously maintainer-audited and merged through PR #12 as
+`d9434be`, retaining reviewed head `461fd792`.
 
 **Proof:** a versioned deterministic generator replays bounded valid and invalid
 property cases by seed and ordinal; maintained near-limit assets, repeated
@@ -352,14 +353,32 @@ M13 does not add geometry operations, automatic repair or cleanup, raise safety
 limits to conceal failures, add runtime I/O or dependencies, preempt a compile
 mid-operation, freeze the 1.0 API/format, publish `1.0.0`, or implement M14.
 
+Acceptance evidence: repository run `30880541772` and Unity run `30880541775`
+were green with 460/460 Edit Mode tests. Exact-head long-run `30880076543`
+passed 512/512 generated cases and 5/5 resource envelopes; artifact
+`8881073036` has digest
+`sha256:3bda2604adfe17d03d3f258b778ee3b2e3ef4fa3236e9e472745e302aacb12d1`.
+
 ## M14: 1.0 release candidate
 
-**Status:** planned; not active.
+**Status:** active on `codex/m14-release-candidate`.
 
-**Proof direction:** supported Unity/version matrix, frozen public API and
-FoldScript compatibility policy, clean-install corpus, documentation, license,
-security, issue-response, release, and rollback gates are all satisfied before
-an explicit `1.0.0` decision.
+**Proof:** `1.0.0-rc.1` binds one exact supported Unity row, a frozen Runtime API
+and FoldScript contract, deterministic archive/file evidence, clean consumers,
+documentation, license, security, issue-response, release, and rollback gates
+before a separate final `1.0.0` decision.
+
+- exact Unity `6000.3.20f1` qualification and manifest minimum
+- frozen compiled Runtime API and canonical FoldScript `0.1` compatibility
+- deterministic archive, per-file manifest, checksum, and RC evidence
+- full package, clean-install, production-corpus, handoff, and robustness gates
+- install, support, security, troubleshooting, audit, and rollback policy
+- pull-request dry-run artifacts plus exact-tag publication safeguards
+- autonomous exact-head maintainer audit and green-check merge
+
+M14 does not add geometry behavior, change FoldScript `0.1`, add dependencies,
+claim untested Unity versions, publish final `1.0.0`, or submit to an external
+marketplace.
 
 ## Deliberate product non-goals
 
