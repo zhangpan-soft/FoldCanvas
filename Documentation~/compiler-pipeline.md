@@ -452,7 +452,7 @@ M08 copies ordered compiler diagnostics into a provider-neutral repair request:
 
 ```text
 schemaVersion=0.1
-compilerVersion=0.1.0-preview.20
+compilerVersion=0.1.0-preview.21
 assetId=cup
 source=<canonical complete FoldScript>
 diagnostics[0].code=FC3022

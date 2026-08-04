@@ -73,6 +73,27 @@ Runtime assembly, never from a source-text approximation. Repository checks
 validate its order and digest; Edit Mode tests regenerate it in memory and
 show added and removed signatures. See [compatibility and migration](compatibility.md).
 
+## Robustness, scale, and long-run gate
+
+M13 adds replayable evidence above the fixed production corpus. Four bounded
+valid/invalid suites use a repository-owned generator and the identity
+`(generatorVersion, suiteId, seedHex, ordinal)`. Maintained planar, closed-cup,
+sphere, torus, Stitch-resampling, Solidify-budget, and Strict-validation cases
+lock counts, topology, diagnostics, and complete geometry hashes. Cancellation
+is cooperative between synchronous cases; a cancelled, failed, or interrupted
+write cannot replace the previous complete report.
+
+`Tools > FoldCanvas > Run M13 Robustness Smoke` writes the canonical smoke
+report under `Library/FoldCanvas`. `Tools > FoldCanvas > Run M13 Resource
+Envelopes` runs five reviewed large fixtures with exact geometry plus generous
+time/allocation ceilings. The separate weekly/manual hosted workflow defaults
+to 128 cases in each suite and runs all Edit Mode tests in real Unity
+`6000.3.20f1`. It uploads XML, `Editor.log`, the robustness report, replay
+records for every unexpected case, the resource report, environment metadata,
+and a cross-file validation summary. Missing Unity startup, missing evidence,
+stale hashes/counts, incomplete replay coverage, or any failed, skipped, or
+inconclusive test blocks the release.
+
 ## Native extension trust boundary
 
 M10's registry restricts the mesh capability supplied by FoldCanvas: an
@@ -92,8 +113,8 @@ The following block a preview/RC release:
 
 - a reproducible security, data-loss, source-corruption, compiler-correctness,
   determinism, topology, or installation defect;
-- a missing or failed repository, full Unity, clean-install, API, corpus, or
-  archive gate;
+- a missing or failed repository, full Unity, clean-install, API, corpus,
+  archive, robustness, resource, or hosted long-run gate;
 - an unexplained public API or corpus baseline change;
 - a release archive whose version, changelog, runtime constant, or tag differs;
 - a visual production claim that has not been checked in the foreground.
@@ -120,13 +141,15 @@ python3 Scripts/test_clean_install_project.py
 
 Use Unity `6000.3.20f1` without an immediate `-quit` when invoking
 `-runTests`; the Test Framework exits after writing XML. Hosted CI remains the
-release evidence of record because it runs the complete package suite and both
-independent clean hosts.
+release evidence of record because it runs the complete package suite, both
+independent clean hosts, and the M13 long-run evidence gate.
 
 ## 中文摘要
 
 M11 把“仓库里能跑”提升为“真正发布的 `.tgz` 能在两个全新 Unity 工程里安装、
-编译、调用并产生完全一致的证据”。CI 必须上传真实 XML、Editor.log、包解析文件、
-消费者报告和双安装对比；任何缺失都算失败。生产语料覆盖平面、厚杯、球瓣、环面、
-原生扩展和一个预期失败案例。原生扩展是受信任的 Unity 进程内代码，受限 API 不是
-安全沙箱。二维 Canvas、FoldScript 与几何规则仍是源，所有 Mesh 和报告仍是派生物。
+编译、调用并产生完全一致的证据”。M13 再增加可按版本、种子、套件和序号重放的
+鲁棒性语料、大资产资源包络、取消/重试以及定时/手动长时门。CI 必须上传真实 XML、
+Editor.log、完整报告、资源报告、环境信息和每个异常用例的重放身份；任何缺失都算
+失败。生产语料覆盖平面、厚杯、球瓣、环面、原生扩展和一个预期失败案例。原生扩展
+是受信任的 Unity 进程内代码，受限 API 不是安全沙箱。二维 Canvas、FoldScript 与
+几何规则仍是源，所有 Mesh 和报告仍是派生物。

@@ -169,8 +169,9 @@ explicit 16-hex-digit seed. It runs the complete package Edit Mode suite in
 Unity `6000.3.20f1` and retains `test-results.xml`, `Editor.log`, the robustness
 and resource reports, replay records, environment metadata, and a validator
 summary. The default scheduled run uses 128 cases per suite (512 total). A
-workflow-file change also runs this gate once so changes to the gate prove
-themselves before review.
+change to the package version, Runtime compiler, M13 robustness code/tests,
+resource baseline, validator, or workflow also runs this gate so the exact
+changed head proves itself before review.
 
 ## Authoring actions
 

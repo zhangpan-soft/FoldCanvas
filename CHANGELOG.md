@@ -6,6 +6,8 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [0.1.0-preview.21] - 2026-08-04
+
 ### Added
 
 - Initial M13 deterministic robustness smoke layer with a repository-owned
@@ -39,15 +41,22 @@ The format follows Keep a Changelog principles, and package versions follow sema
   reports, environment linkage, exact unexpected-case replay extraction, and a
   validator that rejects missing, incomplete, stale, or mismatched evidence
 
+### Changed
+
+- Package and compiler evidence version advanced to `0.1.0-preview.21`; the
+  Runtime geometry surface and FoldScript `0.1` semantics remain unchanged
+- Public Runtime API and production-corpus baselines regenerated from the
+  compiled `.21` assembly and unchanged deterministic geometry corpus
+
 ### Verified
 
 - Unity `6000.3.20f1` passed all 6 focused M13 generator/smoke tests and the
   complete 437/437 M00-M13 Edit Mode suite in an independent archive-installed
   host, with zero failures, skips, or inconclusive results
 - The default 64-case smoke passed 64/64 twice; both runs produced semantic
-  SHA-256 `fad8385cf02227371df0128b213f38e0b7962cf49ea968b3f2109d03b2ac0290`
+  SHA-256 `6605329ac68e63fabed03c7bf55aab0e975296de0be5bcb0926e9fe962de2614`
   and byte-identical report SHA-256
-  `a0a8a57c29b2bd3a769c87de33d6f6bdbad14422defdd706ef304bd306c1ed9a`
+  `0f57b23b73a165c72b8dbc02c999ee7804bdb9257423094681adc91da2959218`
 - Unity `6000.3.20f1` passed 7/7 focused M13 scale and retry tests. The large
   Solidify fixture emitted 17,904 render vertices, 16,384 logical topology
   vertices, and 32,764 triangles with geometry SHA-256
@@ -77,11 +86,14 @@ The format follows Keep a Changelog principles, and package versions follow sema
   long-run evidence tests, a configured 128/128-case local corpus with 5/5
   resource envelopes, and the complete 460/460 M00-M13 suite with zero
   failures, skips, or inconclusive results
+- Hosted M13 self-test run `30878082026` passed 460/460 Unity tests, 512/512
+  deterministic robustness cases, and 5/5 resource envelopes, then uploaded
+  the validated XML/log/report/replay/environment artifact as ID `8880352076`
 
 ### Not included
 
-- Hosted execution of the new M13 long-running corpus, package-version advance,
-  M14 freeze, and `1.0.0` remain pending
+- M14 public API/FoldScript freeze, release-candidate declaration, external
+  marketplace publication, and `1.0.0` remain pending
 
 ## [0.1.0-preview.20] - 2026-08-04
 

@@ -285,7 +285,22 @@ report, resource observations, and exact replay identities for failures.
   passed the 2/2 focused contract tests, a configured 32-per-suite run with
   128/128 cases and 5/5 resource envelopes, and the complete 460/460 M00-M13
   suite with zero failures, skips, or inconclusive results. Hosted validation
-  of the new workflow remains required before this slice can close.
+  then passed in run `30878082026`: Unity `6000.3.20f1` completed 460/460 tests,
+  512/512 cases, and 5/5 resource envelopes. Artifact `8880352076` uploaded all
+  seven required files with digest
+  `sha256:e3f53988fe2cb1d62d00b3527c6bd8ba4bc0d912abb75f18d44f63d5ba97ac1f`.
+- 2026-08-04: Advanced package/compiler evidence to `0.1.0-preview.21` without
+  changing FoldScript `0.1` or Runtime geometry semantics. Unity regenerated
+  the compiled public Runtime API baseline at 808 signatures with digest
+  `7223da13d8acbe55775e603297ef6fb2760d9d069a2cc14326ce159186bf2098`
+  and regenerated the six-case production corpus with unchanged geometry
+  hashes. A fresh `.21` archive host produced byte-identical 64-case smoke
+  reports with semantic SHA-256
+  `6605329ac68e63fabed03c7bf55aab0e975296de0be5bcb0926e9fe962de2614`,
+  passed 5/5 resource envelopes with semantic SHA-256
+  `dd99958ef9daf9506ec8035307c1491afaef8c57b78aebcc00ad9e5f9e3fa063`,
+  passed a configured 128/128-case evidence run, and passed the complete
+  460/460 suite with zero failures, skips, or inconclusive results.
 
 # Decisions made
 
@@ -319,9 +334,9 @@ report, resource observations, and exact replay identities for failures.
 The deterministic smoke, budget/Strict scale, multi-family scale, repeated
 compile, failure-then-retry, cooperative cancellation/atomic-report, and
 resource-envelope slices are implemented and locally verified. The long-run
-workflow and artifact validator are implemented and locally verified, but its
-hosted self-test, package-version advancement, and final PR audit remain
-pending.
+workflow has passed its hosted self-test and `.21` has passed final local
+archive validation. Exact `.21` hosted evidence, draft PR creation, and the
+final PR-head audit remain pending.
 The final M13 audit must record:
 
 - exact branch head, package/compiler/FoldScript/generator versions

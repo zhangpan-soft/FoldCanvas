@@ -22,6 +22,12 @@ on:
   push:
     paths:
       - .github/workflows/m13-robustness-long-run.yml
+      - Documentation~/m13-resource-envelopes.json
+      - Editor/Robustness/**
+      - Runtime/**
+      - Scripts/validate_m13_long_run_evidence.py
+      - Tests/Editor/M13*.cs
+      - package.json
 
 permissions:
   contents: read
