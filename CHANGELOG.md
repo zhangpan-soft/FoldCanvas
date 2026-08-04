@@ -79,7 +79,8 @@ The format follows Keep a Changelog principles, and package versions follow sema
   complete archive-installed 458/458 M00-M13 suite with zero failures, skips,
   or inconclusive results. The default one-warmup/three-measurement report
   passed 5/5 reviewed envelopes using the Unity profiler allocation counter;
-  every scenario remained below its 10-second and 512-MiB median ceilings.
+  every scenario remained below its initial 10-second and 512-MiB median
+  ceilings.
   Hosted Repository run `30877120530` and Unity run `30877120533` were also
   green, including 458/458 package tests and both clean-host regression jobs
 - An independent archive-installed Unity `6000.3.20f1` host passed 2/2 focused
@@ -89,6 +90,10 @@ The format follows Keep a Changelog principles, and package versions follow sema
 - Hosted M13 self-test run `30878082026` passed 460/460 Unity tests, 512/512
   deterministic robustness cases, and 5/5 resource envelopes, then uploaded
   the validated XML/log/report/replay/environment artifact as ID `8880352076`
+- Final-head hosted evidence exposed insufficient timing headroom: the Strict
+  cup used an 8.49-second median on Linux. The reviewed elapsed ceiling is now
+  20 seconds for all five fixtures while the 512-MiB allocation ceiling and
+  exact geometry counts/hashes remain unchanged
 
 ### Not included
 

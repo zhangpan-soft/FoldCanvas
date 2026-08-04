@@ -555,7 +555,7 @@ the harness does not downgrade that case to Standard validation.
 The resource runner compiles those same five fixtures from fresh in-memory
 sources after one warmup and across three measured observations by default. Its
 reviewed Unity `6000.3.20f1` baseline requires exact geometry counts and hashes,
-a median elapsed time no greater than 10 seconds, and measured managed
+a median elapsed time no greater than 20 seconds, and measured managed
 allocation no greater than 512 MiB for each scenario. It prefers the current
 thread allocation counter when supported, otherwise uses Unity's
 `GC Allocated In Frame` profiler counter, with managed live-heap growth as the

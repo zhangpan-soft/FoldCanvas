@@ -271,8 +271,8 @@ report, resource observations, and exact replay identities for failures.
   one-warmup/three-measurement run passed 5/5 envelopes; observed medians were
   1,086.986 ms / 51,352,602 bytes planar, 1,628.242 ms / 75,051,662 bytes cup,
   290.962 ms / 99,468,724 bytes sphere, 143.354 ms / 24,902,865 bytes torus,
-  and 64.729 ms / 14,558,998 bytes Stitch. Each reviewed ceiling is 10 seconds
-  and 512 MiB, and the selected method was Unity's
+  and 64.729 ms / 14,558,998 bytes Stitch. The first reviewed ceiling was
+  10 seconds and 512 MiB, and the selected method was Unity's
   `GC Allocated In Frame` profiler counter. Commit `78d0a91` then passed hosted
   Repository run `30877120530` and Unity run `30877120533`; the latter passed
   458/458 package tests plus both repeated clean-install and production-handoff
@@ -298,9 +298,17 @@ report, resource observations, and exact replay identities for failures.
   reports with semantic SHA-256
   `6605329ac68e63fabed03c7bf55aab0e975296de0be5bcb0926e9fe962de2614`,
   passed 5/5 resource envelopes with semantic SHA-256
-  `dd99958ef9daf9506ec8035307c1491afaef8c57b78aebcc00ad9e5f9e3fa063`,
+  `6362b47f55f624aa74680aca97d2b637dde39085e4a5801405453a2f92556ce6`,
   passed a configured 128/128-case evidence run, and passed the complete
   460/460 suite with zero failures, skips, or inconclusive results.
+- 2026-08-04: Downloaded and independently revalidated final-head hosted
+  artifact `8880714702`. Its Linux runner observed an 8,492.548 ms median for
+  the Strict cup against the initial 10-second ceiling, which did not provide
+  the deliberately conservative headroom required for a non-flaky gross-
+  regression alarm. Raised every time ceiling to 20 seconds while retaining
+  exact geometry hashes/counts and the 512-MiB allocation ceiling; fresh
+  exact-head local and hosted evidence is required after this reviewed baseline
+  change.
 
 # Decisions made
 
