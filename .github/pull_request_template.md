@@ -36,3 +36,11 @@ State the active milestone and confirm that later milestones were not implemente
 - [ ] package/API/FoldScript/Unity compatibility impact is explicit
 - [ ] rollback target preserves the 2D canvas plus FoldScript source
 - [ ] no credentials, paid service, irreversible permission, legal change, or external marketplace publication is hidden in this PR
+
+## External fork note
+
+Fork pull requests intentionally cannot access FoldCanvas Unity or repository
+secrets and cannot merge directly. The maintainer reviews the exact fork head,
+preserves attribution, imports an approved patch into a maintainer-owned
+integration PR, and runs the complete privileged Unity evidence there. Do not
+add credentials or weaken a check to bypass `Trusted contribution qualification`.

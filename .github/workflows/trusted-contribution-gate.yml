@@ -1,0 +1,45 @@
+name: Trusted contribution qualification
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions: {}
+
+jobs:
+  trusted-contribution:
+    name: Trusted contribution qualification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require maintainer-owned integration before privileged Unity CI
+        env:
+          BASE_REPOSITORY: ${{ github.repository }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          TRUSTED_OWNER: ${{ github.repository_owner }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$PR_AUTHOR" != "$TRUSTED_OWNER" ]]; then
+            echo "::error title=Maintainer integration required::External fork pull requests are reviewed as proposals. A maintainer must import the approved exact patch into an internal integration pull request before privileged Unity validation and merge."
+            {
+              echo "## External contribution intake"
+              echo
+              echo "This fork pull request cannot run repository Unity credentials or merge directly."
+              echo "The maintainer will review the exact diff, preserve attribution, import an approved patch into a maintainer-owned integration branch, and run the complete required Unity evidence there."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]]
+          {
+            echo "## Trusted contribution qualification"
+            echo
+            echo "This maintainer-owned branch may proceed to privileged Unity validation."
+            echo "Exact head: \`$HEAD_SHA\`"
+          } >> "$GITHUB_STEP_SUMMARY"

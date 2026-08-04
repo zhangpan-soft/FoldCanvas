@@ -20,11 +20,20 @@ After the repository exists, add its URLs to the optional `documentationUrl`, `c
 ## Recommended repository settings
 
 - Enable Issues and Discussions.
-- Protect `main` after the first collaborators join.
-- Require the repository-checks workflow before merge.
+- Keep `main` protected before inviting collaborators or external agents.
+- Require repository, deterministic package, trusted-contribution, Unity,
+  clean-install, handoff, and source-upgrade checks before merge.
 - Use squash merge or rebase merge to keep geometry changes reviewable.
 - Require pull requests to include deterministic tests for new geometry behavior.
 - Do not accept generated Unity caches or baked meshes as source-of-truth changes.
+- Treat fork PRs as untrusted proposals. Do not pass Unity credentials to them;
+  review the exact diff and land approved work through a maintainer-owned
+  integration PR with full privileged CI.
+- Keep external agents fork-only and do not grant collaborator/write access.
+  Same-repository writers can modify Actions workflows, so job-level author
+  guards are only defense in depth. Before adding a non-owner writer, move
+  Unity credentials behind a protected Environment requiring owner approval or
+  an equivalent base-owned approval gate.
 
 ## Suggested labels
 

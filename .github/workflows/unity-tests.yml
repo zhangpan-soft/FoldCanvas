@@ -2,17 +2,26 @@ name: Unity Edit Mode tests
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
   contents: read
-  checks: write
 
 jobs:
   unity-editmode-tests:
     name: Unity 6000.3.20f1 Edit Mode tests
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4.2.2
@@ -95,8 +104,16 @@ jobs:
 
   unity-clean-install-tests:
     name: Unity 6000.3.20f1 repeated clean archive install
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4.2.2
@@ -269,8 +286,16 @@ jobs:
 
   unity-production-handoff-tests:
     name: Unity 6000.3.20f1 clean producer and receiver handoff
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4.2.2
@@ -434,8 +459,16 @@ jobs:
 
   unity-source-upgrade-tests:
     name: Unity 6000.3.20f1 source-first package upgrade
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      checks: write
     steps:
       - name: Check out repository with rollback history
         uses: actions/checkout@v4.2.2

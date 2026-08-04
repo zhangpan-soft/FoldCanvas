@@ -128,6 +128,7 @@ required = [
     ".github/foldcanvas-active-candidate.json",
     ".github/workflows/m16-candidate-soak.yml",
     ".github/workflows/m16-stable-exit.yml",
+    ".github/workflows/trusted-contribution-gate.yml",
     "Scripts/validate_active_candidate.py",
     "Scripts/test_active_candidate.py",
     "Scripts/aggregate_candidate_soak.py",
@@ -135,9 +136,11 @@ required = [
     ".github/foldcanvas-rc2-gates.json",
     "Scripts/validate_release_gate_ledger.py",
     "Scripts/test_release_gate_ledger.py",
+    "Scripts/test_trusted_contribution_gate.py",
     "Docs/Community/START_HERE.md",
     "Docs/Community/AGENT_COLLABORATION.md",
     ".github/ISSUE_TEMPLATE/contributor_task.yml",
+    ".github/pull_request_template.md",
     "SUPPORT.md",
     "SECURITY.md",
     "CONTRIBUTING.md",
@@ -317,6 +320,47 @@ for required_fragment in [
         errors.append(
             "Unity workflow is missing required configuration: "
             f"{required_fragment}"
+        )
+
+fork_guard = (
+    "if: >-\n"
+    "      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||\n"
+    "      (github.event_name == 'pull_request' &&\n"
+    "      github.event.pull_request.head.repo.full_name == github.repository &&\n"
+    "      github.event.pull_request.user.login == github.repository_owner)"
+)
+if unity_workflow.count(fork_guard) != 4:
+    errors.append("Every privileged Unity job must skip untrusted fork pull requests")
+if unity_workflow.count("      checks: write") != 4:
+    errors.append("Unity checks:write must be scoped to exactly four trusted jobs")
+if "permissions:\n  contents: read\n  checks: write\n\njobs:" in unity_workflow:
+    errors.append("Unity workflow must not grant checks:write globally")
+if "push:\n    branches:\n      - main" not in unity_workflow:
+    errors.append("Privileged Unity push trigger must be limited to protected main")
+
+trusted_contribution_workflow = (
+    ROOT / ".github" / "workflows" / "trusted-contribution-gate.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "pull_request_target:",
+    "permissions: {}",
+    "HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}",
+    "PR_AUTHOR: ${{ github.event.pull_request.user.login }}",
+    "TRUSTED_OWNER: ${{ github.repository_owner }}",
+    'if [[ "$HEAD_REPOSITORY" != "$BASE_REPOSITORY" || "$PR_AUTHOR" != "$TRUSTED_OWNER" ]]',
+    "Maintainer integration required",
+    "exit 1",
+]:
+    if required_fragment not in trusted_contribution_workflow:
+        errors.append(
+            "Trusted contribution gate is missing fail-closed evidence: "
+            f"{required_fragment}"
+        )
+for forbidden_fragment in ["actions/checkout", "secrets.", "uses:"]:
+    if forbidden_fragment in trusted_contribution_workflow:
+        errors.append(
+            "Trusted contribution gate must not execute untrusted code or actions: "
+            f"{forbidden_fragment}"
         )
 
 if "artifactsPath: artifacts/unity-editmode" in unity_workflow:
@@ -927,6 +971,8 @@ if "python3 Scripts/test_candidate_soak.py" not in repository_workflow:
     errors.append("Repository checks must validate M16 soak aggregation")
 if "python3 Scripts/test_release_gate_ledger.py" not in repository_workflow:
     errors.append("Repository checks must validate the M16 gate ledger")
+if "python3 Scripts/test_trusted_contribution_gate.py" not in repository_workflow:
+    errors.append("Repository checks must validate the fork trust boundary")
 
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
@@ -1066,6 +1112,12 @@ active_plan_text = (ROOT / "Docs" / "Plans" / "active-plan.md").read_text(
 community_start_text = (
     ROOT / "Docs" / "Community" / "START_HERE.md"
 ).read_text(encoding="utf-8")
+agent_policy_text = (
+    ROOT / "Docs" / "Community" / "AGENT_COLLABORATION.md"
+).read_text(encoding="utf-8")
+pull_request_template_text = (
+    ROOT / ".github" / "pull_request_template.md"
+).read_text(encoding="utf-8")
 if "M16: stable-candidate soak and contributor on-ramp" not in current_task_text:
     errors.append("CURRENT_TASK.md must identify the active M16 milestone")
 for required_fragment in [
@@ -1079,9 +1131,25 @@ for required_fragment in [
     "3D result = 2D appearance",
     "Choose a contribution lane",
     "Pull-request evidence",
+    "maintainer reviews the exact fork diff",
 ]:
     if required_fragment not in community_start_text:
         errors.append("M16 contributor start page is missing: " + required_fragment)
+for required_fragment in [
+    "maintainer-owned integration branch",
+    "pull_request_target",
+    "never checks out",
+    "Trusted contribution qualification",
+]:
+    if required_fragment not in agent_policy_text:
+        errors.append("M16 agent trust policy is missing: " + required_fragment)
+for required_fragment in [
+    "External fork note",
+    "maintainer-owned",
+    "Trusted contribution qualification",
+]:
+    if required_fragment not in pull_request_template_text:
+        errors.append("Pull request template is missing: " + required_fragment)
 
 m13_long_run_workflow = (
     ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"

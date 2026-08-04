@@ -84,4 +84,11 @@ commit Unity licenses, credentials, tokens, generated `Library` state, or a
 manually repaired Mesh as source.
 
 The maintainer will review against the exact PR head. A later push invalidates
-the earlier audit, so the final commit must rerun the required gates.
+the earlier audit. For a fork PR, GitHub withholds Unity-license secrets and
+FoldCanvas intentionally blocks direct merge rather than exposing them. The
+maintainer reviews the exact fork diff, imports an approved patch with
+attribution into a repository-owner-authored integration PR, and runs the
+complete Unity gates there. See the
+[external agent policy](AGENT_COLLABORATION.md). An expected
+`Trusted contribution qualification` failure on the fork is therefore a trust
+boundary, not a request to add credentials or weaken tests.

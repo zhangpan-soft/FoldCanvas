@@ -19,6 +19,12 @@ clean public consumers, and the source-first upgrade. PR #15 then fixed the
 workflow-to-workflow dispatch boundary and merged as
 `0d06450f1f1f309b605b1e25f1833ef993d2abe7` after 19 checks passed.
 
+M16 PR #16 was audited at exact head `82defcb8`, passed 472/472 Edit Mode plus
+all clean consumer, handoff, and upgrade gates, and merged as `211d55c`.
+`main` is protected. Manual soak `30910305230` proved the full candidate path
+without qualifying for stable; evaluator `30910883290` remains correctly
+blocked until 168 hours and two genuine scheduled runs are complete.
+
 M16 changes the acceptance question from “can the exact public RC be consumed
 and upgraded?” to “can that immutable RC survive a candidate-pinned soak while
 an unfamiliar contributor can find, reproduce, and complete a bounded task?”
@@ -34,7 +40,8 @@ The active proof covers:
 - a contributor start page, bounded issue forms, discoverable repository
   metadata, and several genuinely small tasks with numerical acceptance;
 - a fork/PR-only external AI-agent policy with protected `main`, no shared
-  credentials, and community platforms limited to public recruitment;
+  credentials, and maintainer-owned integration PRs for the privileged Unity
+  evidence that GitHub correctly withholds from fork runs;
 - no package-byte change while RC2 is soaking.
 
 The maintainer may plan, implement, audit, merge, triage issues, publish GitHub

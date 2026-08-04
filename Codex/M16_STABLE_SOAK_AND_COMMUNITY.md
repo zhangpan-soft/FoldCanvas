@@ -56,8 +56,9 @@ geometry, topology, determinism, compatibility, and distribution contract.
   operations, UV expectations, winding, invalid cases, and a visible proof.
   A final-shape screenshot alone is insufficient.
 - Contributor code follows the same evidence ladder as maintainer code. A
-  smaller task can run fewer local checks, but the PR must still pass hosted
-  repository and Unity gates before merge.
+  smaller task can run fewer local checks. Fork PRs run only non-secret checks
+  and cannot merge directly; an approved exact patch enters a maintainer-owned
+  integration PR that must pass hosted repository and Unity gates before merge.
 - Generated Meshes remain derived. No starter task may introduce direct
   text-to-mesh, opaque model generation, network behavior, or a hidden
   dependency.
@@ -113,6 +114,9 @@ geometry, topology, determinism, compatibility, and distribution contract.
 - keep all external agents on fork-to-PR access; community platforms receive
   no repository credential, collaborator role, Unity license, or execution
   authority.
+- add one base-owned metadata-only trust check that never checks out fork code;
+  skip credentialed Unity jobs on fork events and require an audited internal
+  integration PR for complete privileged evidence.
 
 ### F. Acceptance and autonomous audit
 
@@ -158,13 +162,15 @@ owner escalation points.
 
 ## Implementation status
 
-Active on `codex/m16-stable-soak-community`, based on PR #15 merge
-`0d06450f1f1f309b605b1e25f1833ef993d2abe7`. RC2 is public and its first
-manual public qualification is green. Candidate-pinned scheduling, strict
-soak aggregation, the reviewed 14-gate ledger, automatic stable evaluation,
-contributor/agent entry, and local static/archive regressions are implemented.
-The rebuilt RC2 archive remains byte-identical. Hosted validation, the
-post-merge manual soak rehearsal, genuine scheduled runs, repository metadata,
-starter issues, and the M16 exact-head audit remain to be completed. The
-configured `main` protection rule is waiting only for the owner's GitHub
-Passkey/Touch ID sudo confirmation.
+PR #16 exact head `82defcb8` passed 472/472 Edit Mode plus repository, package,
+clean-install, handoff, and upgrade checks, was independently audited, and
+merged as `211d55c`. `main` is protected and repository metadata plus the
+fork/PR-only agent policy are public. Manual soak run `30910305230` passed
+472/472 Edit Mode, 512/512 robustness, and 5/5 resources while correctly
+recording `qualifiesForStableExit: false`; stable evaluator run `30910883290`
+kept promotion blocked at 0/2 scheduled runs and under 168 hours. Before public
+recruitment, `codex/m16-fork-pr-qualification` closes
+the discovered GitHub fork-secret boundary with a metadata-only trust check,
+fork-safe Unity skip conditions, deterministic static tests, and documented
+maintainer integration PRs. Genuine scheduled runs, starter issues, and the
+168-hour stable decision remain pending. RC2 package bytes stay unchanged.
