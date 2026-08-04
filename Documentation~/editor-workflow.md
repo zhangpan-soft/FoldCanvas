@@ -152,6 +152,17 @@ inputs matches a clean run. Any unexpected result is logged and causes the
 command to fail; it never creates or edits an `Assets/` source, scene object,
 selection, or baked Mesh.
 
+`Tools > FoldCanvas > Run M13 Resource Envelopes` runs the five maintained
+large planar, cup, sphere, torus, and Stitch fixtures against the reviewed
+`Documentation~/m13-resource-envelopes.json` contract. The default run performs
+one warmup and three measurements per fixture, requires the exact locked
+geometry evidence plus median time/allocation ceilings, and atomically writes
+only a complete derived report to
+`Library/FoldCanvas/M13ResourceReport.json`. Raw timing and allocation values
+are intentionally machine-specific; they do not affect source, geometry, case
+order, or the report's semantic digest. Any unavailable measurement, geometry
+drift, or exceeded envelope fails the command visibly.
+
 ## Authoring actions
 
 - create rectangle and disk panels
@@ -171,6 +182,8 @@ selection, or baked Mesh.
 - rebuild receipt-owned runtime outputs from the received source
 - run the bounded M13 robustness smoke without persisting generated source or
   Mesh assets
+- run the reviewed M13 resource envelopes without persisting generated source
+  or Mesh assets
 
 ## Preview rules
 

@@ -29,6 +29,11 @@ The format follows Keep a Changelog principles, and package versions follow sema
   and 1,025-sample Stitch-resampling fixtures with complete render/topology/
   triangle counts and geometry hashes, plus a dense-cup safety case proving
   that thickness crossing authored rows returns `FC5018` without a Mesh
+- Reviewed five-scenario resource envelopes for the maintained planar, cup,
+  sphere, torus, and Stitch fixtures, with exact geometry evidence, explicit
+  warmup/measurement counts, conservative median time/allocation limits, an
+  Editor runner, atomic derived report, measurement-method disclosure, and
+  semantic hashing that excludes raw environmental noise
 
 ### Verified
 
@@ -57,11 +62,16 @@ The format follows Keep a Changelog principles, and package versions follow sema
   4,626/3,601/6,848 Stitch render vertices/topology vertices/triangles; the
   complete M00-M13 suite then passed 455/455 with zero failures, skips, or
   inconclusive results
+- Unity `6000.3.20f1` passed all 3 focused resource-envelope tests and the
+  complete archive-installed 458/458 M00-M13 suite with zero failures, skips,
+  or inconclusive results. The default one-warmup/three-measurement report
+  passed 5/5 reviewed envelopes using the Unity profiler allocation counter;
+  every scenario remained below its 10-second and 512-MiB median ceilings
 
 ### Not included
 
-- Remaining M13 resource envelopes, long-running hosted corpus,
-  package-version advance, M14 freeze, and `1.0.0` remain pending
+- Remaining M13 long-running hosted corpus, package-version advance, M14
+  freeze, and `1.0.0` remain pending
 
 ## [0.1.0-preview.20] - 2026-08-04
 

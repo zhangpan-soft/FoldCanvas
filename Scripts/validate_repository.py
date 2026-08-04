@@ -115,6 +115,7 @@ required = [
     "Samples~/Gallery/gallery.json",
     "Schema/foldcanvas-gallery.schema.json",
     "Documentation~/m10-performance-baselines.json",
+    "Documentation~/m13-resource-envelopes.json",
     "Documentation~/public-runtime-api.json",
     "Documentation~/m11-production-corpus.json",
     "Scripts/create_clean_install_project.py",
@@ -394,6 +395,60 @@ else:
         "registered-wave-48x24",
     ]:
         errors.append("M10 performance scenario order or identity changed")
+
+m13_resource_envelopes = read_json(
+    "Documentation~/m13-resource-envelopes.json"
+)
+if (
+    m13_resource_envelopes.get("format")
+    != "foldcanvas-robustness-resource-envelopes"
+    or m13_resource_envelopes.get("version") != "1"
+    or m13_resource_envelopes.get("unityVersion") != "6000.3.20f1"
+):
+    errors.append("M13 resource envelope format/version/Unity is invalid")
+m13_resource_scenarios = m13_resource_envelopes.get("scenarios")
+expected_m13_resources = [
+    ("large-planar", 18432, 18432, 36290),
+    ("large-cup", 12804, 12290, 24576),
+    ("large-sphere", 4496, 3970, 7936),
+    ("large-torus", 4753, 4608, 9216),
+    ("large-stitch", 4626, 3601, 6848),
+]
+if not isinstance(m13_resource_scenarios, list) or len(
+    m13_resource_scenarios
+) != len(expected_m13_resources):
+    errors.append("M13 must retain five ordered resource scenarios")
+else:
+    digest_pattern = re.compile(r"[0-9a-f]{64}")
+    for scenario, expected in zip(
+        m13_resource_scenarios, expected_m13_resources
+    ):
+        expected_id, render_vertices, topology_vertices, triangles = expected
+        if not isinstance(scenario, dict) or (
+            scenario.get("id") != expected_id
+            or scenario.get("expectedRenderVertices") != render_vertices
+            or scenario.get("expectedTopologyVertices") != topology_vertices
+            or scenario.get("expectedTriangles") != triangles
+        ):
+            errors.append(
+                f"M13 resource scenario changed: expected {expected_id}"
+            )
+            continue
+        digest = scenario.get("expectedGeometrySha256")
+        if not isinstance(digest, str) or digest_pattern.fullmatch(digest) is None:
+            errors.append(f"M13 resource scenario {expected_id} has invalid hash")
+        if scenario.get("warmupIterations", -1) < 0 or scenario.get(
+            "measuredIterations", 0
+        ) < 1:
+            errors.append(
+                f"M13 resource scenario {expected_id} has invalid iterations"
+            )
+        if scenario.get("maximumMedianMilliseconds", 0) <= 0 or scenario.get(
+            "maximumMedianManagedBytes", 0
+        ) <= 0:
+            errors.append(
+                f"M13 resource scenario {expected_id} has invalid envelopes"
+            )
 
 public_api = read_json("Documentation~/public-runtime-api.json")
 public_signatures = public_api.get("signatures")

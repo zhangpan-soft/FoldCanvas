@@ -100,6 +100,18 @@ paired Strict case deliberately crosses that spacing and must return `FC5018`
 without a Mesh, because topological closure alone cannot validate a folded-back
 inner wall.
 
+M13 resource envelopes are a second Editor-only evidence layer over those five
+fixtures. `Documentation~/m13-resource-envelopes.json` locks scenario order,
+geometry counts and hashes, warmup/measured iteration counts, target Unity
+version, and deliberately conservative median elapsed/allocation ceilings. The
+runner creates a fresh source and compiler result for every observation,
+destroys both after use, and writes only a derived complete report under the
+active project's `Library/FoldCanvas` folder. Raw elapsed and managed-allocation
+observations plus their measurement method remain environmental evidence and do
+not enter the semantic hash; the reviewed envelope identity and deterministic
+pass/fail outcomes do. This prevents timing noise from changing source or
+geometry identity while still making a gross regression fail explicitly.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived

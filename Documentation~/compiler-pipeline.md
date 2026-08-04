@@ -551,3 +551,15 @@ and geometry-hash evidence. The Strict cup fixture uses thickness smaller than
 one authored wall row. Its paired over-thick input crosses later rows, is
 confirmed as a real triangle intersection, and returns `FC5018` with no Mesh;
 the harness does not downgrade that case to Standard validation.
+
+The resource runner compiles those same five fixtures from fresh in-memory
+sources after one warmup and across three measured observations by default. Its
+reviewed Unity `6000.3.20f1` baseline requires exact geometry counts and hashes,
+a median elapsed time no greater than 10 seconds, and measured managed
+allocation no greater than 512 MiB for each scenario. It prefers the current
+thread allocation counter when supported, otherwise uses Unity's
+`GC Allocated In Frame` profiler counter, with managed live-heap growth as the
+declared fallback. The selected method and raw min/median/max values are
+reported, but only measurement availability, envelope identity, exact geometry,
+and pass/fail outcomes enter the semantic projection. The report is derived
+evidence and never feeds a Mesh or operation back into compilation.

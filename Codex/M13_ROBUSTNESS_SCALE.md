@@ -123,6 +123,8 @@ rules architecture.
 - `RobustnessReport_CanonicalProjectionIsByteStable`
 - `RobustnessRun_PersistenceFailureLeavesLastReportUnchanged`
 - `RobustnessReport_TimeAndAllocationEnvelopesAreExplicit`
+- `ResourceReport_RawObservationsDoNotChangeSemanticProjection`
+- `ResourceReport_PersistenceFailurePreservesPreviousBytes`
 - `LongRunReport_ContainsReplayIdentityForEveryUnexpectedCase`
 
 Exact final test names may be split by subsystem, but none of these behaviors

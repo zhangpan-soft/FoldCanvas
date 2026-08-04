@@ -261,6 +261,19 @@ report, resource observations, and exact replay identities for failures.
   without a Mesh for the invalid case. Unity `6000.3.20f1` passed all 6 focused
   family-scale tests and the complete 455/455 M00-M13 suite in an independent
   archive-installed host with zero failures, skips, or inconclusive results.
+- 2026-08-04: Added a reviewed five-scenario resource envelope document and an
+  Editor runner that performs fresh-source warmups/measurements, verifies exact
+  geometry evidence, records elapsed time plus managed allocation without
+  placing raw noise in the semantic hash, and atomically persists only complete
+  derived reports. In an independent archive-installed Unity `6000.3.20f1`
+  host, all 3 focused resource-contract tests and the complete 458/458 M00-M13
+  suite passed with zero failures, skips, or inconclusive results. The default
+  one-warmup/three-measurement run passed 5/5 envelopes; observed medians were
+  1,086.986 ms / 51,352,602 bytes planar, 1,628.242 ms / 75,051,662 bytes cup,
+  290.962 ms / 99,468,724 bytes sphere, 143.354 ms / 24,902,865 bytes torus,
+  and 64.729 ms / 14,558,998 bytes Stitch. Each reviewed ceiling is 10 seconds
+  and 512 MiB, and the selected method was Unity's
+  `GC Allocated In Frame` profiler counter.
 
 # Decisions made
 
@@ -284,12 +297,16 @@ report, resource observations, and exact replay identities for failures.
   checked final count at the exact cap, then changes only that cap by one so the
   stable operation-level diagnostic cannot be confused with source
   tessellation preflight.
+- Resource thresholds are deliberately broad gross-regression alarms, not
+  performance promises. Raw observations and the selected measurement adapter
+  stay outside semantic identity, while the baseline hash, measurement
+  availability, exact geometry, and pass/fail outcomes remain reviewable gates.
 
 # Final verification
 
 The deterministic smoke, budget/Strict scale, multi-family scale, repeated
-compile, failure-then-retry, and cooperative cancellation/atomic-report slices
-are implemented and locally verified. Resource envelopes, hosted long-run
+compile, failure-then-retry, cooperative cancellation/atomic-report, and
+resource-envelope slices are implemented and locally verified. Hosted long-run
 evidence, package-version advancement, and the final PR audit remain pending.
 The final M13 audit must record:
 
