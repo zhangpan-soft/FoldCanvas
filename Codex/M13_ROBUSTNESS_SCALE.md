@@ -112,8 +112,10 @@ rules architecture.
 - `LargeFailureThenSmallRetryMatchesCleanCompile`
 - `RepeatedCompile_DoesNotLeakGeometryStateOrChangeSource`
 - `RobustnessRun_CancelBetweenCasesLeavesAssetsAndLastReportUnchanged`
+- `RobustnessRun_CancelBeforeReportReplaceLeavesLastReportUnchanged`
 - `RobustnessRun_RetryAfterCancellationMatchesCleanRun`
 - `RobustnessReport_CanonicalProjectionIsByteStable`
+- `RobustnessRun_PersistenceFailureLeavesLastReportUnchanged`
 - `RobustnessReport_TimeAndAllocationEnvelopesAreExplicit`
 - `LongRunReport_ContainsReplayIdentityForEveryUnexpectedCase`
 

@@ -75,9 +75,13 @@ repository-owned fixed integer algorithm creates bounded in-memory
 `FoldCanvasAsset` cases identified by generator version, suite, seed, and
 ordinal. Every case enters the same compiler as authored source. The runner
 destroys derived Meshes, compares canonical source before and after compilation,
-and atomically replaces only a complete report under the current project's
-`Library/FoldCanvas` folder. Runtime contains no fuzzer, global random state,
-report I/O, or alternate geometry path.
+and checks for cooperative cancellation only between synchronous cases and
+immediately before report replacement. A cancelled or failed run cannot replace
+the last complete report. Successful persistence writes a temporary sibling and
+atomically replaces only a complete report under the current project's
+`Library/FoldCanvas` folder; the temporary file is removed after an injected or
+real write failure. Runtime contains no fuzzer, global random state, report I/O,
+or alternate geometry path.
 
 Maintained M13 scale fixtures follow the same boundary. Their checked expected
 counts are derived from source tessellation and existing operation equations,

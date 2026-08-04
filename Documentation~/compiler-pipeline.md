@@ -505,6 +505,7 @@ The initial M13 smoke layer is outside the Runtime geometry stages:
   -> ordinary deterministic compiler
   -> source/geometry/diagnostic semantic evidence
   -> destroy derived Mesh and source instance
+  -> cooperative between-case cancellation boundary
   -> complete atomic Library report
 ```
 
@@ -516,6 +517,16 @@ exception is recorded with its replay identity and fails the runner rather than
 being converted into a generic compiler diagnostic. Unity/platform fields are
 environment metadata; package, compiler, FoldScript, generator, source,
 geometry, and ordered diagnostic evidence form the semantic contract.
+
+Cancellation is deliberately cooperative: the Editor checks immediately before
+each synchronous case and once more before replacing the report. It never aborts
+a compiler invocation mid-build. A cancelled run keeps `complete = false` and
+has no semantic aggregate hash, so it cannot replace the previous complete
+report. Complete reports are serialized deterministically to a sibling temporary
+file and atomically moved into place; cancellation or persistence failure leaves
+the previous report bytes unchanged and removes the temporary file. Retrying the
+same version, suite count, and seed produces the same semantic and serialized
+report as a clean run.
 
 The maintained M13 Solidify scale fixture starts with a `127 x 63` rectangle
 grid: 8,192 source render vertices and 16,002 source triangles. Existing

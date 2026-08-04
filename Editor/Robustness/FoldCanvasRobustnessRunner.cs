@@ -19,8 +19,36 @@ namespace FoldCanvas.Editor
         [MenuItem("Tools/FoldCanvas/Run M13 Robustness Smoke")]
         public static void RunFromMenu()
         {
-            FoldCanvasRobustnessReport report = RunSmoke();
-            string path = WriteCompleteReportAtomically(report);
+            FoldCanvasRobustnessRunOutcome outcome;
+            try
+            {
+                outcome = RunAndWrite(
+                    DefaultCasesPerSuite,
+                    DefaultSeed,
+                    ResolveDefaultReportPath(),
+                    progress => EditorUtility
+                        .DisplayCancelableProgressBar(
+                            "FoldCanvas M13 Robustness Smoke",
+                            ProgressDescription(progress),
+                            progress.TotalCaseCount > 0
+                                ? progress.CompletedCaseCount /
+                                  (float)progress.TotalCaseCount
+                                : 0f));
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+
+            FoldCanvasRobustnessReport report = outcome.Report;
+            if (outcome.Cancelled)
+            {
+                Debug.LogWarning(
+                    $"FoldCanvas M13 robustness smoke cancelled between cases after {report.caseCount} completed cases. The last complete report was not replaced.");
+                return;
+            }
+
+            string path = outcome.ReportPath;
             string message =
                 $"FoldCanvas M13 robustness smoke completed: {report.passedCount}/{report.caseCount} passed; semantic SHA-256 {report.semanticSha256}. Derived report: {path}";
             if (report.unexpectedCount > 0)
@@ -36,6 +64,45 @@ namespace FoldCanvas.Editor
         public static FoldCanvasRobustnessReport RunSmoke(
             int casesPerSuite = DefaultCasesPerSuite,
             ulong seed = DefaultSeed)
+        {
+            return RunSmokeCancellable(
+                casesPerSuite,
+                seed,
+                null).Report;
+        }
+
+        internal static FoldCanvasRobustnessRunOutcome RunAndWrite(
+            int casesPerSuite,
+            ulong seed,
+            string reportPath,
+            Func<FoldCanvasRobustnessRunProgress, bool>
+                cancellationRequested)
+        {
+            FoldCanvasRobustnessRunOutcome outcome =
+                RunSmokeCancellable(
+                    casesPerSuite,
+                    seed,
+                    cancellationRequested);
+            if (outcome.Cancelled)
+            {
+                return outcome;
+            }
+
+            string writtenPath = WriteCompleteReportAtomically(
+                outcome.Report,
+                reportPath);
+            return new FoldCanvasRobustnessRunOutcome(
+                outcome.Report,
+                false,
+                writtenPath);
+        }
+
+        internal static FoldCanvasRobustnessRunOutcome
+            RunSmokeCancellable(
+                int casesPerSuite,
+                ulong seed,
+                Func<FoldCanvasRobustnessRunProgress, bool>
+                    cancellationRequested)
         {
             if (casesPerSuite < 1 ||
                 casesPerSuite > MaximumCasesPerSuite)
@@ -60,8 +127,12 @@ namespace FoldCanvas.Editor
                     casesPerSuite = casesPerSuite,
                     suiteCount = FoldCanvasRobustnessGenerator
                         .SmokeSuiteIds.Length,
+                    semanticSha256 = string.Empty,
                     complete = false
                 };
+
+            int totalCaseCount = checked(
+                casesPerSuite * report.suiteCount);
 
             for (int suiteIndex = 0;
                 suiteIndex < FoldCanvasRobustnessGenerator
@@ -74,6 +145,22 @@ namespace FoldCanvas.Editor
                     ordinal < casesPerSuite;
                     ordinal++)
                 {
+                    if (CancellationRequested(
+                            cancellationRequested,
+                            new FoldCanvasRobustnessRunProgress(
+                                FoldCanvasRobustnessRunPhase
+                                    .BeforeCase,
+                                report.cases.Count,
+                                totalCaseCount,
+                                suiteId,
+                                ordinal)))
+                    {
+                        FinalizeCounts(report);
+                        return new FoldCanvasRobustnessRunOutcome(
+                            report,
+                            true);
+                    }
+
                     FoldCanvasRobustnessCaseResult caseResult =
                         RunCase(suiteId, seed, ordinal);
                     report.cases.Add(caseResult);
@@ -88,10 +175,27 @@ namespace FoldCanvas.Editor
                 }
             }
 
-            report.caseCount = report.cases.Count;
+            FinalizeCounts(report);
+            if (CancellationRequested(
+                    cancellationRequested,
+                    new FoldCanvasRobustnessRunProgress(
+                        FoldCanvasRobustnessRunPhase
+                            .BeforeReportReplace,
+                        report.caseCount,
+                        totalCaseCount,
+                        string.Empty,
+                        -1)))
+            {
+                return new FoldCanvasRobustnessRunOutcome(
+                    report,
+                    true);
+            }
+
             report.complete = true;
             report.semanticSha256 = SemanticHash(report);
-            return report;
+            return new FoldCanvasRobustnessRunOutcome(
+                report,
+                false);
         }
 
         internal static FoldCanvasRobustnessCaseResult RunCase(
@@ -235,23 +339,30 @@ namespace FoldCanvas.Editor
         internal static string WriteCompleteReportAtomically(
             FoldCanvasRobustnessReport report)
         {
+            return WriteCompleteReportAtomically(
+                report,
+                ResolveDefaultReportPath());
+        }
+
+        internal static string WriteCompleteReportAtomically(
+            FoldCanvasRobustnessReport report,
+            string reportPath,
+            Action beforeReplace = null)
+        {
             if (report == null || !report.complete)
             {
                 throw new InvalidDataException(
                     "Only a complete M13 robustness report may replace the last report.");
             }
 
-            string projectRoot = Directory.GetParent(Application.dataPath)
-                ?.FullName;
-            if (string.IsNullOrEmpty(projectRoot))
+            if (string.IsNullOrWhiteSpace(reportPath))
             {
-                throw new InvalidDataException(
-                    "Could not resolve the Unity project root for the M13 report.");
+                throw new ArgumentException(
+                    "The M13 report path must be non-empty.",
+                    nameof(reportPath));
             }
 
-            string path = Path.GetFullPath(Path.Combine(
-                projectRoot,
-                ReportRelativePath));
+            string path = Path.GetFullPath(reportPath);
             string directory = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(directory))
             {
@@ -268,8 +379,9 @@ namespace FoldCanvas.Editor
             {
                 File.WriteAllText(
                     temporary,
-                    JsonUtility.ToJson(report, true) + "\n",
+                    SerializeReport(report),
                     new UTF8Encoding(false));
+                beforeReplace?.Invoke();
                 if (File.Exists(path))
                 {
                     File.Replace(temporary, path, null);
@@ -290,6 +402,61 @@ namespace FoldCanvas.Editor
                     File.Delete(temporary);
                 }
             }
+        }
+
+        internal static string SerializeReport(
+            FoldCanvasRobustnessReport report)
+        {
+            if (report == null)
+            {
+                throw new ArgumentNullException(nameof(report));
+            }
+
+            return JsonUtility.ToJson(report, true) + "\n";
+        }
+
+        private static string ResolveDefaultReportPath()
+        {
+            string projectRoot = Directory.GetParent(Application.dataPath)
+                ?.FullName;
+            if (string.IsNullOrEmpty(projectRoot))
+            {
+                throw new InvalidDataException(
+                    "Could not resolve the Unity project root for the M13 report.");
+            }
+
+            return Path.GetFullPath(Path.Combine(
+                projectRoot,
+                ReportRelativePath));
+        }
+
+        private static bool CancellationRequested(
+            Func<FoldCanvasRobustnessRunProgress, bool>
+                cancellationRequested,
+            FoldCanvasRobustnessRunProgress progress)
+        {
+            return cancellationRequested != null &&
+                cancellationRequested(progress);
+        }
+
+        private static void FinalizeCounts(
+            FoldCanvasRobustnessReport report)
+        {
+            report.caseCount = report.cases.Count;
+            report.complete = false;
+            report.semanticSha256 = string.Empty;
+        }
+
+        private static string ProgressDescription(
+            FoldCanvasRobustnessRunProgress progress)
+        {
+            if (progress.Phase ==
+                FoldCanvasRobustnessRunPhase.BeforeReportReplace)
+            {
+                return "Preparing complete report replacement";
+            }
+
+            return $"Compiling {progress.SuiteId} case {progress.Ordinal}";
         }
 
         private static bool MatchesExpectation(

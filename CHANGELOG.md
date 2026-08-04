@@ -21,6 +21,10 @@ The format follows Keep a Changelog principles, and package versions follow sema
   a locked geometry hash, exact vertex/triangle budget acceptance, one-over
   `FC5005`/`FC5006` rejection, a public-compiler Strict candidate-budget
   fixture, repeated-compile isolation, and large-failure-then-small-retry proof
+- Cooperative between-case cancellation for the Editor robustness runner,
+  preservation of the last complete report on cancellation or persistence
+  failure, byte-stable clean retry evidence, and test-only atomic-write fault
+  injection that leaves no partial report or temporary file
 
 ### Verified
 
@@ -38,12 +42,16 @@ The format follows Keep a Changelog principles, and package versions follow sema
   the Strict fixture stopped deterministically at candidate pair 250,001. The
   complete archive-installed M00-M13 suite then passed 444/444 with zero
   failures, skips, or inconclusive results
+- Unity `6000.3.20f1` passed 5/5 focused cancellation, retry, canonical-report,
+  and persistence-failure tests in an independent archive-installed host. The
+  complete M00-M13 suite then passed 449/449 with zero failures, skips, or
+  inconclusive results
 
 ### Not included
 
-- Remaining M13 multi-family scale corpus, cancellation/report retry, resource
-  envelopes, long-running hosted corpus, package-version advance, M14 freeze,
-  and `1.0.0` remain pending
+- Remaining M13 multi-family scale corpus, resource envelopes, long-running
+  hosted corpus, package-version advance, M14 freeze, and `1.0.0` remain
+  pending
 
 ## [0.1.0-preview.20] - 2026-08-04
 

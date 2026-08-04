@@ -3,6 +3,59 @@ using System.Collections.Generic;
 
 namespace FoldCanvas.Editor
 {
+    internal enum FoldCanvasRobustnessRunPhase
+    {
+        BeforeCase = 0,
+        BeforeReportReplace = 1
+    }
+
+    internal readonly struct FoldCanvasRobustnessRunProgress
+    {
+        public FoldCanvasRobustnessRunProgress(
+            FoldCanvasRobustnessRunPhase phase,
+            int completedCaseCount,
+            int totalCaseCount,
+            string suiteId,
+            int ordinal)
+        {
+            Phase = phase;
+            CompletedCaseCount = completedCaseCount;
+            TotalCaseCount = totalCaseCount;
+            SuiteId = suiteId ?? string.Empty;
+            Ordinal = ordinal;
+        }
+
+        public FoldCanvasRobustnessRunPhase Phase { get; }
+
+        public int CompletedCaseCount { get; }
+
+        public int TotalCaseCount { get; }
+
+        public string SuiteId { get; }
+
+        public int Ordinal { get; }
+    }
+
+    internal sealed class FoldCanvasRobustnessRunOutcome
+    {
+        public FoldCanvasRobustnessRunOutcome(
+            FoldCanvasRobustnessReport report,
+            bool cancelled,
+            string reportPath = null)
+        {
+            Report = report ??
+                throw new ArgumentNullException(nameof(report));
+            Cancelled = cancelled;
+            ReportPath = reportPath ?? string.Empty;
+        }
+
+        public FoldCanvasRobustnessReport Report { get; }
+
+        public bool Cancelled { get; }
+
+        public string ReportPath { get; }
+    }
+
     [Serializable]
     public sealed class FoldCanvasRobustnessCaseResult
     {

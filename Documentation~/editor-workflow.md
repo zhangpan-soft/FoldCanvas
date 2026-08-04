@@ -144,9 +144,13 @@ M13 adds `Tools > FoldCanvas > Run M13 Robustness Smoke`. The command runs four
 bounded, replayable suites from a fixed generator seed, destroys every derived
 in-memory Mesh, and atomically writes a complete derived report to
 `Library/FoldCanvas/M13RobustnessSmokeReport.json`. The report records exact
-case identities and semantic hashes. Any unexpected result is logged and causes
-the command to fail; it never creates or edits an `Assets/` source, scene
-object, selection, or baked Mesh.
+case identities and semantic hashes. The progress window can cancel before the
+next case or before final report replacement; it does not interrupt the case
+currently compiling. Cancellation and persistence failure preserve the prior
+complete report byte-for-byte and leave no partial report. A retry with the same
+inputs matches a clean run. Any unexpected result is logged and causes the
+command to fail; it never creates or edits an `Assets/` source, scene object,
+selection, or baked Mesh.
 
 ## Authoring actions
 

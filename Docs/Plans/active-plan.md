@@ -241,6 +241,15 @@ report, resource observations, and exact replay identities for failures.
   `6000.3.20f1` passed all 7 focused scale/retry tests in an independent
   archive-installed host, followed by the complete 444/444 M00-M13 Edit Mode
   suite with zero failures, skips, or inconclusive results.
+- 2026-08-04: Added cooperative cancellation immediately before each
+  synchronous robustness case and before final report replacement. Cancelled
+  runs stay incomplete and cannot replace the last report; complete reports use
+  sibling temporary files plus atomic replacement, and injected persistence
+  failure removes the temporary file while preserving prior bytes. Retry after
+  cancellation matches a clean serialized report. Unity `6000.3.20f1` passed
+  all 5 focused cancellation/retry/persistence tests in an independent
+  archive-installed host and then passed the complete 449/449 M00-M13 Edit Mode
+  suite with zero failures, skips, or inconclusive results.
 
 # Decisions made
 
@@ -267,11 +276,11 @@ report, resource observations, and exact replay identities for failures.
 
 # Final verification
 
-The initial deterministic smoke slice and the first Solidify/Strict scale,
-repeat, and failure-then-retry slice are implemented and locally verified.
-Additional planar/cup/sphere/torus/Stitch scale fixtures, cancellation and
-atomic-report retry, resource envelopes, hosted long-run evidence,
-package-version advancement, and the final PR audit remain pending.
+The initial deterministic smoke slice, first Solidify/Strict scale and repeat
+slice, and cooperative cancellation/atomic-report retry slice are implemented
+and locally verified. Additional planar/cup/sphere/torus/Stitch scale fixtures,
+resource envelopes, hosted long-run evidence, package-version advancement, and
+the final PR audit remain pending.
 The final M13 audit must record:
 
 - exact branch head, package/compiler/FoldScript/generator versions
