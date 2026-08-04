@@ -1040,6 +1040,8 @@ for required_fragment in [
     "Scripts/validate_release_gate_ledger.py",
     'git rev-parse "$source_head^{tree}"',
     "gh api \"repos/$GITHUB_REPOSITORY/actions/runs/$run_id\"",
+    "actions/runs/$run_id/jobs?per_page=100",
+    '.conclusion == "success"',
     "foldcanvas-stable-exit-snapshot",
     "m16-candidate-soak.yml",
     "Scripts/aggregate_candidate_soak.py",

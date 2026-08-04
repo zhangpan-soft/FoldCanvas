@@ -65,6 +65,19 @@ jobs:
                 "$(jq -r '.expectedHead' <<< "$expected")"
               test "$(jq -r '.path' "$actual")" = \
                 "$(jq -r '.workflowPath' <<< "$expected")"
+              jobs="$output_root/jobs-$run_id.json"
+              gh api \
+                "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?per_page=100" \
+                > "$jobs"
+              jq -r '.jobs[].name' "$jobs" | LC_ALL=C sort > "$jobs.actual"
+              jq -r '.jobs[]' <<< "$expected" | LC_ALL=C sort > "$jobs.expected"
+              while IFS= read -r expected_job; do
+                test "$(
+                  jq --arg name "$expected_job" \
+                    '[.jobs[] | select(.name == $name and .conclusion == "success")] | length' \
+                    "$jobs"
+                )" = "1"
+              done < "$jobs.expected"
             done
 
       - name: Download reviewed public qualification snapshot
@@ -177,6 +190,7 @@ jobs:
           path: |
             artifacts/m16-stable-exit/gate-ledger.json
             artifacts/m16-stable-exit/run-*.json
+            artifacts/m16-stable-exit/jobs-*.json
             artifacts/m16-stable-exit/public-snapshot/input.json
             artifacts/m16-stable-exit/public-snapshot/report.json
             artifacts/m16-stable-exit/soak-workflow-runs.json

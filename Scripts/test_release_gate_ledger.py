@@ -70,6 +70,10 @@ def main() -> int:
         "release gate ledger run head is not reviewed",
     )
     assert_rejected(
+        lambda value: value["runs"][0].update(jobs=[]),
+        "release gate ledger job names are invalid",
+    )
+    assert_rejected(
         lambda value: value["runs"][0].update(gates=[]),
         "release gate ledger run gates are invalid",
     )

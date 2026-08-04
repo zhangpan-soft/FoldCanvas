@@ -166,8 +166,8 @@ select work without reading the full internal milestone history.
   contributor start page, and bounded contributor-task issue form.
 - 2026-08-04: Added deterministic soak-record aggregation, a reviewed 14-gate
   RC2 ledger with tree-equivalence proof, and an automatic stable evaluator
-  that rechecks GitHub run identities, public qualification, open release
-  blockers, exact audit, and scheduled evidence.
+  that rechecks GitHub run and individual required-job success, public
+  qualification, open release blockers, exact audit, and scheduled evidence.
 - 2026-08-04: Rebuilt the excluded M16 repository changes and confirmed the
   public RC2 archive remains byte-identical at
   `72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`.

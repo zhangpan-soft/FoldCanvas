@@ -98,6 +98,14 @@ def validate(ledger: dict, control: dict, contract: dict) -> dict:
         expected_head = run.get("expectedHead")
         if expected_head not in {source_head, candidate_commit}:
             raise ValueError("release gate ledger run head is not reviewed")
+        jobs = run.get("jobs")
+        if (
+            not isinstance(jobs, list)
+            or not jobs
+            or len(jobs) != len(set(jobs))
+            or any(not isinstance(job, str) or not job.strip() for job in jobs)
+        ):
+            raise ValueError("release gate ledger job names are invalid")
         gates = run.get("gates")
         if (
             not isinstance(gates, list)
@@ -113,6 +121,7 @@ def validate(ledger: dict, control: dict, contract: dict) -> dict:
                 "workflowPath": workflow_path,
                 "event": run["event"],
                 "expectedHead": expected_head,
+                "jobs": jobs,
                 "gates": gates,
             }
         )
