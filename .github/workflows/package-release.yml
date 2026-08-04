@@ -65,6 +65,7 @@ jobs:
     needs: build-package
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
     steps:
       - name: Download validated release-candidate bundle
@@ -89,3 +90,14 @@ jobs:
             --generate-notes \
             --repo "$GITHUB_REPOSITORY" \
             --title "FoldCanvas $GITHUB_REF_NAME"
+
+      - name: Dispatch public release qualification
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run public-release-qualification.yml \
+            --ref "$GITHUB_REF_NAME" \
+            --field release_tag="$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY"

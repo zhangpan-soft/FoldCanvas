@@ -865,17 +865,31 @@ for required_fragment in [
     "--prerelease",
     "contents: read",
     "publish-prerelease:",
+    "actions: write",
     "contents: write",
     "actions/download-artifact@",
     "*.manifest.json",
     "*.evidence.json",
     "secrets.GITHUB_TOKEN",
+    "gh workflow run public-release-qualification.yml",
+    '--ref "$GITHUB_REF_NAME"',
+    '--field release_tag="$GITHUB_REF_NAME"',
 ]:
     if required_fragment not in release_workflow:
         errors.append(
             "Package release workflow is missing required configuration: "
             f"{required_fragment}"
         )
+
+release_create_index = release_workflow.find("gh release create")
+public_dispatch_index = release_workflow.find(
+    "gh workflow run public-release-qualification.yml"
+)
+if not 0 <= release_create_index < public_dispatch_index:
+    errors.append(
+        "Package publication must dispatch public qualification only after "
+        "the tagged pre-release exists"
+    )
 
 repository_workflow = (
     ROOT / ".github" / "workflows" / "repository-checks.yml"
