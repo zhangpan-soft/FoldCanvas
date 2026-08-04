@@ -25,6 +25,16 @@ all clean consumer, handoff, and upgrade gates, and merged as `211d55c`.
 without qualifying for stable; evaluator `30910883290` remains correctly
 blocked until 168 hours and two genuine scheduled runs are complete.
 
+M16.1 PR #17 was audited at exact head `77b8adff`, passed 472/472 Edit Mode
+plus repository, deterministic package, clean-install, handoff, and upgrade
+gates, and merged as `df5e13c`. Protected `main` now requires seven strict
+checks, including the zero-permission `Trusted contribution qualification`
+gate. Closed, unmerged canary PR #18 proved that check attached successfully to
+its exact head `0d9f48ba`; current repository access remains one owner and zero
+non-owner collaborators. Starter issues #19-#21 expose bounded documentation,
+schema-validation, and Windows clean-install work without granting write or
+credential access.
+
 M16 changes the acceptance question from “can the exact public RC be consumed
 and upgraded?” to “can that immutable RC survive a candidate-pinned soak while
 an unfamiliar contributor can find, reproduce, and complete a bounded task?”
