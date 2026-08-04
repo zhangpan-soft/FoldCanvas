@@ -125,6 +125,19 @@ required = [
     "Scripts/test_upgrade_proof.py",
     "Scripts/evaluate_stable_exit.py",
     "Scripts/test_stable_exit.py",
+    ".github/foldcanvas-active-candidate.json",
+    ".github/workflows/m16-candidate-soak.yml",
+    ".github/workflows/m16-stable-exit.yml",
+    "Scripts/validate_active_candidate.py",
+    "Scripts/test_active_candidate.py",
+    "Scripts/aggregate_candidate_soak.py",
+    "Scripts/test_candidate_soak.py",
+    ".github/foldcanvas-rc2-gates.json",
+    "Scripts/validate_release_gate_ledger.py",
+    "Scripts/test_release_gate_ledger.py",
+    "Docs/Community/START_HERE.md",
+    "Docs/Community/AGENT_COLLABORATION.md",
+    ".github/ISSUE_TEMPLATE/contributor_task.yml",
     "SUPPORT.md",
     "SECURITY.md",
     "CONTRIBUTING.md",
@@ -908,6 +921,12 @@ if "python3 Scripts/test_upgrade_proof.py" not in repository_workflow:
     errors.append("Repository checks must validate M15 source-first upgrade")
 if "python3 Scripts/test_stable_exit.py" not in repository_workflow:
     errors.append("Repository checks must validate the M15 stable exit gate")
+if "python3 Scripts/test_active_candidate.py" not in repository_workflow:
+    errors.append("Repository checks must validate the M16 active candidate")
+if "python3 Scripts/test_candidate_soak.py" not in repository_workflow:
+    errors.append("Repository checks must validate M16 soak aggregation")
+if "python3 Scripts/test_release_gate_ledger.py" not in repository_workflow:
+    errors.append("Repository checks must validate the M16 gate ledger")
 
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
@@ -957,6 +976,108 @@ for required_fragment in [
             "Public release workflow is missing required evidence: "
             f"{required_fragment}"
         )
+
+active_candidate = read_json(".github/foldcanvas-active-candidate.json")
+if active_candidate != {
+    "format": "foldcanvas-active-release-candidate",
+    "version": "1",
+    "active": True,
+    "packageName": "com.foldcanvas.core",
+    "candidateVersion": "1.0.0-rc.2",
+    "candidateTag": "v1.0.0-rc.2",
+    "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+    "archiveSha256": "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707",
+    "publishedAt": "2026-08-04T09:51:46Z",
+    "unityVersion": "6000.3.20f1",
+    "longRun": {
+        "casesPerSuite": 128,
+        "seedHex": "464f4c4443414e56",
+    },
+    "stableExit": {
+        "targetVersion": "1.0.0",
+        "minimumSoakHours": 168,
+        "minimumScheduledLongRuns": 2,
+    },
+}:
+    errors.append("M16 active candidate identity or soak policy drifted")
+
+m16_soak_workflow = (
+    ROOT / ".github" / "workflows" / "m16-candidate-soak.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    'cron: "17 3 * * 1,4"',
+    "python3 Scripts/validate_active_candidate.py",
+    "python3 Scripts/test_active_candidate.py",
+    "ref: ${{ env.ACTIVE_CANDIDATE_TAG }}",
+    'test "$(git rev-parse HEAD)" = "$ACTIVE_CANDIDATE_COMMIT"',
+    "gh release download",
+    "python3 Scripts/verify_public_release.py",
+    "game-ci/unity-test-runner@v4.3.1",
+    "unityVersion: 6000.3.20f1",
+    "testMode: EditMode",
+    "Scripts/validate_m13_long_run_evidence.py",
+    'qualifiesForStableExit: ($event == "schedule")',
+    "test-results.xml",
+    "Editor.log",
+    "soak-run.json",
+    "if-no-files-found: error",
+]:
+    if required_fragment not in m16_soak_workflow:
+        errors.append(
+            "M16 candidate-soak workflow is missing required evidence: "
+            f"{required_fragment}"
+        )
+
+m16_stable_workflow = (
+    ROOT / ".github" / "workflows" / "m16-stable-exit.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "workflow_run:",
+    "M16 candidate soak",
+    "actions: read",
+    "issues: read",
+    "Scripts/validate_active_candidate.py",
+    "Scripts/validate_release_gate_ledger.py",
+    'git rev-parse "$source_head^{tree}"',
+    "gh api \"repos/$GITHUB_REPOSITORY/actions/runs/$run_id\"",
+    "foldcanvas-stable-exit-snapshot",
+    "m16-candidate-soak.yml",
+    "Scripts/aggregate_candidate_soak.py",
+    "event == \"schedule\"",
+    "label:release-blocker",
+    "Scripts/evaluate_stable_exit.py",
+    "foldcanvas-m16-stable-exit-${{ github.run_id }}",
+    "if-no-files-found: error",
+]:
+    if required_fragment not in m16_stable_workflow:
+        errors.append(
+            "M16 stable-exit workflow is missing required evidence: "
+            f"{required_fragment}"
+        )
+
+current_task_text = (ROOT / "CURRENT_TASK.md").read_text(encoding="utf-8")
+active_plan_text = (ROOT / "Docs" / "Plans" / "active-plan.md").read_text(
+    encoding="utf-8"
+)
+community_start_text = (
+    ROOT / "Docs" / "Community" / "START_HERE.md"
+).read_text(encoding="utf-8")
+if "M16: stable-candidate soak and contributor on-ramp" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M16 milestone")
+for required_fragment in [
+    "checks out exact RC2 tag/commit",
+    "Manual dispatch proves infrastructure but never stable qualification",
+    "Community growth is treated as product work",
+]:
+    if required_fragment not in active_plan_text:
+        errors.append("M16 active plan is missing: " + required_fragment)
+for required_fragment in [
+    "3D result = 2D appearance",
+    "Choose a contribution lane",
+    "Pull-request evidence",
+]:
+    if required_fragment not in community_start_text:
+        errors.append("M16 contributor start page is missing: " + required_fragment)
 
 m13_long_run_workflow = (
     ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"

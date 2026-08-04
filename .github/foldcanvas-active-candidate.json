@@ -1,0 +1,21 @@
+{
+  "format": "foldcanvas-active-release-candidate",
+  "version": "1",
+  "active": true,
+  "packageName": "com.foldcanvas.core",
+  "candidateVersion": "1.0.0-rc.2",
+  "candidateTag": "v1.0.0-rc.2",
+  "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+  "archiveSha256": "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707",
+  "publishedAt": "2026-08-04T09:51:46Z",
+  "unityVersion": "6000.3.20f1",
+  "longRun": {
+    "casesPerSuite": 128,
+    "seedHex": "464f4c4443414e56"
+  },
+  "stableExit": {
+    "targetVersion": "1.0.0",
+    "minimumSoakHours": 168,
+    "minimumScheduledLongRuns": 2
+  }
+}

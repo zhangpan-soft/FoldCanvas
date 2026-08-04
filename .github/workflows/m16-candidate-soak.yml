@@ -1,0 +1,232 @@
+name: M16 candidate soak
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1,4"
+  pull_request:
+    paths:
+      - .github/foldcanvas-active-candidate.json
+      - .github/workflows/m16-candidate-soak.yml
+      - Scripts/validate_active_candidate.py
+      - Scripts/test_active_candidate.py
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: m16-candidate-soak-${{ github.event_name }}
+  cancel-in-progress: false
+
+jobs:
+  candidate-control:
+    name: Validate active release candidate
+    runs-on: ubuntu-latest
+    outputs:
+      candidate_version: ${{ steps.candidate.outputs.candidate_version }}
+      candidate_tag: ${{ steps.candidate.outputs.candidate_tag }}
+      candidate_commit: ${{ steps.candidate.outputs.candidate_commit }}
+      archive_sha256: ${{ steps.candidate.outputs.archive_sha256 }}
+      published_at: ${{ steps.candidate.outputs.published_at }}
+      unity_version: ${{ steps.candidate.outputs.unity_version }}
+      cases_per_suite: ${{ steps.candidate.outputs.cases_per_suite }}
+      seed_hex: ${{ steps.candidate.outputs.seed_hex }}
+    steps:
+      - name: Check out orchestration revision
+        uses: actions/checkout@v4.2.2
+
+      - name: Validate exact candidate control
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 Scripts/validate_active_candidate.py \
+            --github-output "$GITHUB_OUTPUT"
+          python3 Scripts/test_active_candidate.py
+          git diff --check
+
+  candidate-soak:
+    name: Unity 6000.3.20f1 exact-candidate soak
+    if: github.event_name != 'pull_request'
+    needs: candidate-control
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ACTIVE_CANDIDATE_VERSION: ${{ needs.candidate-control.outputs.candidate_version }}
+      ACTIVE_CANDIDATE_TAG: ${{ needs.candidate-control.outputs.candidate_tag }}
+      ACTIVE_CANDIDATE_COMMIT: ${{ needs.candidate-control.outputs.candidate_commit }}
+      ACTIVE_ARCHIVE_SHA256: ${{ needs.candidate-control.outputs.archive_sha256 }}
+      M13_CASES_PER_SUITE: ${{ needs.candidate-control.outputs.cases_per_suite }}
+      M13_SEED_HEX: ${{ needs.candidate-control.outputs.seed_hex }}
+      M13_EVIDENCE_DIRECTORY: CIArtifacts/m16-candidate-soak-evidence
+    steps:
+      - name: Check out exact immutable candidate tag
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ env.ACTIVE_CANDIDATE_TAG }}
+          fetch-depth: 0
+
+      - name: Reject tag or commit drift before Unity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$ACTIVE_CANDIDATE_COMMIT"
+          test "$(git rev-list -n 1 "$ACTIVE_CANDIDATE_TAG")" = \
+            "$ACTIVE_CANDIDATE_COMMIT"
+          test "$(jq -r '.version' package.json)" = "$ACTIVE_CANDIDATE_VERSION"
+
+      - name: Verify the exact public archive still matches the candidate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/m16-public-candidate/assets
+          gh release download "$ACTIVE_CANDIDATE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern 'com.foldcanvas.core-*' \
+            --dir artifacts/m16-public-candidate/assets
+          gh api \
+            "repos/$GITHUB_REPOSITORY/releases/tags/$ACTIVE_CANDIDATE_TAG" \
+            > artifacts/m16-public-candidate/release.json
+          python3 Scripts/verify_public_release.py \
+            --asset-directory artifacts/m16-public-candidate/assets \
+            --release-metadata artifacts/m16-public-candidate/release.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --tag "$ACTIVE_CANDIDATE_TAG" \
+            --tag-commit "$ACTIVE_CANDIDATE_COMMIT" \
+            --output artifacts/m16-public-candidate/verification.json
+          test "$(jq -r '.archiveSha256' \
+            artifacts/m16-public-candidate/verification.json)" = \
+            "$ACTIVE_ARCHIVE_SHA256"
+
+      - name: Run full Edit Mode suite and deterministic long-run evidence
+        id: unity-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          FOLDCANVAS_M13_LONG_CASES_PER_SUITE: ${{ env.M13_CASES_PER_SUITE }}
+          FOLDCANVAS_M13_LONG_SEED_HEX: ${{ env.M13_SEED_HEX }}
+          FOLDCANVAS_M13_LONG_EVIDENCE_DIRECTORY: ${{ env.M13_EVIDENCE_DIRECTORY }}
+        with:
+          projectPath: Project~
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: Project~/CIArtifacts/m16-candidate-soak-unity
+          customParameters: >-
+            -foldCanvasM13CasesPerSuite ${{ env.M13_CASES_PER_SUITE }}
+            -foldCanvasM13SeedHex ${{ env.M13_SEED_HEX }}
+            -foldCanvasM13EvidenceDirectory ${{ env.M13_EVIDENCE_DIRECTORY }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas M16 Candidate Soak
+
+      - name: Normalize, validate, and bind soak evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="${{ steps.unity-tests.outputs.artifactsPath }}"
+          artifact_root="artifacts/m16-candidate-soak"
+          evidence_root="Project~/${M13_EVIDENCE_DIRECTORY}"
+          if [[ -z "$source_root" ]]; then
+            source_root="Project~/CIArtifacts/m16-candidate-soak-unity"
+          fi
+          mkdir -p "$artifact_root"
+          test -d "$source_root"
+          mapfile -t test_xml_candidates < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t editor_log_candidates < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+          test_xml="${test_xml_candidates[0]:-}"
+          editor_log="${editor_log_candidates[0]:-}"
+          test -n "$test_xml"
+          test -n "$editor_log"
+          cp -- "$test_xml" "$artifact_root/test-results.xml"
+          cp -- "$editor_log" "$artifact_root/Editor.log"
+          cp -- "$evidence_root/robustness-report.json" "$artifact_root/"
+          cp -- "$evidence_root/replay-records.json" "$artifact_root/"
+          cp -- "$evidence_root/resource-report.json" "$artifact_root/"
+          cp -- "$evidence_root/environment.json" "$artifact_root/"
+          cp -- artifacts/m16-public-candidate/verification.json \
+            "$artifact_root/public-release-verification.json"
+
+          python3 Scripts/validate_m13_long_run_evidence.py \
+            --test-results "$artifact_root/test-results.xml" \
+            --editor-log "$artifact_root/Editor.log" \
+            --report "$artifact_root/robustness-report.json" \
+            --replays "$artifact_root/replay-records.json" \
+            --resource-report "$artifact_root/resource-report.json" \
+            --environment "$artifact_root/environment.json" \
+            --expected-cases-per-suite "$M13_CASES_PER_SUITE" \
+            --expected-seed "$M13_SEED_HEX" \
+            --output "$artifact_root/validation.json"
+
+          evidence_sha256="$(
+            sha256sum \
+              "$artifact_root/validation.json" \
+              "$artifact_root/robustness-report.json" \
+              "$artifact_root/resource-report.json" \
+              "$artifact_root/public-release-verification.json" | \
+              LC_ALL=C sort | sha256sum | cut -d' ' -f1
+          )"
+          completed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          jq -n \
+            --arg candidateVersion "$ACTIVE_CANDIDATE_VERSION" \
+            --arg candidateTag "$ACTIVE_CANDIDATE_TAG" \
+            --arg candidateCommit "$ACTIVE_CANDIDATE_COMMIT" \
+            --arg archiveSha256 "$ACTIVE_ARCHIVE_SHA256" \
+            --arg event "$GITHUB_EVENT_NAME" \
+            --arg completedAt "$completed_at" \
+            --arg evidenceSha256 "$evidence_sha256" \
+            --argjson runId "$GITHUB_RUN_ID" \
+            --argjson runAttempt "$GITHUB_RUN_ATTEMPT" \
+            --slurpfile validation "$artifact_root/validation.json" \
+            '{
+              format: "foldcanvas-candidate-soak-run",
+              version: "1",
+              candidateVersion: $candidateVersion,
+              candidateTag: $candidateTag,
+              candidateCommit: $candidateCommit,
+              archiveSha256: $archiveSha256,
+              runId: $runId,
+              runAttempt: $runAttempt,
+              event: $event,
+              qualifiesForStableExit: ($event == "schedule"),
+              conclusion: "success",
+              failed: $validation[0].testFailed,
+              skipped: $validation[0].testSkipped,
+              inconclusive: $validation[0].testInconclusive,
+              completedAt: $completedAt,
+              evidenceSha256: $evidenceSha256,
+              validation: $validation[0]
+            }' > "$artifact_root/soak-run.json"
+          find "$artifact_root" -maxdepth 1 -type f -print0 | \
+            xargs -0 -n1 test -s
+
+      - name: Upload exact-candidate Unity and soak evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: foldcanvas-candidate-soak-${{ github.run_id }}
+          path: |
+            artifacts/m16-candidate-soak/test-results.xml
+            artifacts/m16-candidate-soak/Editor.log
+            artifacts/m16-candidate-soak/robustness-report.json
+            artifacts/m16-candidate-soak/replay-records.json
+            artifacts/m16-candidate-soak/resource-report.json
+            artifacts/m16-candidate-soak/environment.json
+            artifacts/m16-candidate-soak/public-release-verification.json
+            artifacts/m16-candidate-soak/validation.json
+            artifacts/m16-candidate-soak/soak-run.json
+          if-no-files-found: error
+          retention-days: 30
