@@ -452,7 +452,7 @@ M08 copies ordered compiler diagnostics into a provider-neutral repair request:
 
 ```text
 schemaVersion=0.1
-compilerVersion=0.1.0-preview.20
+compilerVersion=0.1.0-preview.21
 assetId=cup
 source=<canonical complete FoldScript>
 diagnostics[0].code=FC3022
@@ -493,3 +493,83 @@ one new receipt-owned `Assets/` folder. Rebuild starts again from the receiver's
 editable FoldCanvas source and PNG; archived OBJ and existing generated Mesh
 topology remain comparison or output data only. See
 [Production handoff](production-handoff.md).
+
+## Editor robustness evidence (M13)
+
+The initial M13 smoke layer is outside the Runtime geometry stages:
+
+```text
+(generator version, suite, seed, ordinal)
+  -> bounded in-memory FoldCanvasAsset
+  -> canonical FoldScript before compile
+  -> ordinary deterministic compiler
+  -> source/geometry/diagnostic semantic evidence
+  -> destroy derived Mesh and source instance
+  -> cooperative between-case cancellation boundary
+  -> complete atomic Library report
+```
+
+The fixed SplitMix64 implementation is repository-owned and independent of
+`System.Random`, Unity random state, execution order, locale, and time. Valid
+cases require finite ordered geometry and source equality; invalid cases require
+one expected root diagnostic and no compiled data or Mesh. An unexpected
+exception is recorded with its replay identity and fails the runner rather than
+being converted into a generic compiler diagnostic. Unity/platform fields are
+environment metadata; package, compiler, FoldScript, generator, source,
+geometry, and ordered diagnostic evidence form the semantic contract.
+
+Cancellation is deliberately cooperative: the Editor checks immediately before
+each synchronous case and once more before replacing the report. It never aborts
+a compiler invocation mid-build. A cancelled run keeps `complete = false` and
+has no semantic aggregate hash, so it cannot replace the previous complete
+report. Complete reports are serialized deterministically to a sibling temporary
+file and atomically moved into place; cancellation or persistence failure leaves
+the previous report bytes unchanged and removes the temporary file. Retrying the
+same version, suite count, and seed produces the same semantic and serialized
+report as a clean run.
+
+The maintained M13 Solidify scale fixture starts with a `127 x 63` rectangle
+grid: 8,192 source render vertices and 16,002 source triangles. Existing
+Solidify rules produce 17,904 render vertices, 16,384 logical topology
+vertices, and 32,764 triangles. Those exact configured limits succeed with
+locked geometry SHA-256
+`2045705d501770fc866354e431c58462e1ddee8f278d3fa738ce03b6e24b47b8`.
+Reducing only the vertex or triangle limit by one leaves panel tessellation
+legal but makes Solidify fail with `FC5005` or `FC5006`; no compiled data or
+Mesh is returned. A separate 355-panel, 710-triangle Strict source passes
+ordinary tessellation and deterministically reaches `FC5019` at broad-phase
+candidate pair 250,001. These are lower CI-safe per-case limits and do not
+change FoldCanvas's production defaults.
+
+Five additional maintained fixtures exercise scale through distinct existing
+pipelines: planar tessellation, Roll plus multi-Seam Weld plus Solidify, sixteen
+SphericalWrap gores plus Stitch, full-turn ToroidalWrap plus two welded axes,
+and unequal open boundaries resampled to 1,025 Stitch samples. Every fixture is
+compiled twice from independent source instances and locks render vertex,
+logical topology vertex, triangle, finite-buffer, source non-mutation, topology,
+and geometry-hash evidence. The Strict cup fixture uses thickness smaller than
+one authored wall row. Its paired over-thick input crosses later rows, is
+confirmed as a real triangle intersection, and returns `FC5018` with no Mesh;
+the harness does not downgrade that case to Standard validation.
+
+The resource runner compiles those same five fixtures from fresh in-memory
+sources after one warmup and across three measured observations by default. Its
+reviewed Unity `6000.3.20f1` baseline requires exact geometry counts and hashes,
+a median elapsed time no greater than 20 seconds, and measured managed
+allocation no greater than 512 MiB for each scenario. It prefers the current
+thread allocation counter when supported, otherwise uses Unity's
+`GC Allocated In Frame` profiler counter, with managed live-heap growth as the
+declared fallback. The selected method and raw min/median/max values are
+reported, but only measurement availability, envelope identity, exact geometry,
+and pass/fail outcomes enter the semantic projection. The report is derived
+evidence and never feeds a Mesh or operation back into compilation.
+
+The M13 hosted long run invokes the complete Edit Mode suite while one
+integration test expands the same four deterministic smoke suites to an
+explicit command-line case count and seed. It writes a complete robustness
+report, extracted replay records, the full resource report, and environment
+linkage into a derived CI directory. The repository validator then cross-checks
+the Unity XML and Editor log, report counts and semantic hashes, exact replay
+coverage, 5/5 resource outcomes, and environment references before artifacts
+are accepted. Missing Unity startup, missing files, an incomplete report, an
+unexpected case without its replay tuple, or any non-green count fails the job.

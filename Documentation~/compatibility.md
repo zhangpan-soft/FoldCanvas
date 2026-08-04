@@ -9,7 +9,7 @@ separate contracts.
 
 | Surface | Current contract | Qualification |
 |---|---|---|
-| UPM package | `0.1.0-preview.20` | deterministic `.tgz` archive |
+| UPM package | `0.1.0-preview.21` | deterministic `.tgz` archive |
 | FoldScript | `0.1` | bounded reader and canonical writer |
 | Unity package minimum | `6000.3` | declared by `package.json` |
 | Unity production evidence | `6000.3.20f1` | repository tests and two clean archive installs |
@@ -18,6 +18,10 @@ separate contracts.
 Only `6000.3.20f1` is currently release-qualified. Other Unity 6000.3 patch
 versions may work, but they are not claimed as production evidence until CI
 runs them. The package has no URP/HDRP, third-party, or network dependency.
+
+The `.21` qualification adds replayable Editor-only robustness, scale,
+cancellation/retry, resource-envelope, and hosted long-run evidence. It does
+not add or remove a Runtime geometry operation or change FoldScript `0.1`.
 
 ## Public Runtime API
 

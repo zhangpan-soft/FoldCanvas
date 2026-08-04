@@ -140,6 +140,39 @@ owning one new explicit `Assets/` folder; Rebuild regenerates only the
 receipt-owned Mesh, one-sided textured Material, and Prefab from the received
 2D source. See [Production handoff](production-handoff.md).
 
+M13 adds `Tools > FoldCanvas > Run M13 Robustness Smoke`. The command runs four
+bounded, replayable suites from a fixed generator seed, destroys every derived
+in-memory Mesh, and atomically writes a complete derived report to
+`Library/FoldCanvas/M13RobustnessSmokeReport.json`. The report records exact
+case identities and semantic hashes. The progress window can cancel before the
+next case or before final report replacement; it does not interrupt the case
+currently compiling. Cancellation and persistence failure preserve the prior
+complete report byte-for-byte and leave no partial report. A retry with the same
+inputs matches a clean run. Any unexpected result is logged and causes the
+command to fail; it never creates or edits an `Assets/` source, scene object,
+selection, or baked Mesh.
+
+`Tools > FoldCanvas > Run M13 Resource Envelopes` runs the five maintained
+large planar, cup, sphere, torus, and Stitch fixtures against the reviewed
+`Documentation~/m13-resource-envelopes.json` contract. The default run performs
+one warmup and three measurements per fixture, requires the exact locked
+geometry evidence plus median time/allocation ceilings, and atomically writes
+only a complete derived report to
+`Library/FoldCanvas/M13ResourceReport.json`. Raw timing and allocation values
+are intentionally machine-specific; they do not affect source, geometry, case
+order, or the report's semantic digest. Any unavailable measurement, geometry
+drift, or exceeded envelope fails the command visibly.
+
+The separate `M13 robustness long run` GitHub Actions workflow is scheduled
+weekly and can be started manually with 64, 128, or 256 cases per suite plus an
+explicit 16-hex-digit seed. It runs the complete package Edit Mode suite in
+Unity `6000.3.20f1` and retains `test-results.xml`, `Editor.log`, the robustness
+and resource reports, replay records, environment metadata, and a validator
+summary. The default scheduled run uses 128 cases per suite (512 total). A
+change to the package version, Runtime compiler, M13 robustness code/tests,
+resource baseline, validator, or workflow also runs this gate so the exact
+changed head proves itself before review.
+
 ## Authoring actions
 
 - create rectangle and disk panels
@@ -157,6 +190,10 @@ receipt-owned Mesh, one-sided textured Material, and Prefab from the received
 - export the current valid source as a portable source-first handoff
 - import a validated handoff into one new explicit `Assets/` folder
 - rebuild receipt-owned runtime outputs from the received source
+- run the bounded M13 robustness smoke without persisting generated source or
+  Mesh assets
+- run the reviewed M13 resource envelopes without persisting generated source
+  or Mesh assets
 
 ## Preview rules
 

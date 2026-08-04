@@ -1,0 +1,62 @@
+{
+  "format": "foldcanvas-robustness-resource-envelopes",
+  "version": "1",
+  "unityVersion": "6000.3.20f1",
+  "scenarios": [
+    {
+      "id": "large-planar",
+      "warmupIterations": 1,
+      "measuredIterations": 3,
+      "expectedRenderVertices": 18432,
+      "expectedTopologyVertices": 18432,
+      "expectedTriangles": 36290,
+      "expectedGeometrySha256": "e34fb96222ae5f4c439367f59537309cb5fe4e438aa2ce41ec678485fa82dab0",
+      "maximumMedianMilliseconds": 20000,
+      "maximumMedianManagedBytes": 536870912
+    },
+    {
+      "id": "large-cup",
+      "warmupIterations": 1,
+      "measuredIterations": 3,
+      "expectedRenderVertices": 12804,
+      "expectedTopologyVertices": 12290,
+      "expectedTriangles": 24576,
+      "expectedGeometrySha256": "d4f4e52d93b22cd04f57a24f32f4b3dd83f581b086f0421aa83b16f1791b774c",
+      "maximumMedianMilliseconds": 20000,
+      "maximumMedianManagedBytes": 536870912
+    },
+    {
+      "id": "large-sphere",
+      "warmupIterations": 1,
+      "measuredIterations": 3,
+      "expectedRenderVertices": 4496,
+      "expectedTopologyVertices": 3970,
+      "expectedTriangles": 7936,
+      "expectedGeometrySha256": "cf268f4675a9187a4f79b51355731e2fefb340e6cfb6f80fadabdc142985d9cb",
+      "maximumMedianMilliseconds": 20000,
+      "maximumMedianManagedBytes": 536870912
+    },
+    {
+      "id": "large-torus",
+      "warmupIterations": 1,
+      "measuredIterations": 3,
+      "expectedRenderVertices": 4753,
+      "expectedTopologyVertices": 4608,
+      "expectedTriangles": 9216,
+      "expectedGeometrySha256": "f9ee5decd1c37e4a820170c76e892f3de14c8dd6c70325eaa1aeaf15781b4ada",
+      "maximumMedianMilliseconds": 20000,
+      "maximumMedianManagedBytes": 536870912
+    },
+    {
+      "id": "large-stitch",
+      "warmupIterations": 1,
+      "measuredIterations": 3,
+      "expectedRenderVertices": 4626,
+      "expectedTopologyVertices": 3601,
+      "expectedTriangles": 6848,
+      "expectedGeometrySha256": "86555fb11c39fd9742fb40a590ea4d3892d6496c2fd13479a353bd50d50f5279",
+      "maximumMedianMilliseconds": 20000,
+      "maximumMedianManagedBytes": 536870912
+    }
+  ]
+}

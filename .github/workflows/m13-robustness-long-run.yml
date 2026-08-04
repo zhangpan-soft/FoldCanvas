@@ -1,0 +1,158 @@
+name: M13 robustness long run
+
+on:
+  workflow_dispatch:
+    inputs:
+      cases_per_suite:
+        description: Deterministic cases to run in each of the four suites
+        required: true
+        default: "128"
+        type: choice
+        options:
+          - "64"
+          - "128"
+          - "256"
+      seed_hex:
+        description: Exactly 16 hexadecimal digits for the replay seed
+        required: true
+        default: "464f4c4443414e56"
+        type: string
+  schedule:
+    - cron: "17 3 * * 1"
+  push:
+    paths:
+      - .github/workflows/m13-robustness-long-run.yml
+      - Documentation~/m13-resource-envelopes.json
+      - Editor/Robustness/**
+      - Runtime/**
+      - Scripts/validate_m13_long_run_evidence.py
+      - Tests/Editor/M13*.cs
+      - package.json
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: m13-robustness-long-run-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  repository-validation:
+    name: Repository validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Validate repository and long-run evidence script
+        run: |
+          set -euo pipefail
+          python3 Scripts/validate_repository.py
+          python3 -m py_compile Scripts/validate_m13_long_run_evidence.py
+          git diff --check
+
+  unity-m13-long-run:
+    name: Unity 6000.3.20f1 M13 long run
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      M13_CASES_PER_SUITE: ${{ github.event.inputs.cases_per_suite || '128' }}
+      M13_SEED_HEX: ${{ github.event.inputs.seed_hex || '464f4c4443414e56' }}
+      M13_EVIDENCE_DIRECTORY: CIArtifacts/m13-long-run-evidence
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Compile assemblies, run all Edit Mode tests, and generate evidence
+        id: unity-tests
+        uses: game-ci/unity-test-runner@v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          FOLDCANVAS_M13_LONG_CASES_PER_SUITE: ${{ env.M13_CASES_PER_SUITE }}
+          FOLDCANVAS_M13_LONG_SEED_HEX: ${{ env.M13_SEED_HEX }}
+          FOLDCANVAS_M13_LONG_EVIDENCE_DIRECTORY: ${{ env.M13_EVIDENCE_DIRECTORY }}
+        with:
+          projectPath: Project~
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: Project~/CIArtifacts/m13-long-run-unity
+          customParameters: >-
+            -foldCanvasM13CasesPerSuite ${{ env.M13_CASES_PER_SUITE }}
+            -foldCanvasM13SeedHex ${{ env.M13_SEED_HEX }}
+            -foldCanvasM13EvidenceDirectory ${{ env.M13_EVIDENCE_DIRECTORY }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas M13 Long Run
+
+      - name: Normalize and validate long-run evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_root="${{ steps.unity-tests.outputs.artifactsPath }}"
+          artifact_root="artifacts/m13-long-run"
+          evidence_root="Project~/${M13_EVIDENCE_DIRECTORY}"
+
+          if [[ -z "$source_root" ]]; then
+            source_root="Project~/CIArtifacts/m13-long-run-unity"
+          fi
+          mkdir -p "$artifact_root"
+          if [[ ! -d "$source_root" ]]; then
+            echo "::error::GameCI did not create the M13 Unity artifact directory."
+            exit 1
+          fi
+
+          mapfile -t test_xml_candidates < <(
+            find "$source_root" -type f \
+              \( -iname '*results*.xml' -o -iname 'test-results.xml' \) \
+              -print | LC_ALL=C sort
+          )
+          mapfile -t editor_log_candidates < <(
+            find "$source_root" -type f \
+              \( -iname 'editmode.log' -o -iname 'Editor.log' \) \
+              -print | LC_ALL=C sort
+          )
+          test_xml="${test_xml_candidates[0]:-}"
+          editor_log="${editor_log_candidates[0]:-}"
+          if [[ -z "$test_xml" || -z "$editor_log" ]]; then
+            echo "::error::Unity did not produce both test XML and Editor.log."
+            exit 1
+          fi
+
+          cp -- "$test_xml" "$artifact_root/test-results.xml"
+          cp -- "$editor_log" "$artifact_root/Editor.log"
+          cp -- "$evidence_root/robustness-report.json" "$artifact_root/"
+          cp -- "$evidence_root/replay-records.json" "$artifact_root/"
+          cp -- "$evidence_root/resource-report.json" "$artifact_root/"
+          cp -- "$evidence_root/environment.json" "$artifact_root/"
+
+          python3 Scripts/validate_m13_long_run_evidence.py \
+            --test-results "$artifact_root/test-results.xml" \
+            --editor-log "$artifact_root/Editor.log" \
+            --report "$artifact_root/robustness-report.json" \
+            --replays "$artifact_root/replay-records.json" \
+            --resource-report "$artifact_root/resource-report.json" \
+            --environment "$artifact_root/environment.json" \
+            --expected-cases-per-suite "$M13_CASES_PER_SUITE" \
+            --expected-seed "$M13_SEED_HEX" \
+            --output "$artifact_root/validation.json"
+
+          find "$artifact_root" -maxdepth 1 -type f -print0 | \
+            xargs -0 -n1 test -s
+
+      - name: Upload Unity XML, log, reports, and replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: m13-robustness-long-run-evidence
+          path: |
+            artifacts/m13-long-run/test-results.xml
+            artifacts/m13-long-run/Editor.log
+            artifacts/m13-long-run/robustness-report.json
+            artifacts/m13-long-run/replay-records.json
+            artifacts/m13-long-run/resource-report.json
+            artifacts/m13-long-run/environment.json
+            artifacts/m13-long-run/validation.json
+          if-no-files-found: error
+          retention-days: 30

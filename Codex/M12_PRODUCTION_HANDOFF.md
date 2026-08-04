@@ -137,8 +137,9 @@ production fixture, Authoring/menu entry points, and independent clean-project
 CI. Unity `6000.3.20f1` passes 30/30 focused M12 tests and 431/431 complete
 package tests. Final `.20` clean producer and receiver projects pass 1/1 each
 with complete matching evidence, and a foreground receiver proof shows the
-editable source beside its rebuilt closed runtime Prefab. M12 remains active
-until the PR's hosted jobs/artifacts and maintainer audit are complete.
+editable source beside its rebuilt closed runtime Prefab. PR #11 hosted jobs and
+artifacts were audited for exact head `5edcc23`; M12 was merged into `main` as
+`0d4a576` on 2026-08-04.
 
 ## Tests
 

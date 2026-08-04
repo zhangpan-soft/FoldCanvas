@@ -6,6 +6,100 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [0.1.0-preview.21] - 2026-08-04
+
+### Added
+
+- Initial M13 deterministic robustness smoke layer with a repository-owned
+  SplitMix64 generator, replay identity `(version, suite, seed, ordinal)`,
+  bounded planar/Roll success and stable Roll/Fold failure suites, complete
+  source/geometry/diagnostic hashes, finite-buffer checks, and source
+  non-mutation evidence
+- Editor menu runner and atomic derived smoke report under `Library/FoldCanvas`,
+  plus six Edit Mode tests for order independence, repeatable semantic digests,
+  finite successful geometry, diagnostic-only failures, and exception/source
+  isolation
+- Maintained `127 x 63` Solidify scale fixture with checked expected counts,
+  a locked geometry hash, exact vertex/triangle budget acceptance, one-over
+  `FC5005`/`FC5006` rejection, a public-compiler Strict candidate-budget
+  fixture, repeated-compile isolation, and large-failure-then-small-retry proof
+- Cooperative between-case cancellation for the Editor robustness runner,
+  preservation of the last complete report on cancellation or persistence
+  failure, byte-stable clean retry evidence, and test-only atomic-write fault
+  injection that leaves no partial report or temporary file
+- Locked large planar, Strict closed-cup, closed-sphere, Strict closed-torus,
+  and 1,025-sample Stitch-resampling fixtures with complete render/topology/
+  triangle counts and geometry hashes, plus a dense-cup safety case proving
+  that thickness crossing authored rows returns `FC5018` without a Mesh
+- Reviewed five-scenario resource envelopes for the maintained planar, cup,
+  sphere, torus, and Stitch fixtures, with exact geometry evidence, explicit
+  warmup/measurement counts, conservative median time/allocation limits, an
+  Editor runner, atomic derived report, measurement-method disclosure, and
+  semantic hashing that excludes raw environmental noise
+- Scheduled/manual M13 long-run Unity workflow with explicit bounded case count
+  and seed, complete-suite XML/log proof, canonical robustness and resource
+  reports, environment linkage, exact unexpected-case replay extraction, and a
+  validator that rejects missing, incomplete, stale, or mismatched evidence
+
+### Changed
+
+- Package and compiler evidence version advanced to `0.1.0-preview.21`; the
+  Runtime geometry surface and FoldScript `0.1` semantics remain unchanged
+- Public Runtime API and production-corpus baselines regenerated from the
+  compiled `.21` assembly and unchanged deterministic geometry corpus
+
+### Verified
+
+- Unity `6000.3.20f1` passed all 6 focused M13 generator/smoke tests and the
+  complete 437/437 M00-M13 Edit Mode suite in an independent archive-installed
+  host, with zero failures, skips, or inconclusive results
+- The default 64-case smoke passed 64/64 twice; both runs produced semantic
+  SHA-256 `6605329ac68e63fabed03c7bf55aab0e975296de0be5bcb0926e9fe962de2614`
+  and byte-identical report SHA-256
+  `0f57b23b73a165c72b8dbc02c999ee7804bdb9257423094681adc91da2959218`
+- Unity `6000.3.20f1` passed 7/7 focused M13 scale and retry tests. The large
+  Solidify fixture emitted 17,904 render vertices, 16,384 logical topology
+  vertices, and 32,764 triangles with geometry SHA-256
+  `2045705d501770fc866354e431c58462e1ddee8f278d3fa738ce03b6e24b47b8`;
+  the Strict fixture stopped deterministically at candidate pair 250,001. The
+  complete archive-installed M00-M13 suite then passed 444/444 with zero
+  failures, skips, or inconclusive results
+- Unity `6000.3.20f1` passed 5/5 focused cancellation, retry, canonical-report,
+  and persistence-failure tests in an independent archive-installed host. The
+  complete M00-M13 suite then passed 449/449 with zero failures, skips, or
+  inconclusive results
+- Unity `6000.3.20f1` passed all 6 focused multi-family scale tests in an
+  independent archive-installed host. The valid fixtures respectively produced
+  18,432/18,432/36,290 planar, 12,804/12,290/24,576 cup,
+  4,496/3,970/7,936 sphere, 4,753/4,608/9,216 torus, and
+  4,626/3,601/6,848 Stitch render vertices/topology vertices/triangles; the
+  complete M00-M13 suite then passed 455/455 with zero failures, skips, or
+  inconclusive results
+- Unity `6000.3.20f1` passed all 3 focused resource-envelope tests and the
+  complete archive-installed 458/458 M00-M13 suite with zero failures, skips,
+  or inconclusive results. The default one-warmup/three-measurement report
+  passed 5/5 reviewed envelopes using the Unity profiler allocation counter;
+  every scenario remained below its initial 10-second and 512-MiB median
+  ceilings.
+  Hosted Repository run `30877120530` and Unity run `30877120533` were also
+  green, including 458/458 package tests and both clean-host regression jobs
+- An independent archive-installed Unity `6000.3.20f1` host passed 2/2 focused
+  long-run evidence tests, a configured 128/128-case local corpus with 5/5
+  resource envelopes, and the complete 460/460 M00-M13 suite with zero
+  failures, skips, or inconclusive results
+- Hosted M13 self-test run `30878082026` passed 460/460 Unity tests, 512/512
+  deterministic robustness cases, and 5/5 resource envelopes, then uploaded
+  the validated XML/log/report/replay/environment artifact as ID `8880352076`
+- Final-head hosted evidence exposed insufficient timing headroom: the Strict
+  cup used an 8.49-second median on Linux. The reviewed elapsed ceiling is now
+  20 seconds for all five fixtures while the 512-MiB allocation ceiling and
+  exact geometry counts/hashes remain unchanged
+
+### Not included
+
+- M14 public API/FoldScript freeze, release-candidate declaration, external
+  marketplace publication, and `1.0.0` remain pending
+
 ## [0.1.0-preview.20] - 2026-08-04
 
 ### Added

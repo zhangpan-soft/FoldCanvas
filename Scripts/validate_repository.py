@@ -109,12 +109,14 @@ required = [
     "Documentation~/architecture.md",
     "Schema/foldcanvas.schema.json",
     ".github/workflows/unity-tests.yml",
+    ".github/workflows/m13-robustness-long-run.yml",
     ".github/workflows/package-release.yml",
     "Scripts/build_release_package.py",
     "Scripts/test_release_package.py",
     "Samples~/Gallery/gallery.json",
     "Schema/foldcanvas-gallery.schema.json",
     "Documentation~/m10-performance-baselines.json",
+    "Documentation~/m13-resource-envelopes.json",
     "Documentation~/public-runtime-api.json",
     "Documentation~/m11-production-corpus.json",
     "Scripts/create_clean_install_project.py",
@@ -129,6 +131,7 @@ required = [
     "Scripts/create_handoff_proof_projects.py",
     "Scripts/compare_handoff_evidence.py",
     "Scripts/test_handoff_proof.py",
+    "Scripts/validate_m13_long_run_evidence.py",
     "Scripts/Templates~/M12Handoff/Producer/Assets/FoldCanvas.M12.HandoffProducer.Tests.asmdef",
     "Scripts/Templates~/M12Handoff/Producer/Assets/M12HandoffProducerTests.cs",
     "Scripts/Templates~/M12Handoff/Receiver/Assets/FoldCanvas.M12.HandoffReceiver.Tests.asmdef",
@@ -395,6 +398,60 @@ else:
     ]:
         errors.append("M10 performance scenario order or identity changed")
 
+m13_resource_envelopes = read_json(
+    "Documentation~/m13-resource-envelopes.json"
+)
+if (
+    m13_resource_envelopes.get("format")
+    != "foldcanvas-robustness-resource-envelopes"
+    or m13_resource_envelopes.get("version") != "1"
+    or m13_resource_envelopes.get("unityVersion") != "6000.3.20f1"
+):
+    errors.append("M13 resource envelope format/version/Unity is invalid")
+m13_resource_scenarios = m13_resource_envelopes.get("scenarios")
+expected_m13_resources = [
+    ("large-planar", 18432, 18432, 36290),
+    ("large-cup", 12804, 12290, 24576),
+    ("large-sphere", 4496, 3970, 7936),
+    ("large-torus", 4753, 4608, 9216),
+    ("large-stitch", 4626, 3601, 6848),
+]
+if not isinstance(m13_resource_scenarios, list) or len(
+    m13_resource_scenarios
+) != len(expected_m13_resources):
+    errors.append("M13 must retain five ordered resource scenarios")
+else:
+    digest_pattern = re.compile(r"[0-9a-f]{64}")
+    for scenario, expected in zip(
+        m13_resource_scenarios, expected_m13_resources
+    ):
+        expected_id, render_vertices, topology_vertices, triangles = expected
+        if not isinstance(scenario, dict) or (
+            scenario.get("id") != expected_id
+            or scenario.get("expectedRenderVertices") != render_vertices
+            or scenario.get("expectedTopologyVertices") != topology_vertices
+            or scenario.get("expectedTriangles") != triangles
+        ):
+            errors.append(
+                f"M13 resource scenario changed: expected {expected_id}"
+            )
+            continue
+        digest = scenario.get("expectedGeometrySha256")
+        if not isinstance(digest, str) or digest_pattern.fullmatch(digest) is None:
+            errors.append(f"M13 resource scenario {expected_id} has invalid hash")
+        if scenario.get("warmupIterations", -1) < 0 or scenario.get(
+            "measuredIterations", 0
+        ) < 1:
+            errors.append(
+                f"M13 resource scenario {expected_id} has invalid iterations"
+            )
+        if scenario.get("maximumMedianMilliseconds", 0) <= 0 or scenario.get(
+            "maximumMedianManagedBytes", 0
+        ) <= 0:
+            errors.append(
+                f"M13 resource scenario {expected_id} has invalid envelopes"
+            )
+
 public_api = read_json("Documentation~/public-runtime-api.json")
 public_signatures = public_api.get("signatures")
 if (
@@ -515,6 +572,37 @@ if "python3 Scripts/test_clean_install_project.py" not in repository_workflow:
     errors.append("Repository checks must validate M11 clean-install contracts")
 if "python3 Scripts/test_handoff_proof.py" not in repository_workflow:
     errors.append("Repository checks must validate M12 handoff contracts")
+
+m13_long_run_workflow = (
+    ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "workflow_dispatch:",
+    "schedule:",
+    'cron: "17 3 * * 1"',
+    "game-ci/unity-test-runner@v4.3.1",
+    "projectPath: Project~",
+    "unityVersion: 6000.3.20f1",
+    "testMode: EditMode",
+    "FOLDCANVAS_M13_LONG_CASES_PER_SUITE",
+    "FOLDCANVAS_M13_LONG_SEED_HEX",
+    "foldCanvasM13CasesPerSuite",
+    "foldCanvasM13SeedHex",
+    "foldCanvasM13EvidenceDirectory",
+    "Scripts/validate_m13_long_run_evidence.py",
+    "robustness-report.json",
+    "replay-records.json",
+    "resource-report.json",
+    "environment.json",
+    "test-results.xml",
+    "Editor.log",
+    "if-no-files-found: error",
+]:
+    if required_fragment not in m13_long_run_workflow:
+        errors.append(
+            "M13 long-run workflow is missing required evidence: "
+            f"{required_fragment}"
+        )
 
 for required_fragment in [
     "artifacts/m11-clean-host-a",

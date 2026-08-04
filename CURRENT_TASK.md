@@ -1,34 +1,39 @@
 # Current task
 
-Execute **M12: production asset handoff**.
+Execute **M13: robustness and scale**.
 
 Authoritative task file:
-[`Codex/M12_PRODUCTION_HANDOFF.md`](Codex/M12_PRODUCTION_HANDOFF.md)
+[`Codex/M13_ROBUSTNESS_SCALE.md`](Codex/M13_ROBUSTNESS_SCALE.md)
 
-M11 PR #10 was maintainer-audited and merged into `main` as `b757792` with
-reviewed head `e1204ff`. Hosted run `30812427595` passed 401/401 package tests
-and two independent 1/1 clean-archive consumer tests. M12 development occurs on
-`codex/m12-production-handoff`, created from that merged commit.
+M12 PR #11 was maintainer-audited and merged into `main` as
+`0d4a576736f7501d828cfc4a6824710ca4e5cb8a` with reviewed head
+`5edcc23e1e98e785c5f76802f45f19962569aa49`. Hosted repository run
+`30838162209` and Unity run `30838161788` passed; the complete package suite
+was 431/431 and the independent handoff producer/receiver each passed 1/1.
+M13 development occurs on `codex/m13-robustness-scale`, created from that
+merged commit.
 
-M12 changes the acceptance question from “can another project install and use
-the package?” to “can a production asset owner hand off the complete editable
-2D source, reproducibility evidence, and rebuildable runtime outputs without
-turning a generated Mesh into the source?”
+M13 changes the acceptance question from “can one reviewed production asset be
+handed off reproducibly?” to “does the compiler keep its source-first,
+deterministic, bounded behavior across many generated cases, near-limit assets,
+repetition, cancellation between cases, and retry after failure?”
 
-The active proof therefore covers:
+The active proof covers:
 
-- one deterministic, versioned handoff archive containing canonical FoldScript,
-  the exact PNG appearance source, derived OBJ, validation evidence, and rebuild
-  instructions;
-- bounded, traversal-safe, integrity-checked archive import with no partial
-  project writes on rejection;
-- regeneration of a FoldCanvas source asset, Mesh, one-sided textured Material,
-  Prefab, and ownership receipt under an explicit new `Assets/` destination;
-- producer/receiver evidence equality across two clean Unity projects;
-- idempotent same-bundle import and refusal to overwrite an unowned or changed
-  destination;
-- documented exact-version and native-extension limitations for handoff v1.
+- a versioned deterministic case generator with fixed seeds and replayable case
+  identities;
+- bounded valid and invalid property cases that must never crash, silently
+  approximate geometry, mutate source, or return a Mesh after failure;
+- large deterministic fixtures near vertex, triangle, validation, source-input,
+  and handoff limits;
+- repeated compilation plus failure/cancellation-then-retry evidence with no
+  leaked project asset, partial report, or stale geometry state;
+- conservative time and allocation envelopes recorded separately from geometry
+  hashes;
+- a required pull-request smoke corpus and a larger scheduled/manual Unity
+  regression run with XML, Editor log, canonical report, and replay data.
 
-M12 does not make Mesh canonical, add runtime file/network I/O, preserve Unity
-GUIDs across projects, add a geometry family, expose topology mutation, migrate
-between compiler versions, publish `1.0.0`, or implement M13/M14.
+M13 does not add geometry families or operations, expose topology mutation,
+change canonical source ownership, add runtime file/network I/O, implement
+automatic mesh repair, freeze FoldScript/public API for 1.0, publish `1.0.0`,
+or implement M14.

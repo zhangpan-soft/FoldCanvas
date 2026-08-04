@@ -70,6 +70,59 @@ Rebuild compile the received source; archived OBJ, existing Mesh topology,
 Prefab, and receipt never enter the compiler as geometry input. Runtime remains
 free of ZIP, filesystem, network, and `AssetDatabase` behavior.
 
+M13's robustness generator and runner are Editor-only evidence adapters. A
+repository-owned fixed integer algorithm creates bounded in-memory
+`FoldCanvasAsset` cases identified by generator version, suite, seed, and
+ordinal. Every case enters the same compiler as authored source. The runner
+destroys derived Meshes, compares canonical source before and after compilation,
+and checks for cooperative cancellation only between synchronous cases and
+immediately before report replacement. A cancelled or failed run cannot replace
+the last complete report. Successful persistence writes a temporary sibling and
+atomically replaces only a complete report under the current project's
+`Library/FoldCanvas` folder; the temporary file is removed after an injected or
+real write failure. Runtime contains no fuzzer, global random state, report I/O,
+or alternate geometry path.
+
+Maintained M13 scale fixtures follow the same boundary. Their checked expected
+counts are derived from source tessellation and existing operation equations,
+then verified through the ordinary compiler. Exact configured limits must
+succeed; reducing the relevant limit by one must fail at the geometry-producing
+operation with its stable budget diagnostic and no Mesh. Strict-validation
+scale evidence also starts as ordinary in-memory panels rather than injecting a
+private validation buffer.
+
+The maintained family-scale fixtures cover the same authored paths used by a
+large planar grid, a Roll/Weld/Solidify closed cup, a stitched spherical-gore
+component, a doubly welded torus, and unequal-boundary Stitch resampling. Their
+reviewed render/topology/triangle counts and complete geometry hashes are locked.
+The cup fixture also keeps thickness below its authored wall-row spacing. A
+paired Strict case deliberately crosses that spacing and must return `FC5018`
+without a Mesh, because topological closure alone cannot validate a folded-back
+inner wall.
+
+M13 resource envelopes are a second Editor-only evidence layer over those five
+fixtures. `Documentation~/m13-resource-envelopes.json` locks scenario order,
+geometry counts and hashes, warmup/measured iteration counts, target Unity
+version, and deliberately conservative median elapsed/allocation ceilings. The
+runner creates a fresh source and compiler result for every observation,
+destroys both after use, and writes only a derived complete report under the
+active project's `Library/FoldCanvas` folder. Raw elapsed and managed-allocation
+observations plus their measurement method remain environmental evidence and do
+not enter the semantic hash; the reviewed envelope identity and deterministic
+pass/fail outcomes do. This prevents timing noise from changing source or
+geometry identity while still making a gross regression fail explicitly.
+
+The hosted long-run adapter remains in the Editor/Test boundary. Command-line
+configuration selects an explicit bounded cases-per-suite value, fixed seed,
+and derived evidence directory. The same runner emits the canonical robustness
+report; a separate replay document extracts exactly the unexpected cases by
+`(generatorVersion, suiteId, seedHex, ordinal)`; the resource runner emits its
+independent report; and environment metadata links both semantic hashes without
+becoming authoritative source. Every file is evidence only. The scheduled or
+manual workflow must fail if Unity does not produce a fully green XML/log pair,
+if any report is absent or incomplete, or if replay records do not exactly
+cover the unexpected-case set.
+
 M06's authoring workspace mutates only `FoldCanvasAsset` source data through
 Undo-recorded Editor operations. Its 2D viewport is a source-domain view. Its
 3D preview uses an owned hidden `EditorOnly` hierarchy and disposable derived
