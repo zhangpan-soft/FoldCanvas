@@ -32,7 +32,10 @@ After the repository exists, add its URLs to the optional `documentationUrl`, `c
   label and the commit SHA as the execution identity. Version upgrades require
   resolving and reviewing the new upstream commit, updating the central
   allowlist in `Scripts/validate_action_pins.py`, and running the repository
-  checks; floating tags and unreviewed actions are rejected.
+  checks; floating tags and unreviewed actions are rejected. Use canonical
+  block-style YAML for Action keys. Local Actions must live under
+  `.github/actions`; every local manifest and transitive Action reference is
+  validated, so a composite wrapper cannot bypass the remote allowlist.
 - Treat fork PRs as untrusted proposals. Do not pass Unity credentials to them;
   review the exact diff and land approved work through a maintainer-owned
   integration PR with full privileged CI.

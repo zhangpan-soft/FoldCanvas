@@ -139,8 +139,12 @@ geometry, topology, determinism, compatibility, and distribution contract.
   Action repository, version, and SHA triples;
 - fail on floating tags, branch names, short or uppercase SHAs, missing version
   comments, dynamic remote references, and unreviewed remote Actions;
-- keep local repository Actions eligible for future use without treating them
-  as external dependencies;
+- accept only canonical block-style Action keys and reject alternate quoted,
+  explicit, flow-style, tagged, merged, anchored, or aliased YAML structures
+  that could hide an executable reference from review;
+- keep local repository Actions eligible only under `.github/actions`, scan all
+  checked-in manifests and their transitive `uses` references, and reject path
+  escape, missing or duplicate manifests, and reference cycles;
 - change no package file, geometry behavior, candidate identity, Unity version,
   or accepted evidence threshold.
 

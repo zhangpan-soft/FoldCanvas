@@ -136,7 +136,11 @@ select work without reading the full internal milestone history.
 - every starter issue has outcome, scope, acceptance, non-goals, and no hidden
   package/architecture expansion
 - all remote workflow Actions use lowercase 40-character reviewed commit SHAs
-  with exact version comments; local Actions remain allowed
+  with exact version comments; alternate YAML-key encodings cannot hide a
+  reference from validation
+- local Actions stay under `.github/actions`; every manifest and transitive
+  reference is validated, including unreferenced manifests, missing/duplicate
+  targets, path escape, and cycles
 - RC2 package archive rebuild remains byte-identical despite M16 repository
   control/community files
 
@@ -233,6 +237,11 @@ select work without reading the full internal milestone history.
   `actions/download-artifact@v4.1.8`, and
   `game-ci/unity-test-runner@v4.3.1`; implementation will pin those exact
   commits and add deterministic anti-regression checks.
+- 2026-08-05: Independent review rejected PR #23's initial line-oriented
+  validator because alternate YAML mapping-key forms and a local composite
+  wrapper could hide an unreviewed Action. The remediation enforces canonical
+  Action-bearing YAML, scans every local manifest and transitive reference,
+  and expands the deterministic policy suite to 31 positive and negative cases.
 
 # Decisions made
 
@@ -259,6 +268,10 @@ select work without reading the full internal milestone history.
   Workflows execute full reviewed commit SHAs and preserve the semantic version
   only as an inline comment; a new Action or version requires an explicit
   allowlist update and ordinary PR evidence.
+- Action-bearing workflow and local-manifest YAML uses a deliberately narrow,
+  canonical block style. Local Actions do not bypass dependency review: their
+  checked-in manifests and transitive references are part of the same fail-closed
+  validation graph.
 
 # Final verification
 
