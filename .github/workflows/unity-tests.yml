@@ -24,11 +24,11 @@ jobs:
       checks: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Compile assemblies and run Edit Mode tests
         id: unity-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -92,7 +92,7 @@ jobs:
 
       - name: Upload Unity test results and Editor log
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unity-editmode-results-and-logs
           path: |
@@ -116,7 +116,7 @@ jobs:
       checks: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Build deterministic package archive
         id: package
@@ -154,7 +154,7 @@ jobs:
 
       - name: Compile first consumer assembly and run clean-install tests
         id: clean-unity-tests-a
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -170,7 +170,7 @@ jobs:
 
       - name: Compile second consumer assembly and run clean-install tests
         id: clean-unity-tests-b
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -264,7 +264,7 @@ jobs:
 
       - name: Upload clean-install results and logs
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unity-clean-install-results-and-logs
           path: |
@@ -298,7 +298,7 @@ jobs:
       checks: write
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Build deterministic package archive
         id: handoff-package
@@ -327,7 +327,7 @@ jobs:
 
       - name: Export production cup in clean producer
         id: handoff-producer-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -352,7 +352,7 @@ jobs:
 
       - name: Import and rebuild in clean receiver
         id: handoff-receiver-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -439,7 +439,7 @@ jobs:
 
       - name: Upload production handoff results and evidence
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unity-production-handoff-results-and-evidence
           path: |
@@ -471,7 +471,7 @@ jobs:
       checks: write
     steps:
       - name: Check out repository with rollback history
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
@@ -526,7 +526,7 @@ jobs:
 
       - name: Compile source with rollback package
         id: upgrade-before-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -598,7 +598,7 @@ jobs:
 
       - name: Recompile unchanged source with candidate package
         id: upgrade-after-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -660,7 +660,7 @@ jobs:
 
       - name: Upload pre-release source-upgrade evidence
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unity-source-upgrade-pre-release-results-and-logs
           path: |

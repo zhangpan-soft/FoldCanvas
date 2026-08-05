@@ -137,6 +137,8 @@ required = [
     "Scripts/validate_release_gate_ledger.py",
     "Scripts/test_release_gate_ledger.py",
     "Scripts/test_trusted_contribution_gate.py",
+    "Scripts/validate_action_pins.py",
+    "Scripts/test_action_pins.py",
     "Docs/Community/START_HERE.md",
     "Docs/Community/AGENT_COLLABORATION.md",
     ".github/ISSUE_TEMPLATE/contributor_task.yml",
@@ -973,6 +975,10 @@ if "python3 Scripts/test_release_gate_ledger.py" not in repository_workflow:
     errors.append("Repository checks must validate the M16 gate ledger")
 if "python3 Scripts/test_trusted_contribution_gate.py" not in repository_workflow:
     errors.append("Repository checks must validate the fork trust boundary")
+if "python3 Scripts/validate_action_pins.py" not in repository_workflow:
+    errors.append("Repository checks must validate immutable GitHub Action pins")
+if "python3 Scripts/test_action_pins.py" not in repository_workflow:
+    errors.append("Repository checks must test the GitHub Action pin policy")
 
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
@@ -996,7 +1002,7 @@ for required_fragment in [
     "gh release download",
     "Scripts/verify_public_release.py",
     "Scripts/create_clean_install_project.py",
-    "game-ci/unity-test-runner@v4.3.1",
+    "game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1",
     "unityVersion: 6000.3.20f1",
     "FoldCanvas Public Release Consumer A",
     "FoldCanvas Public Release Consumer B",
@@ -1060,7 +1066,7 @@ for required_fragment in [
     'test "$(git rev-parse HEAD)" = "$ACTIVE_CANDIDATE_COMMIT"',
     "gh release download",
     "python3 Scripts/verify_public_release.py",
-    "game-ci/unity-test-runner@v4.3.1",
+    "game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1",
     "unityVersion: 6000.3.20f1",
     "testMode: EditMode",
     "Scripts/validate_m13_long_run_evidence.py",
@@ -1158,7 +1164,7 @@ for required_fragment in [
     "workflow_dispatch:",
     "schedule:",
     'cron: "17 3 * * 1"',
-    "game-ci/unity-test-runner@v4.3.1",
+    "game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1",
     "projectPath: Project~",
     "unityVersion: 6000.3.20f1",
     "testMode: EditMode",

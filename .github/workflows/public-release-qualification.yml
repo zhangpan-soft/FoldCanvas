@@ -31,7 +31,7 @@ jobs:
       package_sha256: ${{ steps.identity.outputs.package_sha256 }}
     steps:
       - name: Check out exact release tag
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
@@ -71,7 +71,7 @@ jobs:
           echo "package_sha256=$package_sha256" >> "$GITHUB_OUTPUT"
 
       - name: Upload verified public release bundle
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: foldcanvas-public-release-assets
           path: |
@@ -88,12 +88,12 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out exact release tag
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Download verified public release bundle
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/public-release-download
@@ -122,7 +122,7 @@ jobs:
 
       - name: Run first public archive consumer
         id: public-unity-tests-a
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -138,7 +138,7 @@ jobs:
 
       - name: Run second public archive consumer
         id: public-unity-tests-b
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -216,7 +216,7 @@ jobs:
 
       - name: Upload public consumer XML, logs, and evidence
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unity-public-release-consumer-results-and-logs
           path: |
@@ -244,13 +244,13 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out exact release tag with rollback history
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Download verified public release bundle
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/public-release-download
@@ -310,7 +310,7 @@ jobs:
 
       - name: Compile authoritative source with rollback package
         id: upgrade-before-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -382,7 +382,7 @@ jobs:
 
       - name: Recompile unchanged source with public candidate package
         id: upgrade-after-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -444,7 +444,7 @@ jobs:
 
       - name: Upload source-first upgrade XML, logs, and evidence
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: unity-source-first-upgrade-results-and-logs
           path: |
@@ -477,24 +477,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact release tag
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Download public release identity
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/m15-stable-input/public-release
 
       - name: Download public consumer evidence
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: unity-public-release-consumer-results-and-logs
           path: artifacts/m15-stable-input/public-consumers
 
       - name: Download source-upgrade evidence
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: unity-source-first-upgrade-results-and-logs
           path: artifacts/m15-stable-input/source-upgrade
@@ -595,7 +595,7 @@ jobs:
           test "$(jq -r '.status' "$output_root/report.json")" = "blocked"
 
       - name: Upload stable-exit input and blocked report
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: foldcanvas-stable-exit-snapshot
           path: |
