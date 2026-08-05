@@ -207,6 +207,14 @@ def main() -> int:
         },
     )
     assert_has_error(
+        valid,
+        "must have exactly one manifest",
+        local_actions={
+            ".github/actions/unreferenced/action.yml": local_manifest(),
+            ".github/actions/unreferenced/action.yaml": local_manifest(),
+        },
+    )
+    assert_has_error(
         local_workflow,
         "local Action reference cycle",
         local_actions={
@@ -226,6 +234,9 @@ def main() -> int:
         + "          echo '- uses: external/unreviewed@main'\n"
     )
     assert_passes(valid + "permissions: {}\n")
+    assert_passes(valid + "      - run: echo safe &\n")
+    assert_passes(valid + "      - run: echo *\n")
+    assert_passes(valid + "      - run: echo *.txt\n")
 
     unordered_workflows = {
         "z.yml": "steps:\n  - uses: actions/checkout@v4.2.2\n",
@@ -245,7 +256,7 @@ def main() -> int:
             f"{ordered_errors} != {reversed_errors}"
         )
 
-    print("Immutable Action pin validation tests passed (31 cases).")
+    print("Immutable Action pin validation tests passed (35 cases).")
     return 0
 
 

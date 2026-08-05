@@ -241,7 +241,7 @@ select work without reading the full internal milestone history.
   validator because alternate YAML mapping-key forms and a local composite
   wrapper could hide an unreviewed Action. The remediation enforces canonical
   Action-bearing YAML, scans every local manifest and transitive reference,
-  and expands the deterministic policy suite to 31 positive and negative cases.
+  and expands the deterministic policy suite to 35 positive and negative cases.
 
 # Decisions made
 

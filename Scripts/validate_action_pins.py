@@ -55,7 +55,11 @@ QUOTED_MAPPING_KEY = re.compile(
 EXPLICIT_MAPPING_KEY = re.compile(r"^\s*(?:-\s*)?\?(?:\s|$)")
 TAGGED_MAPPING_KEY = re.compile(r"^\s*(?:-\s*)?![^=]")
 MERGE_MAPPING_KEY = re.compile(r"^\s*(?:-\s*)?<<\s*:")
-YAML_ANCHOR_OR_ALIAS = re.compile(r"(?:^|[\s\[\]{},:-])[&*]")
+YAML_ANCHOR_OR_ALIAS = re.compile(
+    r"^\s*(?:-\s+)?[&*](?=[^\s\[\]{},:]+)"
+    r"|^\s*(?:-\s+)?[A-Za-z0-9_.-]+\s*:\s*"
+    r"[&*](?=[^\s\[\]{},:]+)"
+)
 GITHUB_EXPRESSION = re.compile(r"\$\{\{.*?\}\}")
 CANONICAL_EMPTY_COLLECTION = re.compile(
     r"^\s*(?:-\s*)?[A-Za-z0-9_.-]+\s*:\s*(?:\{\s*\}|\[\s*\])\s*$"
@@ -274,6 +278,13 @@ def resolve_local_action_references(
         directory = manifest_path.parent.as_posix()
         manifests_by_directory.setdefault(directory, []).append(manifest_name)
 
+    for directory, candidates in sorted(manifests_by_directory.items()):
+        if len(candidates) != 1:
+            errors.append(
+                f"{directory}: local Action directory must have exactly one "
+                "manifest"
+            )
+
     graph: dict[str, set[str]] = {
         manifest_name: set() for manifest_name in sorted(local_actions)
     }
@@ -298,10 +309,6 @@ def resolve_local_action_references(
             )
             continue
         if len(candidates) != 1:
-            errors.append(
-                f"{location}: local Action {target} must have exactly one "
-                "manifest"
-            )
             continue
         if source_name in graph:
             graph[source_name].add(candidates[0])
