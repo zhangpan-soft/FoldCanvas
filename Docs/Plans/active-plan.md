@@ -21,6 +21,7 @@ select work without reading the full internal milestone history.
 - stable-evidence aggregation over public, soak, issue, gate, and audit inputs
 - contributor start page, issue form, repository metadata, and useful starter
   issues
+- immutable GitHub Actions pins plus a deterministic approved-action validator
 - complete hosted regression and autonomous exact-head audit
 
 # Non-goals
@@ -31,6 +32,8 @@ select work without reading the full internal milestone history.
 - final `1.0.0` before the stable report is ready
 - manual runs masquerading as scheduled evidence
 - fake engagement, unsolicited automated outreach, or marketplace publication
+- adding or upgrading a third-party Action beyond the currently reviewed
+  versions
 - later-milestone geometry work
 
 # Files expected to change
@@ -47,7 +50,10 @@ select work without reading the full internal milestone history.
 - `Scripts/validate_active_candidate.py`
 - `Scripts/test_active_candidate.py`
 - stable soak collection/validation scripts added during work package D
+- `Scripts/validate_action_pins.py`
+- `Scripts/test_action_pins.py`
 - `Scripts/validate_repository.py`
+- existing `.github/workflows/*.yml` files that invoke remote Actions
 
 # Geometry invariants
 
@@ -88,6 +94,9 @@ select work without reading the full internal milestone history.
    keep genuine scheduled evidence for stable qualification.
 10. Evaluate stable readiness only after 168 hours, two qualifying schedules,
     zero release blockers, all gates, and an exact-candidate audit.
+11. Resolve each currently used Action version through the official GitHub
+    repository, pin every invocation to that full commit, and reject future
+    floating or unapproved references in repository validation.
 
 # Test matrix
 
@@ -126,6 +135,8 @@ select work without reading the full internal milestone history.
 - issue forms contain GitHub Issue Form `name`, `description`, and `body`
 - every starter issue has outcome, scope, acceptance, non-goals, and no hidden
   package/architecture expansion
+- all remote workflow Actions use lowercase 40-character reviewed commit SHAs
+  with exact version comments; local Actions remain allowed
 - RC2 package archive rebuild remains byte-identical despite M16 repository
   control/community files
 
@@ -150,6 +161,9 @@ select work without reading the full internal milestone history.
   base-owned approval before Unity credentials remain available.
 - **RC2 bytes drift:** M16 changes only release-excluded files and reruns the
   deterministic package hash check.
+- **Mutable Action tag executes different code:** execute only reviewed full
+  commit SHAs, retain the source version in comments, and make unapproved or
+  floating references fail repository validation.
 - **User scratch contamination:** stage explicit paths only; never include the
   untracked `Project~` files.
 - Rollback is disabling the active-candidate record or reverting the M16
@@ -212,6 +226,13 @@ select work without reading the full internal milestone history.
   collaborators. Published bounded starter issues #19 (Roll convention
   diagram), #20 (schema/reference drift validator), and #21 (Windows RC2 clean
   install). External agents remain fork-only.
+- 2026-08-05: The exact-head audit's remaining P3 supply-chain note was promoted
+  into scoped M16 hardening. Official GitHub tag resolution verified signed
+  commits for `actions/checkout@v4.2.2`,
+  `actions/upload-artifact@v4.6.2`,
+  `actions/download-artifact@v4.1.8`, and
+  `game-ci/unity-test-runner@v4.3.1`; implementation will pin those exact
+  commits and add deterministic anti-regression checks.
 
 # Decisions made
 
@@ -234,6 +255,10 @@ select work without reading the full internal milestone history.
   merge; successful external work is imported with attribution into an
   owner-authored integration PR for privileged Unity evidence. The primary
   credential boundary remains zero non-owner write access.
+- Action tags remain useful review labels but are not execution identities.
+  Workflows execute full reviewed commit SHAs and preserve the semantic version
+  only as an inline comment; a new Action or version requires an explicit
+  allowlist update and ordinary PR evidence.
 
 # Final verification
 

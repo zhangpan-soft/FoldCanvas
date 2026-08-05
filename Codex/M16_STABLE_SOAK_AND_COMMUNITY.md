@@ -128,6 +128,22 @@ geometry, topology, determinism, compatibility, and distribution contract.
 - audit exact head, open issue/PR state, artifacts, and package-byte identity
   before every merge or promotion.
 
+### G. Actions supply-chain hardening
+
+- resolve every used third-party Action version tag through its official
+  GitHub repository and execute only the resulting immutable 40-character
+  commit SHA;
+- retain the reviewed semantic version as an inline comment so updates remain
+  human-auditable;
+- keep one dependency-free allowlist and deterministic validator for approved
+  Action repository, version, and SHA triples;
+- fail on floating tags, branch names, short or uppercase SHAs, missing version
+  comments, dynamic remote references, and unreviewed remote Actions;
+- keep local repository Actions eligible for future use without treating them
+  as external dependencies;
+- change no package file, geometry behavior, candidate identity, Unity version,
+  or accepted evidence threshold.
+
 ## Tests
 
 - valid active candidate produces deterministic safe outputs;
@@ -138,6 +154,9 @@ geometry, topology, determinism, compatibility, and distribution contract.
 - manual run is marked non-qualifying;
 - scheduled run contains real full-suite XML/log and long-run evidence;
 - duplicate or wrong-commit soak records cannot satisfy stable exit;
+- every remote workflow Action matches the reviewed repository/version/SHA
+  allowlist, with deterministic negative tests for floating and unapproved
+  references;
 - no packaged file or deterministic RC2 archive byte changes;
 - all existing M00-M15 tests remain enabled.
 

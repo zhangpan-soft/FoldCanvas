@@ -33,7 +33,7 @@ jobs:
       seed_hex: ${{ steps.candidate.outputs.seed_hex }}
     steps:
       - name: Check out orchestration revision
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Validate exact candidate control
         id: candidate
@@ -64,7 +64,7 @@ jobs:
       M13_EVIDENCE_DIRECTORY: CIArtifacts/m16-candidate-soak-evidence
     steps:
       - name: Check out exact immutable candidate tag
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ env.ACTIVE_CANDIDATE_TAG }}
           fetch-depth: 0
@@ -105,7 +105,7 @@ jobs:
 
       - name: Run full Edit Mode suite and deterministic long-run evidence
         id: unity-tests
-        uses: game-ci/unity-test-runner@v4.3.1
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -217,7 +217,7 @@ jobs:
 
       - name: Upload exact-candidate Unity and soak evidence
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: foldcanvas-candidate-soak-${{ github.run_id }}
           path: |
