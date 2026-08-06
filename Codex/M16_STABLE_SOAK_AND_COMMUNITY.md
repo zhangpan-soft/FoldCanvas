@@ -201,4 +201,11 @@ integration path. Closed canary PR #18 proved the trust check on exact PR head
 Repository access is one owner and zero non-owner collaborators. Bounded public
 starter issues #19-#21 are open. Genuine scheduled runs, the 168-hour stable
 decision, and any separately accepted external-platform registration remain
-pending. RC2 package bytes stay unchanged.
+pending. The first genuine scheduled soak, run `31076024500`, completed on
+2026-08-06 with exact candidate commit `4db988ff`, archive digest
+`72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`,
+472/472 Edit Mode tests, 512/512 deterministic cases, 5/5 resource envelopes,
+and no failed, skipped, or inconclusive tests. Evaluator run `31076434408`
+confirmed 14/14 gates and zero release blockers but correctly remained blocked
+at 1/2 qualifying scheduled runs and 44.325278/168 hours. RC2 package bytes stay
+unchanged and stable `1.0.0` was not published.

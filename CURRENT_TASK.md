@@ -35,6 +35,17 @@ non-owner collaborators. Starter issues #19-#21 expose bounded documentation,
 schema-validation, and Windows clean-install work without granting write or
 credential access.
 
+The first genuine scheduled candidate soak, run
+[`31076024500`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31076024500),
+completed successfully on 2026-08-06 against exact RC2 commit
+`4db988ffac6dad4362d126001e5c9a67081ef2b7`. Its bound evidence reports
+472/472 Edit Mode tests, 512/512 deterministic robustness cases, 5/5 resource
+envelopes, and zero failed, skipped, or inconclusive tests. Stable evaluator
+run [`31076434408`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31076434408)
+verified 14/14 required gates and zero open release blockers while correctly
+remaining blocked at 1/2 qualifying scheduled runs and 44.325278/168 soak
+hours. No stable `1.0.0` publication occurred.
+
 M16 changes the acceptance question from “can the exact public RC be consumed
 and upgraded?” to “can that immutable RC survive a candidate-pinned soak while
 an unfamiliar contributor can find, reproduce, and complete a bounded task?”
