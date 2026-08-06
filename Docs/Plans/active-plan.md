@@ -242,6 +242,15 @@ select work without reading the full internal milestone history.
   wrapper could hide an unreviewed Action. The remediation enforces canonical
   Action-bearing YAML, scans every local manifest and transitive reference,
   and expands the deterministic policy suite to 35 positive and negative cases.
+- 2026-08-06: Genuine scheduled candidate soak run `31076024500` checked out
+  exact RC2 commit `4db988ff`, reverified archive SHA-256
+  `72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`,
+  passed 472/472 Edit Mode tests, 512/512 robustness cases, and 5/5 resource
+  envelopes, and emitted a qualifying bound record with zero failed, skipped,
+  or inconclusive tests. Stable evaluator run `31076434408` passed its workflow
+  and all 14 reviewed gates with zero release blockers, but correctly reported
+  `blocked` at 1/2 qualifying schedules and 44.325278/168 soak hours. No stable
+  release was published.
 
 # Decisions made
 
@@ -279,7 +288,8 @@ Planning, active-candidate control, deterministic tests, candidate-pinned
 workflow, stable artifact aggregation, reviewed gate ledger, automatic stable
 evaluation, repository metadata, fork-safe contributor intake, starter issues,
 exact-head hosted gates/audit, and the post-merge manual soak proof are
-implemented. Genuine scheduled observations and the 168-hour stable decision
-remain pending. RC2 package bytes, final `1.0.0`, external marketplace
-registration, geometry, FoldScript, Runtime API, dependencies, and later
-milestones were not implemented.
+implemented. One genuine scheduled observation is now accepted; one additional
+qualifying scheduled observation and the 168-hour minimum remain pending. RC2
+package bytes, final `1.0.0`, external marketplace registration, geometry,
+FoldScript, Runtime API, dependencies, and later milestones were not
+implemented.
