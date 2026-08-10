@@ -22,8 +22,8 @@ workflow-to-workflow dispatch boundary and merged as
 M16 PR #16 was audited at exact head `82defcb8`, passed 472/472 Edit Mode plus
 all clean consumer, handoff, and upgrade gates, and merged as `211d55c`.
 `main` is protected. Manual soak `30910305230` proved the full candidate path
-without qualifying for stable; evaluator `30910883290` remains correctly
-blocked until 168 hours and two genuine scheduled runs are complete.
+without qualifying for stable; evaluator `30910883290` correctly preserved the
+168-hour and two-genuine-schedule requirements.
 
 M16.1 PR #17 was audited at exact head `77b8adff`, passed 472/472 Edit Mode
 plus repository, deterministic package, clean-install, handoff, and upgrade
@@ -45,6 +45,19 @@ run [`31076434408`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/310
 verified 14/14 required gates and zero open release blockers while correctly
 remaining blocked at 1/2 qualifying scheduled runs and 44.325278/168 soak
 hours. No stable `1.0.0` publication occurred.
+
+The second genuine scheduled candidate soak, run
+[`31356841867`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31356841867),
+completed successfully on 2026-08-10 against the same exact RC2 commit and
+archive. It again passed 472/472 Edit Mode tests, 512/512 deterministic
+robustness cases, 5/5 resource envelopes, and reported zero failed, skipped,
+or inconclusive tests. Evaluator run
+[`31357213318`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31357213318)
+accepted 2/2 qualifying scheduled runs, 14/14 gates, and zero open release
+blockers. Its result remains correctly `blocked` only because 139.1375 of the
+required 168 soak hours had elapsed at 2026-08-10T05:00:01Z. The earliest
+time threshold is 2026-08-11T09:51:46Z; no stable `1.0.0` publication has
+occurred.
 
 M16 changes the acceptance question from “can the exact public RC be consumed
 and upgraded?” to “can that immutable RC survive a candidate-pinned soak while

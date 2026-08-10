@@ -251,6 +251,15 @@ select work without reading the full internal milestone history.
   and all 14 reviewed gates with zero release blockers, but correctly reported
   `blocked` at 1/2 qualifying schedules and 44.325278/168 soak hours. No stable
   release was published.
+- 2026-08-10: Second genuine scheduled candidate soak run `31356841867`
+  checked out the same exact RC2 commit and archive, passed 472/472 Edit Mode
+  tests, 512/512 deterministic cases, and 5/5 resource envelopes, and emitted
+  zero failed, skipped, or inconclusive results. Evaluator run `31357213318`
+  accepted 2/2 qualifying scheduled runs, all 14 reviewed gates, and zero open
+  release blockers. It remained correctly `blocked` only because 139.1375 of
+  168 hours had elapsed at 2026-08-10T05:00:01Z. The immutable publication
+  timestamp makes 2026-08-11T09:51:46Z the earliest time-only threshold; no
+  stable release was published.
 
 # Decisions made
 
@@ -288,8 +297,9 @@ Planning, active-candidate control, deterministic tests, candidate-pinned
 workflow, stable artifact aggregation, reviewed gate ledger, automatic stable
 evaluation, repository metadata, fork-safe contributor intake, starter issues,
 exact-head hosted gates/audit, and the post-merge manual soak proof are
-implemented. One genuine scheduled observation is now accepted; one additional
-qualifying scheduled observation and the 168-hour minimum remain pending. RC2
-package bytes, final `1.0.0`, external marketplace registration, geometry,
-FoldScript, Runtime API, dependencies, and later milestones were not
-implemented.
+implemented. Two genuine scheduled observations are now accepted, so the
+two-run requirement is complete. The 168-hour minimum remains the only current
+blocker; the latest evaluator measured 139.1375 hours and will be rerun only
+after the threshold. RC2 package bytes, final `1.0.0`, external marketplace
+registration, geometry, FoldScript, Runtime API, dependencies, and later
+milestones were not implemented.
