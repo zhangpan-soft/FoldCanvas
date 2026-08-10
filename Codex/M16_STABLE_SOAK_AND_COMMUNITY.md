@@ -199,13 +199,19 @@ conditions, deterministic negative tests, and a documented maintainer
 integration path. Closed canary PR #18 proved the trust check on exact PR head
 `0d9f48ba`; `main` now requires it alongside the existing six strict checks.
 Repository access is one owner and zero non-owner collaborators. Bounded public
-starter issues #19-#21 are open. Genuine scheduled runs, the 168-hour stable
-decision, and any separately accepted external-platform registration remain
-pending. The first genuine scheduled soak, run `31076024500`, completed on
+starter issues #19-#21 are open. The 168-hour stable decision and any separately
+accepted external-platform registration remain pending. The first genuine
+scheduled soak, run `31076024500`, completed on
 2026-08-06 with exact candidate commit `4db988ff`, archive digest
 `72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`,
 472/472 Edit Mode tests, 512/512 deterministic cases, 5/5 resource envelopes,
 and no failed, skipped, or inconclusive tests. Evaluator run `31076434408`
 confirmed 14/14 gates and zero release blockers but correctly remained blocked
 at 1/2 qualifying scheduled runs and 44.325278/168 hours. RC2 package bytes stay
-unchanged and stable `1.0.0` was not published.
+unchanged and stable `1.0.0` was not published. The second genuine scheduled
+soak, run `31356841867`, completed on 2026-08-10 against the identical commit
+and archive with the same 472/472, 512/512, and 5/5 green evidence and zero
+failed, skipped, or inconclusive tests. Evaluator run `31357213318` accepted
+2/2 qualifying scheduled runs, 14/14 gates, and zero release blockers, while
+remaining correctly blocked only at 139.1375/168 elapsed hours. The earliest
+time threshold is 2026-08-11T09:51:46Z; stable `1.0.0` remains unpublished.
