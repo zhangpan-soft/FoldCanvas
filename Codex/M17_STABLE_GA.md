@@ -129,10 +129,23 @@ escalation points.
 
 ## Implementation status
 
-M16 evaluator run `31501082596` completed successfully at
-`2026-08-11T14:21:46Z`. Its downloaded artifact digest matched GitHub metadata,
-and `report.json` is `ready` at 172.5 hours, 2/2 qualifying scheduled runs,
-14/14 gates, and zero open release blockers. Stable package implementation,
-static validation, Unity baseline regeneration, and 477/477 local Edit Mode
-tests are complete. Hosted verification, exact-head audit, merge, tag, public
-release, and public qualification remain pending.
+Complete. M16 evaluator run `31501082596` authorized the release at 172.5
+hours, 2/2 qualifying scheduled runs, 14/14 gates, and zero blockers. PR #29
+passed exact-head audit at `b0d2a849ff2bb990a209ff3104390fcdb200fd42`
+and merged as `6ed32f1ed2a48796f5c0e015205cd47249e1bcef`. Annotated tag
+`v1.0.0` peels to that merge.
+
+The first tag run exposed ambiguous recursive discovery of two intentionally
+different `report.json` files inside the readiness artifact. Recovery PR #30
+selected the bound root report, preserved the immutable tag and package bytes,
+and merged as `33e36bb21e86bcb91c1ab5f140ccefb1b52739b4`. Recovery release run
+`31511961850` then published non-draft, non-prerelease GitHub release
+`368700889` with exactly four assets and archive SHA-256
+`16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
+
+Public qualification run `31512005281` succeeded on exact tag commit
+`6ed32f1e`. Its two independent consumers each passed 1/1, its RC2 and stable
+upgrade phases each passed 1/1, and every Editor log reports Unity
+`6000.3.20f1`. Final proof artifact `9109614640` binds the public assets,
+consumer comparison, and source-first upgrade and reports `qualified: true`.
+External marketplace publication was not performed.
