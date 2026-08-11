@@ -5,10 +5,28 @@ from __future__ import annotations
 
 from validate_action_pins import (
     APPROVED_ACTIONS,
+    NODE24_ACTIONS,
+    REVIEWED_RUNTIME_EXCEPTIONS,
     collect_action_pin_errors,
     load_local_actions,
     load_workflows,
 )
+
+
+STALE_ACTIONS = {
+    "actions/checkout": (
+        "v4.2.2",
+        "11bd71901bbe5b1630ceea73d27597364c9af683",
+    ),
+    "actions/download-artifact": (
+        "v4.1.8",
+        "fa0a91b85d4f404e444e00e005971372dc801d16",
+    ),
+    "actions/upload-artifact": (
+        "v4.6.2",
+        "ea165f8d65b6e75b540449e92b4886f43607fa02",
+    ),
+}
 
 
 def approved_fixture() -> str:
@@ -61,6 +79,18 @@ def assert_passes(
 
 
 def main() -> int:
+    if NODE24_ACTIONS != frozenset(STALE_ACTIONS):
+        raise AssertionError("M18 Node 24 Action set drifted")
+    if REVIEWED_RUNTIME_EXCEPTIONS != {
+        "game-ci/unity-test-runner": (
+            "node20",
+            "https://github.com/game-ci/unity-test-runner/pull/304",
+        )
+    }:
+        raise AssertionError("M18 reviewed runtime exception drifted")
+    if NODE24_ACTIONS | REVIEWED_RUNTIME_EXCEPTIONS.keys() != APPROVED_ACTIONS.keys():
+        raise AssertionError("every approved Action needs a reviewed runtime status")
+
     repository_errors = collect_action_pin_errors(
         load_workflows(),
         load_local_actions(),
@@ -96,6 +126,34 @@ def main() -> int:
         valid.replace(checkout_sha, "0" * 40, 1),
         "is not the approved",
     )
+    for action in sorted(STALE_ACTIONS):
+        current_version, current_sha = APPROVED_ACTIONS[action]
+        stale_version, stale_sha = STALE_ACTIONS[action]
+        current_line = f"{action}@{current_sha} # {current_version}"
+        assert_has_error(
+            valid.replace(
+                current_line,
+                f"{action}@{stale_sha} # {stale_version}",
+                1,
+            ),
+            "is not the approved",
+        )
+        assert_has_error(
+            valid.replace(
+                current_line,
+                f"{action}@{current_sha} # {stale_version}",
+                1,
+            ),
+            "must retain exact version comment",
+        )
+        assert_has_error(
+            valid.replace(
+                current_line,
+                f"{action}@{stale_sha} # {current_version}",
+                1,
+            ),
+            "is not the approved",
+        )
     assert_has_error(
         valid + "      - uses: external/unreviewed@" + "1" * 40 + " # v1.0.0\n",
         "unapproved remote Action external/unreviewed",
@@ -256,7 +314,7 @@ def main() -> int:
             f"{ordered_errors} != {reversed_errors}"
         )
 
-    print("Immutable Action pin validation tests passed (35 cases).")
+    print("Immutable Action pin validation tests passed (44 cases).")
     return 0
 
 

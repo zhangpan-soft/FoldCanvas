@@ -1252,6 +1252,9 @@ current_task_text = (ROOT / "CURRENT_TASK.md").read_text(encoding="utf-8")
 active_plan_text = (ROOT / "Docs" / "Plans" / "active-plan.md").read_text(
     encoding="utf-8"
 )
+m18_action_review_text = (
+    ROOT / "Docs" / "M18_NODE24_ACTION_REVIEW.md"
+).read_text(encoding="utf-8")
 community_start_text = (
     ROOT / "Docs" / "Community" / "START_HERE.md"
 ).read_text(encoding="utf-8")
@@ -1271,6 +1274,20 @@ for required_fragment in [
 ]:
     if required_fragment not in active_plan_text:
         errors.append("M18 active plan is missing: " + required_fragment)
+for required_fragment in [
+    "actions/checkout",
+    "3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "actions/upload-artifact",
+    "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+    "actions/download-artifact",
+    "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+    "game-ci/unity-test-runner",
+    "0ff419b913a3630032cbe0de48a0099b5a9f0ed9",
+    "https://github.com/game-ci/unity-test-runner/pull/304",
+    "No tagged GameCI Node 24 release",
+]:
+    if required_fragment not in m18_action_review_text:
+        errors.append("M18 Action review is missing: " + required_fragment)
 for required_fragment in [
     "3D result = 2D appearance",
     "Choose a contribution lane",

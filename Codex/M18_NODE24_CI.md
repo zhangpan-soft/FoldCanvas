@@ -58,5 +58,23 @@ package bytes, geometry behavior, or the qualified stable release.
 
 ## Implementation status
 
-Planning began after the qualified `v1.0.0` public release. No M18 Action pin
-has been selected or changed yet.
+Implementation is active on `agent/m18-node24-ci`. Official release, tag,
+commit-signature, and `action.yml` metadata were re-queried on 2026-08-12 and
+recorded in `Docs/M18_NODE24_ACTION_REVIEW.md` before changing any pin.
+
+- `actions/checkout` is selected at signed `v7.0.1` commit
+  `3d3c42e5aac5ba805825da76410c181273ba90b1` (`node24`).
+- `actions/upload-artifact` is selected at signed `v7.0.1` commit
+  `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` (`node24`).
+- `actions/download-artifact` is selected at signed `v8.0.1` commit
+  `3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c` (`node24`).
+- `game-ci/unity-test-runner` remains at signed `v4.3.1` commit
+  `0ff419b913a3630032cbe0de48a0099b5a9f0ed9` (`node20`). Its Node 24 change
+  is merged upstream but still has no official release tag, so an unreleased
+  commit, floating branch, fork, or warning suppression is not accepted.
+
+Workflow pins and the central allowlist now contain those selections. The full
+local repository matrix is green, including 44 Action-pin adversarial cases,
+and the deterministic package SHA-256 remains
+`16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
+Hosted verification remains pending.

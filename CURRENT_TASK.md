@@ -28,6 +28,13 @@ and the exact stable package archive. GameCI may change only through a
 supported official upstream path; no unreviewed fork or warning suppression is
 allowed.
 
+Implementation is active on `agent/m18-node24-ci`. The three first-party
+Actions have reviewed signed Node 24 release selections. GameCI remains on its
+signed `v4.3.1` release because its merged Node 24 change is not yet tagged.
+The complete upstream record is `Docs/M18_NODE24_ACTION_REVIEW.md`. Local
+repository validation and deterministic package hashing are green; hosted
+full-matrix evidence, exact-head audit, merge, and issue closure remain.
+
 The maintainer may research, plan, implement, audit, merge, and close this
 repository-only milestone autonomously. Credentials, paid services,
 irreversible permission changes, legal decisions, and external marketplace

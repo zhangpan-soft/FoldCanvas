@@ -33,7 +33,7 @@ jobs:
       stable_release: ${{ steps.identity.outputs.stable_release }}
     steps:
       - name: Check out exact release tag
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
@@ -89,7 +89,7 @@ jobs:
           echo "stable_release=$stable_release" >> "$GITHUB_OUTPUT"
 
       - name: Upload verified public release bundle
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: foldcanvas-public-release-assets
           path: |
@@ -106,12 +106,12 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: Check out exact release tag
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Download verified public release bundle
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/public-release-download
@@ -234,7 +234,7 @@ jobs:
 
       - name: Upload public consumer XML, logs, and evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: unity-public-release-consumer-results-and-logs
           path: |
@@ -262,13 +262,13 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Check out exact release tag with rollback history
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Download verified public release bundle
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/public-release-download
@@ -463,7 +463,7 @@ jobs:
 
       - name: Upload source-first upgrade XML, logs, and evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: unity-source-first-upgrade-results-and-logs
           path: |
@@ -497,24 +497,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact release tag
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Download public release identity
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/m15-stable-input/public-release
 
       - name: Download public consumer evidence
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: unity-public-release-consumer-results-and-logs
           path: artifacts/m15-stable-input/public-consumers
 
       - name: Download source-upgrade evidence
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: unity-source-first-upgrade-results-and-logs
           path: artifacts/m15-stable-input/source-upgrade
@@ -615,7 +615,7 @@ jobs:
           test "$(jq -r '.status' "$output_root/report.json")" = "blocked"
 
       - name: Upload stable-exit input and blocked report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: foldcanvas-stable-exit-snapshot
           path: |
@@ -635,24 +635,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact stable release tag
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.RELEASE_TAG }}
 
       - name: Download verified public release identity
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: foldcanvas-public-release-assets
           path: artifacts/m17-stable-proof/public-release
 
       - name: Download public consumer evidence
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: unity-public-release-consumer-results-and-logs
           path: artifacts/m17-stable-proof/public-consumers
 
       - name: Download RC2-to-stable source-upgrade evidence
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: unity-source-first-upgrade-results-and-logs
           path: artifacts/m17-stable-proof/source-upgrade
@@ -722,7 +722,7 @@ jobs:
             }' > "$proof_root/report.json"
 
       - name: Upload final stable-publication proof
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: foldcanvas-stable-publication-proof
           path: artifacts/m17-stable-proof/report.json
