@@ -30,6 +30,12 @@ The format follows Keep a Changelog principles, and package versions follow sema
 - compatibility, support, and installation guidance now identify RC2 as the
   immutable stable rollback rather than the active package
 
+### Fixed
+
+- stable publication now selects the bound root M16 readiness report instead
+  of rejecting the artifact's separate public snapshot report, and a protected
+  manual recovery path can republish only the existing immutable `v1.0.0` tag
+
 ### Preserved
 
 - no geometry, topology, FoldScript `0.1`, Runtime API shape, source UV,

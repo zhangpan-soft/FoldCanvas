@@ -1025,6 +1025,7 @@ release_workflow = (
 ).read_text(encoding="utf-8")
 for required_fragment in [
     "workflow_dispatch:",
+    "release_tag:",
     "pull_request:",
     'tags:',
     '"v*-rc.*"',
@@ -1044,18 +1045,28 @@ for required_fragment in [
     "actions: write",
     "contents: write",
     "actions/download-artifact@",
+    "ref: ${{ inputs.release_tag || github.ref }}",
+    "Manual release recovery only accepts immutable v1.0.0.",
+    'report_path="$output_root/download/report.json"',
+    '--report "$report_path"',
     "*.manifest.json",
     "*.evidence.json",
     "secrets.GITHUB_TOKEN",
     "gh workflow run public-release-qualification.yml",
-    '--ref "$GITHUB_REF_NAME"',
-    '--field release_tag="$GITHUB_REF_NAME"',
+    '--ref "$RELEASE_TAG"',
+    '--field release_tag="$RELEASE_TAG"',
 ]:
     if required_fragment not in release_workflow:
         errors.append(
             "Package release workflow is missing required configuration: "
             f"{required_fragment}"
         )
+
+if 'find "$output_root/download" -type f -name report.json' in release_workflow:
+    errors.append(
+        "Stable publication must select the bound root readiness report, not "
+        "recursively reject unrelated snapshot reports"
+    )
 
 release_create_index = release_workflow.find("gh release create")
 public_dispatch_index = release_workflow.find(
