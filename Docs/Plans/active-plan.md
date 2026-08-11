@@ -112,6 +112,34 @@ still has the public `v1.0.0` archive SHA-256
 
 # Progress log
 
+- 2026-08-12: queried official GitHub release, tag, commit, signature, and
+  `action.yml` metadata. Selected signed Node 24 releases for checkout
+  `v7.0.1`, upload-artifact `v7.0.1`, and download-artifact `v8.0.1`.
+- 2026-08-12: confirmed GameCI PR #304 is merged and `main` declares Node 24,
+  but the latest official release/tag remains `v4.3.1` with Node 20. Retained
+  its existing full-SHA pin as a bounded upstream exception.
+- 2026-08-12: updated workflow references and the central allowlist atomically;
+  added stale-version/SHA adversarial cases.
+- 2026-08-12: the complete local repository matrix passed. Action pin tests
+  report 44 cases; repository, release, stable-readiness, public-release,
+  upgrade, soak, trust-boundary, clean-install, and handoff validators are
+  green. The rebuilt stable archive is exactly
+  `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
+  Hosted gates remain.
+- 2026-08-12: hosted PR run `31533100145` passed 477/477 Edit Mode tests,
+  repeated clean installs, producer/receiver handoff, and source-first upgrade.
+  All four expected evidence artifacts were uploaded.
+- 2026-08-12: hosted M13 run `31533018780` passed 477/477 Edit Mode tests and
+  512 deterministic robustness cases with zero unexpected cases. Evidence
+  artifact `9117850962` contains the real XML, Editor log, reports, replay, and
+  validation files.
+- 2026-08-12: branch-dispatched public qualification run `31533891950` passed
+  exact public-asset verification, two clean public consumers, RC2-to-stable
+  source upgrade, and final stable-publication binding. Proof artifact
+  `9118098988` is `qualified: true` and retains the public stable archive hash.
+- 2026-08-12: hosted log audit found zero Node 20 Action warnings in jobs using
+  only checkout/upload/download. GameCI jobs retained one final warning whose
+  Action list names only the documented GameCI v4.3.1 exception.
 - 2026-08-12: M17 public qualification run `31512005281` completed successfully
   on exact tag commit `6ed32f1e`; two consumers and both upgrade phases passed
   in Unity `6000.3.20f1`, and stable proof artifact `9109614640` is qualified.
@@ -121,6 +149,17 @@ still has the public `v1.0.0` archive SHA-256
 
 # Decisions made
 
+- Use the latest signed official Node 24 release for each first-party Action.
+  The workflows use named artifacts rather than single `artifact-ids`, so
+  download-artifact v5's ID-path change is irrelevant; v8's digest mismatch
+  default strengthens the existing fail-closed contract. Upload v7 retains
+  archive mode by default, so no workflow input changes are required.
+- Checkout v7's safer `pull_request_target` / `workflow_run` behavior is
+  compatible with this repository: the credential-bearing
+  `pull_request_target` gate never checks out code, and the only workflow-run
+  checkout is gated to same-repository schedule or manual candidate-soak runs.
+- No tagged GameCI Node 24 release exists. Retain the signed v4.3.1 pin until
+  upstream publishes one; do not treat an untagged `main` commit as a release.
 - M18 is repository infrastructure only; its acceptance explicitly freezes all
   package-included bytes to the public stable archive.
 - Official upstream repositories are the only authority for release, commit,
@@ -132,7 +171,8 @@ still has the public `v1.0.0` archive SHA-256
 
 # Final verification
 
-Planning is complete. Upstream research, pin selection, implementation, local
-checks, hosted evidence, exact-head audit, merge, and issue closure remain
-pending. No M18 Action reference or later geometry milestone has been
-implemented.
+Upstream research, pin implementation, local checks, archive identity, and the
+complete hosted implementation-head matrix are verified. This closeout changes
+only milestone documentation; its required checks, exact-head audit, merge,
+and issue closure remain pending. No package-included file, geometry behavior,
+or later geometry milestone has been implemented.

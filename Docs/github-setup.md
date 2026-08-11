@@ -28,7 +28,7 @@ After the repository exists, add its URLs to the optional `documentationUrl`, `c
 - Do not accept generated Unity caches or baked meshes as source-of-truth changes.
 - Pin every remote GitHub Action to a reviewed, lowercase, full 40-character
   commit SHA. Keep the human-readable release tag in an inline comment, for
-  example `actions/checkout@<full-sha> # v4.2.2`. Treat the tag as a review
+  example `actions/checkout@<full-sha> # v7.0.1`. Treat the tag as a review
   label and the commit SHA as the execution identity. Version upgrades require
   resolving and reviewing the new upstream commit, updating the central
   allowlist in `Scripts/validate_action_pins.py`, and running the repository
@@ -36,6 +36,11 @@ After the repository exists, add its URLs to the optional `documentationUrl`, `c
   block-style YAML for Action keys. Local Actions must live under
   `.github/actions`; every local manifest and transitive Action reference is
   validated, so a composite wrapper cannot bypass the remote allowlist.
+- Prefer an official tagged Action release whose `action.yml` declares the
+  current GitHub-hosted JavaScript runtime. If upstream has merged a runtime
+  update but has not tagged it, retain the last reviewed release and document
+  the bounded exception. Do not pin `main`, an unreleased branch commit, an
+  unreviewed fork, or a warning-suppression flag to make the warning disappear.
 - Treat fork PRs as untrusted proposals. Do not pass Unity credentials to them;
   review the exact diff and land approved work through a maintainer-owned
   integration PR with full privileged CI.

@@ -17,20 +17,39 @@ LOCAL_ACTION_DIRECTORY = ".github/actions"
 # repository. The version remains a review label; workflows execute the SHA.
 APPROVED_ACTIONS: dict[str, tuple[str, str]] = {
     "actions/checkout": (
-        "v4.2.2",
-        "11bd71901bbe5b1630ceea73d27597364c9af683",
+        "v7.0.1",
+        "3d3c42e5aac5ba805825da76410c181273ba90b1",
     ),
     "actions/download-artifact": (
-        "v4.1.8",
-        "fa0a91b85d4f404e444e00e005971372dc801d16",
+        "v8.0.1",
+        "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
     ),
     "actions/upload-artifact": (
-        "v4.6.2",
-        "ea165f8d65b6e75b540449e92b4886f43607fa02",
+        "v7.0.1",
+        "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
     ),
     "game-ci/unity-test-runner": (
         "v4.3.1",
         "0ff419b913a3630032cbe0de48a0099b5a9f0ed9",
+    ),
+}
+
+# The three first-party Actions above declare ``runs.using: node24`` at the
+# reviewed tags. GameCI's latest tagged release still declares Node 20. Its
+# main branch has the upstream fix, but no immutable release tag contains it;
+# therefore M18 deliberately retains the last official release instead of
+# pinning an unreleased branch commit or an unreviewed fork.
+NODE24_ACTIONS = frozenset(
+    {
+        "actions/checkout",
+        "actions/download-artifact",
+        "actions/upload-artifact",
+    }
+)
+REVIEWED_RUNTIME_EXCEPTIONS: dict[str, tuple[str, str]] = {
+    "game-ci/unity-test-runner": (
+        "node20",
+        "https://github.com/game-ci/unity-test-runner/pull/304",
     ),
 }
 
