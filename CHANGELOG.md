@@ -6,6 +6,12 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+### Fixed
+
+- stable publication now selects the bound root M16 readiness report instead
+  of rejecting the artifact's separate public snapshot report, and a protected
+  manual recovery path can republish only the existing immutable `v1.0.0` tag
+
 ## [1.0.0] - 2026-08-11
 
 ### Added
@@ -29,12 +35,6 @@ The format follows Keep a Changelog principles, and package versions follow sema
   revalidating the bound M16 readiness artifact; RC tags remain prereleases
 - compatibility, support, and installation guidance now identify RC2 as the
   immutable stable rollback rather than the active package
-
-### Fixed
-
-- stable publication now selects the bound root M16 readiness report instead
-  of rejecting the artifact's separate public snapshot report, and a protected
-  manual recovery path can republish only the existing immutable `v1.0.0` tag
 
 ### Preserved
 
