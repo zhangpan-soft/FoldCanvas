@@ -63,8 +63,27 @@ official tagged Node 24 release that passes the same upstream and hosted review.
 
 ## Verification boundary
 
-This file records upstream selection evidence, not a hosted-pass claim. The
-branch still must pass Action-pin adversarial tests, repository validation,
-deterministic stable-package hashing, full Unity Edit Mode tests, repeated clean
-installs, handoff, source upgrade, long run, exact-head audit, and protected
-merge before M18 is complete.
+The selected implementation head `d3ed7eb25fbc52f99580ef99b26b59d351702754`
+passed the hosted matrix on 2026-08-12:
+
+- [PR Unity run 31533100145](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31533100145):
+  477 passed, zero failed/skipped/inconclusive; repeated clean archive installs,
+  producer/receiver handoff, and source-first upgrade all succeeded.
+- [M13 run 31533018780](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31533018780):
+  477 passed plus 512 deterministic robustness cases with zero unexpected
+  cases; XML, Editor log, reports, replay evidence, and validation were
+  uploaded as artifact `9117850962`.
+- [Public qualification run 31533891950](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31533891950):
+  exact public assets, two public consumers, RC2-to-stable source upgrade, and
+  stable-publication binding passed. Proof artifact `9118098988` reports
+  `qualified: true` and the exact public archive SHA-256.
+
+Log audit found no Node 20 runtime warning in jobs that used only the selected
+first-party Actions. In each job that also invoked GameCI, GitHub's final
+runtime warning named only
+`game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9`.
+
+The closeout commit changes only milestone documentation. It must still pass
+the protected required checks and exact-head audit before merge. That does not
+replace or weaken the successful implementation-head long-run and public
+qualification evidence above.

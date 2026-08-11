@@ -77,4 +77,19 @@ Workflow pins and the central allowlist now contain those selections. The full
 local repository matrix is green, including 44 Action-pin adversarial cases,
 and the deterministic package SHA-256 remains
 `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
-Hosted verification remains pending.
+Hosted implementation-head verification is green:
+
+- PR Unity run `31533100145`: 477/477 Edit Mode tests, two independent clean
+  consumers, producer/receiver handoff, and source upgrade all passed with all
+  expected artifacts uploaded.
+- push long-run `31533018780`: 477/477 Edit Mode tests plus 512 deterministic
+  robustness cases passed with zero unexpected cases.
+- manually dispatched public qualification `31533891950`: exact stable assets,
+  two public consumers, RC2-to-stable source upgrade, and final publication
+  proof passed; proof artifact `9118098988` is `qualified: true`.
+- jobs without GameCI emitted no Node 20 Action warning. Jobs that invoke
+  GameCI emitted one final warning whose Action list contains only the retained
+  `game-ci/unity-test-runner` v4.3.1 SHA.
+
+A documentation-only closeout commit, final required checks, exact-head audit,
+merge, and issue closure remain.

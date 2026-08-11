@@ -126,6 +126,20 @@ still has the public `v1.0.0` archive SHA-256
   green. The rebuilt stable archive is exactly
   `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
   Hosted gates remain.
+- 2026-08-12: hosted PR run `31533100145` passed 477/477 Edit Mode tests,
+  repeated clean installs, producer/receiver handoff, and source-first upgrade.
+  All four expected evidence artifacts were uploaded.
+- 2026-08-12: hosted M13 run `31533018780` passed 477/477 Edit Mode tests and
+  512 deterministic robustness cases with zero unexpected cases. Evidence
+  artifact `9117850962` contains the real XML, Editor log, reports, replay, and
+  validation files.
+- 2026-08-12: branch-dispatched public qualification run `31533891950` passed
+  exact public-asset verification, two clean public consumers, RC2-to-stable
+  source upgrade, and final stable-publication binding. Proof artifact
+  `9118098988` is `qualified: true` and retains the public stable archive hash.
+- 2026-08-12: hosted log audit found zero Node 20 Action warnings in jobs using
+  only checkout/upload/download. GameCI jobs retained one final warning whose
+  Action list names only the documented GameCI v4.3.1 exception.
 - 2026-08-12: M17 public qualification run `31512005281` completed successfully
   on exact tag commit `6ed32f1e`; two consumers and both upgrade phases passed
   in Unity `6000.3.20f1`, and stable proof artifact `9109614640` is qualified.
@@ -157,7 +171,8 @@ still has the public `v1.0.0` archive SHA-256
 
 # Final verification
 
-Upstream research, pin implementation, local checks, and archive identity are
-complete. Hosted evidence, exact-head audit, merge, and issue closure remain
-pending. No package-included file, geometry behavior, or later geometry
-milestone has been implemented.
+Upstream research, pin implementation, local checks, archive identity, and the
+complete hosted implementation-head matrix are verified. This closeout changes
+only milestone documentation; its required checks, exact-head audit, merge,
+and issue closure remain pending. No package-included file, geometry behavior,
+or later geometry milestone has been implemented.
