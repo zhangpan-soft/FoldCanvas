@@ -1261,15 +1261,16 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M17: stable `1.0.0` general availability" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M17 milestone")
+if "M18: Node 24 CI runtime modernization" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M18 milestone")
 for required_fragment in [
-    "exact M16 readiness evidence freeze",
-    "version-neutral API-shape",
-    "Stable rollback is immutable `v1.0.0-rc.2`",
+    "official upstream release, tag, commit, and runtime-metadata review",
+    "lowercase 40-character commit",
+    "byte-identical to public stable `v1.0.0`",
+    "GameCI lacks Node 24 support",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M17 active plan is missing: " + required_fragment)
+        errors.append("M18 active plan is missing: " + required_fragment)
 for required_fragment in [
     "3D result = 2D appearance",
     "Choose a contribution lane",
