@@ -200,13 +200,13 @@ def build_file_manifest(
     return path
 
 
-def build_candidate_evidence(
+def build_release_evidence(
     output_directory: pathlib.Path,
     archive_path: pathlib.Path,
     manifest_path: pathlib.Path,
 ) -> pathlib.Path:
     package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
-    contract_path = ROOT / "Documentation~" / "m15-public-distribution.json"
+    contract_path = ROOT / "Documentation~" / "m17-stable-release.json"
     contract_bytes = contract_path.read_bytes()
     contract = json.loads(contract_bytes)
     public_api_path = ROOT / "Documentation~" / "public-runtime-api.json"
@@ -218,12 +218,12 @@ def build_candidate_evidence(
     manifest_bytes = manifest_path.read_bytes()
 
     document = {
-        "format": "foldcanvas-release-candidate-evidence",
+        "format": "foldcanvas-stable-release-evidence",
         "version": "1",
         "state": "built-unverified",
         "packageName": package["name"],
         "packageVersion": package["version"],
-        "stableRelease": False,
+        "stableRelease": True,
         "unity": {
             "packageMinimum": package["unity"],
             "packageRelease": package["unityRelease"],
@@ -239,7 +239,7 @@ def build_candidate_evidence(
             "sha256": sha256_bytes(corpus_bytes),
         },
         "contract": {
-            "path": "Documentation~/m15-public-distribution.json",
+            "path": "Documentation~/m17-stable-release.json",
             "sha256": sha256_bytes(contract_bytes),
         },
         "archive": {
@@ -250,16 +250,17 @@ def build_candidate_evidence(
             "file": manifest_path.name,
             "sha256": sha256_bytes(manifest_bytes),
         },
-        "requiredGates": contract["requiredGates"],
+        "requiredPrePublicationGates": contract[
+            "requiredPrePublicationGates"
+        ],
+        "requiredPostPublicationGates": contract[
+            "requiredPostPublicationGates"
+        ],
         "rollback": contract["rollback"],
-        "priorRelease": contract["priorRelease"],
+        "releaseCandidate": contract["releaseCandidate"],
+        "stableQualification": contract["stableQualification"],
         "upgrade": contract["upgrade"],
-        "stableExit": contract["stableExit"],
-        "publication": {
-            "githubPrereleaseOnly": True,
-            "finalStableRelease": False,
-            "externalMarketplace": False,
-        },
+        "publication": contract["publication"],
     }
     version = package["version"]
     path = output_directory / f"com.foldcanvas.core-{version}.evidence.json"
@@ -273,7 +274,7 @@ def build_release_bundle(
 ) -> tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
     archive = build_archive(output_directory, tag)
     manifest = build_file_manifest(output_directory, archive)
-    evidence = build_candidate_evidence(output_directory, archive, manifest)
+    evidence = build_release_evidence(output_directory, archive, manifest)
     return archive, manifest, evidence
 
 
@@ -296,7 +297,7 @@ def main() -> int:
     print(f"Built {archive}")
     print(f"SHA256 {digest}")
     print(f"File manifest {manifest}")
-    print(f"Candidate evidence {evidence}")
+    print(f"Release evidence {evidence}")
     return 0
 
 

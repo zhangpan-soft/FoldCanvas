@@ -21,6 +21,10 @@ A preview or release-candidate build passes these independent rungs:
    resolving only the downloaded public archive.
 10. Source-first package-upgrade rehearsal and a fail-closed stable-release
     soak/issue/run gate.
+11. M16 candidate-pinned 168-hour soak, two scheduled long runs, reviewed
+    14/14 gates, and zero open release blockers.
+12. M17 stable publication plus two public clean consumers and an
+    RC2-to-stable source-first recompilation.
 
 Passing a lower rung does not replace a higher one. In particular, a Python
 check does not prove C# compilation, a Unity exit code without XML does not
@@ -192,14 +196,32 @@ missing before-phase report. It deletes only that marked host's `Library`,
 before-phase evidence are preserved. Real before/after XML and Editor logs are
 validated separately before semantic hashes are compared.
 
-Final `1.0.0` remains blocked until at least 168 hours after the latest RC,
-two distinct scheduled long-run passes on that lineage, no open release
-blocker, a complete public-consumer and upgrade report, and an exact-head audit.
+Historical M15 evidence kept final `1.0.0` blocked until at least 168 hours
+after RC2, two distinct scheduled long-run passes on that lineage, no open
+release blocker, a complete public-consumer and upgrade report, and an
+exact-head audit.
 `evaluate_stable_exit.py` receives an explicit timestamped evidence object; it
 does not read credentials or infer missing runs. Duplicate, pre-publication,
 wrong-commit, failed, skipped, or inconclusive scheduled runs do not qualify.
 The post-publication workflow emits a conservative blocked snapshot first;
 `--require-ready` is reserved for the later stable publication gate.
+
+## M16 qualification and M17 stable publication
+
+M16 evaluator run `31501082596` froze the completed threshold at 172.5 hours,
+2/2 qualifying scheduled runs, 14/14 reviewed gates, zero open release
+blockers, and status `ready`. M17 binds that exact run, artifact, report bytes,
+RC2 commit, and archive identity in `m17-stable-release.json`; a locally
+synthesized or different ready report cannot authorize publication.
+
+Stable `v1.0.0` is a new deterministic archive rather than renamed RC2 bytes.
+Its version-bearing API signatures and corpus header advance to `1.0.0`, while
+the normalized Runtime API digest and the complete ordered corpus-case digest
+remain RC2-identical. The tag workflow re-downloads the exact M16 readiness
+artifact before creating a non-prerelease GitHub release. Public qualification
+then verifies all four public assets, installs the archive into two clean Unity
+projects, and recompiles unchanged authoritative FoldScript plus PNG source
+after upgrading from immutable RC2.
 
 ## Local commands
 
@@ -212,6 +234,8 @@ python3 Scripts/test_release_candidate.py
 python3 Scripts/test_public_release.py
 python3 Scripts/test_upgrade_proof.py
 python3 Scripts/test_stable_exit.py
+python3 Scripts/test_stable_readiness.py
+python3 Scripts/test_stable_release.py
 python3 Scripts/test_clean_install_project.py
 ```
 

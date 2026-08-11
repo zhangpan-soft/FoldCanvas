@@ -1,88 +1,43 @@
 # Current task
 
-Execute **M16: stable-candidate soak and contributor on-ramp**.
+Execute **M17: stable `1.0.0` general availability**.
 
 Authoritative task file:
-[`Codex/M16_STABLE_SOAK_AND_COMMUNITY.md`](Codex/M16_STABLE_SOAK_AND_COMMUNITY.md)
+[`Codex/M17_STABLE_GA.md`](Codex/M17_STABLE_GA.md)
 
-M15 PR #14 was autonomously audited at exact head
-`4729ab93ed37f0bc59546eb3e1b2464f9b310959` and merged into `main` as
-`4db988ffac6dad4362d126001e5c9a67081ef2b7`. Unity `6000.3.20f1` passed
-472/472 Edit Mode tests, two public-package consumers, source-first upgrade,
-512/512 deterministic long-run cases, and 5/5 resource envelopes.
-
-Public pre-release [`v1.0.0-rc.2`](https://github.com/zhangpan-soft/FoldCanvas/releases/tag/v1.0.0-rc.2)
-was published from that merge. Its public archive SHA-256 is
+M16 candidate-pinned soak is complete. The exact RC2 candidate remains commit
+`4db988ffac6dad4362d126001e5c9a67081ef2b7`, public tag
+`v1.0.0-rc.2`, and archive SHA-256
 `72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707`.
-Recovery run `30898280828` independently verified the four public assets, two
-clean public consumers, and the source-first upgrade. PR #15 then fixed the
-workflow-to-workflow dispatch boundary and merged as
-`0d06450f1f1f309b605b1e25f1833ef993d2abe7` after 19 checks passed.
 
-M16 PR #16 was audited at exact head `82defcb8`, passed 472/472 Edit Mode plus
-all clean consumer, handoff, and upgrade gates, and merged as `211d55c`.
-`main` is protected. Manual soak `30910305230` proved the full candidate path
-without qualifying for stable; evaluator `30910883290` correctly preserved the
-168-hour and two-genuine-schedule requirements.
+Two genuine scheduled runs (`31076024500` and `31356841867`) each passed
+472/472 Edit Mode tests, 512/512 deterministic robustness cases, and 5/5
+resource envelopes with zero failed, skipped, or inconclusive tests.
 
-M16.1 PR #17 was audited at exact head `77b8adff`, passed 472/472 Edit Mode
-plus repository, deterministic package, clean-install, handoff, and upgrade
-gates, and merged as `df5e13c`. Protected `main` now requires seven strict
-checks, including the zero-permission `Trusted contribution qualification`
-gate. Closed, unmerged canary PR #18 proved that check attached successfully to
-its exact head `0d9f48ba`; current repository access remains one owner and zero
-non-owner collaborators. Starter issues #19-#21 expose bounded documentation,
-schema-validation, and Windows clean-install work without granting write or
-credential access.
+After the 168-hour threshold, evaluator run
+[`31501082596`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31501082596)
+completed at `2026-08-11T14:21:46Z`. Its downloaded artifact
+`9105046023` matched GitHub digest
+`945b75d662c0eb39395eae03b1ec32cefd8e2d6d8b2a83f759c1aa7c3dfc37b0`.
+The report SHA-256 is
+`c581d89bb45a6269d183ff73d881d450f20c49e0dbd565e679ac9a922f779ad4`
+and records:
 
-The first genuine scheduled candidate soak, run
-[`31076024500`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31076024500),
-completed successfully on 2026-08-06 against exact RC2 commit
-`4db988ffac6dad4362d126001e5c9a67081ef2b7`. Its bound evidence reports
-472/472 Edit Mode tests, 512/512 deterministic robustness cases, 5/5 resource
-envelopes, and zero failed, skipped, or inconclusive tests. Stable evaluator
-run [`31076434408`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31076434408)
-verified 14/14 required gates and zero open release blockers while correctly
-remaining blocked at 1/2 qualifying scheduled runs and 44.325278/168 soak
-hours. No stable `1.0.0` publication occurred.
+- status `ready`;
+- 172.5/168 soak hours;
+- 2/2 qualifying scheduled runs;
+- 14/14 required gates;
+- zero open release blockers;
+- exact target version `1.0.0`.
 
-The second genuine scheduled candidate soak, run
-[`31356841867`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31356841867),
-completed successfully on 2026-08-10 against the same exact RC2 commit and
-archive. It again passed 472/472 Edit Mode tests, 512/512 deterministic
-robustness cases, 5/5 resource envelopes, and reported zero failed, skipped,
-or inconclusive tests. Evaluator run
-[`31357213318`](https://github.com/zhangpan-soft/FoldCanvas/actions/runs/31357213318)
-accepted 2/2 qualifying scheduled runs, 14/14 gates, and zero open release
-blockers. Its result remains correctly `blocked` only because 139.1375 of the
-required 168 soak hours had elapsed at 2026-08-10T05:00:01Z. The earliest
-time threshold is 2026-08-11T09:51:46Z; no stable `1.0.0` publication has
-occurred.
+M17 converts that qualified lineage into a real stable package. It advances
+only release/compatibility identity and evidence: no geometry, topology,
+FoldScript, Runtime API shape, dependency, or Unity-version behavior may
+change. Stable publication must use a dedicated PR, exact-head audit, protected
+`main`, exact `v1.0.0` tag, deterministic archive, and post-publication public
+asset plus clean-consumer verification. RC2 remains immutable rollback.
 
-M16 changes the acceptance question from “can the exact public RC be consumed
-and upgraded?” to “can that immutable RC survive a candidate-pinned soak while
-an unfamiliar contributor can find, reproduce, and complete a bounded task?”
-
-The active proof covers:
-
-- one non-packaged active-candidate record binding RC2 tag, commit, archive,
-  publication time, Unity version, and long-run parameters;
-- scheduled Unity runs that orchestrate from `main` but check out and test the
-  exact immutable candidate tag rather than the moving default branch;
-- stable-exit evidence collection that accepts only distinct successful
-  `schedule` runs on the candidate commit;
-- a contributor start page, bounded issue forms, discoverable repository
-  metadata, and several genuinely small tasks with numerical acceptance;
-- a fork/PR-only external AI-agent policy with protected `main`, no shared
-  credentials, and maintainer-owned integration PRs for the privileged Unity
-  evidence that GitHub correctly withholds from fork runs;
-- no package-byte change while RC2 is soaking.
-
-The maintainer may plan, implement, audit, merge, triage issues, publish GitHub
-pre-releases, and continue the roadmap autonomously. Credentials, paid
-services, irreversible permission changes, legal decisions, and external
-marketplace publication remain owner escalation points.
-
-M16 does not change geometry, FoldScript, Runtime API, package dependencies,
-or the published RC2 bytes. It does not publish final `1.0.0` before the
-machine-readable gate is ready and exact evidence is audited.
+The maintainer may plan, implement, audit, merge, publish the GitHub stable
+release, and continue the roadmap autonomously. Credentials, paid services,
+irreversible permission changes, legal decisions, and external marketplace
+publication remain owner escalation points.

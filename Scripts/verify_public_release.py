@@ -131,12 +131,16 @@ def validate_release_metadata(
     tag: str,
     tag_commit: str,
     assets: dict[str, pathlib.Path],
+    expected_prerelease: bool,
 ) -> int:
     if metadata.get("tag_name") != tag:
         raise PublicReleaseVerificationError("GitHub release tag does not match")
-    if metadata.get("draft") is not False or metadata.get("prerelease") is not True:
+    if (
+        metadata.get("draft") is not False
+        or metadata.get("prerelease") is not expected_prerelease
+    ):
         raise PublicReleaseVerificationError(
-            "GitHub release must be a published pre-release"
+            "GitHub release publication state differs from the contract"
         )
     release_id = metadata.get("id")
     if not isinstance(release_id, int) or release_id <= 0:
@@ -250,6 +254,7 @@ def validate_archive_and_manifest(
                     files,
                     manifest_names,
                     canonical_archive,
+                    package_version,
                 )
                 canonical_archive.close()
             canonical_raw.seek(0)
@@ -275,8 +280,10 @@ def validate_archive_members(
     files: list[dict],
     manifest_names: list[str],
     canonical_archive: tarfile.TarFile,
+    package_version: str,
 ) -> None:
     total_unpacked = 0
+    semantic_files: dict[str, bytes] = {}
     with tarfile.open(archive_path, mode="r:gz") as archive:
         members = archive.getmembers()
         names = [member.name for member in members]
@@ -368,6 +375,12 @@ def validate_archive_members(
                     raise PublicReleaseVerificationError(
                         f"Release manifest digest differs: {member.name}"
                     )
+                if member.name in (
+                    "package/package.json",
+                    "package/Runtime/Data/FoldCanvasVersion.cs",
+                ):
+                    payload.seek(0)
+                    semantic_files[member.name] = payload.read()
                 payload.seek(0)
                 canonical_info = tarfile.TarInfo(member.name)
                 canonical_info.size = member.size
@@ -379,8 +392,34 @@ def validate_archive_members(
                 canonical_info.gname = ""
                 canonical_archive.addfile(canonical_info, payload)
 
+    try:
+        package = json.loads(
+            semantic_files["package/package.json"].decode("utf-8")
+        )
+        version_source = semantic_files[
+            "package/Runtime/Data/FoldCanvasVersion.cs"
+        ].decode("utf-8")
+    except (KeyError, UnicodeDecodeError, json.JSONDecodeError) as exception:
+        raise PublicReleaseVerificationError(
+            "Release archive lacks readable package version identity"
+        ) from exception
+    if package.get("name") != "com.foldcanvas.core" or package.get(
+        "version"
+    ) != package_version:
+        raise PublicReleaseVerificationError(
+            "Release archive package.json version identity differs"
+        )
+    runtime_match = re.search(
+        r'\bPackage\s*=\s*"([^"]+)"\s*;',
+        version_source,
+    )
+    if runtime_match is None or runtime_match.group(1) != package_version:
+        raise PublicReleaseVerificationError(
+            "Release archive runtime version identity differs"
+        )
 
-def validate_candidate_evidence(
+
+def validate_release_evidence(
     evidence: dict,
     contract: dict,
     contract_path: pathlib.Path,
@@ -388,16 +427,50 @@ def validate_candidate_evidence(
     manifest_path: pathlib.Path,
     package_version: str,
 ) -> None:
-    if (
-        evidence.get("format") != "foldcanvas-release-candidate-evidence"
-        or evidence.get("version") != "1"
-        or evidence.get("state") != "built-unverified"
-        or evidence.get("packageName") != "com.foldcanvas.core"
-        or evidence.get("packageVersion") != package_version
-        or evidence.get("stableRelease") is not False
-        or evidence.get("foldScriptVersion") != "0.1"
-    ):
-        raise PublicReleaseVerificationError("Candidate evidence header differs")
+    stable_release = contract.get("stableRelease") is True
+    if stable_release:
+        if (
+            evidence.get("format") != "foldcanvas-stable-release-evidence"
+            or evidence.get("version") != "1"
+            or evidence.get("state") != "built-unverified"
+            or evidence.get("packageName") != "com.foldcanvas.core"
+            or evidence.get("packageVersion") != package_version
+            or evidence.get("stableRelease") is not True
+            or evidence.get("foldScriptVersion") != "0.1"
+        ):
+            raise PublicReleaseVerificationError(
+                "Stable release evidence header differs"
+            )
+        expected_contract_path = "Documentation~/m17-stable-release.json"
+        expected_fields = (
+            "publication",
+            "releaseCandidate",
+            "requiredPostPublicationGates",
+            "requiredPrePublicationGates",
+            "rollback",
+            "stableQualification",
+            "upgrade",
+        )
+    else:
+        if (
+            evidence.get("format") != "foldcanvas-release-candidate-evidence"
+            or evidence.get("version") != "1"
+            or evidence.get("state") != "built-unverified"
+            or evidence.get("packageName") != "com.foldcanvas.core"
+            or evidence.get("packageVersion") != package_version
+            or evidence.get("stableRelease") is not False
+            or evidence.get("foldScriptVersion") != "0.1"
+        ):
+            raise PublicReleaseVerificationError("Candidate evidence header differs")
+        expected_contract_path = "Documentation~/m15-public-distribution.json"
+        expected_fields = (
+            "priorRelease",
+            "requiredGates",
+            "rollback",
+            "stableExit",
+            "upgrade",
+        )
+
     if evidence.get("archive") != {
         "file": archive_path.name,
         "sha256": sha256_file(archive_path),
@@ -409,28 +482,25 @@ def validate_candidate_evidence(
     }:
         raise PublicReleaseVerificationError("Candidate manifest evidence differs")
     if evidence.get("contract") != {
-        "path": "Documentation~/m15-public-distribution.json",
+        "path": expected_contract_path,
         "sha256": sha256_file(contract_path),
     }:
-        raise PublicReleaseVerificationError("Candidate contract evidence differs")
-    for field in (
-        "priorRelease",
-        "requiredGates",
-        "rollback",
-        "stableExit",
-        "upgrade",
-    ):
+        raise PublicReleaseVerificationError("Release contract evidence differs")
+    for field in expected_fields:
         if evidence.get(field) != contract.get(field):
             raise PublicReleaseVerificationError(
-                f"Candidate evidence field differs from contract: {field}"
+                f"Release evidence field differs from contract: {field}"
             )
-    publication = evidence.get("publication", {})
-    if (
-        publication.get("githubPrereleaseOnly") is not True
-        or publication.get("finalStableRelease") is not False
-        or publication.get("externalMarketplace") is not False
-    ):
-        raise PublicReleaseVerificationError("Candidate publication scope differs")
+    if not stable_release:
+        publication = evidence.get("publication", {})
+        if (
+            publication.get("githubPrereleaseOnly") is not True
+            or publication.get("finalStableRelease") is not False
+            or publication.get("externalMarketplace") is not False
+        ):
+            raise PublicReleaseVerificationError(
+                "Candidate publication scope differs"
+            )
 
 
 def verify_public_release(
@@ -442,7 +512,12 @@ def verify_public_release(
     tag_commit: str,
 ) -> dict:
     contract = load_object(contract_path, "Public distribution contract")
-    package_version = contract.get("candidateVersion")
+    stable_release = contract.get("stableRelease") is True
+    package_version = (
+        contract.get("packageVersion")
+        if stable_release
+        else contract.get("candidateVersion")
+    )
     if not isinstance(package_version, str) or tag != "v" + package_version:
         raise PublicReleaseVerificationError(
             "Public release tag must exactly match the candidate version"
@@ -460,6 +535,7 @@ def verify_public_release(
         tag,
         tag_commit,
         assets,
+        not stable_release,
     )
 
     prefix = f"com.foldcanvas.core-{package_version}"
@@ -475,7 +551,7 @@ def verify_public_release(
         package_version,
     )
     evidence = load_object(evidence_path, "Candidate evidence")
-    validate_candidate_evidence(
+    validate_release_evidence(
         evidence,
         contract,
         contract_path,
@@ -492,6 +568,7 @@ def verify_public_release(
         "releaseId": release_id,
         "packageName": "com.foldcanvas.core",
         "packageVersion": package_version,
+        "stableRelease": stable_release,
         "unityVersion": contract["unityVersion"],
         "foldScriptVersion": contract["foldScriptVersion"],
         "assetCount": len(assets),

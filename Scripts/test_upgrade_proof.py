@@ -20,7 +20,7 @@ from create_upgrade_proof_project import create_project  # noqa: E402
 from validate_upgrade_evidence import validate  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CONTRACT_PATH = ROOT / "Documentation~" / "m15-public-distribution.json"
+CONTRACT_PATH = ROOT / "Documentation~" / "m17-stable-release.json"
 
 
 def write_json(path: pathlib.Path, value: dict) -> None:
@@ -147,11 +147,12 @@ def main() -> int:
     fixture = contract["upgrade"]["fixture"]
     source = ROOT / fixture["sourcePath"]
     appearance = ROOT / fixture["appearancePath"]
-    with tempfile.TemporaryDirectory(prefix="foldcanvas-m15-upgrade-") as temp:
+    with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-upgrade-") as temp:
         temp_root = pathlib.Path(temp)
+        baseline_version = fixture["baselinePackageVersion"]
         baseline_archive = synthetic_package(
-            temp_root / "com.foldcanvas.core-0.1.0-preview.21.tgz",
-            "0.1.0-preview.21",
+            temp_root / f"com.foldcanvas.core-{baseline_version}.tgz",
+            baseline_version,
         )
         current_archive = build_archive(temp_root / "current-package")
         project = temp_root / "upgrade-host"
@@ -161,7 +162,7 @@ def main() -> int:
             source,
             appearance,
         )
-        if before_expected["packageVersion"] != "0.1.0-preview.21":
+        if before_expected["packageVersion"] != baseline_version:
             raise AssertionError("upgrade generator used the wrong baseline")
         input_names = sorted(path.name for path in (project / "M15Input").iterdir())
         if input_names != sorted(fixture["inputFileNames"]):
@@ -214,8 +215,8 @@ def main() -> int:
         appearance_before = (project / "M15Input" / appearance.name).read_bytes()
 
         after_expected = advance_project(project, current_archive)
-        if after_expected["packageVersion"] != contract["candidateVersion"]:
-            raise AssertionError("upgrade advance used the wrong candidate")
+        if after_expected["packageVersion"] != contract["packageVersion"]:
+            raise AssertionError("upgrade advance used the wrong stable target")
         if after_expected["phase"] != "after":
             raise AssertionError("upgrade advance did not enter after phase")
         for directory in ("Library", "Logs", "Temp", "obj"):

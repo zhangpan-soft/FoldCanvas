@@ -1,0 +1,19 @@
+{
+  "blockers": [],
+  "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+  "candidateTag": "v1.0.0-rc.2",
+  "candidateVersion": "1.0.0-rc.2",
+  "evaluatedAt": "2026-08-11T14:21:46Z",
+  "format": "foldcanvas-stable-exit-report",
+  "inputSha256": "ed371baa5c48eafbd680ef2491426d3a6fcf02f6938713fa4318f9118271652f",
+  "minimumScheduledLongRuns": 2,
+  "minimumSoakHours": 168,
+  "openReleaseBlockerCount": 0,
+  "qualifyingScheduledLongRuns": 2,
+  "requiredGateCount": 14,
+  "satisfiedGateCount": 14,
+  "soakHours": 172.5,
+  "status": "ready",
+  "targetVersion": "1.0.0",
+  "version": "1"
+}

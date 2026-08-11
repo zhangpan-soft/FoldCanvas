@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Exact FoldCanvas RC tag to qualify
+        description: Exact FoldCanvas release tag to qualify
         required: true
-        default: "v1.0.0-rc.2"
+        default: "v1.0.0"
         type: string
   release:
     types:
@@ -23,12 +23,14 @@ env:
 jobs:
   verify-public-assets:
     name: Verify exact public GitHub release assets
-    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease == true
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'release'
     runs-on: ubuntu-latest
     outputs:
       tag_commit: ${{ steps.identity.outputs.tag_commit }}
       package_version: ${{ steps.identity.outputs.package_version }}
       package_sha256: ${{ steps.identity.outputs.package_sha256 }}
+      contract_path: ${{ steps.identity.outputs.contract_path }}
+      stable_release: ${{ steps.identity.outputs.stable_release }}
     steps:
       - name: Check out exact release tag
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -57,18 +59,34 @@ jobs:
         run: |
           set -euo pipefail
           tag_commit="$(git rev-parse HEAD)"
+          case "$RELEASE_TAG" in
+            v1.0.0)
+              contract_path="Documentation~/m17-stable-release.json"
+              ;;
+            v1.0.0-rc.2)
+              contract_path="Documentation~/m15-public-distribution.json"
+              ;;
+            *)
+              echo "::error::Unsupported FoldCanvas public qualification tag."
+              exit 1
+              ;;
+          esac
           python3 Scripts/verify_public_release.py \
             --asset-directory artifacts/public-release/assets \
             --release-metadata artifacts/public-release/release.json \
+            --contract "$contract_path" \
             --repository "$GITHUB_REPOSITORY" \
             --tag "$RELEASE_TAG" \
             --tag-commit "$tag_commit" \
             --output artifacts/public-release/verification.json
           package_version="$(jq -r '.packageVersion' artifacts/public-release/verification.json)"
           package_sha256="$(jq -r '.archiveSha256' artifacts/public-release/verification.json)"
+          stable_release="$(jq -r '.stableRelease' artifacts/public-release/verification.json)"
           echo "tag_commit=$tag_commit" >> "$GITHUB_OUTPUT"
           echo "package_version=$package_version" >> "$GITHUB_OUTPUT"
           echo "package_sha256=$package_sha256" >> "$GITHUB_OUTPUT"
+          echo "contract_path=$contract_path" >> "$GITHUB_OUTPUT"
+          echo "stable_release=$stable_release" >> "$GITHUB_OUTPUT"
 
       - name: Upload verified public release bundle
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -261,9 +279,10 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/m15-source-upgrade
+          contract_path="${{ needs.verify-public-assets.outputs.contract_path }}"
           baseline_commit="$(
             jq -r '.upgrade.fixture.baselineGitCommit' \
-              Documentation~/m15-public-distribution.json
+              "$contract_path"
           )"
           baseline_root="$RUNNER_TEMP/foldcanvas-m15-upgrade-baseline"
           git worktree add --detach "$baseline_root" "$baseline_commit"
@@ -439,7 +458,7 @@ jobs:
           python3 Scripts/compare_upgrade_evidence.py \
             --before artifacts/m15-source-upgrade/before/report.json \
             --after "$output_root/report.json" \
-            --contract Documentation~/m15-public-distribution.json \
+            --contract "${{ needs.verify-public-assets.outputs.contract_path }}" \
             --output artifacts/m15-source-upgrade/comparison.json
 
       - name: Upload source-first upgrade XML, logs, and evidence
@@ -474,6 +493,7 @@ jobs:
       - verify-public-assets
       - public-release-consumers
       - source-first-upgrade
+    if: needs.verify-public-assets.outputs.stable_release == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact release tag
@@ -604,3 +624,107 @@ jobs:
             artifacts/m15-stable-exit/open-release-blockers.json
           if-no-files-found: error
           retention-days: 30
+
+  stable-publication-proof:
+    name: Bind stable public assets, consumers, and RC2 upgrade
+    needs:
+      - verify-public-assets
+      - public-release-consumers
+      - source-first-upgrade
+    if: needs.verify-public-assets.outputs.stable_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact stable release tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Download verified public release identity
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: foldcanvas-public-release-assets
+          path: artifacts/m17-stable-proof/public-release
+
+      - name: Download public consumer evidence
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: unity-public-release-consumer-results-and-logs
+          path: artifacts/m17-stable-proof/public-consumers
+
+      - name: Download RC2-to-stable source-upgrade evidence
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: unity-source-first-upgrade-results-and-logs
+          path: artifacts/m17-stable-proof/source-upgrade
+
+      - name: Validate and bind final public stable evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          proof_root="artifacts/m17-stable-proof"
+          verification_json="$(find "$proof_root/public-release" -type f -name verification.json -print -quit)"
+          consumer_json="$(find "$proof_root/public-consumers" -type f -name m15-public-consumer-comparison.json -print -quit)"
+          upgrade_json="$(find "$proof_root/source-upgrade" -type f -name comparison.json -print -quit)"
+          test -n "$verification_json"
+          test -n "$consumer_json"
+          test -n "$upgrade_json"
+          jq -e '
+            .qualified == true and
+            .stableRelease == true and
+            .tag == "v1.0.0" and
+            .packageVersion == "1.0.0" and
+            .assetCount == 4
+          ' "$verification_json" > /dev/null
+          archive_sha256="$(jq -r '.archiveSha256' "$verification_json")"
+          jq -e \
+            --arg archive "$archive_sha256" '
+              .format == "foldcanvas-clean-install-comparison" and
+              .installations == 2 and
+              .packageVersion == "1.0.0" and
+              .packageSha256 == $archive
+            ' "$consumer_json" > /dev/null
+          jq -e '
+            .format == "foldcanvas-m15-source-upgrade-comparison" and
+            .baselineVersion == "1.0.0-rc.2" and
+            .candidateVersion == "1.0.0" and
+            .sourceAuthority == "2d-canvas-plus-foldscript" and
+            .derivedInputCount == 0 and
+            .isSingleClosedVolume == true
+          ' "$upgrade_json" > /dev/null
+          jq -e '
+            .stableRelease == true and
+            .publication.githubPrerelease == false and
+            .publication.finalStableRelease == true and
+            .publication.externalMarketplace == false
+          ' Documentation~/m17-stable-release.json > /dev/null
+          jq -n \
+            --arg tag "$RELEASE_TAG" \
+            --arg tagCommit "${{ needs.verify-public-assets.outputs.tag_commit }}" \
+            --arg packageVersion "${{ needs.verify-public-assets.outputs.package_version }}" \
+            --arg archiveSha256 "$archive_sha256" \
+            --arg verificationSha256 "$(sha256sum "$verification_json" | cut -d' ' -f1)" \
+            --arg consumerSha256 "$(sha256sum "$consumer_json" | cut -d' ' -f1)" \
+            --arg upgradeSha256 "$(sha256sum "$upgrade_json" | cut -d' ' -f1)" \
+            '{
+              format: "foldcanvas-stable-publication-proof",
+              version: "1",
+              tag: $tag,
+              tagCommit: $tagCommit,
+              packageVersion: $packageVersion,
+              archiveSha256: $archiveSha256,
+              publicReleaseVerificationSha256: $verificationSha256,
+              publicConsumerComparisonSha256: $consumerSha256,
+              sourceUpgradeComparisonSha256: $upgradeSha256,
+              publicConsumerInstallations: 2,
+              upgradeBaselineVersion: "1.0.0-rc.2",
+              sourceAuthority: "2d-canvas-plus-foldscript",
+              qualified: true
+            }' > "$proof_root/report.json"
+
+      - name: Upload final stable-publication proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: foldcanvas-stable-publication-proof
+          path: artifacts/m17-stable-proof/report.json
+          if-no-files-found: error
+          retention-days: 90

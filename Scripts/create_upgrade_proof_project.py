@@ -14,7 +14,7 @@ sys.dont_write_bytecode = True
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 TEMPLATE_ROOT = ROOT / "Scripts" / "Templates~" / "M15UpgradeHost"
-CONTRACT_PATH = ROOT / "Documentation~" / "m15-public-distribution.json"
+CONTRACT_PATH = ROOT / "Documentation~" / "m17-stable-release.json"
 MARKER_NAME = ".foldcanvas-m15-upgrade-project.json"
 EXPECTED_NAME = "M15Expected.json"
 SOURCE_NAME = "m12-production-cup.foldcanvas.json"

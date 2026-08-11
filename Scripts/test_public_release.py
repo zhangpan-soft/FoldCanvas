@@ -20,12 +20,13 @@ from verify_public_release import (  # noqa: E402
     PublicReleaseVerificationError,
     expected_asset_names,
     validate_archive_and_manifest,
+    validate_release_metadata,
     verify_public_release,
 )
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 REPOSITORY = "zhangpan-soft/FoldCanvas"
-VERSION = "1.0.0-rc.2"
+VERSION = "1.0.0"
 TAG = "v" + VERSION
 TAG_COMMIT = "a" * 40
 
@@ -48,7 +49,7 @@ def write_metadata(path: pathlib.Path, assets: pathlib.Path, value: dict | None 
             "id": 123456,
             "tag_name": TAG,
             "draft": False,
-            "prerelease": True,
+            "prerelease": False,
             "html_url": f"https://github.com/{REPOSITORY}/releases/tag/{TAG}",
             "assets": [
                 {
@@ -68,16 +69,16 @@ def write_metadata(path: pathlib.Path, assets: pathlib.Path, value: dict | None 
 
 
 def main() -> int:
-    contract_path = ROOT / "Documentation~" / "m15-public-distribution.json"
+    contract_path = ROOT / "Documentation~" / "m17-stable-release.json"
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
-    if contract["candidateVersion"] != VERSION:
-        raise AssertionError("M15 public distribution version drifted")
-    if contract["priorRelease"]["archiveSha256"] != (
-        "ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd"
+    if contract["packageVersion"] != VERSION:
+        raise AssertionError("M17 stable release version drifted")
+    if contract["releaseCandidate"]["archiveSha256"] != (
+        "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707"
     ):
-        raise AssertionError("Published RC1 archive identity drifted")
+        raise AssertionError("Published RC2 archive identity drifted")
 
-    with tempfile.TemporaryDirectory(prefix="foldcanvas-m15-public-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-public-") as temporary:
         temporary_path = pathlib.Path(temporary)
         asset_directory = temporary_path / "assets"
         asset_directory.mkdir()
@@ -108,7 +109,11 @@ def main() -> int:
         )
         if first != second or first["qualified"] is not True:
             raise AssertionError("Public release verification is not deterministic")
-        if first["assetCount"] != 4 or first["archiveSha256"] != sha256(archive):
+        if (
+            first["assetCount"] != 4
+            or first["archiveSha256"] != sha256(archive)
+            or first["stableRelease"] is not True
+        ):
             raise AssertionError("Public release verification report differs")
         if "url" in json.dumps(first).lower():
             raise AssertionError("Public report must not retain a transport URL")
@@ -156,7 +161,7 @@ def main() -> int:
                 metadata_path,
                 contract_path,
                 REPOSITORY,
-                "v1.0.0-rc.1",
+                "v1.0.0-rc.2",
                 TAG_COMMIT,
             ),
             "Wrong public tag was accepted",
@@ -256,11 +261,39 @@ def main() -> int:
                 TAG,
                 TAG_COMMIT,
             ),
-            "Stale candidate evidence was accepted",
+            "Stale stable evidence was accepted",
         )
 
-    print("M15 public release verifier validation passed.")
-    print(f"Candidate {TAG}; exact four-asset allowlist; RC1 identity frozen.")
+        prerelease_metadata = copy.deepcopy(metadata)
+        prerelease_metadata["tag_name"] = "v1.0.0-rc.2"
+        prerelease_metadata["prerelease"] = True
+        prerelease_metadata["html_url"] = (
+            f"https://github.com/{REPOSITORY}/releases/tag/v1.0.0-rc.2"
+        )
+        release_id = validate_release_metadata(
+            prerelease_metadata,
+            REPOSITORY,
+            "v1.0.0-rc.2",
+            TAG_COMMIT,
+            {item.name: item for item in asset_directory.iterdir()},
+            True,
+        )
+        if release_id != prerelease_metadata["id"]:
+            raise AssertionError("Historical prerelease metadata was not accepted")
+        require_error(
+            lambda: validate_release_metadata(
+                metadata,
+                REPOSITORY,
+                TAG,
+                TAG_COMMIT,
+                {item.name: item for item in asset_directory.iterdir()},
+                True,
+            ),
+            "Stable metadata was accepted as a prerelease",
+        )
+
+    print("M17 public release verifier validation passed.")
+    print(f"Stable {TAG}; exact four-asset allowlist; RC2 identity frozen.")
     return 0
 
 

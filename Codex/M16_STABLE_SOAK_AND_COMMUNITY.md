@@ -214,4 +214,8 @@ and archive with the same 472/472, 512/512, and 5/5 green evidence and zero
 failed, skipped, or inconclusive tests. Evaluator run `31357213318` accepted
 2/2 qualifying scheduled runs, 14/14 gates, and zero release blockers, while
 remaining correctly blocked only at 139.1375/168 elapsed hours. The earliest
-time threshold is 2026-08-11T09:51:46Z; stable `1.0.0` remains unpublished.
+time threshold was 2026-08-11T09:51:46Z. Post-threshold evaluator run
+`31501082596` then accepted the same immutable RC2 candidate at 172.5 hours,
+2/2 qualifying schedules, 14/14 gates, and zero release blockers. Its report
+status is `ready`; M16 qualification is complete. Stable `1.0.0` publication
+is the separate active M17 task.

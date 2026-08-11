@@ -389,9 +389,8 @@ release run `30888055335` published four assets whose archive SHA-256 is
 
 ## M15: Public distribution and upgrade qualification
 
-**Status:** implementation complete locally on
-`codex/m15-public-distribution`; hosted PR/public-release qualification is
-pending.
+**Status:** merged, publicly qualified, and published as immutable
+`v1.0.0-rc.2`.
 
 **Proof:** the exact public GitHub release assets, rather than a local rebuild
 or CI-internal artifact, verify byte-for-byte and install into two independent
@@ -412,12 +411,46 @@ M15 does not add geometry behavior, change FoldScript `0.1`, add dependencies,
 claim another Unity version, publish final `1.0.0`, use generated geometry as
 migration source, or submit to an external marketplace.
 
-Local implementation evidence: Unity `6000.3.20f1` passed 472/472 package Edit
+Acceptance evidence: Unity `6000.3.20f1` passed 472/472 package Edit
 Mode tests. A separately generated upgrade host passed 1/1 on exact
 `0.1.0-preview.21`, removed only its marked derived state, then passed 1/1 on
 RC2 with identical FoldScript/PNG, geometry, OBJ, diagnostics, topology,
 validation, and single-closed-volume evidence. This does not substitute for the
 post-publication public-asset/consumer/upgrade workflow.
+
+## M16: Stable-candidate soak and contributor on-ramp
+
+**Status:** complete. RC2 completed 172.5 hours of candidate-pinned soak, two
+qualifying scheduled long runs, 14/14 reviewed gates, and zero open release
+blockers.
+
+**Proof:** scheduled validation always checks out the exact RC2 tag/commit and
+public archive, while the stable evaluator rejects manual-only runs, different
+trees, incomplete evidence, duplicate schedules, or an unreviewed gate ledger.
+Contributor intake is public fork/PR-only and never gives outside agents
+privileged CI or direct main access.
+
+M16 does not change geometry, FoldScript, package dependencies, or RC2 bytes.
+
+## M17: Stable 1.0.0 general availability
+
+**Status:** active on `agent/m17-stable-ga`.
+
+**Proof:** the exact M16 ready report authorizes one deterministic stable
+package. Normalized public Runtime API shape and all six production-corpus case
+records remain RC2-identical. Exact `v1.0.0` publication is non-prerelease and
+must be followed by public-asset verification, two clean Unity consumers, and
+an RC2-to-stable source-first recompilation.
+
+- exact run/artifact/report digest binding for M16 readiness
+- package/compiler version `1.0.0`, FoldScript still `0.1`
+- deterministic stable archive, checksum, manifest, and evidence sidecar
+- immutable `v1.0.0-rc.2` rollback identity
+- protected-main exact-head audit and tag-only publication
+- public stable release plus clean consumers and source upgrade evidence
+
+M17 does not add geometry, topology, operations, dependencies, marketplace
+publication, or support for an unqualified Unity version.
 
 ## Deliberate product non-goals
 

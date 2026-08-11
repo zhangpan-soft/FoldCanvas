@@ -18,8 +18,12 @@ jobs:
         run: python3 Scripts/validate_repository.py
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
-      - name: Validate current release-candidate contract
+      - name: Validate immutable RC2 release-candidate contract
         run: python3 Scripts/test_release_candidate.py
+      - name: Validate M17 stable release contract
+        run: python3 Scripts/test_stable_release.py
+      - name: Validate exact M16-to-M17 readiness evidence
+        run: python3 Scripts/test_stable_readiness.py
       - name: Validate M15 public release verifier
         run: python3 Scripts/test_public_release.py
       - name: Validate M15 source-first upgrade proof
