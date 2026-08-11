@@ -1350,8 +1350,9 @@ for required_fragment in [
     "Scripts/validate_upgrade_evidence.py",
     "Scripts/compare_upgrade_evidence.py",
     'sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-pr-host',
-    "FoldCanvas Source Upgrade Before Candidate",
-    "FoldCanvas Source Upgrade Candidate",
+    "Documentation~/m17-stable-release.json",
+    "FoldCanvas Source Upgrade Before Stable",
+    "FoldCanvas Source Upgrade Stable",
     "unity-source-upgrade-pre-release-results-and-logs",
 ]:
     if required_fragment not in unity_workflow:
