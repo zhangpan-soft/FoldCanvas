@@ -1,5 +1,8 @@
 # M14 release-candidate guide
 
+> Historical guide: `1.0.0-rc.2` is now the immutable rollback for stable
+> `1.0.0`. New installations should use the [stable release guide](stable-release.md).
+
 FoldCanvas `1.0.0-rc.2` preserves the accepted M00-M14 compiler behavior while
 adding public-download and source-upgrade qualification. It does not add a
 geometry operation and it is not the final `1.0.0` decision. Published RC1

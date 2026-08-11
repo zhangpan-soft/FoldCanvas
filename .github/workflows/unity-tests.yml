@@ -483,7 +483,7 @@ jobs:
           mkdir -p artifacts/m15-upgrade-pr
           baseline_commit="$(
             jq -r '.upgrade.fixture.baselineGitCommit' \
-              Documentation~/m15-public-distribution.json
+              Documentation~/m17-stable-release.json
           )"
           baseline_root="$RUNNER_TEMP/foldcanvas-m15-pr-baseline"
           git worktree add --detach "$baseline_root" "$baseline_commit"
@@ -538,7 +538,7 @@ jobs:
           testMode: EditMode
           artifactsPath: artifacts/m15-upgrade-pr-host/CIArtifacts/unity-upgrade-before
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          checkName: FoldCanvas Source Upgrade Before Candidate
+          checkName: FoldCanvas Source Upgrade Before Stable
 
       - name: Normalize and validate rollback phase
         shell: bash
@@ -596,7 +596,7 @@ jobs:
           cp -- artifacts/m15-upgrade-pr-host/M15Expected.json \
             artifacts/m15-upgrade-pr/after-expected.json
 
-      - name: Recompile unchanged source with candidate package
+      - name: Recompile unchanged source with stable package
         id: upgrade-after-tests
         uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
@@ -610,9 +610,9 @@ jobs:
           testMode: EditMode
           artifactsPath: artifacts/m15-upgrade-pr-host/CIArtifacts/unity-upgrade-after
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-          checkName: FoldCanvas Source Upgrade Candidate
+          checkName: FoldCanvas Source Upgrade Stable
 
-      - name: Validate and compare candidate phase
+      - name: Validate and compare stable phase
         shell: bash
         run: |
           set -euo pipefail
@@ -655,7 +655,7 @@ jobs:
           python3 Scripts/compare_upgrade_evidence.py \
             --before artifacts/m15-upgrade-pr/before/report.json \
             --after "$output_root/report.json" \
-            --contract Documentation~/m15-public-distribution.json \
+            --contract Documentation~/m17-stable-release.json \
             --output artifacts/m15-upgrade-pr/comparison.json
 
       - name: Upload pre-release source-upgrade evidence

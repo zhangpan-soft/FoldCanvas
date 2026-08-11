@@ -14,10 +14,11 @@ namespace FoldCanvas.Tests
     public sealed class M14ReleaseCandidateTests
     {
         private const string CandidateVersion = "1.0.0-rc.2";
+        private const string StableVersion = "1.0.0";
         private const string QualifiedUnityVersion = "6000.3.20f1";
 
         [Test]
-        public void ReleaseCandidate_VersionAndUnityMinimumAreExact()
+        public void HistoricalReleaseCandidate_AndCurrentStableVersionAreExact()
         {
             string root = PackageRoot();
             PackageManifest package = JsonUtility.FromJson<PackageManifest>(
@@ -25,9 +26,9 @@ namespace FoldCanvas.Tests
             ReleaseCandidateContract contract = LoadContract(root);
 
             Assert.That(package.name, Is.EqualTo("com.foldcanvas.core"));
-            Assert.That(package.version, Is.EqualTo(CandidateVersion));
-            Assert.That(FoldCanvasVersion.Package, Is.EqualTo(CandidateVersion));
-            Assert.That(FoldCanvasVersion.Compiler, Is.EqualTo(CandidateVersion));
+            Assert.That(package.version, Is.EqualTo(StableVersion));
+            Assert.That(FoldCanvasVersion.Package, Is.EqualTo(StableVersion));
+            Assert.That(FoldCanvasVersion.Compiler, Is.EqualTo(StableVersion));
             Assert.That(package.unity, Is.EqualTo("6000.3"));
             Assert.That(package.unityRelease, Is.EqualTo("20f1"));
             Assert.That(contract.candidateVersion, Is.EqualTo(CandidateVersion));
@@ -37,21 +38,17 @@ namespace FoldCanvas.Tests
         }
 
         [Test]
-        public void ReleaseCandidate_PublicRuntimeApiMatchesFrozenContract()
+        public void HistoricalReleaseCandidate_PublicRuntimeApiIdentityIsFrozen()
         {
             ReleaseCandidateContract contract = LoadContract(PackageRoot());
-            FoldCanvasPublicApiManifestDocument current =
-                FoldCanvasPublicApiManifest.CreateDocument(
-                    typeof(FoldCanvasCompiler).Assembly,
-                    FoldCanvasVersion.Package);
 
-            Assert.That(
-                current.signatureCount,
-                Is.EqualTo(contract.publicRuntimeApi.signatureCount));
-            Assert.That(
-                current.sha256,
-                Is.EqualTo(contract.publicRuntimeApi.sha256));
-            Assert.That(current.packageVersion, Is.EqualTo(CandidateVersion));
+            Assert.That(contract.publicRuntimeApi.assembly,
+                Is.EqualTo("FoldCanvas.Runtime"));
+            Assert.That(contract.publicRuntimeApi.signatureCount,
+                Is.EqualTo(808));
+            Assert.That(contract.publicRuntimeApi.sha256,
+                Is.EqualTo(
+                    "6bcda14a96fd55c5edae33a7da5c5c783978c4a5c7d300eba7dea525200fc8f4"));
         }
 
         [Test]
@@ -283,6 +280,7 @@ namespace FoldCanvas.Tests
         [Serializable]
         private sealed class PublicRuntimeApi
         {
+            public string assembly;
             public int signatureCount;
             public string sha256;
         }

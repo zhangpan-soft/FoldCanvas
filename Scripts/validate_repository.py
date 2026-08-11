@@ -125,6 +125,9 @@ required = [
     "Scripts/test_upgrade_proof.py",
     "Scripts/evaluate_stable_exit.py",
     "Scripts/test_stable_exit.py",
+    "Scripts/validate_stable_readiness.py",
+    "Scripts/test_stable_readiness.py",
+    "Scripts/test_stable_release.py",
     ".github/foldcanvas-active-candidate.json",
     ".github/workflows/m16-candidate-soak.yml",
     ".github/workflows/m16-stable-exit.yml",
@@ -154,6 +157,10 @@ required = [
     "Schema/foldcanvas-public-distribution.schema.json",
     "Schema/foldcanvas-public-release-verification.schema.json",
     "Schema/foldcanvas-stable-exit.schema.json",
+    "Documentation~/m17-stable-release.json",
+    "Documentation~/m17-stable-readiness-report.json",
+    "Documentation~/stable-release.md",
+    "Schema/foldcanvas-stable-release.schema.json",
     ".github/workflows/public-release-qualification.yml",
     "Scripts/Templates~/M15UpgradeHost/Assets/FoldCanvas.M15.Upgrade.Tests.asmdef",
     "Scripts/Templates~/M15UpgradeHost/Assets/M15SourceUpgradeTests.cs",
@@ -650,11 +657,8 @@ if (
     or m14_contract.get("foldScriptVersion") != "0.1"
 ):
     errors.append("Historical M14 release-candidate header is invalid")
-if not isinstance(package_version, str) or re.fullmatch(
-    r"1\.0\.0-rc\.[1-9][0-9]*",
-    package_version,
-) is None:
-    errors.append("M15 package version must remain a 1.0.0 release candidate")
+if package_version != "1.0.0":
+    errors.append("M17 package version must be exact stable 1.0.0")
 
 m14_unity_matrix = m14_contract.get("unityMatrix")
 if m14_unity_matrix != [
@@ -727,7 +731,7 @@ m15_distribution_schema = read_json(
 m15_schema_properties = m15_distribution_schema.get("properties", {})
 if (
     m15_schema_properties.get("candidateVersion", {}).get("const")
-    != package_version
+    != "1.0.0-rc.2"
     or "fixture"
     not in m15_schema_properties.get("upgrade", {}).get("required", [])
     or m15_schema_properties.get("stableRelease", {}).get("const") is not False
@@ -739,7 +743,7 @@ if (
     stable_exit_properties.get("format", {}).get("const")
     != "foldcanvas-stable-exit-report"
     or stable_exit_properties.get("candidateVersion", {}).get("const")
-    != package_version
+    != "1.0.0-rc.2"
     or stable_exit_properties.get("targetVersion", {}).get("const") != "1.0.0"
     or stable_exit_properties.get("minimumSoakHours", {}).get("minimum") != 168
     or stable_exit_properties.get("minimumScheduledLongRuns", {}).get("minimum")
@@ -766,8 +770,8 @@ if (
     m15_contract.get("format") != "foldcanvas-public-distribution"
     or m15_contract.get("version") != "1"
     or m15_contract.get("packageName") != "com.foldcanvas.core"
-    or m15_contract.get("candidateVersion") != package_version
-    or m15_contract.get("candidateTag") != f"v{package_version}"
+    or m15_contract.get("candidateVersion") != "1.0.0-rc.2"
+    or m15_contract.get("candidateTag") != "v1.0.0-rc.2"
     or m15_contract.get("stableRelease") is not False
     or m15_contract.get("foldScriptVersion") != "0.1"
     or m15_contract.get("unityVersion") != "6000.3.20f1"
@@ -775,12 +779,12 @@ if (
     errors.append("M15 public-distribution header is invalid")
 
 m15_api = m15_contract.get("publicRuntimeApi", {})
-if (
-    m15_api.get("assembly") != public_api.get("assembly")
-    or m15_api.get("signatureCount") != public_api.get("signatureCount")
-    or m15_api.get("sha256") != public_api.get("sha256")
-):
-    errors.append("M15 Runtime API does not match the compiled baseline")
+if m15_api != {
+    "assembly": "FoldCanvas.Runtime",
+    "signatureCount": 808,
+    "sha256": "6bcda14a96fd55c5edae33a7da5c5c783978c4a5c7d300eba7dea525200fc8f4",
+}:
+    errors.append("Historical M15 Runtime API identity drifted")
 
 m15_fixtures = m15_contract.get("foldScriptFixtures")
 m15_fixture_ids: list[str] = []
@@ -813,10 +817,10 @@ else:
         errors.append("M15 FoldScript fixture IDs must be unique and ordinal")
 
 expected_public_assets = [
-    f"com.foldcanvas.core-{package_version}.evidence.json",
-    f"com.foldcanvas.core-{package_version}.manifest.json",
-    f"com.foldcanvas.core-{package_version}.tgz",
-    f"com.foldcanvas.core-{package_version}.tgz.sha256",
+    "com.foldcanvas.core-1.0.0-rc.2.evidence.json",
+    "com.foldcanvas.core-1.0.0-rc.2.manifest.json",
+    "com.foldcanvas.core-1.0.0-rc.2.tgz",
+    "com.foldcanvas.core-1.0.0-rc.2.tgz.sha256",
 ]
 if m15_contract.get("publicAssets") != expected_public_assets:
     errors.append("M15 public release asset allowlist is invalid")
@@ -906,6 +910,116 @@ if m15_contract.get("escalations") != sorted(
 ):
     errors.append("M15 escalation list must be ordinal")
 
+m17_contract = read_json("Documentation~/m17-stable-release.json")
+m17_schema = read_json("Schema/foldcanvas-stable-release.schema.json")
+m17_report_path = ROOT / "Documentation~" / "m17-stable-readiness-report.json"
+m17_report = read_json("Documentation~/m17-stable-readiness-report.json")
+m17_properties = m17_schema.get("properties", {})
+if (
+    m17_properties.get("format", {}).get("const")
+    != "foldcanvas-stable-release"
+    or m17_properties.get("packageVersion", {}).get("const") != "1.0.0"
+    or m17_properties.get("tag", {}).get("const") != "v1.0.0"
+    or m17_properties.get("stableRelease", {}).get("const") is not True
+):
+    errors.append("M17 stable-release schema identity is invalid")
+if (
+    m17_contract.get("format") != "foldcanvas-stable-release"
+    or m17_contract.get("version") != "1"
+    or m17_contract.get("packageName") != "com.foldcanvas.core"
+    or m17_contract.get("packageVersion") != package_version
+    or m17_contract.get("tag") != "v1.0.0"
+    or m17_contract.get("stableRelease") is not True
+    or m17_contract.get("foldScriptVersion") != "0.1"
+    or m17_contract.get("unityVersion") != "6000.3.20f1"
+):
+    errors.append("M17 stable-release header is invalid")
+
+m17_qualification = m17_contract.get("stableQualification", {})
+if (
+    m17_qualification.get("workflowPath")
+    != ".github/workflows/m16-stable-exit.yml"
+    or m17_qualification.get("workflowRunId") != 31501082596
+    or m17_qualification.get("workflowHead")
+    != "34045dea48983f374e0be03689cf969e82264d0e"
+    or m17_qualification.get("artifactId") != 9105046023
+    or m17_qualification.get("artifactSha256")
+    != "945b75d662c0eb39395eae03b1ec32cefd8e2d6d8b2a83f759c1aa7c3dfc37b0"
+    or m17_qualification.get("reportSha256")
+    != "c581d89bb45a6269d183ff73d881d450f20c49e0dbd565e679ac9a922f779ad4"
+    or m17_qualification.get("status") != "ready"
+    or m17_qualification.get("targetVersion") != package_version
+    or m17_qualification.get("soakHours", 0) < 168
+    or m17_qualification.get("qualifyingScheduledLongRuns", 0) < 2
+    or m17_qualification.get("satisfiedGateCount")
+    != m17_qualification.get("requiredGateCount")
+    or m17_qualification.get("openReleaseBlockerCount") != 0
+):
+    errors.append("M17 stable qualification identity is invalid")
+if hashlib.sha256(m17_report_path.read_bytes()).hexdigest() != (
+    m17_qualification.get("reportSha256")
+):
+    errors.append("M17 stable readiness report digest drifted")
+if (
+    m17_report.get("status") != "ready"
+    or m17_report.get("targetVersion") != package_version
+    or m17_report.get("candidateCommit")
+    != m17_qualification.get("candidateCommit")
+    or m17_report.get("blockers") != []
+):
+    errors.append("M17 stable readiness report is not ready")
+
+m17_api = m17_contract.get("publicRuntimeApi", {})
+normalized_version_token = m17_api.get("normalizedVersionToken")
+if not isinstance(normalized_version_token, str) or not normalized_version_token:
+    errors.append("M17 normalized Runtime API token is invalid")
+else:
+    normalized_signatures = [
+        signature.replace(package_version, normalized_version_token)
+        for signature in public_signatures
+    ]
+    normalized_api_digest = hashlib.sha256(
+        ("\n".join(normalized_signatures) + "\n").encode("utf-8")
+    ).hexdigest()
+    if (
+        m17_api.get("assembly") != "FoldCanvas.Runtime"
+        or m17_api.get("signatureCount") != len(public_signatures)
+        or m17_api.get("normalizedSha256") != normalized_api_digest
+    ):
+        errors.append("M17 Runtime API shape differs from immutable RC2")
+
+corpus_cases_digest = hashlib.sha256(
+    json.dumps(
+        corpus_cases,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+).hexdigest()
+if (
+    m17_contract.get("productionCorpus", {}).get("caseIds")
+    != expected_corpus_ids
+    or m17_contract.get("productionCorpus", {}).get("casesSha256")
+    != corpus_cases_digest
+):
+    errors.append("M17 production corpus differs from immutable RC2")
+if m17_contract.get("rollback") != {
+    "packageVersion": "1.0.0-rc.2",
+    "tag": "v1.0.0-rc.2",
+    "gitCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+    "archiveSha256": "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707",
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+}:
+    errors.append("M17 immutable RC2 rollback contract is invalid")
+for field in (
+    "requiredPrePublicationGates",
+    "requiredPostPublicationGates",
+    "escalations",
+):
+    values = m17_contract.get(field, [])
+    if values != sorted(set(values)):
+        errors.append(f"M17 {field} must be unique and ordinal")
+
 release_workflow = (
     ROOT / ".github" / "workflows" / "package-release.yml"
 ).read_text(encoding="utf-8")
@@ -914,8 +1028,11 @@ for required_fragment in [
     "pull_request:",
     'tags:',
     '"v*-rc.*"',
+    '"v1.0.0"',
     'python3 Scripts/test_release_package.py',
     'python3 Scripts/test_release_candidate.py',
+    'python3 Scripts/test_stable_release.py',
+    'python3 Scripts/test_stable_readiness.py',
     'python3 Scripts/build_release_package.py',
     'actions/upload-artifact@',
     'if-no-files-found: error',
@@ -923,7 +1040,7 @@ for required_fragment in [
     "--verify-tag",
     "--prerelease",
     "contents: read",
-    "publish-prerelease:",
+    "publish-release:",
     "actions: write",
     "contents: write",
     "actions/download-artifact@",
@@ -960,7 +1077,11 @@ if "python3 Scripts/test_clean_install_project.py" not in repository_workflow:
 if "python3 Scripts/test_handoff_proof.py" not in repository_workflow:
     errors.append("Repository checks must validate M12 handoff contracts")
 if "python3 Scripts/test_release_candidate.py" not in repository_workflow:
-    errors.append("Repository checks must validate the current release candidate")
+    errors.append("Repository checks must validate immutable RC2 evidence")
+if "python3 Scripts/test_stable_release.py" not in repository_workflow:
+    errors.append("Repository checks must validate the M17 stable contract")
+if "python3 Scripts/test_stable_readiness.py" not in repository_workflow:
+    errors.append("Repository checks must validate exact stable readiness")
 if "python3 Scripts/test_public_release.py" not in repository_workflow:
     errors.append("Repository checks must validate M15 public release evidence")
 if "python3 Scripts/test_upgrade_proof.py" not in repository_workflow:
@@ -983,6 +1104,8 @@ if "python3 Scripts/test_action_pins.py" not in repository_workflow:
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
     "python3 Scripts/test_stable_exit.py",
+    "python3 Scripts/test_stable_release.py",
+    "python3 Scripts/test_stable_readiness.py",
 ]:
     if required_fragment not in release_workflow:
         errors.append(
@@ -1016,6 +1139,9 @@ for required_fragment in [
     'sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-host',
     "unity-source-first-upgrade-results-and-logs",
     "stable-exit-snapshot:",
+    "stable-publication-proof:",
+    "Documentation~/m17-stable-release.json",
+    "foldcanvas-stable-publication-proof",
     "issues: read",
     "Scripts/evaluate_stable_exit.py",
     "foldcanvas-stable-exit-snapshot",
@@ -1124,15 +1250,15 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M16: stable-candidate soak and contributor on-ramp" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M16 milestone")
+if "M17: stable `1.0.0` general availability" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M17 milestone")
 for required_fragment in [
-    "checks out exact RC2 tag/commit",
-    "Manual dispatch proves infrastructure but never stable qualification",
-    "Community growth is treated as product work",
+    "exact M16 readiness evidence freeze",
+    "version-neutral API-shape",
+    "Stable rollback is immutable `v1.0.0-rc.2`",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M16 active plan is missing: " + required_fragment)
+        errors.append("M17 active plan is missing: " + required_fragment)
 for required_fragment in [
     "3D result = 2D appearance",
     "Choose a contribution lane",
@@ -1224,8 +1350,9 @@ for required_fragment in [
     "Scripts/validate_upgrade_evidence.py",
     "Scripts/compare_upgrade_evidence.py",
     'sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-pr-host',
-    "FoldCanvas Source Upgrade Before Candidate",
-    "FoldCanvas Source Upgrade Candidate",
+    "Documentation~/m17-stable-release.json",
+    "FoldCanvas Source Upgrade Before Stable",
+    "FoldCanvas Source Upgrade Stable",
     "unity-source-upgrade-pre-release-results-and-logs",
 ]:
     if required_fragment not in unity_workflow:

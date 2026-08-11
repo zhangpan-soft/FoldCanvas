@@ -35,7 +35,7 @@ def main() -> int:
             if first_manifest.read_bytes() != second_manifest.read_bytes():
                 raise AssertionError("Release file manifests are not byte-identical")
             if first_evidence.read_bytes() != second_evidence.read_bytes():
-                raise AssertionError("Release candidate evidence is not byte-identical")
+                raise AssertionError("Release evidence is not byte-identical")
 
             with tarfile.open(first, mode="r:gz") as archive:
                 names = archive.getnames()
@@ -52,7 +52,10 @@ def main() -> int:
                 "package/Documentation~/index.md",
                 "package/Documentation~/m14-release-candidate.json",
                 "package/Documentation~/m15-public-distribution.json",
+                "package/Documentation~/m17-stable-readiness-report.json",
+                "package/Documentation~/m17-stable-release.json",
                 "package/Documentation~/release-candidate.md",
+                "package/Documentation~/stable-release.md",
                 "package/LICENSE.md",
                 "package/SECURITY.md",
                 "package/SUPPORT.md",
@@ -123,23 +126,31 @@ def main() -> int:
                 first_evidence.read_text(encoding="utf-8")
             )
             if (
-                evidence.get("format") != "foldcanvas-release-candidate-evidence"
+                evidence.get("format") != "foldcanvas-stable-release-evidence"
                 or evidence.get("state") != "built-unverified"
                 or evidence.get("packageVersion") != version
-                or evidence.get("stableRelease") is not False
+                or evidence.get("stableRelease") is not True
                 or evidence.get("archive", {}).get("sha256") != digest
                 or evidence.get("fileManifest", {}).get("file")
                 != first_manifest.name
                 or evidence.get("fileManifest", {}).get("sha256")
                 != hashlib.sha256(first_manifest.read_bytes()).hexdigest()
+                or evidence.get("publication", {}).get("githubPrerelease")
+                is not False
                 or evidence.get("publication", {}).get("finalStableRelease")
+                is not True
+                or evidence.get("publication", {}).get("externalMarketplace")
                 is not False
                 or evidence.get("contract", {}).get("path")
-                != "Documentation~/m15-public-distribution.json"
-                or evidence.get("priorRelease", {}).get("immutable") is not True
-                or evidence.get("stableExit", {}).get("status") != "blocked"
+                != "Documentation~/m17-stable-release.json"
+                or evidence.get("releaseCandidate", {}).get("immutable")
+                is not True
+                or evidence.get("stableQualification", {}).get("status")
+                != "ready"
+                or "stable-exit-ready"
+                not in evidence.get("requiredPrePublicationGates", [])
             ):
-                raise AssertionError("Release candidate evidence contract is invalid")
+                raise AssertionError("Stable release evidence contract is invalid")
 
     print(f"Release package validation passed for {version}.")
     print(f"Deterministic SHA256 {digest}")

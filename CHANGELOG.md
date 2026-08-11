@@ -6,6 +6,61 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-11
+
+### Added
+
+- M17 stable-release contract binding immutable RC2 public assets to the exact
+  M16 post-threshold `ready` report, version-neutral Runtime API shape,
+  unchanged production-corpus identities, rollback, and pre/post-publication
+  gates
+- deterministic stable evidence sidecar and fail-closed readiness validation
+  that rejects any changed run, artifact, report, candidate, gate count, or
+  non-ready status
+- stable-aware public verification and RC2-to-stable source-first upgrade proof
+  while retaining the historical RC2 prerelease verification contract
+
+### Changed
+
+- package and compiler semantic version advanced from `1.0.0-rc.2` to `1.0.0`
+  after 172.5 soak hours, two qualifying scheduled runs, 14/14 reviewed gates,
+  and zero open release blockers
+- exact `v1.0.0` tag publication produces a normal GitHub release only after
+  revalidating the bound M16 readiness artifact; RC tags remain prereleases
+- compatibility, support, and installation guidance now identify RC2 as the
+  immutable stable rollback rather than the active package
+
+### Preserved
+
+- no geometry, topology, FoldScript `0.1`, Runtime API shape, source UV,
+  dependency, render-pipeline, or qualified Unity `6000.3.20f1` behavior change
+- all maintained source, geometry, OBJ, diagnostic, topology, closed-volume,
+  robustness, and resource-envelope evidence remains the stable acceptance
+  baseline
+
+### Validated locally
+
+- Unity `6000.3.20f1` passed 477/477 complete package Edit Mode tests with
+  zero failures, skips, or inconclusive results
+- regenerated Runtime API contains 808 signatures and matches RC2 after
+  version normalization; the six production-corpus cases retain their exact
+  canonical evidence digest
+- repository, deterministic archive, readiness, public verifier, RC2 upgrade,
+  historical release, action-pin, trust-boundary, JSON/YAML, and diff checks
+  pass
+
+### Hosted verification pending
+
+- hosted Unity, clean-install, handoff, source-upgrade, long-run, exact-head
+  audit, stable tag, public assets, and two clean public consumers must be
+  green before this entry is considered released
+
+### Not included
+
+- external marketplace publication, signing, registry publication, new
+  geometry operations, dependencies, or support claims for untested Unity
+  versions
+
 ## [1.0.0-rc.2] - 2026-08-04
 
 ### Added

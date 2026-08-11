@@ -1,6 +1,6 @@
 # FoldCanvas
 
-> **Working title. 1.0 release candidate.** A 2D-first, deterministic surface compiler for Unity.
+> **Stable 1.0.0.** A 2D-first, deterministic surface compiler for Unity.
 
 ## Why this project exists
 
@@ -33,8 +33,9 @@ This repository is not another text-to-mesh wrapper. The geometry core is determ
 The repository currently contains the **M05 spherical-surface compiler, M06
 Editor authoring workspace, M07 geometry validator, M08 FoldScript
 interchange/repair boundary, M09 cyclic-topology proof, M10 bounded extension
-ecosystem, M11 production-readiness evidence, M12 source-first production
-handoff, M13 robustness/scale evidence, and the active M14 release candidate**:
+  ecosystem, M11 production-readiness evidence, M12 source-first production
+handoff, M13 robustness/scale evidence, M14/M15 release qualification, M16
+candidate soak, and the active M17 stable release**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -222,12 +223,11 @@ receipt remain derived; project GUIDs are receiver-owned. See the
 
 M13 adds replayable bounded valid/invalid cases, maintained near-limit assets,
 cancellation/retry isolation, resource envelopes, and a hosted long-run gate.
-M14 froze those accepted semantics as immutable `1.0.0-rc.1`. M15 advances
-packaged distribution work to `1.0.0-rc.2`, qualifies exactly Unity
-`6000.3.20f1`, and adds public GitHub asset verification, two public-archive
-consumers, source-first upgrade evidence, and a fail-closed stable-exit gate.
-See the
-[release-candidate guide](Documentation~/release-candidate.md).
+M14 and M15 published immutable RC1/RC2 candidates. M16 completed 172.5 hours
+of candidate-pinned soak, two genuine scheduled long runs, 14/14 reviewed
+gates, and zero release blockers. M17 promotes that exact lineage to stable
+`1.0.0` on Unity `6000.3.20f1` without changing geometry, FoldScript `0.1`, or
+the normalized public Runtime API. See the [stable release guide](Documentation~/stable-release.md).
 
 ## Design principles
 
@@ -379,7 +379,9 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M12 | Portable source-first production handoff — merged through PR #11 |
 | M13 | Bounded robustness, scale, interruption/retry, and long-running regression evidence — merged through PR #12 |
 | M14 | Public API/FoldScript freeze and immutable `1.0.0-rc.1` — merged and published through PR #13 |
-| M15 | Public release assets, source-first upgrade, and `1.0.0-rc.2` exit gates — active |
+| M15 | Public release assets, source-first upgrade, and immutable `1.0.0-rc.2` — complete |
+| M16 | Candidate-pinned soak, reviewed gate ledger, and contributor trust boundary — complete |
+| M17 | Stable `1.0.0`, RC2 upgrade proof, and public qualification — active |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

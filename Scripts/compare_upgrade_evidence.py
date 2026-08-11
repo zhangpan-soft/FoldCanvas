@@ -124,8 +124,13 @@ def compare(
         "fromPackageVersions", []
     ):
         raise ValueError("M15 before package version is not an approved baseline")
-    if after.get("packageVersion") != contract.get("candidateVersion"):
-        raise ValueError("M15 after package version is not the current candidate")
+    target_version = (
+        contract.get("packageVersion")
+        if contract.get("stableRelease") is True
+        else contract.get("candidateVersion")
+    )
+    if after.get("packageVersion") != target_version:
+        raise ValueError("M15 after package version is not the contract target")
     if before.get("packageVersion") == after.get("packageVersion"):
         raise ValueError("M15 upgrade did not replace the package version")
     if before.get("packageSha256") == after.get("packageSha256"):

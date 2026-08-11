@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-stable-release.schema.json",
+  "title": "FoldCanvas stable release contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "packageName",
+    "packageVersion",
+    "tag",
+    "stableRelease",
+    "foldScriptVersion",
+    "unityVersion",
+    "releaseCandidate",
+    "stableQualification",
+    "publicRuntimeApi",
+    "productionCorpus",
+    "publicAssets",
+    "upgrade",
+    "requiredPrePublicationGates",
+    "requiredPostPublicationGates",
+    "rollback",
+    "publication",
+    "escalations"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-stable-release" },
+    "version": { "const": "1" },
+    "packageName": { "const": "com.foldcanvas.core" },
+    "packageVersion": { "const": "1.0.0" },
+    "tag": { "const": "v1.0.0" },
+    "stableRelease": { "const": true },
+    "foldScriptVersion": { "const": "0.1" },
+    "unityVersion": { "const": "6000.3.20f1" },
+    "releaseCandidate": { "$ref": "#/$defs/releaseCandidate" },
+    "stableQualification": { "$ref": "#/$defs/stableQualification" },
+    "publicRuntimeApi": { "$ref": "#/$defs/publicRuntimeApi" },
+    "productionCorpus": { "$ref": "#/$defs/productionCorpus" },
+    "publicAssets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "upgrade": { "type": "object" },
+    "requiredPrePublicationGates": {
+      "type": "array",
+      "minItems": 12,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "requiredPostPublicationGates": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rollback": { "type": "object" },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "githubPrerelease",
+        "finalStableRelease",
+        "externalMarketplace"
+      ],
+      "properties": {
+        "githubPrerelease": { "const": false },
+        "finalStableRelease": { "const": true },
+        "externalMarketplace": { "const": false }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "releaseCandidate": {
+      "type": "object",
+      "required": [
+        "packageVersion",
+        "tag",
+        "candidateCommit",
+        "releaseId",
+        "publishedAt",
+        "archiveSha256",
+        "checksumSha256",
+        "manifestSha256",
+        "evidenceSha256",
+        "assetCount",
+        "immutable"
+      ],
+      "properties": {
+        "packageVersion": { "const": "1.0.0-rc.2" },
+        "tag": { "const": "v1.0.0-rc.2" },
+        "candidateCommit": { "$ref": "#/$defs/commit" },
+        "releaseId": { "type": "integer", "minimum": 1 },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "archiveSha256": { "$ref": "#/$defs/sha256" },
+        "checksumSha256": { "$ref": "#/$defs/sha256" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "evidenceSha256": { "$ref": "#/$defs/sha256" },
+        "assetCount": { "const": 4 },
+        "immutable": { "const": true }
+      }
+    },
+    "stableQualification": {
+      "type": "object",
+      "required": [
+        "workflowPath",
+        "workflowRunId",
+        "workflowHead",
+        "artifactId",
+        "artifactName",
+        "artifactSha256",
+        "reportSha256",
+        "inputSha256",
+        "evaluatedAt",
+        "status",
+        "targetVersion",
+        "soakHours",
+        "minimumSoakHours",
+        "qualifyingScheduledLongRuns",
+        "minimumScheduledLongRuns",
+        "satisfiedGateCount",
+        "requiredGateCount",
+        "openReleaseBlockerCount",
+        "candidateCommit",
+        "candidateTag",
+        "candidateVersion"
+      ],
+      "properties": {
+        "workflowPath": { "const": ".github/workflows/m16-stable-exit.yml" },
+        "workflowRunId": { "type": "integer", "minimum": 1 },
+        "workflowHead": { "$ref": "#/$defs/commit" },
+        "artifactId": { "type": "integer", "minimum": 1 },
+        "artifactName": { "type": "string", "minLength": 1 },
+        "artifactSha256": { "$ref": "#/$defs/sha256" },
+        "reportSha256": { "$ref": "#/$defs/sha256" },
+        "inputSha256": { "$ref": "#/$defs/sha256" },
+        "evaluatedAt": { "type": "string", "format": "date-time" },
+        "status": { "const": "ready" },
+        "targetVersion": { "const": "1.0.0" },
+        "soakHours": { "type": "number", "minimum": 168 },
+        "minimumSoakHours": { "type": "integer", "minimum": 168 },
+        "qualifyingScheduledLongRuns": { "type": "integer", "minimum": 2 },
+        "minimumScheduledLongRuns": { "type": "integer", "minimum": 2 },
+        "satisfiedGateCount": { "type": "integer", "minimum": 14 },
+        "requiredGateCount": { "type": "integer", "minimum": 14 },
+        "openReleaseBlockerCount": { "const": 0 },
+        "candidateCommit": { "$ref": "#/$defs/commit" },
+        "candidateTag": { "const": "v1.0.0-rc.2" },
+        "candidateVersion": { "const": "1.0.0-rc.2" }
+      }
+    },
+    "publicRuntimeApi": {
+      "type": "object",
+      "required": [
+        "assembly",
+        "signatureCount",
+        "normalizedVersionToken",
+        "normalizedSha256"
+      ],
+      "properties": {
+        "assembly": { "const": "FoldCanvas.Runtime" },
+        "signatureCount": { "type": "integer", "minimum": 1 },
+        "normalizedVersionToken": { "const": "{PACKAGE_VERSION}" },
+        "normalizedSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "productionCorpus": {
+      "type": "object",
+      "required": ["formatVersion", "caseIds", "casesSha256"],
+      "properties": {
+        "formatVersion": { "const": "1" },
+        "caseIds": {
+          "type": "array",
+          "minItems": 6,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "casesSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

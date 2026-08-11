@@ -132,9 +132,14 @@ def advance_project(
         raise ValueError("M15Input must contain only two regular source files")
 
     package_version, package_digest = archive_metadata(archive_path)
-    if package_version != contract.get("candidateVersion"):
+    target_version = (
+        contract.get("packageVersion")
+        if contract.get("stableRelease") is True
+        else contract.get("candidateVersion")
+    )
+    if package_version != target_version:
         raise ValueError(
-            "upgrade target archive does not match the M15 candidate version"
+            "upgrade target archive does not match the contract target version"
         )
     if package_version == expected.get("packageVersion"):
         raise ValueError("upgrade target must differ from the baseline version")

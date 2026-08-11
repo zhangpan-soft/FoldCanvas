@@ -50,6 +50,11 @@ def main() -> int:
     if values["candidate_tag"] != "v1.0.0-rc.2":
         raise AssertionError("active candidate tag was not preserved")
 
+    historical_package = copy.deepcopy(PACKAGE)
+    historical_package["version"] = CONTROL["candidateVersion"]
+    if validate(CONTROL, CONTRACT, historical_package) != values:
+        raise AssertionError("RC2 and stable lineage validation differ")
+
     assert_rejected(lambda value: value.update(active=False))
     assert_rejected(lambda value: value.update(candidateVersion="1.0.0-rc.1"))
     assert_rejected(lambda value: value.update(candidateTag="v1.0.0-rc.1"))

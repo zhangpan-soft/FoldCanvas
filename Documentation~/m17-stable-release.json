@@ -1,0 +1,143 @@
+{
+  "format": "foldcanvas-stable-release",
+  "version": "1",
+  "packageName": "com.foldcanvas.core",
+  "packageVersion": "1.0.0",
+  "tag": "v1.0.0",
+  "stableRelease": true,
+  "foldScriptVersion": "0.1",
+  "unityVersion": "6000.3.20f1",
+  "releaseCandidate": {
+    "packageVersion": "1.0.0-rc.2",
+    "tag": "v1.0.0-rc.2",
+    "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+    "releaseId": 364762780,
+    "publishedAt": "2026-08-04T09:51:46Z",
+    "archiveSha256": "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707",
+    "checksumSha256": "9201b1aea39f8aa74532e74d46824b5386dcfd196e6ef5048a24f9db4219868a",
+    "manifestSha256": "8c8873104a55810b596b40cf154ea45a98c8cbe55def8624dc05dddff03e08e7",
+    "evidenceSha256": "501aba0dffbc870e0fadce5195f178aac654ee2c29fa20be80dae1fcbb4590bc",
+    "assetCount": 4,
+    "immutable": true
+  },
+  "stableQualification": {
+    "workflowPath": ".github/workflows/m16-stable-exit.yml",
+    "workflowRunId": 31501082596,
+    "workflowHead": "34045dea48983f374e0be03689cf969e82264d0e",
+    "artifactId": 9105046023,
+    "artifactName": "foldcanvas-m16-stable-exit-31501082596",
+    "artifactSha256": "945b75d662c0eb39395eae03b1ec32cefd8e2d6d8b2a83f759c1aa7c3dfc37b0",
+    "reportSha256": "c581d89bb45a6269d183ff73d881d450f20c49e0dbd565e679ac9a922f779ad4",
+    "inputSha256": "ed371baa5c48eafbd680ef2491426d3a6fcf02f6938713fa4318f9118271652f",
+    "evaluatedAt": "2026-08-11T14:21:46Z",
+    "status": "ready",
+    "targetVersion": "1.0.0",
+    "soakHours": 172.5,
+    "minimumSoakHours": 168,
+    "qualifyingScheduledLongRuns": 2,
+    "minimumScheduledLongRuns": 2,
+    "satisfiedGateCount": 14,
+    "requiredGateCount": 14,
+    "openReleaseBlockerCount": 0,
+    "candidateCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+    "candidateTag": "v1.0.0-rc.2",
+    "candidateVersion": "1.0.0-rc.2"
+  },
+  "publicRuntimeApi": {
+    "assembly": "FoldCanvas.Runtime",
+    "signatureCount": 808,
+    "normalizedVersionToken": "{PACKAGE_VERSION}",
+    "normalizedSha256": "2e63c82335950440c922b7a66a936442498e24ce8dddb539d147007549dfb3ee"
+  },
+  "productionCorpus": {
+    "formatVersion": "1",
+    "caseIds": [
+      "cyclic-torus",
+      "invalid-off-grid-fold",
+      "planar-artwork",
+      "production-cup",
+      "registered-wave",
+      "sphere-gores"
+    ],
+    "casesSha256": "ebec84a67abece8a7d04c2fda32c193ed9939e5626b357b3f9bbaf1cd81b72f3"
+  },
+  "publicAssets": [
+    "com.foldcanvas.core-1.0.0.evidence.json",
+    "com.foldcanvas.core-1.0.0.manifest.json",
+    "com.foldcanvas.core-1.0.0.tgz",
+    "com.foldcanvas.core-1.0.0.tgz.sha256"
+  ],
+  "upgrade": {
+    "fromPackageVersions": [
+      "1.0.0-rc.2"
+    ],
+    "fixture": {
+      "id": "production-cup",
+      "baselinePackageVersion": "1.0.0-rc.2",
+      "baselineGitCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+      "sourcePath": "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+      "appearancePath": "Samples~/BootstrapPanel/M04ProductionCupCanvas.png",
+      "inputFileNames": [
+        "M04ProductionCupCanvas.png",
+        "m12-production-cup.foldcanvas.json"
+      ],
+      "sourceRawSha256": "44b3c474784736d5e47d974f94b87c56532db01cffc963330d7ae82b88457fc5",
+      "canonicalSourceSha256": "ff9df3d482f1b73820f026093ef3094b0e17f313ebeb26055129af03c41844ff",
+      "appearanceSha256": "2b9691733e89987d795e9dcbcd857902f6feb7109540d36fded1b481ded1a383",
+      "renderVertices": 2972,
+      "topologyVertices": 2562,
+      "triangles": 5120,
+      "closedVolume": true
+    },
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+    "derivedInputsForbidden": [
+      "material",
+      "mesh",
+      "obj",
+      "prefab",
+      "receipt",
+      "report",
+      "screenshot"
+    ],
+    "unknownVersionsFailClosed": true
+  },
+  "requiredPrePublicationGates": [
+    "clean-install-a",
+    "clean-install-b",
+    "deterministic-release",
+    "m13-robustness-long-run",
+    "production-corpus",
+    "production-handoff-producer",
+    "production-handoff-receiver",
+    "public-runtime-api",
+    "repository-validation",
+    "source-upgrade",
+    "stable-exit-ready",
+    "unity-editmode"
+  ],
+  "requiredPostPublicationGates": [
+    "public-release-assets",
+    "public-release-consumer-a",
+    "public-release-consumer-b",
+    "source-upgrade"
+  ],
+  "rollback": {
+    "packageVersion": "1.0.0-rc.2",
+    "tag": "v1.0.0-rc.2",
+    "gitCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+    "archiveSha256": "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707",
+    "sourceAuthority": "2d-canvas-plus-foldscript"
+  },
+  "publication": {
+    "githubPrerelease": false,
+    "finalStableRelease": true,
+    "externalMarketplace": false
+  },
+  "escalations": [
+    "credentials",
+    "external-marketplace-publication",
+    "irreversible-permissions",
+    "legal-decisions",
+    "paid-services"
+  ]
+}

@@ -6,12 +6,9 @@ import json
 import pathlib
 import re
 import sys
-import tempfile
 
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-
-from build_release_package import build_release_bundle  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -32,25 +29,20 @@ def main() -> int:
             encoding="utf-8"
         )
     )
-    public_api = json.loads(
-        (ROOT / "Documentation~" / "public-runtime-api.json").read_text(
-            encoding="utf-8"
-        )
-    )
     corpus = json.loads(
         (ROOT / "Documentation~" / "m11-production-corpus.json").read_text(
             encoding="utf-8"
         )
     )
 
-    require(package["version"] == "1.0.0-rc.2", "M15 candidate version drifted")
+    require(package["version"] == "1.0.0", "Current stable version drifted")
     require(package["unity"] == "6000.3", "Unity major/minor minimum drifted")
     require(package["unityRelease"] == "20f1", "Unity exact release drifted")
     require(
-        contract["candidateVersion"] == package["version"],
-        "Contract version mismatch",
+        contract["candidateVersion"] == "1.0.0-rc.2",
+        "Historical M15 candidate version drifted",
     )
-    require(contract["candidateTag"] == "v" + package["version"], "Tag mismatch")
+    require(contract["candidateTag"] == "v1.0.0-rc.2", "M15 tag drifted")
     require(contract["stableRelease"] is False, "M15 must remain a pre-release")
     require(contract["foldScriptVersion"] == "0.1", "FoldScript version drifted")
     require(
@@ -58,17 +50,13 @@ def main() -> int:
         "Qualified Unity row drifted",
     )
     require(
-        public_api["packageVersion"] == package["version"],
-        "API version mismatch",
-    )
-    require(
-        corpus["packageVersion"] == package["version"],
-        "Corpus version mismatch",
-    )
-    require(
-        contract["publicRuntimeApi"]["signatureCount"] == public_api["signatureCount"]
-        and contract["publicRuntimeApi"]["sha256"] == public_api["sha256"],
-        "Frozen public Runtime API evidence mismatch",
+        contract["publicRuntimeApi"]
+        == {
+            "assembly": "FoldCanvas.Runtime",
+            "signatureCount": 808,
+            "sha256": "6bcda14a96fd55c5edae33a7da5c5c783978c4a5c7d300eba7dea525200fc8f4",
+        },
+        "Historical M15 public Runtime API identity drifted",
     )
     require(
         contract["productionCorpus"]["caseIds"]
@@ -147,32 +135,16 @@ def main() -> int:
         "Stable exit must remain explicitly blocked",
     )
 
-    with tempfile.TemporaryDirectory(prefix="foldcanvas-m15-a-") as first_dir:
-        with tempfile.TemporaryDirectory(prefix="foldcanvas-m15-b-") as second_dir:
-            first = build_release_bundle(pathlib.Path(first_dir), "v1.0.0-rc.2")
-            second = build_release_bundle(pathlib.Path(second_dir), "v1.0.0-rc.2")
-            for first_path, second_path in zip(first, second):
-                require(
-                    first_path.read_bytes() == second_path.read_bytes(),
-                    f"M15 release output is not deterministic: {first_path.name}",
-                )
-            try:
-                build_release_bundle(pathlib.Path(second_dir), "v1.0.0")
-            except ValueError:
-                pass
-            else:
-                raise AssertionError(
-                    "The M15 workflow must reject a final stable 1.0.0 tag"
-                )
-            for wrong_tag in ("v1.0.0-rc.1", "v1.0.0-rc.3", "v2.0.0-rc.2"):
-                try:
-                    build_release_bundle(pathlib.Path(second_dir), wrong_tag)
-                except ValueError:
-                    pass
-                else:
-                    raise AssertionError(
-                        "The M15 workflow must reject mismatched tag " + wrong_tag
-                    )
+    require(
+        contract["publicAssets"]
+        == [
+            "com.foldcanvas.core-1.0.0-rc.2.evidence.json",
+            "com.foldcanvas.core-1.0.0-rc.2.manifest.json",
+            "com.foldcanvas.core-1.0.0-rc.2.tgz",
+            "com.foldcanvas.core-1.0.0-rc.2.tgz.sha256",
+        ],
+        "Historical RC2 public asset allowlist drifted",
+    )
 
     print("M15 public-distribution candidate validation passed.")
     print("Candidate 1.0.0-rc.2; Unity 6000.3.20f1; FoldScript 0.1.")

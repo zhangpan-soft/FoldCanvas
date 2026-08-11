@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the non-packaged control record used by scheduled RC soak runs."""
+"""Validate the immutable control record used by scheduled RC soak runs."""
 
 from __future__ import annotations
 
@@ -47,13 +47,16 @@ def validate(control: dict, contract: dict, package: dict) -> dict:
         raise ValueError("active candidate package name does not match package.json")
 
     candidate_version = control.get("candidateVersion")
+    stable_target = contract.get("stableExit", {}).get("targetVersion")
     if (
         not isinstance(candidate_version, str)
         or VERSION.fullmatch(candidate_version) is None
-        or candidate_version != package.get("version")
         or candidate_version != contract.get("candidateVersion")
+        or package.get("version") not in {candidate_version, stable_target}
     ):
-        raise ValueError("active candidate version does not match the RC contract")
+        raise ValueError(
+            "active candidate version does not match the RC/stable lineage"
+        )
 
     candidate_tag = control.get("candidateTag")
     if (

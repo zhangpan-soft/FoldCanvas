@@ -6,6 +6,7 @@ on:
   push:
     tags:
       - "v*-rc.*"
+      - "v1.0.0"
 
 permissions:
   contents: read
@@ -26,6 +27,12 @@ jobs:
 
       - name: Validate current release-candidate contract
         run: python3 Scripts/test_release_candidate.py
+
+      - name: Validate stable release contract
+        run: python3 Scripts/test_stable_release.py
+
+      - name: Validate exact stable readiness evidence
+        run: python3 Scripts/test_stable_readiness.py
 
       - name: Validate M15 public release verifier
         run: python3 Scripts/test_public_release.py
@@ -59,8 +66,8 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-  publish-prerelease:
-    name: Publish exact RC tag
+  publish-release:
+    name: Publish exact reviewed tag
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build-package
     runs-on: ubuntu-latest
@@ -68,26 +75,76 @@ jobs:
       actions: write
       contents: write
     steps:
+      - name: Check out exact release tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
       - name: Download validated release-candidate bundle
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           name: foldcanvas-upm-release-candidate
           path: artifacts/package
 
-      - name: Publish matching tagged pre-release
+      - name: Revalidate exact M16 readiness before stable publication
+        if: github.ref_name == 'v1.0.0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
+          output_root="artifacts/m17-stable-readiness"
+          mkdir -p "$output_root/download"
+          run_id="$(
+            jq -r '.stableQualification.workflowRunId' \
+              Documentation~/m17-stable-release.json
+          )"
+          artifact_id="$(
+            jq -r '.stableQualification.artifactId' \
+              Documentation~/m17-stable-release.json
+          )"
+          artifact_name="$(
+            jq -r '.stableQualification.artifactName' \
+              Documentation~/m17-stable-release.json
+          )"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" \
+            > "$output_root/run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id" \
+            > "$output_root/artifact.json"
+          gh run download "$run_id" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "$artifact_name" \
+            --dir "$output_root/download"
+          mapfile -t reports < <(
+            find "$output_root/download" -type f -name report.json \
+              -print | LC_ALL=C sort
+          )
+          test "${#reports[@]}" = "1"
+          python3 Scripts/validate_stable_readiness.py \
+            --report "${reports[0]}" \
+            --run-metadata "$output_root/run.json" \
+            --artifact-metadata "$output_root/artifact.json" \
+            --output "$output_root/verification.json"
+
+      - name: Publish matching reviewed GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_flags=()
+          if [[ "$GITHUB_REF_NAME" == *-rc.* ]]; then
+            release_flags+=(--prerelease)
+          elif [[ "$GITHUB_REF_NAME" != "v1.0.0" ]]; then
+            echo "::error::Unsupported FoldCanvas release tag."
+            exit 1
+          fi
           gh release create "$GITHUB_REF_NAME" \
             artifacts/package/*.tgz \
             artifacts/package/*.sha256 \
             artifacts/package/*.manifest.json \
             artifacts/package/*.evidence.json \
             --verify-tag \
-            --prerelease \
             --generate-notes \
+            "${release_flags[@]}" \
             --repo "$GITHUB_REPOSITORY" \
             --title "FoldCanvas $GITHUB_REF_NAME"
 
