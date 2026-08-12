@@ -61,9 +61,10 @@ canvas plus FoldScript, and generated Meshes remain derived artifacts.
 
 Active on `agent/m19-schema-field-coverage`. The validator currently discovers
 72 canonical scoped fields across all implemented FoldScript `0.1` panels,
-boundaries, seams, operations, and compile settings. Seven deterministic cases
+boundaries, seams, operations, and compile settings. Eight deterministic cases
 cover the real repository, missing/stale/duplicate documentation, a newly
-undocumented schema field, an unreviewed structural keyword, and sorted
-multi-error output. The full local repository matrix is green, and the rebuilt
+undocumented schema field, an unreviewed structural keyword, an invalid
+operation reference, and sorted multi-error output. The full local repository
+matrix is green, and the rebuilt
 stable archive remains exactly
 `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.

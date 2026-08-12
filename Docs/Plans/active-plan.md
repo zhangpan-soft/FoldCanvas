@@ -114,7 +114,7 @@ release-excluded gate and related documentation; no source migration is needed.
 - 2026-08-12: selected issue #20 because schema/documentation drift directly
   impairs reliable human and AI FoldScript authoring; no external CLAIM exists.
 - 2026-08-12: implemented scoped discovery for 72 current public fields and
-  seven deterministic positive/negative cases. Initial focused tests pass.
+  eight deterministic positive/negative cases. Initial focused tests pass.
 - 2026-08-12: wired the gate into hosted repository checks and the repository's
   self-validation. The complete local static/release/maintenance matrix passes;
   the stable archive remains exactly

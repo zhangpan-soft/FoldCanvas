@@ -34,9 +34,7 @@ SCHEMA_ONLY_STRUCTURAL_KEYWORDS = frozenset(
         "const",
         "default",
         "description",
-        "else",
         "enum",
-        "exclusiveMaximum",
         "exclusiveMinimum",
         "if",
         "items",
@@ -46,7 +44,6 @@ SCHEMA_ONLY_STRUCTURAL_KEYWORDS = frozenset(
         "minItems",
         "minLength",
         "minimum",
-        "not",
         "oneOf",
         "pattern",
         "prefixItems",
@@ -131,23 +128,35 @@ def collect_structural_keyword_errors(schema: object) -> list[str]:
 
 
 def referenced_definitions(
-    schema: Mapping[str, object], path: tuple[str, ...]
+    schema: Mapping[str, object],
+    path: tuple[str, ...],
+    collection_name: str,
+    errors: list[str],
 ) -> list[str]:
     value: object = schema
     for component in path:
         if not isinstance(value, Mapping) or component not in value:
+            errors.append(f"schema path is missing: {'/'.join(path)}")
             return []
         value = value[component]
     if not isinstance(value, list):
+        errors.append(f"{collection_name} oneOf must be an array")
         return []
 
     names: list[str] = []
-    for item in value:
+    for index, item in enumerate(value):
         if not isinstance(item, Mapping):
+            errors.append(
+                f"{collection_name} oneOf entry {index} must be a local $defs ref"
+            )
             continue
         name = local_ref_name(item.get("$ref"))
-        if name is not None:
-            names.append(name)
+        if name is None:
+            errors.append(
+                f"{collection_name} oneOf entry {index} must be a local $defs ref"
+            )
+            continue
+        names.append(name)
     return names
 
 
@@ -194,6 +203,8 @@ def collect_schema_fields(schema: object) -> tuple[set[str], set[str], list[str]
     panel_names = referenced_definitions(
         schema,
         ("properties", "panels", "items", "oneOf"),
+        "panels",
+        errors,
     )
     panel_paths: dict[str, set[tuple[str, ...]]] = {}
     for name in panel_names:
@@ -232,6 +243,8 @@ def collect_schema_fields(schema: object) -> tuple[set[str], set[str], list[str]
     operation_names = referenced_definitions(
         schema,
         ("properties", "operations", "items", "oneOf"),
+        "operations",
+        errors,
     )
     operation_paths: dict[str, set[tuple[str, ...]]] = {}
     for name in operation_names:

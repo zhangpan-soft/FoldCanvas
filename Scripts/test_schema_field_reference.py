@@ -165,6 +165,18 @@ def main() -> int:
             "unreviewed schema structural keyword: #/x-opaque-policy",
         )
 
+        invalid_operation_ref_schema = json.loads(json.dumps(fixture_schema))
+        invalid_operation_ref_schema["properties"]["operations"]["items"][
+            "oneOf"
+        ].append({"type": "object"})
+        assert_exact_error(
+            collect_coverage_errors(
+                invalid_operation_ref_schema,
+                fixture_markdown,
+            ),
+            "operations oneOf entry 7 must be a local $defs ref",
+        )
+
         two_stale_rows = append_after_field(
             fixture_markdown,
             "extensions",
@@ -184,7 +196,7 @@ def main() -> int:
         ):
             raise AssertionError("validator mutated its schema or documentation input")
 
-    print("Schema field-reference validation tests passed: 7 cases.")
+    print("Schema field-reference validation tests passed: 8 cases.")
     return 0
 
 
