@@ -10,6 +10,121 @@ permissions:
   contents: read
 
 jobs:
+  unity-proof-gallery:
+    name: Unity 6000.3.20f1 proof-gallery regeneration
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == github.repository_owner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Create clean proof-gallery host
+        id: proof-inputs
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/m21-package
+          python3 Scripts/build_release_package.py \
+            --output artifacts/m21-package \
+            --tag v1.0.0
+          python3 Scripts/create_proof_gallery_project.py \
+            --project artifacts/m21-proof-host \
+            --package-archive \
+            artifacts/m21-package/com.foldcanvas.core-1.0.0.tgz
+          echo "generator_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "test_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "runner_hash=$(sha256sum Scripts/generate_proof_gallery.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "project_builder_hash=$(sha256sum Scripts/create_proof_gallery_project.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Regenerate proof-gallery evidence
+        id: unity-proof
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m21-proof-host
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m21-proof-host/CIArtifacts/unity-proof-gallery
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Proof Gallery
+          customParameters: >-
+            -testFilter
+            FoldCanvas.M21Proof.FoldCanvasProofGalleryTests
+            -foldCanvasProofOutput
+            /github/workspace/artifacts/m21-proof-output
+            -foldCanvasProofSourceRevision
+            ${{ github.event.pull_request.head.sha || github.sha }}
+            -foldCanvasProofGeneratorSha256
+            ${{ steps.proof-inputs.outputs.generator_hash }}
+            -foldCanvasProofTestSha256
+            ${{ steps.proof-inputs.outputs.test_hash }}
+            -foldCanvasProofRunnerSha256
+            ${{ steps.proof-inputs.outputs.runner_hash }}
+            -foldCanvasProofProjectBuilderSha256
+            ${{ steps.proof-inputs.outputs.project_builder_hash }}
+
+      - name: Compare regenerated proof gallery
+        if: always()
+        run: |
+          set -euo pipefail
+          output="artifacts/m21-proof-output"
+          test -d "$output"
+          python3 Scripts/validate_proof_gallery.py \
+            --manifest "$output/manifest.json" \
+            --allow-missing-readme
+          python3 - <<'PY'
+          import json
+          import pathlib
+
+          tracked = json.loads(
+              pathlib.Path("Docs/Community/ProofGallery/manifest.json")
+              .read_text(encoding="utf-8")
+          )
+          regenerated = json.loads(
+              pathlib.Path("artifacts/m21-proof-output/manifest.json")
+              .read_text(encoding="utf-8")
+          )
+          for key in (
+              "format",
+              "version",
+              "unityVersion",
+              "packageVersion",
+              "foldScriptVersion",
+              "generator",
+              "generatorSha256",
+              "runnerSha256",
+              "testSha256",
+              "projectBuilderSha256",
+              "command",
+              "sources",
+              "geometry",
+          ):
+              if regenerated[key] != tracked[key]:
+                  raise SystemExit(f"regenerated proof contract drifted: {key}")
+          PY
+
+      - name: Upload proof-gallery regeneration evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unity-proof-gallery-evidence
+          path: |
+            artifacts/m21-proof-output
+            artifacts/m21-proof-host/CIArtifacts/unity-proof-gallery
+          if-no-files-found: error
+          retention-days: 14
+
   unity-editmode-tests:
     name: Unity 6000.3.20f1 Edit Mode tests
     if: >-

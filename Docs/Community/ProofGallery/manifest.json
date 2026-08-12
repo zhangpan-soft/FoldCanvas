@@ -1,0 +1,97 @@
+{
+  "format": "foldcanvas-proof-gallery",
+  "version": "1",
+  "sourceRevision": "352efc4c8ca91885a0dc02c2efa3bb3783c67ada",
+  "unityVersion": "6000.3.20f1",
+  "packageVersion": "1.0.0",
+  "foldScriptVersion": "0.1",
+  "generator": "FoldCanvas.M21Proof.FoldCanvasProofGalleryGenerator.GenerateBatch",
+  "generatorSha256": "80c614438315311c06780a41e622791cb7d8bd7313e5f59c279bb935d56b2e13",
+  "runnerSha256": "e77378dd020f1abbab87552a12f43bf76889609d41a3c639366d9b8a3a862a16",
+  "testSha256": "907572ff3be30ec0ea9af31b72b141c8690568640d1e7b29c1c52e132c0dbf81",
+  "projectBuilderSha256": "162ce1aff8835c2aaebc61a5b7256008fbcc2c37d28c84496794c4ab7adf017a",
+  "command": "python3 Scripts/generate_proof_gallery.py --unity /path/to/Unity",
+  "sources": [
+    {
+      "id": "cup",
+      "foldScriptPath": "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+      "foldScriptSha256": "44b3c474784736d5e47d974f94b87c56532db01cffc963330d7ae82b88457fc5",
+      "sourceCanvasPath": "Samples~/BootstrapPanel/M04ProductionCupCanvas.png",
+      "sourceCanvasSha256": "2b9691733e89987d795e9dcbcd857902f6feb7109540d36fded1b481ded1a383"
+    },
+    {
+      "id": "sphere",
+      "foldScriptPath": "Samples~/Sphere/sphere-golden.foldcanvas.json",
+      "foldScriptSha256": "2c23c1239e30cf23bdd44f944cf4cbe76c326ac8f346a1e6d55d9bc177032d74",
+      "sourceCanvasPath": "Samples~/Sphere/sphere-canvas.png",
+      "sourceCanvasSha256": "b91970c9d1416ebf4b10a6ab105eaeff0d9227a248a9999c5237bbac3ce82211"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "cup-source.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "663c945edaa6eea652db4e84cb6b76706c00f9b5544065887c4472c981c8bb57"
+    },
+    {
+      "path": "cup-textured.png",
+      "width": 720,
+      "height": 720,
+      "sha256": "55055219f9a3a03ff370d580d5ef349a8b072520c82c4e97d415cd1e8c8e4b27"
+    },
+    {
+      "path": "cup-topology.png",
+      "width": 720,
+      "height": 720,
+      "sha256": "c4897efc0cd3818c84cfb74169a2c67a3275f1148c21728f6790fa0c3a86afd2"
+    },
+    {
+      "path": "sphere-source.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1df3186d766d2b36fd87ad0f05b5f104107f0fb178d63d12473cc1520bda15da"
+    },
+    {
+      "path": "sphere-textured.png",
+      "width": 720,
+      "height": 720,
+      "sha256": "1800230867a8cd0da7dbd2d1fe45fb833e572c4cf9ae0b3e3795b3880e78f3c9"
+    },
+    {
+      "path": "sphere-topology.png",
+      "width": 720,
+      "height": 720,
+      "sha256": "4dc745c3974c93166d8ec234274f94cc06fcb867b94d5773e97b22f235b91b54"
+    }
+  ],
+  "geometry": [
+    {
+      "id": "cup",
+      "geometrySha256": "457b7a2e8abbc1ab646b96fa7de2f398ed1459a4dddbec100eb08807753fe189",
+      "values": {
+        "componentCount": "1",
+        "isSingleClosedVolume": "true",
+        "nonManifoldEdgeCount": "0",
+        "openEdgeCount": "0",
+        "orientationConflictEdgeCount": "0",
+        "totalAbsoluteVolume": "8.8310545065480814E-05"
+      }
+    },
+    {
+      "id": "sphere",
+      "geometrySha256": "39c21d8bd7da6d6b19eb72851ce50eb3aa51ffa26b1a144d7a7ac9e5699d68b0",
+      "values": {
+        "eulerCharacteristic": "2",
+        "inwardTriangleCount": "0",
+        "isClosedSphere": "true",
+        "nonManifoldEdgeCount": "0",
+        "northPoleTopologyCount": "1",
+        "openEdgeCount": "0",
+        "orientationConflictEdgeCount": "0",
+        "southPoleTopologyCount": "1",
+        "sphericalPanelCount": "8"
+      }
+    }
+  ]
+}

@@ -67,9 +67,8 @@ position mapping, and generated Meshes remain derived artifacts.
 
 ## Implementation status
 
-Implementation is complete on `agent/m20-roll-handedness-diagram`. No external
-agent CLAIM or open pull request existed when the maintainer selected issue #19
-on 2026-08-12.
+Complete. No external agent CLAIM or open pull request existed when the
+maintainer selected issue #19 on 2026-08-12.
 
 The repository-native SVG shows four signed sweeps and embeds the exact current
 frame, selected axis, start/minimum, first-quarter, and radial-orientation
@@ -84,4 +83,8 @@ The complete local repository matrix is green, visual rendering was inspected
 at the SVG's native `1600 x 1180` viewBox, and the rebuilt stable archive
 remains exactly
 `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
-Hosted exact-head checks, audit, merge, and issue closure remain.
+PR #34 merged exact audited head
+`a6844150ed38bdce62d9c39b07eb92df7ca2370e` as merge commit
+`eb310e06e6686942b191ffdb6967567418f79d37`; issue #19 is closed. Main runs
+`31607803239` and `31607803162` passed repository checks, 477/477 Edit Mode
+tests, two clean installs, producer/receiver handoff, and source-first upgrade.

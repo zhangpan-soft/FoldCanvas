@@ -1,161 +1,172 @@
 # Goal
 
-Deliver M20 on `agent/m20-roll-handedness-diagram`: make the implemented Roll
-coordinate, sweep, winding, and texture-direction contract visually reviewable
+Deliver M21 on `agent/m21-proof-gallery-evidence`: regenerate honest cup and
+sphere proof images from tracked 2D source through the ordinary compiler,
 without changing stable package bytes.
 
 # User-visible proof
 
-A bilingual review pairs one source rectangle with Roll-U and Roll-V positive
-and negative cross-sections. Each claim is traceable to the compiler equation,
-the executor, or a named existing Edit Mode test.
+A reviewable gallery pairs each maintained 2D canvas with a clean textured 3D
+result and a topology view. A canonical manifest binds pixels to compiler
+evidence, source hashes, source revision, Unity version, and the exact
+regeneration command.
 
 # Scope
 
-- GitHub issue #19
-- repository-native SVG and bilingual Markdown guide
-- dependency-free deterministic validation and adversarial fixtures
-- contributor entry-point link and repository-check wiring
-- exact stable archive and hosted exact-head verification
+- GitHub issue #26, proof-generation gate only
+- release-excluded clean-host Unity renderer and Edit Mode test adapter
+- cup source, textured exterior, and closed-volume wire/section evidence
+- eight-gore sphere source, textured result, and wire/seam evidence
+- canonical manifest, dependency-free validator, adversarial fixtures
+- repository and hosted exact-head integration
 
 # Non-goals
 
-- Runtime, Editor, Tests, Schema, compiler, geometry, topology, diagnostics,
-  tolerances, UV behavior, winding behavior, material implementation, Unity
-  version, dependencies, package version, or release assets
-- generated Meshes, raster screenshots, external fonts/assets, ImageGen, or
-  any attempt to hide winding with two-sided rendering
-- issues #21 or #26
+- package-included README changes or a package version bump
+- repository social-preview publication
+- Runtime, compiler, geometry, topology, Schema, samples, existing Tests,
+  materials, dependencies, public API, or release-asset changes
+- ImageGen, Blender, stock geometry, manual pixel painting, editor chrome, or
+  untracked Project~ input
+- issue #21 or later geometry work
 
 # Files expected to change
 
-- `Docs/Community/GeometryReviews/roll-handedness.svg`
-- `Docs/Community/GeometryReviews/roll-handedness.md`
-- `Scripts/validate_roll_handedness_review.py`
-- `Scripts/test_roll_handedness_review.py`
+- `Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs`
+- `Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs`
+- `Scripts/create_proof_gallery_project.py`
+- `Scripts/generate_proof_gallery.py`
+- `Docs/Community/ProofGallery/*.png`
+- `Docs/Community/ProofGallery/manifest.json`
+- `Docs/Community/ProofGallery/README.md`
+- `Scripts/validate_proof_gallery.py`
+- `Scripts/test_proof_gallery.py`
 - `Scripts/validate_repository.py`
 - `.github/workflows/repository-checks.yml`
+- `.github/workflows/unity-tests.yml`
 - `Docs/Community/START_HERE.md`
-- `CURRENT_TASK.md`, `Codex/M19_SCHEMA_FIELD_COVERAGE.md`,
-  `Codex/M20_ROLL_HANDEDNESS_DIAGRAM.md`, and this plan
+- `CURRENT_TASK.md`, `Codex/M20_ROLL_HANDEDNESS_DIAGRAM.md`,
+  `Codex/M21_PROOF_GALLERY_EVIDENCE.md`, and this plan
 
 # Geometry invariants
 
-- `thetaDegrees = startAngleDegrees - t * angleDegrees`, with selected source
-  coordinate `t` increasing from its minimum boundary to maximum boundary; the
-  executor converts it to radians before evaluating `sin` and `cos`.
-- Roll-U uses cylinder axis `CurrentV` and radial basis
-  `(-CurrentU, CurrentNormal)`; Roll-V uses cylinder axis `CurrentU` and radial
-  basis `(-CurrentV, CurrentNormal)`.
-- For start angle zero, a positive quarter sweep maps the selected minimum
-  radial direction to `-CurrentNormal`; a negative quarter sweep maps it to
-  `+CurrentNormal`.
-- The executor reverses every target triangle once. Positive full turns are
-  radially outward; negative full turns are radially inward by the documented
-  contract.
-- UV0, source provenance, logical topology, and named-boundary order do not
-  change during Roll. A two-sided material changes visibility only.
-- Package version remains `1.0.0`, FoldScript remains `0.1`, and Unity remains
-  `6000.3.20f1`.
-- The rebuilt archive must remain byte-identical to public stable `v1.0.0` at
-  SHA-256
-  `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
+- source canvases and FoldScript remain the only authoritative asset input;
+  every Mesh, wireframe, report, and PNG is derived
+- cup proof uses the maintained production canvas, rolled/welded wall and
+  bottom, and inward Solidify without overlap or epsilon concealment
+- cup closed-volume report must have one component, zero open,
+  non-manifold, and orientation-conflict edges, and positive absolute volume
+- sphere proof uses exactly eight explicit gore panels and their seam graph;
+  no Unity primitive sphere may enter the proof
+- sphere report must have Euler characteristic two, zero open,
+  non-manifold, orientation-conflict, and inward-triangle counts, with one
+  north and one south topology pole
+- camera transforms, render size, clear color, light-independent shaders,
+  object transforms, ordering, and PNG encoder are fixed
+- geometry identity is computed from canonical compiled buffers, not from
+  transient Unity instance IDs or screenshots
+- package version remains `1.0.0`, FoldScript remains `0.1`, Unity remains
+  `6000.3.20f1`, and archive SHA-256 remains
+  `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`
 
 # Implementation steps
 
-1. Freeze the source-plane axes, boundary order, selected-coordinate mapping,
-   signed sweep, and winding claims from maintained code and tests.
-2. Draw the source rectangle, current-frame triad, Roll-U/Roll-V cross-sections,
-   both signs, and canonical readable-exterior note as native SVG primitives.
-3. Write a concise bilingual explanation and claim-to-evidence table.
-4. Add a standard-library validator for XML safety, embedded convention
-   metadata, required labels, and evidence mappings.
-5. Add real-repository and adversarial in-memory fixtures with stable sorted
-   errors; wire them into repository checks.
-6. Render and visually inspect the SVG, then run the complete local validation
-   matrix and stable archive comparison.
-7. Run exact-head hosted checks, record an exact-head audit, and merge only
-   when protected required gates are green.
+1. Close M20 records and freeze M21's release-excluded boundary.
+2. Add one batch-safe, release-excluded clean-host adapter that builds proof
+   objects through the public Runtime compiler, renders fixed cameras to PNG,
+   records compile reports, and exits nonzero on any mismatch.
+3. Render cup source/textured/topology and sphere source/textured/topology
+   images at fixed dimensions with no UI or external asset.
+4. Emit a canonical manifest with source revision, Unity/package/FoldScript
+   versions, exact command, source/output hashes, geometry hashes, and checked
+   topology values.
+5. Add a standard-library validator for schema, ordering, path confinement,
+   PNG structure/dimensions, hashes, claim invariants, and prohibited metadata.
+6. Add real-repository and adversarial fixtures; wire static validation and a
+   Unity batch-regeneration comparison into hosted CI.
+7. Inspect every rendered PNG, run the complete local validation matrix, and
+   confirm stable archive identity.
+8. Push a PR, wait for exact-head hosted checks, record exact-head audit, and
+   merge only when all required gates are green.
 
 # Test matrix
 
-## Contract coverage
+## Generator and geometry
 
-- source `CurrentU`, `CurrentV`, `CurrentNormal`, front face, and all four
-  rectangle boundaries are present
-- Roll-U and Roll-V identify the correct cylinder axis and selected coordinate
-- positive and negative first-quarter directions match the equation
-- positive/outward and negative/inward winding are not conflated with culling
-- canonical positive Roll-U exterior reading direction is identified
+- clean batch invocation succeeds twice and produces byte-identical PNGs and
+  manifest content except for no environment-dependent fields
+- cup source/textured/topology views match the maintained source and closed
+  volume invariants
+- sphere source/textured/topology views match eight-gore and sphere-report
+  invariants
+- output directories cannot escape the repository proof root
+- failed compile/report/render writes no partial accepted manifest
 
-## Safety and deterministic failures
+## Evidence safety
 
-- malformed XML, external raster/reference, executable SVG, missing sweep
-  metadata, missing formula, and missing named-test evidence fail
-- multiple failures are returned in ordinal sorted order
-- validation inputs are never modified
+- missing file, wrong hash, invalid PNG signature/dimension, remote reference,
+  absolute/local path, unexpected field/order, duplicate output, untracked
+  source, wrong Unity/package/FoldScript version, geometry-hash mismatch, and
+  weakened topology claim fail deterministically
+- multi-error diagnostics are stable and validation does not mutate inputs
 
 ## Product regression
 
-- complete repository validation and required hosted checks stay green
-- the deterministic main archive SHA-256 remains
-  `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`
-- no Unity rerun is required by the implementation itself because M20 changes
-  only release-excluded documentation/tooling; protected CI remains authority
+- repository validation and 477 existing Edit Mode tests stay green
+- clean-install, producer/receiver handoff, and source-first upgrade stay green
+- stable archive remains byte-identical to public v1.0.0
+- no package-included file changes
 
 # Risks and rollback
 
-- **Perspective ambiguity:** use orthographic cross-sections with named basis
-  directions rather than a decorative 3D sketch.
-- **Sign ambiguity:** embed machine-checked start and first-quarter metadata for
-  each of four sweeps.
-- **Texture/winding confusion:** give UV reading and triangle orientation
-  separate legend rows.
-- **Unsafe SVG content:** fail on image, foreignObject, script, event handlers,
-  external hrefs, remote URLs, data URLs, and font-face rules.
-- **Package-byte contamination:** rebuild and compare the stable archive before
-  merge.
-- **User scratch contamination:** never stage untracked `Project~` scenes,
-  results, or generated `.meta` files.
+- **Render nondeterminism:** use unlit deterministic materials, explicit camera
+  and render-target settings, fixed color space, no post-processing, and byte
+  comparison across two clean renders.
+- **Proof drift:** bind every image to source and geometry hashes, and regenerate
+  in CI rather than accepting manually edited pixels.
+- **Leaking local state:** start from a new scene, write only to an explicit
+  proof root, exclude UI, and reject usernames/absolute paths in metadata.
+- **Package contamination:** statically reject changes to package allowlisted
+  paths and rebuild the exact stable archive.
+- **Scratch contamination:** never stage untracked Project~ scenes, TestResults,
+  or generated `.meta` files.
 
-Rollback is one revert of the M20 integration commit. It removes only
-release-excluded documentation, validation tooling, and task records; no source
-migration is needed.
+Rollback is one revert of the M21 integration commit. It removes only the
+release-excluded renderer, gallery evidence, validators, workflow wiring, and
+task records. No source migration is required.
 
 # Progress log
 
-- 2026-08-12: verified M19 merge `6fbdb3b`, issue #20 closure, green main
-  repository/Unity runs, zero open PRs, and no external claims on issues #19,
-  #21, or #26.
-- 2026-08-12: selected #19 because handedness, outward winding, and readable
-  texture direction directly address recurrent mirrored-artwork and hidden-face
-  mistakes while preserving the public package byte-for-byte.
-- 2026-08-12: derived both mappings from the field reference, pipeline,
-  `RollExecutor`, and the named `RollCompilerTests` proofs.
-- 2026-08-12: implemented the native SVG, bilingual evidence map, fail-closed
-  validator, and fourteen deterministic fixtures; rendered and visually inspected
-  the final `1600 x 1180` SVG.
-- 2026-08-12: complete local repository, release, installation, upgrade,
-  handoff, JSON, Python, link, and diff checks pass. The archive remains exactly
-  `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
+- 2026-08-13: verified M20 merge `eb310e0`, green main repository and Unity
+  runs, zero open PRs, no external CLAIMs, and #21 still blocked on real
+  Windows evidence.
+- 2026-08-13: confirmed `README.md` is an explicit deterministic UPM archive
+  member. Split #26 so proof generation precedes a separately versioned README
+  integration.
+- 2026-08-13: selected tracked M04.1 cup and M05 eight-gore sphere creators as
+  the only allowed proof geometry paths; no untracked Project~ input is used.
 
 # Decisions made
 
-- Use orthographic selected-axis/normal cross-sections; they express the exact
-  equation more reliably than a perspective cylinder illustration.
-- The canonical readable-text claim is limited to positive Roll-U with
-  `startAngleDegrees = 180`, matching the existing executable proof.
-- Negative Roll is shown as radial-inward because that is the implemented and
-  documented contract; the diagram does not silently relabel it outward.
-- The SVG uses only local vector primitives and generic system fonts.
-- M20 is release-excluded and therefore does not create a CHANGELOG package
-  entry or version bump.
+- M21 creates its host adapter and evidence outside package allowlisted paths.
+  The public v1.0.0 and RC2 archives are immutable; a future README edit must
+  be a patch release.
+- Use existing one-sided unlit/textured, topology-wireframe, seam, and section
+  proof materials. No lighting or two-sided material may conceal geometry.
+- Record compiler topology reports and canonical geometry hashes alongside
+  images; screenshots alone are insufficient evidence.
+- Use a fresh empty scene and an explicit owned RenderTexture for batch output;
+  never discover or modify a user camera.
 
 # Final verification
 
-Focused review validation (four signed sweeps and seven evidence claims), fourteen
-adversarial cases, complete local repository/release/maintenance checks, native
-SVG visual inspection, JSON/Python checks, link validation, `git diff --check`,
-and exact stable-archive identity pass. Hosted checks, exact-head audit, merge,
-and issue closure remain. No compiler, geometry, material, Unity-test, package,
-or later milestone behavior has been implemented.
+Local implementation is complete. Unity `6000.3.20f1` regenerated all seven
+evidence files twice from disposable clean hosts; both output sets were
+byte-identical. All six PNGs were visually inspected. Proof validation (six
+PNGs, two sources, two geometry reports), nine adversarial proof fixtures,
+repository/release/installation/upgrade/handoff checks, 44 Action-pin cases,
+JSON/Python checks, `git diff --check`, and the trusted-contribution gate pass.
+The stable archive remains exactly
+`16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
+Hosted exact-head checks, audit, and merge remain. M21 has not changed compiler,
+geometry, package contents, or later milestone behavior.

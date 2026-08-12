@@ -58,10 +58,10 @@ def main() -> int:
         "      github.event.pull_request.head.repo.full_name == github.repository &&\n"
         "      github.event.pull_request.user.login == github.repository_owner)"
     )
-    if unity.count(fork_guard) != 4:
+    if unity.count(fork_guard) != 5:
         raise AssertionError("every privileged Unity job must use the fork guard")
-    if unity.count("      checks: write") != 4:
-        raise AssertionError("checks: write must be scoped to the four Unity jobs")
+    if unity.count("      checks: write") != 5:
+        raise AssertionError("checks: write must be scoped to the five Unity jobs")
     if "permissions:\n  contents: read\n  checks: write\n\njobs:" in unity:
         raise AssertionError("Unity workflow must not grant checks:write globally")
     if "push:\n    branches:\n      - main" not in unity:

@@ -146,6 +146,16 @@ required = [
     "Scripts/test_schema_field_reference.py",
     "Scripts/validate_roll_handedness_review.py",
     "Scripts/test_roll_handedness_review.py",
+    "Scripts/create_proof_gallery_project.py",
+    "Scripts/generate_proof_gallery.py",
+    "Scripts/validate_proof_gallery.py",
+    "Scripts/test_proof_gallery.py",
+    "Codex/M21_PROOF_GALLERY_EVIDENCE.md",
+    "Docs/Community/ProofGallery/README.md",
+    "Docs/Community/ProofGallery/manifest.json",
+    "Scripts/Templates~/M21ProofGallery/Assets/FoldCanvas.M21.ProofGallery.asmdef",
+    "Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs",
+    "Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs",
     "Codex/M19_SCHEMA_FIELD_COVERAGE.md",
     "Codex/M20_ROLL_HANDEDNESS_DIAGRAM.md",
     "Docs/Community/START_HERE.md",
@@ -346,10 +356,10 @@ fork_guard = (
     "      github.event.pull_request.head.repo.full_name == github.repository &&\n"
     "      github.event.pull_request.user.login == github.repository_owner)"
 )
-if unity_workflow.count(fork_guard) != 4:
+if unity_workflow.count(fork_guard) != 5:
     errors.append("Every privileged Unity job must skip untrusted fork pull requests")
-if unity_workflow.count("      checks: write") != 4:
-    errors.append("Unity checks:write must be scoped to exactly four trusted jobs")
+if unity_workflow.count("      checks: write") != 5:
+    errors.append("Unity checks:write must be scoped to exactly five trusted jobs")
 if "permissions:\n  contents: read\n  checks: write\n\njobs:" in unity_workflow:
     errors.append("Unity workflow must not grant checks:write globally")
 if "push:\n    branches:\n      - main" not in unity_workflow:
@@ -1127,6 +1137,10 @@ if "python3 Scripts/validate_roll_handedness_review.py" not in repository_workfl
     errors.append("Repository checks must validate the Roll handedness review")
 if "python3 Scripts/test_roll_handedness_review.py" not in repository_workflow:
     errors.append("Repository checks must test the Roll handedness review")
+if "python3 Scripts/validate_proof_gallery.py" not in repository_workflow:
+    errors.append("Repository checks must validate proof-gallery evidence")
+if "python3 Scripts/test_proof_gallery.py" not in repository_workflow:
+    errors.append("Repository checks must test proof-gallery validation")
 
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
@@ -1280,17 +1294,18 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M20: Roll handedness review diagram" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M20 milestone")
+if "M21: proof-gallery evidence generation" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M21 milestone")
 for required_fragment in [
-    "thetaDegrees = startAngleDegrees - t * angleDegrees",
-    "Roll-U uses cylinder axis `CurrentV`",
-    "Roll-V uses cylinder axis `CurrentU`",
-    "Negative Roll is shown as radial-inward",
+    "GitHub issue #26, proof-generation gate only",
+    "eight-gore sphere",
+    "zero open",
+    "source canvases and FoldScript remain the only authoritative asset input",
+    "package-included README changes",
     "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M20 active plan is missing: " + required_fragment)
+        errors.append("M21 active plan is missing: " + required_fragment)
 for required_fragment in [
     "actions/checkout",
     "3d3c42e5aac5ba805825da76410c181273ba90b1",
@@ -1357,6 +1372,29 @@ for required_fragment in [
     if required_fragment not in m13_long_run_workflow:
         errors.append(
             "M13 long-run workflow is missing required evidence: "
+            f"{required_fragment}"
+        )
+
+for required_fragment in [
+    "unity-proof-gallery:",
+    "Scripts/create_proof_gallery_project.py",
+    "--package-archive",
+    "com.foldcanvas.core-1.0.0.tgz",
+    "FoldCanvas Proof Gallery",
+    "generator_hash=",
+    "FoldCanvas.M21Proof.FoldCanvasProofGalleryTests",
+    "customParameters: >-",
+    "-foldCanvasProofOutput",
+    "-foldCanvasProofSourceRevision",
+    "-foldCanvasProofGeneratorSha256",
+    "-foldCanvasProofTestSha256",
+    "-foldCanvasProofRunnerSha256",
+    "-foldCanvasProofProjectBuilderSha256",
+    "unity-proof-gallery-evidence",
+]:
+    if required_fragment not in unity_workflow:
+        errors.append(
+            "Unity workflow is missing M21 proof-gallery evidence: "
             f"{required_fragment}"
         )
 

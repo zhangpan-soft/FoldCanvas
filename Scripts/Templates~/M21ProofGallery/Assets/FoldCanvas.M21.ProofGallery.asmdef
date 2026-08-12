@@ -1,0 +1,21 @@
+{
+  "name": "FoldCanvas.M21.ProofGallery",
+  "rootNamespace": "FoldCanvas.M21Proof",
+  "references": [
+    "FoldCanvas.Runtime"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

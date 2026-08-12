@@ -1,9 +1,9 @@
 # Current task
 
-Execute **M20: Roll handedness review diagram**.
+Execute **M21: proof-gallery evidence generation**.
 
 Authoritative task file:
-[`Codex/M20_ROLL_HANDEDNESS_DIAGRAM.md`](Codex/M20_ROLL_HANDEDNESS_DIAGRAM.md)
+[`Codex/M21_PROOF_GALLERY_EVIDENCE.md`](Codex/M21_PROOF_GALLERY_EVIDENCE.md)
 
 M17 is complete. PR #29 merged stable package head
 `b0d2a849ff2bb990a209ff3104390fcdb200fd42` as merge commit
@@ -25,15 +25,21 @@ eight deterministic positive/adversarial cases. Main runs `31559362738` and
 `31559362706` passed repository checks, 477/477 Edit Mode tests, two clean
 installs, producer/receiver handoff, and source-first upgrade.
 
-M20 addresses GitHub issue #19. It derives one source-controlled Roll-U/Roll-V
-handedness diagram from the implemented equation, executor, and named Edit Mode
-tests. The review distinguishes source UV direction, geometric winding,
-outward/inward radial orientation, and two-sided material behavior. M20 changes
-only release-excluded community documentation, validation tooling, and task
-records; it does not change compiler behavior, tests, package version, or the
-public `1.0.0` package bytes.
+M20 is complete. PR #34 merged exact audited head
+`a6844150ed38bdce62d9c39b07eb92df7ca2370e` as merge commit
+`eb310e06e6686942b191ffdb6967567418f79d37`; issue #19 is closed. Main runs
+`31607803239` and `31607803162` passed repository checks, 477/477 Edit Mode
+tests, two clean installs, producer/receiver handoff, and source-first upgrade.
 
-Implementation is active on `agent/m20-roll-handedness-diagram`.
+M21 is the release-excluded first gate of GitHub issue #26. It creates a
+deterministic Unity batch proof renderer for the maintained cup and eight-gore
+sphere, source-controlled proof images, and a machine-readable provenance
+manifest. It deliberately does not modify package-included `README.md`: the
+root README is part of the UPM archive, so README integration requires a later
+explicit patch-version decision. Published `v1.0.0` and RC2 release assets stay
+immutable.
+
+Implementation is active on `agent/m21-proof-gallery-evidence`.
 
 The maintainer may research, plan, implement, audit, merge, and close this
 repository-only milestone autonomously. Credentials, paid services,
