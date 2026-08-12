@@ -1378,9 +1378,12 @@ for required_fragment in [
 for required_fragment in [
     "unity-proof-gallery:",
     "Scripts/create_proof_gallery_project.py",
+    "--package-archive",
+    "com.foldcanvas.core-1.0.0.tgz",
     "FoldCanvas Proof Gallery",
     "FOLDCANVAS_PROOF_GENERATOR_SHA256",
     "FoldCanvas.M21Proof.FoldCanvasProofGalleryTests",
+    "customParameters: >-",
     "unity-proof-gallery-evidence",
 ]:
     if required_fragment not in unity_workflow:

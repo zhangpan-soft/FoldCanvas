@@ -29,8 +29,14 @@ jobs:
       - name: Create clean proof-gallery host
         run: |
           set -euo pipefail
+          mkdir -p artifacts/m21-package
+          python3 Scripts/build_release_package.py \
+            --output artifacts/m21-package \
+            --tag v1.0.0
           python3 Scripts/create_proof_gallery_project.py \
-            --project artifacts/m21-proof-host
+            --project artifacts/m21-proof-host \
+            --package-archive \
+            artifacts/m21-package/com.foldcanvas.core-1.0.0.tgz
           echo "FOLDCANVAS_PROOF_OUTPUT=${{ github.workspace }}/artifacts/m21-proof-output" >> "$GITHUB_ENV"
           echo "FOLDCANVAS_PROOF_SOURCE_REVISION=${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_ENV"
           echo "FOLDCANVAS_PROOF_GENERATOR_SHA256=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs | awk '{print $1}')" >> "$GITHUB_ENV"
@@ -53,7 +59,9 @@ jobs:
           artifactsPath: artifacts/m21-proof-host/CIArtifacts/unity-proof-gallery
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: FoldCanvas Proof Gallery
-          testFilter: FoldCanvas.M21Proof.FoldCanvasProofGalleryTests
+          customParameters: >-
+            -testFilter
+            FoldCanvas.M21Proof.FoldCanvasProofGalleryTests
 
       - name: Compare regenerated proof gallery
         if: always()

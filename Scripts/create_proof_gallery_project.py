@@ -31,13 +31,23 @@ ALLOWED_PROJECT_FILES = tuple(
 )
 
 
-def create_project(project: pathlib.Path, package_root: pathlib.Path) -> None:
+def create_project(
+    project: pathlib.Path,
+    package_root: pathlib.Path,
+    package_archive: pathlib.Path | None = None,
+) -> None:
     project = project.resolve()
     package_root = package_root.resolve()
     if project.exists():
         raise FileExistsError(f"proof-gallery project already exists: {project}")
     if not (package_root / "package.json").is_file():
         raise FileNotFoundError(f"package root is invalid: {package_root}")
+    if package_archive is not None:
+        package_archive = package_archive.resolve()
+        if not package_archive.is_file():
+            raise FileNotFoundError(
+                f"package archive is invalid: {package_archive}"
+            )
 
     actual_template_files = tuple(
         sorted(path.relative_to(TEMPLATE).as_posix() for path in TEMPLATE.rglob("*") if path.is_file())
@@ -54,12 +64,13 @@ def create_project(project: pathlib.Path, package_root: pathlib.Path) -> None:
     source = project / "Assets" / "Source"
     source.mkdir()
 
+    package_source = package_archive or package_root
     manifest = {
         "dependencies": {
             "com.foldcanvas.core": (
                 "file:"
                 + pathlib.Path(
-                    os.path.relpath(package_root, project / "Packages")
+                    os.path.relpath(package_source, project / "Packages")
                 ).as_posix()
             ),
             "com.unity.test-framework": "1.6.0",
@@ -125,8 +136,9 @@ def main() -> int:
     )
     parser.add_argument("--project", required=True, type=pathlib.Path)
     parser.add_argument("--package", default=ROOT, type=pathlib.Path)
+    parser.add_argument("--package-archive", type=pathlib.Path)
     args = parser.parse_args()
-    create_project(args.project, args.package)
+    create_project(args.project, args.package, args.package_archive)
     return 0
 
 

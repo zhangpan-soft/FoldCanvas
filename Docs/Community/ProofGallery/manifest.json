@@ -1,7 +1,7 @@
 {
   "format": "foldcanvas-proof-gallery",
   "version": "1",
-  "sourceRevision": "eb310e06e6686942b191ffdb6967567418f79d37",
+  "sourceRevision": "96ff1d8c8492337af40d2147bbbc379d70db923c",
   "unityVersion": "6000.3.20f1",
   "packageVersion": "1.0.0",
   "foldScriptVersion": "0.1",
@@ -9,7 +9,7 @@
   "generatorSha256": "cc654b7e26d5543f86fcdd9005c4844ca4cf58d996a1ad5c33c5112b042865ab",
   "runnerSha256": "e77378dd020f1abbab87552a12f43bf76889609d41a3c639366d9b8a3a862a16",
   "testSha256": "907572ff3be30ec0ea9af31b72b141c8690568640d1e7b29c1c52e132c0dbf81",
-  "projectBuilderSha256": "0149f0a25ee974c90b72df7617d977607b749e3f2543b3be6a73839c3c5c4168",
+  "projectBuilderSha256": "162ce1aff8835c2aaebc61a5b7256008fbcc2c37d28c84496794c4ab7adf017a",
   "command": "python3 Scripts/generate_proof_gallery.py --unity /path/to/Unity",
   "sources": [
     {
