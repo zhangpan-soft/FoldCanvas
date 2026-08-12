@@ -62,18 +62,24 @@ namespace FoldCanvas.M21Proof
                     "M21 requires Unity " + RequiredUnityVersion + ".");
             }
 
-            string outputRoot = Environment.GetEnvironmentVariable(
-                "FOLDCANVAS_PROOF_OUTPUT");
-            string sourceRevision = Environment.GetEnvironmentVariable(
-                "FOLDCANVAS_PROOF_SOURCE_REVISION");
-            string generatorHash = RequiredHashEnvironment(
-                "FOLDCANVAS_PROOF_GENERATOR_SHA256");
-            string runnerHash = RequiredHashEnvironment(
-                "FOLDCANVAS_PROOF_RUNNER_SHA256");
-            string testHash = RequiredHashEnvironment(
-                "FOLDCANVAS_PROOF_TEST_SHA256");
-            string projectBuilderHash = RequiredHashEnvironment(
-                "FOLDCANVAS_PROOF_PROJECT_BUILDER_SHA256");
+            string outputRoot = Setting(
+                "FOLDCANVAS_PROOF_OUTPUT",
+                "-foldCanvasProofOutput");
+            string sourceRevision = Setting(
+                "FOLDCANVAS_PROOF_SOURCE_REVISION",
+                "-foldCanvasProofSourceRevision");
+            string generatorHash = RequiredHashSetting(
+                "FOLDCANVAS_PROOF_GENERATOR_SHA256",
+                "-foldCanvasProofGeneratorSha256");
+            string runnerHash = RequiredHashSetting(
+                "FOLDCANVAS_PROOF_RUNNER_SHA256",
+                "-foldCanvasProofRunnerSha256");
+            string testHash = RequiredHashSetting(
+                "FOLDCANVAS_PROOF_TEST_SHA256",
+                "-foldCanvasProofTestSha256");
+            string projectBuilderHash = RequiredHashSetting(
+                "FOLDCANVAS_PROOF_PROJECT_BUILDER_SHA256",
+                "-foldCanvasProofProjectBuilderSha256");
             if (string.IsNullOrWhiteSpace(outputRoot) ||
                 !Path.IsPathRooted(outputRoot))
             {
@@ -975,13 +981,38 @@ namespace FoldCanvas.M21Proof
             return true;
         }
 
-        private static string RequiredHashEnvironment(string name)
+        private static string Setting(
+            string environmentName,
+            string argumentName)
         {
-            string value = Environment.GetEnvironmentVariable(name);
+            string value = Environment.GetEnvironmentVariable(
+                environmentName);
+            if (!string.IsNullOrWhiteSpace(value)) return value;
+
+            string[] arguments = Environment.GetCommandLineArgs();
+            for (int i = 0; i + 1 < arguments.Length; i++)
+            {
+                if (string.Equals(
+                    arguments[i],
+                    argumentName,
+                    StringComparison.Ordinal))
+                {
+                    return arguments[i + 1];
+                }
+            }
+            return null;
+        }
+
+        private static string RequiredHashSetting(
+            string environmentName,
+            string argumentName)
+        {
+            string value = Setting(environmentName, argumentName);
             if (value == null || value.Length != 64)
             {
                 throw new InvalidDataException(
-                    name + " must be a lowercase SHA-256 value.");
+                    environmentName +
+                    " must be a lowercase SHA-256 value.");
             }
             for (int i = 0; i < value.Length; i++)
             {
@@ -990,7 +1021,8 @@ namespace FoldCanvas.M21Proof
                     (c >= 'a' && c <= 'f')))
                 {
                     throw new InvalidDataException(
-                        name + " must be a lowercase SHA-256 value.");
+                        environmentName +
+                        " must be a lowercase SHA-256 value.");
                 }
             }
             return value;

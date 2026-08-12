@@ -1381,9 +1381,15 @@ for required_fragment in [
     "--package-archive",
     "com.foldcanvas.core-1.0.0.tgz",
     "FoldCanvas Proof Gallery",
-    "FOLDCANVAS_PROOF_GENERATOR_SHA256",
+    "generator_hash=",
     "FoldCanvas.M21Proof.FoldCanvasProofGalleryTests",
     "customParameters: >-",
+    "-foldCanvasProofOutput",
+    "-foldCanvasProofSourceRevision",
+    "-foldCanvasProofGeneratorSha256",
+    "-foldCanvasProofTestSha256",
+    "-foldCanvasProofRunnerSha256",
+    "-foldCanvasProofProjectBuilderSha256",
     "unity-proof-gallery-evidence",
 ]:
     if required_fragment not in unity_workflow:

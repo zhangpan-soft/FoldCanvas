@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Create clean proof-gallery host
+        id: proof-inputs
         run: |
           set -euo pipefail
           mkdir -p artifacts/m21-package
@@ -37,12 +38,10 @@ jobs:
             --project artifacts/m21-proof-host \
             --package-archive \
             artifacts/m21-package/com.foldcanvas.core-1.0.0.tgz
-          echo "FOLDCANVAS_PROOF_OUTPUT=${{ github.workspace }}/artifacts/m21-proof-output" >> "$GITHUB_ENV"
-          echo "FOLDCANVAS_PROOF_SOURCE_REVISION=${{ github.event.pull_request.head.sha || github.sha }}" >> "$GITHUB_ENV"
-          echo "FOLDCANVAS_PROOF_GENERATOR_SHA256=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs | awk '{print $1}')" >> "$GITHUB_ENV"
-          echo "FOLDCANVAS_PROOF_TEST_SHA256=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs | awk '{print $1}')" >> "$GITHUB_ENV"
-          echo "FOLDCANVAS_PROOF_RUNNER_SHA256=$(sha256sum Scripts/generate_proof_gallery.py | awk '{print $1}')" >> "$GITHUB_ENV"
-          echo "FOLDCANVAS_PROOF_PROJECT_BUILDER_SHA256=$(sha256sum Scripts/create_proof_gallery_project.py | awk '{print $1}')" >> "$GITHUB_ENV"
+          echo "generator_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "test_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "runner_hash=$(sha256sum Scripts/generate_proof_gallery.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "project_builder_hash=$(sha256sum Scripts/create_proof_gallery_project.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
       - name: Regenerate proof-gallery evidence
         id: unity-proof
@@ -62,6 +61,18 @@ jobs:
           customParameters: >-
             -testFilter
             FoldCanvas.M21Proof.FoldCanvasProofGalleryTests
+            -foldCanvasProofOutput
+            /github/workspace/artifacts/m21-proof-output
+            -foldCanvasProofSourceRevision
+            ${{ github.event.pull_request.head.sha || github.sha }}
+            -foldCanvasProofGeneratorSha256
+            ${{ steps.proof-inputs.outputs.generator_hash }}
+            -foldCanvasProofTestSha256
+            ${{ steps.proof-inputs.outputs.test_hash }}
+            -foldCanvasProofRunnerSha256
+            ${{ steps.proof-inputs.outputs.runner_hash }}
+            -foldCanvasProofProjectBuilderSha256
+            ${{ steps.proof-inputs.outputs.project_builder_hash }}
 
       - name: Compare regenerated proof gallery
         if: always()
