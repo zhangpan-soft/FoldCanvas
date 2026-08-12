@@ -20,6 +20,10 @@ jobs:
         run: |
           python3 Scripts/validate_schema_field_reference.py
           python3 Scripts/test_schema_field_reference.py
+      - name: Validate Roll handedness review
+        run: |
+          python3 Scripts/validate_roll_handedness_review.py
+          python3 Scripts/test_roll_handedness_review.py
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
       - name: Validate immutable RC2 release-candidate contract

@@ -59,12 +59,18 @@ canvas plus FoldScript, and generated Meshes remain derived artifacts.
 
 ## Implementation status
 
-Active on `agent/m19-schema-field-coverage`. The validator currently discovers
-72 canonical scoped fields across all implemented FoldScript `0.1` panels,
-boundaries, seams, operations, and compile settings. Eight deterministic cases
-cover the real repository, missing/stale/duplicate documentation, a newly
-undocumented schema field, an unreviewed structural keyword, an invalid
-operation reference, and sorted multi-error output. The full local repository
-matrix is green, and the rebuilt
-stable archive remains exactly
+Complete. PR #33 merged exact audited head
+`dc04e6b5d59efbc7084973ab358c07c9aaa98a54` as merge commit
+`6fbdb3b012fe5dde9328376e38c8a8b5d6bb1bdc`, and issue #20 is closed. The
+validator discovers 72 canonical scoped fields across all implemented
+FoldScript `0.1` panels, boundaries, seams, operations, and compile settings.
+Eight deterministic cases cover the real repository,
+missing/stale/duplicate documentation, a newly undocumented schema field, an
+unreviewed structural keyword, an invalid operation reference, and sorted
+multi-error output.
+
+Exact-head hosted run `31558708430` passed 477/477 Edit Mode tests, two clean
+archive installs, producer/receiver handoff, and source-first upgrade. Main
+runs `31559362738` and `31559362706` passed after merge. The rebuilt stable
+archive remains exactly
 `16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7`.
