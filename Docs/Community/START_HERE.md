@@ -94,6 +94,9 @@ part of any task.
   maps Roll-U and Roll-V signed sweeps, current-frame axes, source boundaries,
   UV reading direction, and radial winding to the implemented equation and
   named Edit Mode tests.
+- [Proof gallery evidence](ProofGallery/README.md) binds clean Unity renders of
+  the maintained cup and eight-gore sphere to tracked canvases, FoldScript,
+  topology reports, tool hashes, and deterministic regeneration instructions.
 
 ## Pull-request evidence
 
