@@ -77,9 +77,6 @@ the same work.
 
 ## Open starter tasks
 
-- [#19: Roll handedness review diagram](https://github.com/zhangpan-soft/FoldCanvas/issues/19)
-  turns the executable U/V, sweep, winding, and texture-direction convention
-  into a source-controlled bilingual visual.
 - [#21: Windows RC2 clean-install smoke](https://github.com/zhangpan-soft/FoldCanvas/issues/21)
   gathers real public-package XML, Editor log, and generated-result evidence on
   a clean Windows Unity 6000.3.20f1 host.
@@ -90,6 +87,13 @@ the same work.
 These are public work items, not reserved assignments. Comment before starting
 and submit from a fork; repository credentials and collaborator access are not
 part of any task.
+
+## Maintained geometry reviews
+
+- [Roll handedness / Roll 坐标与绕序](GeometryReviews/roll-handedness.md)
+  maps Roll-U and Roll-V signed sweeps, current-frame axes, source boundaries,
+  UV reading direction, and radial winding to the implemented equation and
+  named Edit Mode tests.
 
 ## Pull-request evidence
 

@@ -144,9 +144,14 @@ required = [
     "Scripts/test_action_pins.py",
     "Scripts/validate_schema_field_reference.py",
     "Scripts/test_schema_field_reference.py",
+    "Scripts/validate_roll_handedness_review.py",
+    "Scripts/test_roll_handedness_review.py",
     "Codex/M19_SCHEMA_FIELD_COVERAGE.md",
+    "Codex/M20_ROLL_HANDEDNESS_DIAGRAM.md",
     "Docs/Community/START_HERE.md",
     "Docs/Community/AGENT_COLLABORATION.md",
+    "Docs/Community/GeometryReviews/roll-handedness.svg",
+    "Docs/Community/GeometryReviews/roll-handedness.md",
     ".github/ISSUE_TEMPLATE/contributor_task.yml",
     ".github/pull_request_template.md",
     "SUPPORT.md",
@@ -1118,6 +1123,10 @@ if "python3 Scripts/validate_schema_field_reference.py" not in repository_workfl
     errors.append("Repository checks must validate FoldScript field coverage")
 if "python3 Scripts/test_schema_field_reference.py" not in repository_workflow:
     errors.append("Repository checks must test FoldScript field coverage")
+if "python3 Scripts/validate_roll_handedness_review.py" not in repository_workflow:
+    errors.append("Repository checks must validate the Roll handedness review")
+if "python3 Scripts/test_roll_handedness_review.py" not in repository_workflow:
+    errors.append("Repository checks must test the Roll handedness review")
 
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
@@ -1271,16 +1280,17 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M19: FoldScript schema-to-field-reference coverage" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M19 milestone")
+if "M20: Roll handedness review diagram" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M20 milestone")
 for required_fragment in [
-    "canonical scoped fields",
-    "newly added operation property",
-    "unreviewed schema structural keyword",
-    "stable archive hash",
+    "theta = startAngleDegrees - t * angleDegrees",
+    "Roll-U uses cylinder axis `CurrentV`",
+    "Roll-V uses cylinder axis `CurrentU`",
+    "Negative Roll is shown as radial-inward",
+    "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M19 active plan is missing: " + required_fragment)
+        errors.append("M20 active plan is missing: " + required_fragment)
 for required_fragment in [
     "actions/checkout",
     "3d3c42e5aac5ba805825da76410c181273ba90b1",
