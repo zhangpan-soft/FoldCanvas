@@ -27,6 +27,17 @@ def main() -> int:
     if collect_review_errors("<svg", guide) != ["SVG XML is invalid"]:
         raise AssertionError("malformed XML must return one stable diagnostic")
 
+    doctype = svg.replace(
+        '<svg xmlns="http://www.w3.org/2000/svg"',
+        '<!DOCTYPE svg SYSTEM "https://example.invalid/svg.dtd">\n'
+        '<svg xmlns="http://www.w3.org/2000/svg"',
+        1,
+    )
+    require_error(
+        collect_review_errors(doctype, guide),
+        "SVG contains forbidden XML declaration",
+    )
+
     external_image = svg.replace(
         "</svg>",
         '<image href="https://example.invalid/proof.png"/></svg>',
@@ -70,12 +81,27 @@ def main() -> int:
     )
 
     missing_formula = guide.replace(
-        "theta = startAngleDegrees - t * angleDegrees",
-        "theta = undocumented",
+        "thetaDegrees = startAngleDegrees - t * angleDegrees",
+        "thetaDegrees = undocumented",
     )
     require_error(
         collect_review_errors(svg, missing_formula),
         "guide is missing the exact Roll theta formula",
+    )
+
+    missing_radians = guide.replace(
+        "theta = radians(thetaDegrees)",
+        "theta = thetaDegrees",
+    )
+    require_error(
+        collect_review_errors(svg, missing_radians),
+        "guide is missing the Roll degrees-to-radians conversion",
+    )
+
+    remote_guide_image = guide + "\n![remote](https://example.invalid/proof.png)\n"
+    require_error(
+        collect_review_errors(svg, remote_guide_image),
+        "guide contains non-local image reference",
     )
 
     missing_test = guide.replace(
@@ -109,7 +135,7 @@ def main() -> int:
     if DEFAULT_SVG.read_bytes() != original_svg or DEFAULT_GUIDE.read_bytes() != original_guide:
         raise AssertionError("Roll review validator mutated its inputs")
 
-    print("Roll handedness review validation tests passed: 9 cases.")
+    print("Roll handedness review validation tests passed: 14 cases.")
     return 0
 
 

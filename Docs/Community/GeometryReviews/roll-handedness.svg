@@ -53,7 +53,7 @@
      data-selected-axis="CurrentU"
      data-angle-degrees="+360"
      data-start-angle-degrees="0"
-     data-theta-expression="startAngleDegrees - t * angleDegrees"
+     data-theta-degrees-expression="startAngleDegrees - t * angleDegrees"
      data-min-radial="-CurrentU"
      data-quarter-radial="-CurrentNormal"
      data-radial-orientation="outward">
@@ -85,7 +85,7 @@
      data-selected-axis="CurrentU"
      data-angle-degrees="-360"
      data-start-angle-degrees="0"
-     data-theta-expression="startAngleDegrees - t * angleDegrees"
+     data-theta-degrees-expression="startAngleDegrees - t * angleDegrees"
      data-min-radial="-CurrentU"
      data-quarter-radial="+CurrentNormal"
      data-radial-orientation="inward">
@@ -116,7 +116,7 @@
      data-selected-axis="CurrentV"
      data-angle-degrees="+360"
      data-start-angle-degrees="0"
-     data-theta-expression="startAngleDegrees - t * angleDegrees"
+     data-theta-degrees-expression="startAngleDegrees - t * angleDegrees"
      data-min-radial="-CurrentV"
      data-quarter-radial="-CurrentNormal"
      data-radial-orientation="outward">
@@ -148,7 +148,7 @@
      data-selected-axis="CurrentV"
      data-angle-degrees="-360"
      data-start-angle-degrees="0"
-     data-theta-expression="startAngleDegrees - t * angleDegrees"
+     data-theta-degrees-expression="startAngleDegrees - t * angleDegrees"
      data-min-radial="-CurrentV"
      data-quarter-radial="+CurrentNormal"
      data-radial-orientation="inward">
@@ -177,10 +177,11 @@
     <rect x="1170" y="125" width="380" height="725" rx="18" fill="#0f172a"/>
     <text x="1200" y="168" font-family="system-ui, sans-serif" font-size="23" font-weight="700" fill="#ffffff">Reading the proof / 如何读图</text>
     <text x="1200" y="210" font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="#93c5fd">POSITION / 位置</text>
-    <text x="1200" y="238" font-family="system-ui, sans-serif" font-size="16" fill="#e2e8f0">θ(t) = startAngleDegrees</text>
+    <text x="1200" y="238" font-family="system-ui, sans-serif" font-size="16" fill="#e2e8f0">θdeg(t) = startAngleDegrees</text>
     <text x="1200" y="261" font-family="system-ui, sans-serif" font-size="16" fill="#e2e8f0">          − t × angleDegrees</text>
-    <text x="1200" y="294" font-family="system-ui, sans-serif" font-size="15" fill="#cbd5e1">+ sweep: first quarter → −Normal</text>
-    <text x="1200" y="318" font-family="system-ui, sans-serif" font-size="15" fill="#cbd5e1">− sweep: first quarter → +Normal</text>
+    <text x="1200" y="284" font-family="system-ui, sans-serif" font-size="15" fill="#e2e8f0">θ = radians(θdeg)</text>
+    <text x="1200" y="310" font-family="system-ui, sans-serif" font-size="15" fill="#cbd5e1">+ sweep: first quarter → −Normal</text>
+    <text x="1200" y="334" font-family="system-ui, sans-serif" font-size="15" fill="#cbd5e1">− sweep: first quarter → +Normal</text>
 
     <text x="1200" y="365" font-family="system-ui, sans-serif" font-size="17" font-weight="700" fill="#86efac">WINDING / 三角形绕序</text>
     <line x1="1210" y1="399" x2="1270" y2="399" stroke="#15803d" stroke-width="5" marker-end="url(#arrow-green)"/>
@@ -203,10 +204,10 @@
     <text x="1200" y="812" font-family="system-ui, sans-serif" font-size="14" fill="#94a3b8">Evidence: RollCompilerTests + documented formula</text>
   </g>
 
-  <g id="formula-footer" data-formula="theta = startAngleDegrees - t * angleDegrees">
+  <g id="formula-footer" data-degrees-formula="thetaDegrees = startAngleDegrees - t * angleDegrees" data-radians-formula="thetaRadians = radians(thetaDegrees)">
     <rect x="50" y="880" width="1500" height="250" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
     <text x="80" y="925" font-family="system-ui, sans-serif" font-size="21" font-weight="700" fill="#0f172a">2. Exact mapping / 精确映射</text>
-    <text x="80" y="963" font-family="ui-monospace, monospace" font-size="18" fill="#1e293b">theta = startAngleDegrees - t * angleDegrees</text>
+    <text x="80" y="963" font-family="ui-monospace, monospace" font-size="18" fill="#1e293b">thetaDegrees = startAngleDegrees - t * angleDegrees; theta = radians(thetaDegrees)</text>
     <text x="80" y="997" font-family="ui-monospace, monospace" font-size="17" fill="#1e293b">Roll-U: P = O + y·V - R·cos(theta)·U + R·sin(theta)·Normal</text>
     <text x="80" y="1029" font-family="ui-monospace, monospace" font-size="17" fill="#1e293b">Roll-V: P = O + x·U - R·cos(theta)·V + R·sin(theta)·Normal</text>
     <text x="80" y="1070" font-family="system-ui, sans-serif" font-size="16" fill="#475569">Green outward / red inward arrows are geometric front orientation. Blue/orange sweep arrows are parameter motion. They are independent of material culling.</text>

@@ -15,8 +15,15 @@ For normalized selected coordinate `t` from the selected minimum boundary to
 its maximum boundary:
 
 ```text
-theta = startAngleDegrees - t * angleDegrees
+thetaDegrees = startAngleDegrees - t * angleDegrees
+theta = radians(thetaDegrees)
 ```
+
+`angleDegrees` and `startAngleDegrees` are authored in degrees; the mapping
+converts the derived angle to radians before evaluating `sin` and `cos`.
+
+`angleDegrees` 与 `startAngleDegrees` 的输入单位是度；映射会先把推导出的角度
+转换为弧度，再交给 `sin` 与 `cos`。
 
 - Roll-U selects source U, bends it around an axis parallel to `CurrentV`, and
   uses the `CurrentU`/`CurrentNormal` radial plane.

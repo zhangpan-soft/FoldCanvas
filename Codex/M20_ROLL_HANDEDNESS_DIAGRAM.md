@@ -40,7 +40,8 @@ land on a cylinder without trial-and-error material changes.
 ## Acceptance
 
 - every sweep follows
-  `theta = startAngleDegrees - t * angleDegrees`;
+  `thetaDegrees = startAngleDegrees - t * angleDegrees`, then converts the
+  result to radians before evaluating `sin` and `cos`;
 - Roll-U maps selected U around an axis parallel to `CurrentV`; Roll-V maps
   selected V around an axis parallel to `CurrentU`;
 - at start angle zero, the selected minimum boundary begins on the negative
@@ -73,10 +74,11 @@ on 2026-08-12.
 The repository-native SVG shows four signed sweeps and embeds the exact current
 frame, selected axis, start/minimum, first-quarter, and radial-orientation
 contract. The bilingual guide maps seven claims to the maintained formula,
-executor, and named Edit Mode tests. Nine deterministic positive/adversarial
+executor, and named Edit Mode tests. Fourteen deterministic positive/adversarial
 fixtures reject malformed XML, external raster/reference content, executable
 SVG, external fonts, missing sweep/formula/test evidence, unreviewed claims,
-unstable multi-errors, and input mutation.
+missing degree-to-radian conversion, unsafe XML declarations, non-local
+Markdown images, unstable multi-errors, and input mutation.
 
 The complete local repository matrix is green, visual rendering was inspected
 at the SVG's native `1600 x 1180` viewBox, and the rebuilt stable archive

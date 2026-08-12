@@ -20,7 +20,8 @@ DEFAULT_GUIDE = (
 )
 
 FORMULA = "startAngleDegrees - t * angleDegrees"
-DISPLAY_FORMULA = "theta = " + FORMULA
+DEGREES_FORMULA = "thetaDegrees = " + FORMULA
+RADIANS_FORMULA = "thetaRadians = radians(thetaDegrees)"
 EXPECTED_SWEEPS: Mapping[str, Mapping[str, str]] = {
     "roll-u-negative": {
         "data-angle-degrees": "-360",
@@ -31,7 +32,7 @@ EXPECTED_SWEEPS: Mapping[str, Mapping[str, str]] = {
         "data-radial-orientation": "inward",
         "data-selected-axis": "CurrentU",
         "data-start-angle-degrees": "0",
-        "data-theta-expression": FORMULA,
+        "data-theta-degrees-expression": FORMULA,
     },
     "roll-u-positive": {
         "data-angle-degrees": "+360",
@@ -42,7 +43,7 @@ EXPECTED_SWEEPS: Mapping[str, Mapping[str, str]] = {
         "data-radial-orientation": "outward",
         "data-selected-axis": "CurrentU",
         "data-start-angle-degrees": "0",
-        "data-theta-expression": FORMULA,
+        "data-theta-degrees-expression": FORMULA,
     },
     "roll-v-negative": {
         "data-angle-degrees": "-360",
@@ -53,7 +54,7 @@ EXPECTED_SWEEPS: Mapping[str, Mapping[str, str]] = {
         "data-radial-orientation": "inward",
         "data-selected-axis": "CurrentV",
         "data-start-angle-degrees": "0",
-        "data-theta-expression": FORMULA,
+        "data-theta-degrees-expression": FORMULA,
     },
     "roll-v-positive": {
         "data-angle-degrees": "+360",
@@ -64,7 +65,7 @@ EXPECTED_SWEEPS: Mapping[str, Mapping[str, str]] = {
         "data-radial-orientation": "outward",
         "data-selected-axis": "CurrentV",
         "data-start-angle-degrees": "0",
-        "data-theta-expression": FORMULA,
+        "data-theta-degrees-expression": FORMULA,
     },
 }
 
@@ -110,6 +111,7 @@ LOCAL_URL = re.compile(r"url\(#[A-Za-z_][A-Za-z0-9_.:-]*\)")
 CLAIM_ROW = re.compile(
     r"^\|\s*(?P<claim>[A-Z]+(?:-[A-Z]+)+)\s*\|.*?\|(?P<evidence>.*?)\|\s*$"
 )
+MARKDOWN_IMAGE = re.compile(r"!\[[^\]]*\]\((?P<target>[^)]+)\)")
 
 
 def local_name(value: str) -> str:
@@ -118,10 +120,13 @@ def local_name(value: str) -> str:
 
 def collect_review_errors(svg_text: str, guide_text: str) -> list[str]:
     errors: list[str] = []
+    if re.search(r"(?i)<!DOCTYPE|<!ENTITY", svg_text):
+        errors.append("SVG contains forbidden XML declaration")
     try:
         root = ET.fromstring(svg_text)
     except ET.ParseError:
-        return ["SVG XML is invalid"]
+        errors.append("SVG XML is invalid")
+        return sorted(set(errors))
 
     if local_name(root.tag) != "svg":
         errors.append("SVG root element must be svg")
@@ -195,23 +200,34 @@ def collect_review_errors(svg_text: str, guide_text: str) -> list[str]:
         "uMax",
         "vMin",
         "vMax",
+        "radians(",
     ):
         if token not in visible_text:
             errors.append(f"SVG visible text is missing: {token}")
 
     formula_footer = ids.get("formula-footer")
-    if formula_footer is None or formula_footer.get("data-formula") != DISPLAY_FORMULA:
+    if formula_footer is None:
         errors.append("SVG formula metadata is missing or stale")
+    else:
+        if formula_footer.get("data-degrees-formula") != DEGREES_FORMULA:
+            errors.append("SVG degrees formula metadata is missing or stale")
+        if formula_footer.get("data-radians-formula") != RADIANS_FORMULA:
+            errors.append("SVG radians formula metadata is missing or stale")
 
-    if DISPLAY_FORMULA not in guide_text:
+    if DEGREES_FORMULA not in guide_text:
         errors.append("guide is missing the exact Roll theta formula")
+    if "theta = radians(thetaDegrees)" not in guide_text:
+        errors.append("guide is missing the Roll degrees-to-radians conversion")
     if "Cull Off" not in guide_text or "does not repair triangle winding" not in guide_text:
         errors.append("guide must separate two-sided visibility from winding")
     if "[FoldCanvas Roll-U and Roll-V signed-sweep handedness diagram](roll-handedness.svg)" not in guide_text:
         errors.append("guide must embed the local Roll SVG with meaningful alt text")
+    for match in MARKDOWN_IMAGE.finditer(guide_text):
+        if match.group("target").strip() != "roll-handedness.svg":
+            errors.append("guide contains non-local image reference")
 
     claim_rows: dict[str, str] = {}
-    for line_number, line in enumerate(guide_text.splitlines(), start=1):
+    for line in guide_text.splitlines():
         match = CLAIM_ROW.match(line)
         if match is None:
             continue

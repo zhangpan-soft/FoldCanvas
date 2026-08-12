@@ -1283,7 +1283,7 @@ pull_request_template_text = (
 if "M20: Roll handedness review diagram" not in current_task_text:
     errors.append("CURRENT_TASK.md must identify the active M20 milestone")
 for required_fragment in [
-    "theta = startAngleDegrees - t * angleDegrees",
+    "thetaDegrees = startAngleDegrees - t * angleDegrees",
     "Roll-U uses cylinder axis `CurrentV`",
     "Roll-V uses cylinder axis `CurrentU`",
     "Negative Roll is shown as radial-inward",

@@ -41,8 +41,9 @@ the executor, or a named existing Edit Mode test.
 
 # Geometry invariants
 
-- `theta = startAngleDegrees - t * angleDegrees`, with selected source
-  coordinate `t` increasing from its minimum boundary to maximum boundary.
+- `thetaDegrees = startAngleDegrees - t * angleDegrees`, with selected source
+  coordinate `t` increasing from its minimum boundary to maximum boundary; the
+  executor converts it to radians before evaluating `sin` and `cos`.
 - Roll-U uses cylinder axis `CurrentV` and radial basis
   `(-CurrentU, CurrentNormal)`; Roll-V uses cylinder axis `CurrentU` and radial
   basis `(-CurrentV, CurrentNormal)`.
@@ -132,7 +133,7 @@ migration is needed.
 - 2026-08-12: derived both mappings from the field reference, pipeline,
   `RollExecutor`, and the named `RollCompilerTests` proofs.
 - 2026-08-12: implemented the native SVG, bilingual evidence map, fail-closed
-  validator, and nine deterministic fixtures; rendered and visually inspected
+  validator, and fourteen deterministic fixtures; rendered and visually inspected
   the final `1600 x 1180` SVG.
 - 2026-08-12: complete local repository, release, installation, upgrade,
   handoff, JSON, Python, link, and diff checks pass. The archive remains exactly
@@ -152,7 +153,7 @@ migration is needed.
 
 # Final verification
 
-Focused review validation (four signed sweeps and seven evidence claims), nine
+Focused review validation (four signed sweeps and seven evidence claims), fourteen
 adversarial cases, complete local repository/release/maintenance checks, native
 SVG visual inspection, JSON/Python checks, link validation, `git diff --check`,
 and exact stable-archive identity pass. Hosted checks, exact-head audit, merge,
