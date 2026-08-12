@@ -142,6 +142,9 @@ required = [
     "Scripts/test_trusted_contribution_gate.py",
     "Scripts/validate_action_pins.py",
     "Scripts/test_action_pins.py",
+    "Scripts/validate_schema_field_reference.py",
+    "Scripts/test_schema_field_reference.py",
+    "Codex/M19_SCHEMA_FIELD_COVERAGE.md",
     "Docs/Community/START_HERE.md",
     "Docs/Community/AGENT_COLLABORATION.md",
     ".github/ISSUE_TEMPLATE/contributor_task.yml",
@@ -1111,6 +1114,10 @@ if "python3 Scripts/validate_action_pins.py" not in repository_workflow:
     errors.append("Repository checks must validate immutable GitHub Action pins")
 if "python3 Scripts/test_action_pins.py" not in repository_workflow:
     errors.append("Repository checks must test the GitHub Action pin policy")
+if "python3 Scripts/validate_schema_field_reference.py" not in repository_workflow:
+    errors.append("Repository checks must validate FoldScript field coverage")
+if "python3 Scripts/test_schema_field_reference.py" not in repository_workflow:
+    errors.append("Repository checks must test FoldScript field coverage")
 
 for required_fragment in [
     "python3 Scripts/test_upgrade_proof.py",
@@ -1264,16 +1271,16 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M18: Node 24 CI runtime modernization" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M18 milestone")
+if "M19: FoldScript schema-to-field-reference coverage" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M19 milestone")
 for required_fragment in [
-    "official upstream release, tag, commit, and runtime-metadata review",
-    "lowercase 40-character commit",
-    "byte-identical to public stable `v1.0.0`",
-    "GameCI lacks Node 24 support",
+    "canonical scoped fields",
+    "newly added operation property",
+    "unreviewed schema structural keyword",
+    "stable archive hash",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M18 active plan is missing: " + required_fragment)
+        errors.append("M19 active plan is missing: " + required_fragment)
 for required_fragment in [
     "actions/checkout",
     "3d3c42e5aac5ba805825da76410c181273ba90b1",

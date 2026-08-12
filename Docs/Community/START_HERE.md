@@ -80,12 +80,12 @@ the same work.
 - [#19: Roll handedness review diagram](https://github.com/zhangpan-soft/FoldCanvas/issues/19)
   turns the executable U/V, sweep, winding, and texture-direction convention
   into a source-controlled bilingual visual.
-- [#20: schema-to-field-reference coverage](https://github.com/zhangpan-soft/FoldCanvas/issues/20)
-  adds dependency-free deterministic drift detection for programmable asset
-  fields.
 - [#21: Windows RC2 clean-install smoke](https://github.com/zhangpan-soft/FoldCanvas/issues/21)
   gathers real public-package XML, Editor log, and generated-result evidence on
   a clean Windows Unity 6000.3.20f1 host.
+- [#26: proof-first README gallery](https://github.com/zhangpan-soft/FoldCanvas/issues/26)
+  turns maintained cup and sphere source/result evidence into a reproducible,
+  source-controlled first-visitor visual.
 
 These are public work items, not reserved assignments. Comment before starting
 and submit from a fork; repository credentials and collaborator access are not

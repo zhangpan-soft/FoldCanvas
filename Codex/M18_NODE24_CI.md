@@ -58,9 +58,12 @@ package bytes, geometry behavior, or the qualified stable release.
 
 ## Implementation status
 
-Implementation is active on `agent/m18-node24-ci`. Official release, tag,
-commit-signature, and `action.yml` metadata were re-queried on 2026-08-12 and
-recorded in `Docs/M18_NODE24_ACTION_REVIEW.md` before changing any pin.
+M18 is complete. PR #32 merged exact audited head
+`5ea179df718c3f6bed391c05b08186e43cb20990` as merge commit
+`b45b84ed6c97baae1f8ea1fef7bb532b24c40904`, and issue #25 is closed. Official
+release, tag, commit-signature, and `action.yml` metadata were re-queried on
+2026-08-12 and recorded in `Docs/M18_NODE24_ACTION_REVIEW.md` before changing
+any pin.
 
 - `actions/checkout` is selected at signed `v7.0.1` commit
   `3d3c42e5aac5ba805825da76410c181273ba90b1` (`node24`).
@@ -91,5 +94,6 @@ Hosted implementation-head verification is green:
   GameCI emitted one final warning whose Action list contains only the retained
   `game-ci/unity-test-runner` v4.3.1 SHA.
 
-A documentation-only closeout commit, final required checks, exact-head audit,
-merge, and issue closure remain.
+Protected-main runs `31535304144`, `31535304112`, and `31535304118` passed
+repository validation, 477/477 Edit Mode tests, clean installs, handoff,
+source-first upgrade, and 512/512 deterministic long-run cases after merge.
