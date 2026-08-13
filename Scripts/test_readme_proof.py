@@ -96,10 +96,10 @@ def main() -> int:
         fixture(version)
         package = version / "package.json"
         package.write_text(
-            package.read_text(encoding="utf-8").replace('"1.0.1"', '"1.0.0"'),
+            package.read_text(encoding="utf-8").replace('"1.1.0"', '"1.0.1"'),
             encoding="utf-8",
         )
-        require_error(validator.validate(version), "exact 1.0.1")
+        require_error(validator.validate(version), "exact 1.1.0")
         cases += 1
 
         first = validator.validate()

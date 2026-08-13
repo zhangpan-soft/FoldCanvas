@@ -35,7 +35,7 @@ def main() -> int:
         )
     )
 
-    require(package["version"] == "1.0.1", "Current patch version drifted")
+    require(package["version"] == "1.1.0", "Current minor version drifted")
     require(package["unity"] == "6000.3", "Unity major/minor minimum drifted")
     require(package["unityRelease"] == "20f1", "Unity exact release drifted")
     require(
@@ -61,7 +61,7 @@ def main() -> int:
     require(
         contract["productionCorpus"]["caseIds"]
         == [case["id"] for case in corpus["cases"]],
-        "Production corpus identity mismatch",
+        "Historical production corpus identity mismatch",
     )
 
     digest_pattern = re.compile(r"[0-9a-f]{64}")

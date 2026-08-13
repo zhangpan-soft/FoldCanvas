@@ -44,14 +44,14 @@ def main() -> int:
         )
     )
     corpus = json.loads(
-        (ROOT / "Documentation~" / "m11-production-corpus.json").read_text(
+        (ROOT / "Documentation~" / "m24-production-corpus.json").read_text(
             encoding="utf-8"
         )
     )
     report_path = ROOT / "Documentation~" / "m17-stable-readiness-report.json"
     report = json.loads(report_path.read_text(encoding="utf-8"))
 
-    require(package["version"] == "1.0.1", "Current patch version drifted")
+    require(package["version"] == "1.1.0", "Current minor version drifted")
     require(package["unity"] == "6000.3", "Unity major/minor minimum drifted")
     require(package["unityRelease"] == "20f1", "Unity exact release drifted")
     require(
@@ -110,13 +110,16 @@ def main() -> int:
         corpus["packageVersion"] == package["version"]
         and corpus["foldScriptVersion"] == "0.1"
         and corpus["unityVersion"] == "6000.3.20f1"
-        and case_ids == contract["productionCorpus"]["caseIds"],
-        "Stable production corpus header drifted",
-    )
-    require(
-        canonical_sha256(corpus["cases"])
-        == contract["productionCorpus"]["casesSha256"],
-        "Stable production corpus geometry evidence differs from RC2",
+        and case_ids
+        == [
+            "cyclic-torus",
+            "off-grid-fold",
+            "planar-artwork",
+            "production-cup",
+            "registered-wave",
+            "sphere-gores",
+        ],
+        "Current production corpus header drifted",
     )
 
     release_candidate = contract["releaseCandidate"]
@@ -166,36 +169,36 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-a-") as first_dir:
         with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-b-") as second_dir:
-            first = build_release_bundle(pathlib.Path(first_dir), "v1.0.1")
-            second = build_release_bundle(pathlib.Path(second_dir), "v1.0.1")
+            first = build_release_bundle(pathlib.Path(first_dir), "v1.1.0")
+            second = build_release_bundle(pathlib.Path(second_dir), "v1.1.0")
             for first_path, second_path in zip(first, second):
                 require(
                     first_path.read_bytes() == second_path.read_bytes(),
                     f"M17 release output is not deterministic: {first_path.name}",
                 )
             evidence = json.loads(first[2].read_text(encoding="utf-8"))
-            patch_contract = json.loads(
-                (ROOT / "Documentation~" / "m23-patch-release.json").read_text(
+            minor_contract = json.loads(
+                (ROOT / "Documentation~" / "m25-minor-release.json").read_text(
                     encoding="utf-8"
                 )
             )
             require(
-                evidence["format"] == "foldcanvas-patch-release-evidence"
+                evidence["format"] == "foldcanvas-minor-release-evidence"
                 and evidence["stableRelease"] is True
-                and evidence["patchRelease"] is True
+                and evidence["minorRelease"] is True
                 and evidence["stableBaseline"]
-                == patch_contract["stableBaseline"],
-                "Stable baseline or patch evidence drifted",
+                == minor_contract["stableBaseline"],
+                "Stable baseline or minor evidence drifted",
             )
             require(
-                evidence["publication"] == patch_contract["publication"],
-                "Patch publication evidence differs from contract",
+                evidence["publication"] == minor_contract["publication"],
+                "Minor publication evidence differs from contract",
             )
             for wrong_tag in (
                 "v1.0.0-rc.2",
                 "v1.0.0",
                 "v2.0.0",
-                "1.0.1",
+                "1.1.0",
             ):
                 try:
                     build_release_bundle(pathlib.Path(second_dir), wrong_tag)
@@ -210,8 +213,8 @@ def main() -> int:
         re.fullmatch(r"[0-9a-f]{64}", normalized_digest) is not None,
         "Normalized Runtime API digest is invalid",
     )
-    print("M17 stable baseline and M22 patch compatibility validation passed.")
-    print("Patch 1.0.1; stable baseline 1.0.0; Unity 6000.3.20f1; FoldScript 0.1.")
+    print("M17 stable baseline and M25 minor compatibility validation passed.")
+    print("Minor 1.1.0; stable baseline 1.0.1; Unity 6000.3.20f1; FoldScript 0.1.")
     return 0
 
 

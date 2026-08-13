@@ -259,7 +259,7 @@ def validate(
             "proof package version must be "
             f"{expected_package_version} for this evidence context"
         )
-    if package_version not in {"1.0.0", "1.0.1"}:
+    if package_version not in {"1.0.0", "1.0.1", "1.1.0"}:
         errors.append("proof consumer package version is unsupported")
     if manifest["foldScriptVersion"] != "0.1":
         errors.append("proof FoldScript version must be 0.1")

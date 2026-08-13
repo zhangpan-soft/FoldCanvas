@@ -607,7 +607,7 @@ jobs:
           mkdir -p artifacts/m15-upgrade-pr
           baseline_commit="$(
             jq -r '.upgrade.fixture.baselineGitCommit' \
-              Documentation~/m23-patch-release.json
+              Documentation~/m25-minor-release.json
           )"
           baseline_root="$RUNNER_TEMP/foldcanvas-m15-pr-baseline"
           git worktree add --detach "$baseline_root" "$baseline_commit"
@@ -779,7 +779,7 @@ jobs:
           python3 Scripts/compare_upgrade_evidence.py \
             --before artifacts/m15-upgrade-pr/before/report.json \
             --after "$output_root/report.json" \
-            --contract Documentation~/m23-patch-release.json \
+            --contract Documentation~/m25-minor-release.json \
             --output artifacts/m15-upgrade-pr/comparison.json
 
       - name: Upload pre-release source-upgrade evidence

@@ -1,8 +1,8 @@
 # FoldCanvas
 
-> **Stable patch 1.0.1 release candidate.** A 2D-first, deterministic surface
-> compiler for Unity. M23 publishes exact `v1.0.1` only after its separate
-> fail-closed release and public-consumer gates pass; `v1.0.0` is rollback.
+> **FoldCanvas 1.1.0 minor release.** A 2D-first, deterministic surface compiler
+> for Unity. M25 assigns M24's backward-compatible off-grid Fold capability the
+> exact `v1.1.0` identity; immutable `v1.0.1` is rollback.
 
 **2D canvas + FoldScript -> deterministic 3D geometry.** The images below are
 real Unity `6000.3.20f1` outputs from the maintained source—not primitives,
@@ -422,7 +422,8 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M21 | Deterministic cup/sphere proof-gallery evidence — complete |
 | M22 | Proof-first README and social-preview patch — complete |
 | M23 | Audited `v1.0.1` patch release and public qualification — complete |
-| M24 | Deterministic off-grid rectangle crease topology split — active |
+| M24 | Deterministic off-grid rectangle crease topology split — complete |
+| M25 | Immutable identity gate and exact-tag `v1.1.0` qualification pipeline — implemented |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

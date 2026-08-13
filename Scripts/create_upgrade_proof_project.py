@@ -14,6 +14,7 @@ sys.dont_write_bytecode = True
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 TEMPLATE_ROOT = ROOT / "Scripts" / "Templates~" / "M15UpgradeHost"
+MINOR_CONTRACT_PATH = ROOT / "Documentation~" / "m25-minor-release.json"
 PATCH_CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
 STABLE_CONTRACT_PATH = ROOT / "Documentation~" / "m17-stable-release.json"
 MARKER_NAME = ".foldcanvas-m15-upgrade-project.json"
@@ -68,7 +69,9 @@ def archive_metadata(archive_path: pathlib.Path) -> tuple[str, str]:
 
 def load_upgrade_contract() -> dict:
     contract_path = (
-        PATCH_CONTRACT_PATH
+        MINOR_CONTRACT_PATH
+        if MINOR_CONTRACT_PATH.is_file()
+        else PATCH_CONTRACT_PATH
         if PATCH_CONTRACT_PATH.is_file()
         else STABLE_CONTRACT_PATH
     )

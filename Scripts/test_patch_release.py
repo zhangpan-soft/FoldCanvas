@@ -7,6 +7,7 @@ import json
 import pathlib
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -124,12 +125,12 @@ def main() -> int:
         "  unity-source-upgrade-tests:", 1
     )[1]
     require(
-        source_upgrade_job.count("Documentation~/m23-patch-release.json") == 2,
-        "Hosted source-first upgrade must use the M23 baseline and comparison contract",
+        source_upgrade_job.count("Documentation~/m25-minor-release.json") == 2,
+        "Hosted source-first upgrade must use the active M25 contract",
     )
     require(
-        "Documentation~/m17-stable-release.json" not in source_upgrade_job,
-        "Hosted source-first patch upgrade retained the RC2-to-1.0.0 contract",
+        "Documentation~/m23-patch-release.json" not in source_upgrade_job,
+        "Hosted source-first upgrade retained the superseded M23 target",
     )
     long_run_workflow = LONG_RUN_WORKFLOW_PATH.read_text(encoding="utf-8")
     require(
@@ -151,9 +152,27 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="foldcanvas-m23-") as temporary:
         root = pathlib.Path(temporary)
+        historical_source = root / "historical-source"
+        historical_source.mkdir()
+        archive_bytes = subprocess.run(
+            ["git", "archive", TAG],
+            cwd=ROOT,
+            check=True,
+            stdout=subprocess.PIPE,
+        ).stdout
+        subprocess.run(
+            ["tar", "-x", "-C", str(historical_source)],
+            input=archive_bytes,
+            check=True,
+        )
+        historical_contract_path = (
+            historical_source / "Documentation~" / "m23-patch-release.json"
+        )
         assets = root / "assets"
         assets.mkdir()
-        archive, manifest, evidence = build_release_bundle(assets, TAG)
+        archive, manifest, evidence = build_release_bundle(
+            assets, TAG, root=historical_source
+        )
         require(
             sorted(path.name for path in assets.iterdir())
             == expected_asset_names(VERSION),
@@ -171,10 +190,10 @@ def main() -> int:
         metadata_path = root / "release.json"
         write_metadata(metadata_path, assets)
         first = verify_public_release(
-            assets, metadata_path, CONTRACT_PATH, REPOSITORY, TAG, TAG_COMMIT
+            assets, metadata_path, historical_contract_path, REPOSITORY, TAG, TAG_COMMIT
         )
         second = verify_public_release(
-            assets, metadata_path, CONTRACT_PATH, REPOSITORY, TAG, TAG_COMMIT
+            assets, metadata_path, historical_contract_path, REPOSITORY, TAG, TAG_COMMIT
         )
         require(first == second, "M23 public verification is not deterministic")
         require(
@@ -194,7 +213,7 @@ def main() -> int:
             lambda: verify_public_release(
                 assets,
                 prerelease_path,
-                CONTRACT_PATH,
+                historical_contract_path,
                 REPOSITORY,
                 TAG,
                 TAG_COMMIT,
@@ -226,7 +245,7 @@ def main() -> int:
         write_metadata(metadata_path, assets)
         require_error(
             lambda: verify_public_release(
-                assets, metadata_path, CONTRACT_PATH, REPOSITORY, TAG, TAG_COMMIT
+                assets, metadata_path, historical_contract_path, REPOSITORY, TAG, TAG_COMMIT
             ),
             "M23 accepted stale patch evidence",
         )
@@ -234,7 +253,9 @@ def main() -> int:
 
         for wrong_tag in ("v1.0.0", "v1.0.2", "1.0.1"):
             require_error(
-                lambda wrong_tag=wrong_tag: build_release_bundle(root, wrong_tag),
+                lambda wrong_tag=wrong_tag: build_release_bundle(
+                    root, wrong_tag, root=historical_source
+                ),
                 f"M23 accepted mismatched tag {wrong_tag}",
             )
             cases += 1

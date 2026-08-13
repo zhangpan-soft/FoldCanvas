@@ -1,0 +1,59 @@
+{
+  "format": "foldcanvas-public-release-identities",
+  "version": "1",
+  "packageName": "com.foldcanvas.core",
+  "releases": [
+    {
+      "packageVersion": "1.0.0-rc.1",
+      "tag": "v1.0.0-rc.1",
+      "tagCommit": "a8c81e61175dafbc48d1750de7ef6823589517a6",
+      "releaseId": 364684802,
+      "publishedAt": "2026-08-04T07:30:31Z",
+      "archiveSha256": "ff3a065eec3a638701ff51d4f069684df4f075226305253ae04fd6ed2b250fdd",
+      "checksumSha256": "eb835a1cac0ee0c5adb6b99511f6bb93739839543bee1fe0be3cbad989960725",
+      "manifestSha256": "a0b9f19b9b69cace6b430b4546fc67b0f294dadb1efef6f8542b5e53ee5a9aca",
+      "evidenceSha256": "c9603b475bbfa78300a27b64189188a337ca95ef333c8ad00effa7cf808e3c32",
+      "assetCount": 4,
+      "immutable": true
+    },
+    {
+      "packageVersion": "1.0.0-rc.2",
+      "tag": "v1.0.0-rc.2",
+      "tagCommit": "4db988ffac6dad4362d126001e5c9a67081ef2b7",
+      "releaseId": 364762780,
+      "publishedAt": "2026-08-04T09:51:46Z",
+      "archiveSha256": "72c4191ed8c466f966e30b77cf76f61cb0f51ab12d5853b5f1bc893a5c46d707",
+      "checksumSha256": "9201b1aea39f8aa74532e74d46824b5386dcfd196e6ef5048a24f9db4219868a",
+      "manifestSha256": "8c8873104a55810b596b40cf154ea45a98c8cbe55def8624dc05dddff03e08e7",
+      "evidenceSha256": "501aba0dffbc870e0fadce5195f178aac654ee2c29fa20be80dae1fcbb4590bc",
+      "assetCount": 4,
+      "immutable": true
+    },
+    {
+      "packageVersion": "1.0.0",
+      "tag": "v1.0.0",
+      "tagCommit": "6ed32f1ed2a48796f5c0e015205cd47249e1bcef",
+      "releaseId": 368700889,
+      "publishedAt": "2026-08-11T16:22:02Z",
+      "archiveSha256": "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
+      "checksumSha256": "a6a976f7fbc8b82d9d1aba232a7232ae86a25fbcf87a60008f968158d841e0d3",
+      "manifestSha256": "06f223038b5f0e467cf7f1bc7010cd62add1704a59eadd62940b982ebe48aae1",
+      "evidenceSha256": "7fe6d4cb2cc0294fcefe7c2cdbc5f061d9b361aecccdfca5a059b29d9e6630fd",
+      "assetCount": 4,
+      "immutable": true
+    },
+    {
+      "packageVersion": "1.0.1",
+      "tag": "v1.0.1",
+      "tagCommit": "867f3bd5501218aa95872db6e7e66cb213031cab",
+      "releaseId": 369729288,
+      "publishedAt": "2026-08-13T07:16:56Z",
+      "archiveSha256": "4188d23b18b924f6642f9e4eabbc15500fb60fb3d3916f23857a5a19966e1de5",
+      "checksumSha256": "2fc1301f537be0a1224242154de870992b7ca13b38bcbf4174bbcebb3dd930b8",
+      "manifestSha256": "cabf6b76e61ee96e82978c10213b88f1fa1785ba2b02b9900906ea989b57e54f",
+      "evidenceSha256": "deba3003217325eeb0549f367eb98b43bbeb53d62e817b1d22f27a2621e64b7f",
+      "assetCount": 4,
+      "immutable": true
+    }
+  ]
+}

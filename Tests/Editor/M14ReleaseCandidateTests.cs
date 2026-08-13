@@ -14,7 +14,7 @@ namespace FoldCanvas.Tests
     public sealed class M14ReleaseCandidateTests
     {
         private const string CandidateVersion = "1.0.0-rc.2";
-        private const string CurrentVersion = "1.0.1";
+        private const string CurrentVersion = "1.1.0";
         private const string QualifiedUnityVersion = "6000.3.20f1";
 
         [Test]

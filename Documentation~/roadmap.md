@@ -85,7 +85,8 @@ operation is active, Circular Roll angles outside `[-360, 360]` return
 
 ## M24: Deterministic crease topology split
 
-**Status:** active on `agent/m24-crease-topology-split`.
+**Status:** complete through audited PR #41, reviewed head `c9845d7`, and
+protected-main merge `7ffa350`.
 
 **Proof:** an off-grid crease inserts deterministic source vertices and edges,
 splits every crossed triangle without changing UV correspondence, and then
@@ -97,6 +98,23 @@ refined source topology before panel emission so the panel keeps contiguous
 vertex and triangle ranges. Curved, branched, disk, interior-ending, and
 collinear-overlap cases remain explicit future work and continue to return
 `FC3011 FoldCreaseRequiresTopologySplit` with no Mesh.
+
+Acceptance evidence: Unity `6000.3.20f1` passed 491/491 Edit Mode tests with
+zero failures, skips, or inconclusive results. Exact protected-main repository,
+Unity, and long-run workflows passed after merge.
+
+## M25: 1.1.0 minor release qualification
+
+**Status:** release contract and exact-tag qualification pipeline implemented;
+dynamic publication evidence is retained outside the immutable package.
+
+M25 assigns the backward-compatible M24 compiler behavior a new semantic
+identity instead of reusing immutable `v1.0.1`. It adds an offline public-tag
+rebuild ledger, advances package/compiler identity to `1.1.0`, and extends the
+exact-head release/public-consumer/source-upgrade gates to the minor line.
+
+M25 does not add geometry, FoldScript fields, dependencies, Unity support,
+registry or marketplace publication, or rewrite any existing release asset.
 
 ## M04: General Stitch and solidify
 
@@ -483,7 +501,7 @@ package, marketplace listing, or new geometry behavior.
 
 ## M23: 1.0.1 patch release
 
-**Status:** active on `agent/m23-patch-release-qualification`.
+**Status:** complete, published, and publicly qualified.
 
 M23 adds a fail-closed patch-release contract around the exact M22 package,
 extends tag publication and public qualification to `v1.0.1`, and proves two

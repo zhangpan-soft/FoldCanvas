@@ -6,12 +6,48 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-13
+
 ### Added
 
 - Added M24 deterministic source-topology refinement for compatible straight
   off-grid rectangle Fold creases, preserving source UVs, ordered named
   boundaries, downstream contiguous panel ranges, and exact zero-angle identity
   before rigid deformation.
+- Added an ordinal immutable-public-release identity ledger and offline tag
+  rebuild gate. Every recorded tag must reproduce its published deterministic
+  archive, and a current tree cannot reuse a published version with new bytes.
+- Added a fail-closed M25 minor-release contract, exact-head authorization,
+  two-public-consumer qualification, and source-first `1.0.1` to `1.1.0`
+  upgrade proof.
+
+### Changed
+
+- Advanced package and compiler identity to `1.1.0` because M24 adds a
+  backward-compatible compiler capability. FoldScript remains `0.1`, the
+  normalized 808-signature Runtime API shape is unchanged, and Unity remains
+  `6000.3.20f1`.
+- The maintained production corpus now accepts `off-grid-fold` as a
+  deterministic 7-vertex, 6-triangle result; the other five cases retain their
+  exact geometry, topology, OBJ, validation, and diagnostic identities.
+
+### Preserved
+
+- Public `v1.0.1` remains immutable at archive SHA-256
+  `4188d23b18b924f6642f9e4eabbc15500fb60fb3d3916f23857a5a19966e1de5`.
+- No later crease domains, topology-group deformation propagation, FoldScript
+  field, dependency, supported Unity row, registry, or marketplace change is
+  included.
+
+### Qualification status
+
+- Local repository-workflow parity passed all 31 validation entrypoints; four
+  historical public tags rebuilt exactly, and Unity `6000.3.20f1` passed all
+  495 Edit Mode tests with zero failures, skips, or inconclusive results.
+- Qualification is fail-closed on hosted M25 validation, exact-head audit,
+  protected-main merge, annotated tag publication, exact public assets, two
+  public consumers, and source-upgrade evidence. Dynamic identifiers and final
+  results are retained outside the immutable package archive.
 
 ## [1.0.1] - 2026-08-13
 
