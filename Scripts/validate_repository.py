@@ -1456,6 +1456,7 @@ for required_fragment in [
     "workflow_dispatch:",
     "schedule:",
     'cron: "17 3 * * 1"',
+    "Documentation~/m23-patch-release.json",
     "game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1",
     "projectPath: Project~",
     "unityVersion: 6000.3.20f1",

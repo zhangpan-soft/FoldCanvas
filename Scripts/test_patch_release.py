@@ -23,6 +23,9 @@ from verify_public_release import (  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
 UNITY_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "unity-tests.yml"
+LONG_RUN_WORKFLOW_PATH = (
+    ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"
+)
 REPOSITORY = "zhangpan-soft/FoldCanvas"
 VERSION = "1.0.1"
 TAG = "v1.0.1"
@@ -124,6 +127,11 @@ def main() -> int:
     require(
         "Documentation~/m17-stable-release.json" not in source_upgrade_job,
         "Hosted source-first patch upgrade retained the RC2-to-1.0.0 contract",
+    )
+    long_run_workflow = LONG_RUN_WORKFLOW_PATH.read_text(encoding="utf-8")
+    require(
+        "      - Documentation~/m23-patch-release.json" in long_run_workflow,
+        "M23 contract changes must trigger the exact-main-SHA long run",
     )
 
     with tempfile.TemporaryDirectory(prefix="foldcanvas-m23-") as temporary:
