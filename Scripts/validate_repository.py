@@ -1445,7 +1445,55 @@ pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
 if "M25: 1.1.0 minor release qualification" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M25 milestone")
+    errors.append("CURRENT_TASK.md must identify the M25 closure milestone")
+for required_fragment in [
+    "M25 is complete",
+    "42b9fd44cb9c7f4764951b0331a9118b71698810",
+    "d2ef6dcef0ab11f725f4e9d7665eb0850471178d2b467198835119eb63d986df",
+    "31721769647",
+]:
+    if required_fragment not in current_task_text:
+        errors.append("CURRENT_TASK.md is missing M25 closure evidence: " + required_fragment)
+m25_qualification_record = read_json(
+    "Docs/Release/m25-v1.1.0-qualification.json"
+)
+if (
+    m25_qualification_record.get("format")
+    != "foldcanvas-m25-public-qualification-record"
+    or m25_qualification_record.get("version") != "1"
+    or m25_qualification_record.get("repository") != "zhangpan-soft/FoldCanvas"
+    or m25_qualification_record.get("pullRequest") != 42
+    or m25_qualification_record.get("auditCommentId") != 5283235251
+    or m25_qualification_record.get("auditedHead")
+    != "9594adfedcb710fa3705ecbc9c7a224209b13c26"
+    or m25_qualification_record.get("mergeCommit")
+    != "42b9fd44cb9c7f4764951b0331a9118b71698810"
+    or m25_qualification_record.get("tag") != "v1.1.0"
+    or m25_qualification_record.get("tagCommit")
+    != "42b9fd44cb9c7f4764951b0331a9118b71698810"
+    or m25_qualification_record.get("releaseId") != 370063615
+    or m25_qualification_record.get("archiveSha256")
+    != "d2ef6dcef0ab11f725f4e9d7665eb0850471178d2b467198835119eb63d986df"
+    or m25_qualification_record.get("publicQualificationRun") != 31721769647
+    or m25_qualification_record.get("publicConsumerInstallations") != 2
+    or m25_qualification_record.get("qualified") is not True
+):
+    errors.append("M25 package-external public qualification record differs")
+if m25_qualification_record.get("fullEditModeTests") != {
+    "passed": 495,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0,
+}:
+    errors.append("M25 package-external Unity totals differ")
+if m25_qualification_record.get("sourceUpgrade") != {
+    "from": "1.0.1",
+    "to": "1.1.0",
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+    "derivedInputCount": 0,
+    "isSingleClosedVolume": True,
+}:
+    errors.append("M25 package-external source-upgrade record differs")
 for required_fragment in [
     "M25",
     "2D canvas plus FoldScript",

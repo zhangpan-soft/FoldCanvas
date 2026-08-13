@@ -1,0 +1,53 @@
+{
+  "format": "foldcanvas-m25-public-qualification-record",
+  "version": "1",
+  "repository": "zhangpan-soft/FoldCanvas",
+  "pullRequest": 42,
+  "auditCommentId": 5283235251,
+  "auditedHead": "9594adfedcb710fa3705ecbc9c7a224209b13c26",
+  "mergeCommit": "42b9fd44cb9c7f4764951b0331a9118b71698810",
+  "tag": "v1.1.0",
+  "tagCommit": "42b9fd44cb9c7f4764951b0331a9118b71698810",
+  "releaseId": 370063615,
+  "publishedAt": "2026-08-13T16:39:18Z",
+  "packageVersion": "1.1.0",
+  "archiveSha256": "d2ef6dcef0ab11f725f4e9d7665eb0850471178d2b467198835119eb63d986df",
+  "checksumSha256": "7708aeab2800f4016b9b3460806e1ac57ee80995197b37e48878cfcc47d4e113",
+  "manifestSha256": "7ae41c1719ec4bf3a50d5903bf8f5a9e27ad678636f4bbace6a43644b2ed36e8",
+  "evidenceSha256": "44cda9450014a32fc6af61e9a24476093385a94baa6cf85b2fcb9d7ca4c8041e",
+  "pullRequestRuns": {
+    "repository": 31718768595,
+    "unity": 31718768469
+  },
+  "protectedMainRuns": {
+    "repository": 31719754897,
+    "unity": 31719755074,
+    "robustness": 31719754955
+  },
+  "tagRuns": {
+    "release": 31720593657,
+    "repository": 31720593692,
+    "robustness": 31720593649
+  },
+  "publicQualificationRun": 31721769647,
+  "publicReleaseVerificationSha256": "1c96e119da6e101499af285fca7626dfd9c2272ae2a927256e9488615184d796",
+  "publicConsumerComparisonSha256": "ec39129212cb2aff5d18319f2427c6e616f23186484d00bd5a1fa5c13d8e8dab",
+  "sourceUpgradeComparisonSha256": "af3ba16151c372a049cc9ce436a0f6c494996d864eb00ae9ab82cc8ae79dbb5c",
+  "minorPublicationProofSha256": "7fd00a5eb4230901fb00de28515aabc6a113b851ff6805fe3731ee18cb641247",
+  "publicConsumerInstallations": 2,
+  "unityVersion": "6000.3.20f1",
+  "fullEditModeTests": {
+    "passed": 495,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "sourceUpgrade": {
+    "from": "1.0.1",
+    "to": "1.1.0",
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+    "derivedInputCount": 0,
+    "isSingleClosedVolume": true
+  },
+  "qualified": true
+}

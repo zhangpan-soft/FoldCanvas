@@ -54,6 +54,19 @@
       "evidenceSha256": "deba3003217325eeb0549f367eb98b43bbeb53d62e817b1d22f27a2621e64b7f",
       "assetCount": 4,
       "immutable": true
+    },
+    {
+      "packageVersion": "1.1.0",
+      "tag": "v1.1.0",
+      "tagCommit": "42b9fd44cb9c7f4764951b0331a9118b71698810",
+      "releaseId": 370063615,
+      "publishedAt": "2026-08-13T16:39:18Z",
+      "archiveSha256": "d2ef6dcef0ab11f725f4e9d7665eb0850471178d2b467198835119eb63d986df",
+      "checksumSha256": "7708aeab2800f4016b9b3460806e1ac57ee80995197b37e48878cfcc47d4e113",
+      "manifestSha256": "7ae41c1719ec4bf3a50d5903bf8f5a9e27ad678636f4bbace6a43644b2ed36e8",
+      "evidenceSha256": "44cda9450014a32fc6af61e9a24476093385a94baa6cf85b2fcb9d7ca4c8041e",
+      "assetCount": 4,
+      "immutable": true
     }
   ]
 }

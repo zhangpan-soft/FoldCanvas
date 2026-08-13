@@ -125,6 +125,18 @@ and the final qualification report are retained as reviewable evidence.
   recomputed from the frozen PR head rather than treated as authored source.
 - 2026-08-13: the complete Unity `6000.3.20f1` Edit Mode suite passed 495/495
   with zero failures, skips, or inconclusive results in an isolated host.
+- 2026-08-13: PR #42 retained exact audited head `9594adf`, passed every
+  required hosted check, and merged through protected main as `42b9fd4`.
+- 2026-08-13: exact main Repository, Unity, and M13 workflows passed; both
+  Unity suites reported 495/495 with zero failures, skips, or inconclusive
+  results. Annotated tag `v1.1.0` was created at the unchanged merge commit.
+- 2026-08-13: the first publication attempt failed closed because GitHub's
+  stored owner comment used CRLF line endings. The original audit identity was
+  preserved, its line endings were normalized, and the same package/tag passed
+  authorization on retry; no tag or package byte moved.
+- 2026-08-13: GitHub release `370063615` published the exact four assets.
+  Public qualification run `31721769647` verified both clean consumers, the
+  source-only `1.0.1 -> 1.1.0` upgrade, and the final minor-publication proof.
 
 # Decisions made
 
@@ -152,7 +164,8 @@ Local implementation verification is complete:
 - local Editor log: `/tmp/foldcanvas-m25-unity-all.log`;
 - `git diff --check`: passed.
 
-Hosted PR checks, exact-head audit, protected-main merge, tag/release identity,
+Hosted PR and protected-main checks, exact-head audit, merge, annotated tag,
 four public asset digests, two public consumers, source-upgrade comparison, and
-post-publication qualification remain pending. Later geometry milestones were
-not implemented.
+post-publication qualification all passed. The immutable public archive is
+`d2ef6dcef0ab11f725f4e9d7665eb0850471178d2b467198835119eb63d986df`.
+Later geometry milestones were not implemented.

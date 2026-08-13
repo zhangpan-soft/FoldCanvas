@@ -88,6 +88,14 @@ def main() -> int:
         raise AssertionError("valid minor authorization differs")
     cases = 1
 
+    crlf_audit = fixtures()
+    crlf_audit["comments"][0]["body"] = crlf_audit["comments"][0][
+        "body"
+    ].replace("\n", "\r\n")
+    if run(crlf_audit)["auditCommentId"] != 9100:
+        raise AssertionError("CRLF owner audit identity differs")
+    cases += 1
+
     tag_routed = fixtures()
     tag_routed["workflow_runs"]["workflow_runs"] = [
         item
