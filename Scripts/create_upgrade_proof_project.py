@@ -14,7 +14,8 @@ sys.dont_write_bytecode = True
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 TEMPLATE_ROOT = ROOT / "Scripts" / "Templates~" / "M15UpgradeHost"
-CONTRACT_PATH = ROOT / "Documentation~" / "m17-stable-release.json"
+PATCH_CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
+STABLE_CONTRACT_PATH = ROOT / "Documentation~" / "m17-stable-release.json"
 MARKER_NAME = ".foldcanvas-m15-upgrade-project.json"
 EXPECTED_NAME = "M15Expected.json"
 SOURCE_NAME = "m12-production-cup.foldcanvas.json"
@@ -66,7 +67,12 @@ def archive_metadata(archive_path: pathlib.Path) -> tuple[str, str]:
 
 
 def load_upgrade_contract() -> dict:
-    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    contract_path = (
+        PATCH_CONTRACT_PATH
+        if PATCH_CONTRACT_PATH.is_file()
+        else STABLE_CONTRACT_PATH
+    )
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
     upgrade = contract.get("upgrade")
     if not isinstance(upgrade, dict) or not isinstance(
         upgrade.get("fixture"), dict

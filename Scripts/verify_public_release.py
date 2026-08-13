@@ -428,7 +428,31 @@ def validate_release_evidence(
     package_version: str,
 ) -> None:
     stable_release = contract.get("stableRelease") is True
-    if stable_release:
+    patch_release = contract.get("patchRelease") is True
+    if patch_release:
+        if (
+            evidence.get("format") != "foldcanvas-patch-release-evidence"
+            or evidence.get("version") != "1"
+            or evidence.get("state") != "built-unverified"
+            or evidence.get("packageName") != "com.foldcanvas.core"
+            or evidence.get("packageVersion") != package_version
+            or evidence.get("stableRelease") is not True
+            or evidence.get("patchRelease") is not True
+            or evidence.get("foldScriptVersion") != "0.1"
+        ):
+            raise PublicReleaseVerificationError(
+                "Patch release evidence header differs"
+            )
+        expected_contract_path = "Documentation~/m23-patch-release.json"
+        expected_fields = (
+            "publication",
+            "requiredPostPublicationGates",
+            "requiredPrePublicationGates",
+            "rollback",
+            "stableBaseline",
+            "upgrade",
+        )
+    elif stable_release:
         if (
             evidence.get("format") != "foldcanvas-stable-release-evidence"
             or evidence.get("version") != "1"
@@ -491,7 +515,29 @@ def validate_release_evidence(
             raise PublicReleaseVerificationError(
                 f"Release evidence field differs from contract: {field}"
             )
-    if not stable_release:
+    if patch_release:
+        publication = evidence.get("publication", {})
+        if (
+            publication.get("githubPrerelease") is not False
+            or publication.get("stablePatchRelease") is not True
+            or publication.get("externalMarketplace") is not False
+        ):
+            raise PublicReleaseVerificationError(
+                "Patch publication scope differs"
+            )
+        for field in ("publicRuntimeApi", "productionCorpus"):
+            contracted = contract.get(field, {})
+            actual = evidence.get(field, {})
+            for key in (
+                ("signatureCount", "normalizedVersionToken", "normalizedSha256")
+                if field == "publicRuntimeApi"
+                else ("casesSha256",)
+            ):
+                if actual.get(key) != contracted.get(key):
+                    raise PublicReleaseVerificationError(
+                        f"Patch evidence field differs from contract: {field}.{key}"
+                    )
+    elif not stable_release:
         publication = evidence.get("publication", {})
         if (
             publication.get("githubPrereleaseOnly") is not True

@@ -1,8 +1,8 @@
 # FoldCanvas
 
-> **Patch 1.0.1 in qualification.** A 2D-first, deterministic surface compiler
-> for Unity. The published stable release remains `v1.0.0` until the patch has
-> completed its own release gate.
+> **Stable patch 1.0.1 release candidate.** A 2D-first, deterministic surface
+> compiler for Unity. M23 publishes exact `v1.0.1` only after its separate
+> fail-closed release and public-consumer gates pass; `v1.0.0` is rollback.
 
 **2D canvas + FoldScript -> deterministic 3D geometry.** The images below are
 real Unity `6000.3.20f1` outputs from the maintained source—not primitives,

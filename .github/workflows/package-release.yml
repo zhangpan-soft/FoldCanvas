@@ -12,6 +12,7 @@ on:
     tags:
       - "v*-rc.*"
       - "v1.0.0"
+      - "v1.0.1"
 
 permissions:
   contents: read
@@ -35,8 +36,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$RELEASE_TAG" != "v1.0.0" ]]; then
-            echo "::error::Manual release recovery only accepts immutable v1.0.0."
+          if [[ "$RELEASE_TAG" != "v1.0.0" && "$RELEASE_TAG" != "v1.0.1" ]]; then
+            echo "::error::Manual release recovery only accepts immutable v1.0.0 or v1.0.1."
             exit 1
           fi
 
@@ -91,12 +92,14 @@ jobs:
     name: Publish exact reviewed tag
     if: >-
       startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'workflow_dispatch' && inputs.release_tag == 'v1.0.0')
+      (github.event_name == 'workflow_dispatch' && (inputs.release_tag == 'v1.0.0' || inputs.release_tag == 'v1.0.1'))
     needs: build-package
     runs-on: ubuntu-latest
     permissions:
       actions: write
       contents: write
+      issues: read
+      pull-requests: read
     steps:
       - name: Check out exact release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -108,6 +111,49 @@ jobs:
         with:
           name: foldcanvas-upm-release-candidate
           path: artifacts/package
+
+      - name: Require one annotated tag on protected main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$RELEASE_TAG" = "v$(jq -r '.version' package.json)"
+          git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          test "$(git cat-file -t "$RELEASE_TAG")" = "tag"
+
+      - name: Verify exact-head patch release authorization
+        if: env.RELEASE_TAG == 'v1.0.1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output_root="artifacts/m23-release-authorization"
+          mkdir -p "$output_root"
+          tag_commit="$(git rev-parse HEAD)"
+          gh api "repos/$GITHUB_REPOSITORY/commits/$tag_commit/pulls" \
+            > "$output_root/pull-requests.json"
+          pull_number="$(jq -er 'if length == 1 then .[0].number else error("expected one PR") end' "$output_root/pull-requests.json")"
+          gh api --paginate --slurp \
+            "repos/$GITHUB_REPOSITORY/issues/$pull_number/comments?per_page=100" \
+            --jq 'add' > "$output_root/comments.json"
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$tag_commit&per_page=100" \
+            --slurp --jq '{workflow_runs: [.[].workflow_runs[]]}' \
+            > "$output_root/workflow-runs.json"
+          gh api -X GET search/issues \
+            -f q="repo:$GITHUB_REPOSITORY is:issue is:open label:release-blocker" \
+            > "$output_root/release-blockers.json"
+          python3 Scripts/verify_patch_release_authorization.py \
+            --contract Documentation~/m23-patch-release.json \
+            --pull-requests "$output_root/pull-requests.json" \
+            --comments "$output_root/comments.json" \
+            --workflow-runs "$output_root/workflow-runs.json" \
+            --blockers "$output_root/release-blockers.json" \
+            --repository "$GITHUB_REPOSITORY" \
+            --maintainer "${GITHUB_REPOSITORY_OWNER}" \
+            --tag "$RELEASE_TAG" \
+            --tag-commit "$tag_commit" \
+            --output "$output_root/report.json"
 
       - name: Revalidate exact M16 readiness before stable publication
         if: env.RELEASE_TAG == 'v1.0.0'
@@ -155,7 +201,7 @@ jobs:
           release_flags=()
           if [[ "$RELEASE_TAG" == *-rc.* ]]; then
             release_flags+=(--prerelease)
-          elif [[ "$RELEASE_TAG" != "v1.0.0" ]]; then
+          elif [[ "$RELEASE_TAG" != "v1.0.0" && "$RELEASE_TAG" != "v1.0.1" ]]; then
             echo "::error::Unsupported FoldCanvas release tag."
             exit 1
           fi
@@ -180,3 +226,12 @@ jobs:
             --ref "$RELEASE_TAG" \
             --field release_tag="$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload patch release authorization
+        if: always() && env.RELEASE_TAG == 'v1.0.1'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: foldcanvas-patch-release-authorization
+          path: artifacts/m23-release-authorization
+          if-no-files-found: error
+          retention-days: 90

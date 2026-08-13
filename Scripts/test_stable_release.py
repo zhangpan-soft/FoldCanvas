@@ -174,22 +174,22 @@ def main() -> int:
                     f"M17 release output is not deterministic: {first_path.name}",
                 )
             evidence = json.loads(first[2].read_text(encoding="utf-8"))
+            patch_contract = json.loads(
+                (ROOT / "Documentation~" / "m23-patch-release.json").read_text(
+                    encoding="utf-8"
+                )
+            )
             require(
                 evidence["format"] == "foldcanvas-patch-release-evidence"
-                and evidence["stableRelease"] is False
-                and evidence["stableQualification"]
-                == contract["stableQualification"]
-                and evidence["releaseCandidate"] == release_candidate,
+                and evidence["stableRelease"] is True
+                and evidence["patchRelease"] is True
+                and evidence["stableBaseline"]
+                == patch_contract["stableBaseline"],
                 "Stable baseline or patch evidence drifted",
             )
             require(
-                evidence["publication"]
-                == {
-                    "githubPrerelease": False,
-                    "finalStableRelease": False,
-                    "externalMarketplace": False,
-                },
-                "Unpublished patch evidence claims stable publication",
+                evidence["publication"] == patch_contract["publication"],
+                "Patch publication evidence differs from contract",
             )
             for wrong_tag in (
                 "v1.0.0-rc.2",

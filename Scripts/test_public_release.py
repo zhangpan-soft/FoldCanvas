@@ -320,7 +320,7 @@ def main() -> int:
             "Stable metadata was accepted as a prerelease",
         )
 
-    print("M17 public release verifier validation passed.")
+    print("M17 historical public release verifier validation passed.")
     print(f"Stable {TAG}; exact four-asset allowlist; RC2 identity frozen.")
     return 0
 

@@ -28,6 +28,8 @@ The format follows Keep a Changelog principles, and package versions follow sema
 - hosted proof qualification uses two independent clean Unity hosts for
   platform-local pixel repeatability while preserving source, geometry,
   topology, tool, and fixed-dimension cross-platform evidence
+- hosted patch qualification rebuilds the exact public `1.0.0` rollback and
+  proves the unchanged 2D canvas plus FoldScript source against `1.0.1`
 
 ### Preserved
 
@@ -38,9 +40,9 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ### Publication status
 
-- `1.0.1` is under repository and hosted qualification; this iteration does
-  not create a tag, GitHub release, registry package, social-preview setting,
-  or external marketplace publication
+- `1.0.1` remains unpublished while M23 qualifies its exact GitHub release;
+  this version does not apply a social-preview setting, publish a registry or
+  marketplace package, or add geometry behavior
 
 ## [1.0.0] - 2026-08-11
 

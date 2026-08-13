@@ -466,7 +466,7 @@ outside the public `v1.0.0` package bytes.
 
 ## M22: Proof-first README patch
 
-**Status:** active on `agent/m22-readme-proof-patch`.
+**Status:** complete through PR #36.
 
 **Proof:** both package READMEs place the maintained 2D source beside the real
 textured and topology outputs. A deterministic `1280 x 640` social-preview
@@ -477,6 +477,20 @@ and all published `v1.0.0`/RC2 assets remain unchanged.
 
 M22 does not publish a tag, GitHub release, repository social setting, registry
 package, marketplace listing, or new geometry behavior.
+
+## M23: 1.0.1 patch release
+
+**Status:** active on `agent/m23-patch-release-qualification`.
+
+M23 adds a fail-closed patch-release contract around the exact M22 package,
+extends tag publication and public qualification to `v1.0.1`, and proves two
+clean public consumers plus a source-first upgrade from immutable `v1.0.0`.
+The tag may be created only after exact-head audit, green hosted gates, and
+merge. Existing stable and RC assets remain immutable.
+
+M23 does not add geometry behavior, change Runtime API shape, expand the Unity
+support row, apply a repository social setting, or publish to a registry or
+external marketplace.
 
 ## Deliberate product non-goals
 

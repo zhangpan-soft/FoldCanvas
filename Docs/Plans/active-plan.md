@@ -1,173 +1,63 @@
-# Goal
+# M23 active plan: 1.0.1 patch release
 
-Deliver M22 on `agent/m22-readme-proof-patch`: integrate M21's audited proof
-gallery into the package READMEs as a compatible `1.0.1` patch and generate a
-deterministic release-excluded repository social-preview candidate.
+## Objective
 
-# User-visible proof
+Qualify and publish exact stable patch `v1.0.1` from an audited merge. This is
+a release-evidence milestone: the authoritative geometry remains the 2D canvas plus FoldScript,
+and no generated Mesh becomes source.
 
-The README hero shows `2D canvas + FoldScript -> deterministic 3D geometry`
-through two compact source/result/topology rows. A `1280 x 640` companion image
-uses the same validated pixels. All claims link to a manifest that binds Unity,
-source, tool, geometry, topology, and SHA-256 evidence.
+## Scope
 
-# Scope
+- add a patch-release contract/schema for package `1.0.1`, stable baseline
+  `v1.0.0`, FoldScript `0.1`, and Unity `6000.3.20f1`;
+- make deterministic patch evidence point to that contract;
+- support exact `v1.0.1` tag publication and manual recovery while keeping
+  every historical tag path immutable;
+- qualify the public archive in two clean consumers and a source-first
+  `1.0.0` to `1.0.1` upgrade;
+- retain real Unity XML and Editor logs as hosted artifacts;
+- record exact-head audit before merge, then create an annotated tag and
+  verify the resulting public release.
 
-- GitHub issue #26, README/social-preview gate only
-- English and Chinese README hero integration
-- deterministic standard-library social-card composition and validation
-- package/compiler version `1.0.1`, newest-first changelog, API/corpus header
-  regeneration, and patch compatibility evidence
-- M21 closeout, M22 task/roadmap documentation, repository and hosted gates
+## Non-goals
 
-# Non-goals
+- geometry, topology, operations, UV, compiler, or public API changes;
+- package dependencies, network services in core, or a new Unity row;
+- generated Mesh, OBJ, material, prefab, or report as upgrade authority;
+- registry, external marketplace, or repository social-preview publication;
+- simulated Windows evidence for issue #21.
 
-- compiler, geometry, topology, UV, FoldScript, sample, shader, dependency, or
-  Unity-version behavior
-- edits to M21's six audited Unity proof PNGs or geometry claims
-- a tag, GitHub release, repository setting change, registry, or marketplace
-  publication
-- issue #21 Windows evidence or later geometry milestones
+## Gates
 
-# Files expected to change
+1. Contract and Schema parse and reject drift deterministically.
+2. Release archives, manifests, checksums, and evidence are byte-reproducible.
+3. `v1.0.1` is the sole new normal-release tag accepted by both publication
+   and public qualification workflows.
+4. Patch evidence binds exact contract bytes, stable baseline, API shape,
+   corpus geometry, source-first upgrade fixture, and rollback.
+5. Repository checks, full Edit Mode tests, clean installs, handoff, proof
+   regeneration, source upgrade, and M13 long-run are green on exact PR head.
+6. A maintainer audit comment names the exact head SHA before merge.
+7. The annotated tag peels to the audited merge; publication has exactly four
+   assets and is non-draft/non-prerelease.
+8. Public qualification proves downloaded bytes, two clean consumers, and the
+   source-first upgrade before reporting the patch as qualified.
 
-- `README.md`, `README.zh-CN.md`, `CHANGELOG.md`, `package.json`
-- `Runtime/Data/FoldCanvasVersion.cs`
-- `Documentation~/public-runtime-api.json`
-- `Documentation~/m11-production-corpus.json`
-- `Documentation~/compatibility.md`, `Documentation~/roadmap.md`
-- `SUPPORT.md`
-- `Docs/Community/ProofGallery/README.md`
-- `Docs/Community/ProofGallery/social-preview.png`
-- `Documentation~/ProofGallery/*.png` byte-identical package copies used by
-  the package-root READMEs
-- `Scripts/generate_social_preview.py`
-- `Scripts/validate_readme_proof.py`, `Scripts/test_readme_proof.py`
-- `Scripts/validate_repository.py`, repository workflow wiring
-- `CURRENT_TASK.md`, M21/M22 milestone files, and this plan
+## Failure and rollback
 
-# Geometry invariants
+Any identity or evidence mismatch stops before publication. A failed tag run
+may be retried only against the same immutable annotated tag. Never force-move
+or rewrite a public tag or release. Rollback remains exact `v1.0.0`, followed
+by recompilation from the unchanged 2D canvas and FoldScript.
 
-- source canvases and FoldScript remain the only authoritative geometry input
-- the six M21 PNGs and their package copies remain byte-identical and continue
-  to bind to the same cup and sphere geometry hashes and topology values
-- each hosted platform proves deterministic render bytes through two
-  independent clean-host regenerations; PNG bytes are not compared across GPU
-  platforms, while source, geometry, topology, tool, and dimensions are
-  cross-platform invariants
-- README image targets are package-contained byte copies of those exact PNGs;
-  provenance and the release-excluded social candidate use public repository
-  links so installed-package READMEs contain no broken `Docs/` references
-- README and social-card generation do not invoke, mutate, approximate, hide,
-  or replace geometry
-- public Runtime API shape remains the normalized 808-signature stable shape;
-  only reviewed version literals may change from `1.0.0` to `1.0.1`
-- all six production-corpus case records other than the package-version header
-  remain byte-semantically unchanged
-- FoldScript remains `0.1`; Unity remains `6000.3.20f1`; dependencies remain
-  empty
-- `v1.0.0`, RC2, and their public archive assets are immutable
+## Progress
 
-# Implementation steps
-
-1. Close M21 records and freeze M22 as a patch-version documentation gate.
-2. Add concise English/Chinese hero copy, two three-column proof rows, useful
-   alt text, and links to the maintained sample/provenance documentation.
-3. Compose a fixed `1280 x 640` social card from decoded validated proof PNGs
-   with only fixed colors/labels; encode deterministic RGBA PNG bytes.
-4. Add a dependency-free validator for README placement/links/alt text,
-   version agreement, M21 input hashes, output dimensions/hash, and compositor
-   repeatability, plus adversarial fixtures.
-5. Advance package/compiler/changelog/API/corpus version evidence to `1.0.1`
-   while proving normalized API shape and corpus cases unchanged.
-6. Wire repository validation and update two independent M21 proof hosts to
-   consume the current archive version without weakening geometry evidence.
-7. Run complete static/archive/Unity/clean-host/proof gates and visual checks.
-8. Push a PR, require green exact-head hosted checks, record an exact-head
-   maintainer audit, and merge only if all protected-main requirements pass.
-
-# Test matrix
-
-## README and social proof
-
-- both READMEs contain the hero statement before the long status inventory
-- exactly six local proof-image references resolve and have meaningful alt text
-- every claim links to M21 manifest/guide/sample documentation
-- social output is `1280 x 640`, RGBA, deterministic across two builds, and
-  changes/fails when a required source hash or layout contract is altered
-- remote URLs, traversal, missing images, wrong dimensions, duplicate panels,
-  stale hashes, unexpected PNG chunks, and absent provenance fail
-
-## Patch compatibility
-
-- package, compiler, changelog, public API, and corpus headers equal `1.0.1`
-- normalized API signatures remain the stable 808-signature identity
-- corpus case IDs, hashes, counts, diagnostics, topology, and validation remain
-  unchanged
-- the deterministic archive is rebuilt twice and has a new non-v1.0.0 hash
-
-## Product regression
-
-- repository validators and full Edit Mode suite pass
-- repeated clean archive installs, producer/receiver handoff, source-first
-  upgrade, and proof regeneration pass
-- Published `v1.0.0` and RC2 artifacts are never edited or republished
-
-# Risks and rollback
-
-- **Package identity ambiguity:** advance version before merging README bytes,
-  and validate a new deterministic hash without overwriting any public asset.
-- **Screenshot-as-claim:** keep M21 geometry reports and manifest as the claim
-  authority; README pixels alone never prove topology.
-- **Social-card fabrication:** permit only fixed crop/scale composition from the
-  six tracked M21 images plus fixed labels/background; validate source hashes.
-- **API false break:** normalize only version literals and compare complete
-  signature order/digest.
-- **Scratch contamination:** never stage untracked `.meta`, Project~ scenes,
-  TestResults, Library, or other user scratch.
-
-Rollback is one revert of the M22 merge. It restores package version `1.0.0`
-and removes only the README/social integration and its evidence. No geometry or
-source migration is required.
-
-# Progress log
-
-- 2026-08-13: verified M21 merge `67fb659`, green main repository/Unity runs,
-  zero open PRs, no external CLAIMs, protected main, and #21 still requiring a
-  real external Windows host.
-- 2026-08-13: confirmed both root READMEs are package allowlist members; chose
-  compatible patch `1.0.1` instead of mutating or pretending to preserve the
-  published `1.0.0` archive.
-- 2026-08-13: inspected all six M21 PNGs and retained their exact bytes.
-- 2026-08-13: hosted Linux regeneration reproduced source, geometry, topology,
-  and tool evidence but exposed platform-specific PNG raster bytes; replaced
-  the invalid macOS-to-Linux byte comparison with two-host Linux repeatability.
-
-# Decisions made
-
-- M22 is versioned `1.0.1`; `v1.0.0` remains the current published rollback
-  until a future explicit release milestone qualifies/publishes another tag.
-- A version constant embedded in signatures is normalized for API-shape proof;
-  no public type/member shape change is accepted.
-- The social-preview file is a tracked candidate only. Applying it to GitHub's
-  repository setting is a distinct public presentation action outside M22.
-- Social composition uses a checked-in dependency-free script and exact M21
-  source hashes; no AI image generation, browser screenshot, or manual retouch.
-
-# Final verification
-
-Local implementation is complete. The complete repository matrix passes,
-including 44 Action-pin fixtures, 72 Schema fields, 14 Roll review fixtures,
-9 M21 gallery fixtures, 7 M22 README/social fixtures, deterministic archive,
-stable-baseline compatibility, public-release verifier, source-first upgrade,
-clean-install, handoff, trust, JSON, and diff checks. The final `1.0.1`
-archive is byte-deterministic with SHA-256
-`56699767ff482e7bfd4a8fcf90e5d2eb5b8ca8d553cf6a2387e5f29f03a4e656`.
-
-Unity `6000.3.20f1` installed that exact archive into a disposable clean host
-and passed 478/478 full package Edit Mode tests with zero failures, skips, or
-inconclusive results. `test-results.xml` and `Editor.log` exist under
-`/private/tmp/foldcanvas-m22-ci-fix-full.aHcxW2/results/`. All six README package
-images are byte-identical to M21, and the social candidate was visually
-inspected. Hosted exact-head checks, audit, and merge remain. M22 does not
-implement a new geometry operation or any later milestone behavior.
+- 2026-08-13: PR #36 merged audited M22 head `8edd04b` as `1ff4a1b`.
+- 2026-08-13: post-merge repository checks, full Unity workflow, and M13
+  robustness long run all completed successfully on `main`.
+- 2026-08-13: M23 selected as the explicit release milestone promised by M22;
+  implementation is in progress on `agent/m23-patch-release-qualification`.
+- 2026-08-13: the contract, Schema, deterministic evidence, public verifier,
+  `v1.0.1` workflow paths, two-consumer/source-upgrade proof, and fail-closed
+  exact-head authorization fixtures pass locally. Exact-head hosted audit and
+  public tag qualification remain.
