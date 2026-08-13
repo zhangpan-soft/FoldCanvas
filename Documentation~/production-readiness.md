@@ -56,14 +56,16 @@ Missing, empty, skipped, failed, or inconclusive evidence fails the gate.
 
 ## Production corpus
 
-`Documentation~/m11-production-corpus.json` stores source and result evidence,
-not generated Mesh assets. Every case compiles twice before it is compared to
-the reviewed baseline.
+`Documentation~/m24-production-corpus.json` stores the current source and
+result evidence, not generated Mesh assets. Every case compiles twice before
+it is compared to the reviewed baseline. The immutable M11/M17 evidence remains
+in `Documentation~/m11-production-corpus.json`; M24 does not rewrite published
+v1.0.0 or v1.0.1 qualification history.
 
 | Case | Validation | Production question |
 |---|---|---|
 | `cyclic-torus` | Strict | do two explicit cycles stay closed and non-self-intersecting? |
-| `invalid-off-grid-fold` | Basic | does unsupported topology split fail as `FC3011` with no Mesh? |
+| `off-grid-fold` | Basic | does M24 insert a deterministic crease edge and fold without triangle stretch? |
 | `planar-artwork` | Basic | do source coordinates, UVs, and deterministic tessellation remain stable? |
 | `production-cup` | Strict | do welded wall/base, inner shell, rim, and closed volume remain connected? |
 | `registered-wave` | Standard | does an explicit position-only native extension retain bounded topology? |
@@ -71,8 +73,7 @@ the reviewed baseline.
 
 For successful cases the gate records render and logical vertex counts,
 triangles, components, open/non-manifold edges, closed-volume state, source,
-full compiled-data, OBJ, and diagnostic hashes. The invalid case records its
-stable root diagnostic and empty geometry evidence. The derived CI report is
+full compiled-data, OBJ, and diagnostic hashes. The derived CI report is
 written under the host's `M11Evidence` directory and uploaded with package-test
 artifacts.
 

@@ -209,6 +209,7 @@ required = [
     "Documentation~/m13-resource-envelopes.json",
     "Documentation~/public-runtime-api.json",
     "Documentation~/m11-production-corpus.json",
+    "Documentation~/m24-production-corpus.json",
     "Scripts/create_clean_install_project.py",
     "Scripts/validate_clean_install_evidence.py",
     "Scripts/compare_clean_install_evidence.py",
@@ -620,7 +621,7 @@ else:
                 f"M11 public Runtime API manifest exposes forbidden type: {fragment}"
             )
 
-production_corpus = read_json("Documentation~/m11-production-corpus.json")
+production_corpus = read_json("Documentation~/m24-production-corpus.json")
 if (
     production_corpus.get("format") != "foldcanvas-production-corpus"
     or production_corpus.get("version") != "1"
@@ -628,9 +629,17 @@ if (
     or production_corpus.get("foldScriptVersion") != "0.1"
     or production_corpus.get("unityVersion") != "6000.3.20f1"
 ):
-    errors.append("M11 production corpus header is invalid")
+    errors.append("M24 production corpus header is invalid")
 corpus_cases = production_corpus.get("cases")
 expected_corpus_ids = [
+    "cyclic-torus",
+    "off-grid-fold",
+    "planar-artwork",
+    "production-cup",
+    "registered-wave",
+    "sphere-gores",
+]
+historical_corpus_ids = [
     "cyclic-torus",
     "invalid-off-grid-fold",
     "planar-artwork",
@@ -642,7 +651,7 @@ if not isinstance(corpus_cases, list) or [
     case.get("id") if isinstance(case, dict) else None
     for case in (corpus_cases or [])
 ] != expected_corpus_ids:
-    errors.append("M11 production corpus order or identity changed")
+    errors.append("M24 production corpus order or identity changed")
     corpus_cases = []
 else:
     digest_pattern = re.compile(r"[0-9a-f]{64}")
@@ -650,9 +659,9 @@ else:
         case.get("validationLevel") for case in corpus_cases
     }
     if validation_levels != {"Basic", "Standard", "Strict"}:
-        errors.append("M11 corpus must cover Basic, Standard, and Strict validation")
-    if sum(case.get("success") is True for case in corpus_cases) != 5:
-        errors.append("M11 corpus must retain five successful production cases")
+        errors.append("M24 corpus must cover Basic, Standard, and Strict validation")
+    if sum(case.get("success") is True for case in corpus_cases) != 6:
+        errors.append("M24 corpus must contain six successful production cases")
     for case in corpus_cases:
         for field in (
             "sourceSha256",
@@ -663,16 +672,16 @@ else:
             value = case.get(field)
             if not isinstance(value, str) or digest_pattern.fullmatch(value) is None:
                 errors.append(
-                    f"M11 corpus case {case.get('id')} has invalid {field}"
+                    f"M24 corpus case {case.get('id')} has invalid {field}"
                 )
-    invalid_case = corpus_cases[1]
+    off_grid_case = corpus_cases[1]
     if (
-        invalid_case.get("success") is not False
-        or invalid_case.get("errorDiagnosticCode") != "FC3011"
-        or invalid_case.get("renderVertices") != 0
-        or invalid_case.get("triangles") != 0
+        off_grid_case.get("success") is not True
+        or off_grid_case.get("errorDiagnosticCode") != ""
+        or off_grid_case.get("renderVertices") != 7
+        or off_grid_case.get("triangles") != 6
     ):
-        errors.append("M11 expected-invalid corpus evidence changed")
+        errors.append("M24 off-grid Fold corpus evidence is invalid")
 
 m14_contract = read_json("Documentation~/m14-release-candidate.json")
 expected_m14_gates = [
@@ -748,7 +757,7 @@ else:
     if m14_fixture_ids != sorted(set(m14_fixture_ids)):
         errors.append("M14 FoldScript fixture IDs must be unique and ordinal")
 
-if m14_contract.get("productionCorpus", {}).get("caseIds") != expected_corpus_ids:
+if m14_contract.get("productionCorpus", {}).get("caseIds") != historical_corpus_ids:
     errors.append("M14 production-corpus identity changed")
 if m14_contract.get("requiredGates") != expected_m14_gates:
     errors.append("M14 required release gates changed or are not ordinal")
@@ -863,7 +872,7 @@ expected_public_assets = [
 ]
 if m15_contract.get("publicAssets") != expected_public_assets:
     errors.append("M15 public release asset allowlist is invalid")
-if m15_contract.get("productionCorpus", {}).get("caseIds") != expected_corpus_ids:
+if m15_contract.get("productionCorpus", {}).get("caseIds") != historical_corpus_ids:
     errors.append("M15 production-corpus identity changed")
 if m15_contract.get("requiredGates") != expected_m15_gates:
     errors.append("M15 required gates changed or are not ordinal")
@@ -1027,19 +1036,11 @@ else:
     ):
         errors.append("M17 Runtime API shape differs from immutable RC2")
 
-corpus_cases_digest = hashlib.sha256(
-    json.dumps(
-        corpus_cases,
-        ensure_ascii=True,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-).hexdigest()
 if (
     m17_contract.get("productionCorpus", {}).get("caseIds")
-    != expected_corpus_ids
+    != historical_corpus_ids
     or m17_contract.get("productionCorpus", {}).get("casesSha256")
-    != corpus_cases_digest
+    != "ebec84a67abece8a7d04c2fda32c193ed9939e5626b357b3f9bbaf1cd81b72f3"
 ):
     errors.append("M17 production corpus differs from immutable RC2")
 if m17_contract.get("rollback") != {
@@ -1374,18 +1375,18 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M23: 1.0.1 patch release" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M23 milestone")
+if "M24: deterministic off-grid crease topology split" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M24 milestone")
 for required_fragment in [
-    "1.0.1 patch release",
+    "M24",
     "2D canvas plus FoldScript",
     "v1.0.1",
     "v1.0.0",
-    "source-first",
-    "exact-head",
+    "off-grid",
+    "contiguous",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M23 active plan is missing: " + required_fragment)
+        errors.append("M24 active plan is missing: " + required_fragment)
 repository_checks_text = (
     ROOT / ".github" / "workflows" / "repository-checks.yml"
 ).read_text(encoding="utf-8")

@@ -7,13 +7,13 @@ namespace FoldCanvas.Editor
 {
     internal static class FoldCanvasRobustnessGenerator
     {
-        public const string GeneratorVersion = "1";
+        public const string GeneratorVersion = "2";
 
         public const string PlanarValidSuite = "planar-valid";
         public const string RollValidSuite = "roll-valid";
         public const string RollInsufficientSuite =
             "roll-insufficient-invalid";
-        public const string FoldOffGridSuite = "fold-off-grid-invalid";
+        public const string FoldOffGridSuite = "fold-off-grid-valid";
 
         public static readonly string[] SmokeSuiteIds =
         {
@@ -122,10 +122,8 @@ namespace FoldCanvas.Editor
                 else
                 {
                     BuildFoldOffGrid(asset, ref random);
-                    expectedSuccess = false;
-                    expectedDiagnostic =
-                        FoldCanvasDiagnosticCodes
-                            .FoldCreaseRequiresTopologySplit;
+                    expectedSuccess = true;
+                    expectedDiagnostic = string.Empty;
                 }
 
                 string canonicalSource = CanonicalSource(asset);

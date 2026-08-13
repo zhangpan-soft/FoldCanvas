@@ -77,7 +77,7 @@ namespace FoldCanvas.Editor
     public static class FoldCanvasProductionCorpusRunner
     {
         internal const string BaselineRelativePath =
-            "Documentation~/m11-production-corpus.json";
+            "Documentation~/m24-production-corpus.json";
         internal const string BaselineFormat =
             "foldcanvas-production-corpus";
         internal const string ReportFormat =
@@ -94,11 +94,10 @@ namespace FoldCanvas.Editor
                     string.Empty,
                     "FoldScript 0.1"),
                 new FoldCanvasProductionCorpusDefinition(
-                    "invalid-off-grid-fold",
+                    "off-grid-fold",
                     FoldCanvasValidationLevel.Basic,
-                    false,
-                    FoldCanvasDiagnosticCodes
-                        .FoldCreaseRequiresTopologySplit,
+                    true,
+                    string.Empty,
                     "FoldScript 0.1"),
                 new FoldCanvasProductionCorpusDefinition(
                     "planar-artwork",
@@ -837,7 +836,7 @@ namespace FoldCanvas.Editor
                         "recalculateNormals=true|vertices=1000000|" +
                         "triangles=2000000\n";
                     return asset;
-                case "invalid-off-grid-fold":
+                case "off-grid-fold":
                     asset.Panels.Add(PanelDefinition.CreateRectangle(
                         "panel",
                         new Rect(0f, 0f, 1f, 1f),

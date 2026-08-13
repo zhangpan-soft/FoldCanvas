@@ -97,6 +97,13 @@ namespace FoldCanvas
                 return false;
             }
 
+            // A zero-angle Fold is an exact identity. It does not require a
+            // crease edge because no vertex can move or stretch a triangle.
+            if (operation.AngleDegrees == 0f)
+            {
+                return true;
+            }
+
             if (!IsExistingContinuousEdgeChain(
                     panel,
                     buffer,
@@ -130,18 +137,13 @@ namespace FoldCanvas
                 return false;
             }
 
-            if (operation.AngleDegrees == 0f)
-            {
-                return true;
-            }
-
             Vector3 currentAxis = hingeEnd - hingeStart;
             Quaternion rotation = Quaternion.AngleAxis(
                 operation.AngleDegrees,
                 currentAxis.normalized);
-            int vertexEnd = panel.VertexStart + panel.VertexCount;
-            for (int i = panel.VertexStart; i < vertexEnd; i++)
+            for (int offset = 0; offset < panel.VertexCount; offset++)
             {
+                int i = panel.VertexStart + offset;
                 MeshBuildVertex vertex = buffer.Vertices[i];
                 Vector2 normalized = ToNormalized(panel, vertex.SourcePosition);
                 float signedDistance =

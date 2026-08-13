@@ -83,7 +83,11 @@ compiler stage and source order.
 - `FC3008 NonFiniteFoldAngle`
 - `FC3009 UnsupportedFoldFalloff`
 - `FC3010 InvalidFoldSide`
-- `FC3011 FoldCreaseRequiresTopologySplit`
+- `FC3011 FoldCreaseRequiresTopologySplit` — the crease still needs a topology
+  domain outside M24's straight perimeter-to-perimeter rectangle contract,
+  including curved, branched, disk, interior-ending, collinear-overlap, or
+  wrap-managed off-grid cases. A compatible rectangle crease is refined
+  deterministically and does not emit this diagnostic.
 - `FC3012 RollTargetMissing`
 - `FC3013 NonFiniteRollParameter`
 - `FC3014 NearZeroRollAngle`

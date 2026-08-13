@@ -121,9 +121,13 @@ as a rigid crease when `falloff` is exactly zero. Positive angles match
 `Quaternion.AngleAxis(angleDegrees, currentAxisFromAtoB)`. If an earlier
 operation bends the authored line so it no longer maps to one straight current
 3D axis, compilation fails instead of guessing. The complete authored crease
-must also be an existing continuous mesh-edge chain; otherwise M03 returns
-`FC3011 FoldCreaseRequiresTopologySplit` instead of stretching crossed
-triangles.
+must become a continuous mesh-edge chain. M24 deterministically refines a
+straight perimeter-to-perimeter rectangle crease in normalized source space
+before panel emission, preserving source UVs and named-boundary order instead
+of stretching crossed triangles. A zero-angle Fold is an exact identity and
+does not refine source topology. Curved, branched, disk, interior-ending,
+collinear-overlap, and wrap-managed off-grid cases return
+`FC3011 FoldCreaseRequiresTopologySplit` with no Mesh.
 
 ### Roll
 

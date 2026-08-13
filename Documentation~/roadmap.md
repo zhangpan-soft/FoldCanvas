@@ -83,17 +83,20 @@ several source intervals onto the same cylindrical surface. Until such an
 operation is active, Circular Roll angles outside `[-360, 360]` return
 `FC3023 UnsupportedMultiTurnRoll`.
 
-### Future Fold task: deterministic crease topology split
+## M24: Deterministic crease topology split
 
-**Status:** explicitly deferred; not part of M03 or M04.
+**Status:** active on `agent/m24-crease-topology-split`.
 
 **Proof:** an off-grid crease inserts deterministic source vertices and edges,
 splits every crossed triangle without changing UV correspondence, and then
 executes the exact rigid fold with stable provenance and triangle ordering.
 
-Until that task is active, any crease that is not already a continuous existing
-edge chain returns `FC3011 FoldCreaseRequiresTopologySplit` and produces no
-Mesh.
+M24 first supports straight rectangle creases whose endpoints lie on the panel
+perimeter and whose open segment partitions the source domain. It plans the
+refined source topology before panel emission so the panel keeps contiguous
+vertex and triangle ranges. Curved, branched, disk, interior-ending, and
+collinear-overlap cases remain explicit future work and continue to return
+`FC3011 FoldCreaseRequiresTopologySplit` with no Mesh.
 
 ## M04: General Stitch and solidify
 
