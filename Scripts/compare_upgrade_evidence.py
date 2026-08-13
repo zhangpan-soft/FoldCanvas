@@ -130,7 +130,13 @@ def compare(
         raise ValueError("M15 before package version is not an approved baseline")
     target_version = after.get("packageVersion")
     if contract.get("stableRelease") is True:
-        stable_version = str(contract.get("packageVersion"))
+        stable_version = str(
+            contract.get("stableBaseline", {}).get(
+                "packageVersion",
+                contract.get("packageVersion"),
+            )
+        )
+        contracted_target = str(contract.get("packageVersion"))
         stable_parts = stable_version.split(".")
         target_parts = str(target_version).split(".")
         if (
@@ -142,6 +148,7 @@ def compare(
             or not stable_parts[2].isdigit()
             or not target_parts[2].isdigit()
             or int(target_parts[2]) < int(stable_parts[2])
+            or target_version != contracted_target
         ):
             raise ValueError("M15 after package version is not the stable lineage")
     elif target_version != contract.get("candidateVersion"):

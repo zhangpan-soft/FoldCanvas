@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-patch-release.schema.json",
+  "title": "FoldCanvas stable patch release contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "packageName",
+    "packageVersion",
+    "tag",
+    "stableRelease",
+    "patchRelease",
+    "foldScriptVersion",
+    "unityVersion",
+    "stableBaseline",
+    "publicRuntimeApi",
+    "productionCorpus",
+    "publicAssets",
+    "upgrade",
+    "requiredPrePublicationGates",
+    "requiredPostPublicationGates",
+    "rollback",
+    "publication",
+    "escalations"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-patch-release" },
+    "version": { "const": "1" },
+    "packageName": { "const": "com.foldcanvas.core" },
+    "packageVersion": { "const": "1.0.1" },
+    "tag": { "const": "v1.0.1" },
+    "stableRelease": { "const": true },
+    "patchRelease": { "const": true },
+    "foldScriptVersion": { "const": "0.1" },
+    "unityVersion": { "const": "6000.3.20f1" },
+    "stableBaseline": { "$ref": "#/$defs/stableBaseline" },
+    "publicRuntimeApi": { "$ref": "#/$defs/publicRuntimeApi" },
+    "productionCorpus": { "$ref": "#/$defs/productionCorpus" },
+    "publicAssets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "upgrade": { "type": "object" },
+    "requiredPrePublicationGates": {
+      "type": "array",
+      "minItems": 14,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "requiredPostPublicationGates": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "rollback": { "type": "object" },
+    "publication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "githubPrerelease",
+        "stablePatchRelease",
+        "externalMarketplace"
+      ],
+      "properties": {
+        "githubPrerelease": { "const": false },
+        "stablePatchRelease": { "const": true },
+        "externalMarketplace": { "const": false }
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "stableBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageVersion",
+        "tag",
+        "tagCommit",
+        "releaseId",
+        "publishedAt",
+        "archiveSha256",
+        "checksumSha256",
+        "manifestSha256",
+        "evidenceSha256",
+        "assetCount",
+        "immutable"
+      ],
+      "properties": {
+        "packageVersion": { "const": "1.0.0" },
+        "tag": { "const": "v1.0.0" },
+        "tagCommit": { "$ref": "#/$defs/commit" },
+        "releaseId": { "type": "integer", "minimum": 1 },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "archiveSha256": { "$ref": "#/$defs/sha256" },
+        "checksumSha256": { "$ref": "#/$defs/sha256" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "evidenceSha256": { "$ref": "#/$defs/sha256" },
+        "assetCount": { "const": 4 },
+        "immutable": { "const": true }
+      }
+    },
+    "publicRuntimeApi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assembly",
+        "signatureCount",
+        "normalizedVersionToken",
+        "normalizedSha256"
+      ],
+      "properties": {
+        "assembly": { "const": "FoldCanvas.Runtime" },
+        "signatureCount": { "type": "integer", "minimum": 1 },
+        "normalizedVersionToken": { "const": "{PACKAGE_VERSION}" },
+        "normalizedSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "productionCorpus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formatVersion", "caseIds", "casesSha256"],
+      "properties": {
+        "formatVersion": { "const": "1" },
+        "caseIds": {
+          "type": "array",
+          "minItems": 6,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "casesSha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

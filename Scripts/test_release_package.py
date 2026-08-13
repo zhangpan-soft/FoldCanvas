@@ -13,6 +13,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from build_release_package import build_release_bundle, package_version  # noqa: E402
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
 
 def main() -> int:
     version = package_version()
@@ -60,6 +62,8 @@ def main() -> int:
                 "package/Documentation~/m15-public-distribution.json",
                 "package/Documentation~/m17-stable-readiness-report.json",
                 "package/Documentation~/m17-stable-release.json",
+                "package/Documentation~/m23-patch-release.json",
+                "package/Documentation~/patch-release.md",
                 "package/Documentation~/release-candidate.md",
                 "package/Documentation~/stable-release.md",
                 "package/LICENSE.md",
@@ -131,17 +135,14 @@ def main() -> int:
             evidence = json.loads(
                 first_evidence.read_text(encoding="utf-8")
             )
-            is_stable = version == "1.0.0"
-            expected_format = (
-                "foldcanvas-stable-release-evidence"
-                if is_stable
-                else "foldcanvas-patch-release-evidence"
-            )
+            is_patch = version == "1.0.1"
+            expected_format = "foldcanvas-patch-release-evidence"
             if (
                 evidence.get("format") != expected_format
                 or evidence.get("state") != "built-unverified"
                 or evidence.get("packageVersion") != version
-                or evidence.get("stableRelease") is not is_stable
+                or evidence.get("stableRelease") is not True
+                or evidence.get("patchRelease") is not is_patch
                 or evidence.get("archive", {}).get("sha256") != digest
                 or evidence.get("fileManifest", {}).get("file")
                 != first_manifest.name
@@ -149,23 +150,19 @@ def main() -> int:
                 != hashlib.sha256(first_manifest.read_bytes()).hexdigest()
                 or evidence.get("publication", {}).get("githubPrerelease")
                 is not False
-                or evidence.get("publication", {}).get("finalStableRelease")
-                is not is_stable
+                or evidence.get("publication", {}).get("stablePatchRelease")
+                is not True
                 or evidence.get("publication", {}).get("externalMarketplace")
                 is not False
                 or evidence.get("contract", {}).get("path")
-                != "Documentation~/m17-stable-release.json"
-                or evidence.get("releaseCandidate", {}).get("immutable")
-                is not True
-                or evidence.get("stableQualification", {}).get("status")
-                != "ready"
+                != "Documentation~/m23-patch-release.json"
                 or evidence.get("stableBaseline")
-                != {
-                    "packageVersion": "1.0.0",
-                    "tag": "v1.0.0",
-                    "immutable": True,
-                }
-                or "stable-exit-ready"
+                != json.loads(
+                    (ROOT / "Documentation~" / "m23-patch-release.json").read_text(
+                        encoding="utf-8"
+                    )
+                )["stableBaseline"]
+                or "exact-head-audit"
                 not in evidence.get("requiredPrePublicationGates", [])
             ):
                 raise AssertionError("Release evidence contract is invalid")

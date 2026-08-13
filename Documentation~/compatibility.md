@@ -1,9 +1,9 @@
 # Compatibility and migration policy
 
-FoldCanvas `1.0.1` is the compatible patch currently under qualification;
-public `v1.0.0` remains the installable stable release until a separate release
-gate publishes the patch. Compatibility changes are explicit rather than
-accidental. The checked-in public Runtime API manifest, canonical
+FoldCanvas `1.0.1` is the compatible stable patch release candidate; public
+`v1.0.0` remains the rollback until M23's separate release and public-consumer
+gates publish and qualify the patch. Compatibility changes are explicit rather
+than accidental. The checked-in public Runtime API manifest, canonical
 FoldScript version, package version, Unity evidence, and migration notes are
 separate contracts.
 
@@ -110,11 +110,15 @@ RC2 distribution and historical exit gates live in
 [`m15-public-distribution.json`](m15-public-distribution.json). The current
 stable contract and frozen M16 readiness evidence live in
 [`m17-stable-release.json`](m17-stable-release.json). Installation and rollback
-are documented in the [`stable release guide`](stable-release.md).
+are documented in the [`stable release guide`](stable-release.md). The M23
+patch contract and procedure live in
+[`m23-patch-release.json`](m23-patch-release.json) and
+[`patch-release.md`](patch-release.md).
 
 ## 中文摘要
 
-FoldCanvas `1.0.1` 兼容补丁正在验收，当前已公开稳定版仍是 `v1.0.0`。项目不会把
+FoldCanvas `1.0.1` 是兼容稳定补丁发布候选；在 M23 的发布和公开消费者门禁完成前，
+`v1.0.0` 仍作为公开回退。项目不会把
 破坏性变化藏在普通提交里。公共 Runtime API
 由实际编译程序集生成基线；删除或修改签名必须有 ADR、迁移说明和明确版本决策。
 FoldScript 目前只支持 `0.1`，未知版本会稳定拒绝，不能猜测解析。当前真正跑过完整

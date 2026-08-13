@@ -140,8 +140,12 @@ def advance_project(
     package_version, package_digest = archive_metadata(archive_path)
     target_version = package_version
     if contract.get("stableRelease") is True:
-        stable_version = contract.get("packageVersion")
-        if package_version != stable_version:
+        target_version = contract.get("packageVersion")
+        stable_version = contract.get("stableBaseline", {}).get(
+            "packageVersion",
+            target_version,
+        )
+        if package_version != target_version:
             stable_parts = str(stable_version).split(".")
             package_parts = str(package_version).split(".")
             if (

@@ -2,9 +2,10 @@
 
 ## Supported release
 
-The current published stable package is `1.0.0` on Unity `6000.3.20f1`.
-Compatible patch `1.0.1` is under qualification and is not yet a published
-release. Immutable `1.0.0-rc.2` remains the first rollback. Other Unity
+The current patch candidate is `1.0.1` on Unity `6000.3.20f1`; exact
+`v1.0.1` becomes the published stable package only after M23's release and
+public-consumer gates pass. Immutable public `v1.0.0` is its first rollback.
+Other Unity
 versions may work, but they are not release-qualified until they pass the same
 hosted package, clean-install, handoff, corpus, and robustness gates.
 
@@ -54,8 +55,8 @@ exposure. See [SECURITY.md](SECURITY.md).
 ## Rollback
 
 Retain the previous package archive and authoritative source before upgrading.
-For stable `1.0.0`, the first rollback is immutable `v1.0.0-rc.2` at commit
-`4db988ffac6dad4362d126001e5c9a67081ef2b7`; RC1 and preview.21 remain deeper
-historical fallbacks.
-Reinstall that archive or immutable commit, then recompile the 2D canvas and
-FoldScript. Do not restore a generated Mesh as the editable source.
+For patch `1.0.1`, the first rollback is immutable `v1.0.0` at commit
+`6ed32f1ed2a48796f5c0e015205cd47249e1bcef`; RC2, RC1, and preview.21 remain
+deeper historical fallbacks. Reinstall that archive or immutable commit, then
+recompile the 2D canvas and FoldScript. Do not restore a generated Mesh as the
+editable source.

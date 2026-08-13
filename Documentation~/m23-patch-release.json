@@ -1,0 +1,124 @@
+{
+  "format": "foldcanvas-patch-release",
+  "version": "1",
+  "packageName": "com.foldcanvas.core",
+  "packageVersion": "1.0.1",
+  "tag": "v1.0.1",
+  "stableRelease": true,
+  "patchRelease": true,
+  "foldScriptVersion": "0.1",
+  "unityVersion": "6000.3.20f1",
+  "stableBaseline": {
+    "packageVersion": "1.0.0",
+    "tag": "v1.0.0",
+    "tagCommit": "6ed32f1ed2a48796f5c0e015205cd47249e1bcef",
+    "releaseId": 368700889,
+    "publishedAt": "2026-08-11T16:22:02Z",
+    "archiveSha256": "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
+    "checksumSha256": "a6a976f7fbc8b82d9d1aba232a7232ae86a25fbcf87a60008f968158d841e0d3",
+    "manifestSha256": "06f223038b5f0e467cf7f1bc7010cd62add1704a59eadd62940b982ebe48aae1",
+    "evidenceSha256": "7fe6d4cb2cc0294fcefe7c2cdbc5f061d9b361aecccdfca5a059b29d9e6630fd",
+    "assetCount": 4,
+    "immutable": true
+  },
+  "publicRuntimeApi": {
+    "assembly": "FoldCanvas.Runtime",
+    "signatureCount": 808,
+    "normalizedVersionToken": "{PACKAGE_VERSION}",
+    "normalizedSha256": "2e63c82335950440c922b7a66a936442498e24ce8dddb539d147007549dfb3ee"
+  },
+  "productionCorpus": {
+    "formatVersion": "1",
+    "caseIds": [
+      "cyclic-torus",
+      "invalid-off-grid-fold",
+      "planar-artwork",
+      "production-cup",
+      "registered-wave",
+      "sphere-gores"
+    ],
+    "casesSha256": "ebec84a67abece8a7d04c2fda32c193ed9939e5626b357b3f9bbaf1cd81b72f3"
+  },
+  "publicAssets": [
+    "com.foldcanvas.core-1.0.1.evidence.json",
+    "com.foldcanvas.core-1.0.1.manifest.json",
+    "com.foldcanvas.core-1.0.1.tgz",
+    "com.foldcanvas.core-1.0.1.tgz.sha256"
+  ],
+  "upgrade": {
+    "fromPackageVersions": [
+      "1.0.0"
+    ],
+    "fixture": {
+      "id": "production-cup",
+      "baselinePackageVersion": "1.0.0",
+      "baselineGitCommit": "6ed32f1ed2a48796f5c0e015205cd47249e1bcef",
+      "sourcePath": "Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json",
+      "appearancePath": "Samples~/BootstrapPanel/M04ProductionCupCanvas.png",
+      "inputFileNames": [
+        "M04ProductionCupCanvas.png",
+        "m12-production-cup.foldcanvas.json"
+      ],
+      "sourceRawSha256": "44b3c474784736d5e47d974f94b87c56532db01cffc963330d7ae82b88457fc5",
+      "canonicalSourceSha256": "ff9df3d482f1b73820f026093ef3094b0e17f313ebeb26055129af03c41844ff",
+      "appearanceSha256": "2b9691733e89987d795e9dcbcd857902f6feb7109540d36fded1b481ded1a383",
+      "renderVertices": 2972,
+      "topologyVertices": 2562,
+      "triangles": 5120,
+      "closedVolume": true
+    },
+    "sourceAuthority": "2d-canvas-plus-foldscript",
+    "derivedInputsForbidden": [
+      "material",
+      "mesh",
+      "obj",
+      "prefab",
+      "receipt",
+      "report",
+      "screenshot"
+    ],
+    "unknownVersionsFailClosed": true
+  },
+  "requiredPrePublicationGates": [
+    "clean-install-a",
+    "clean-install-b",
+    "deterministic-release",
+    "exact-head-audit",
+    "m13-robustness-long-run",
+    "patch-contract",
+    "production-corpus",
+    "production-handoff-producer",
+    "production-handoff-receiver",
+    "proof-gallery-repeatability",
+    "public-runtime-api",
+    "repository-validation",
+    "source-upgrade",
+    "unity-editmode"
+  ],
+  "requiredPostPublicationGates": [
+    "patch-publication-proof",
+    "public-release-assets",
+    "public-release-consumer-a",
+    "public-release-consumer-b",
+    "source-upgrade"
+  ],
+  "rollback": {
+    "packageVersion": "1.0.0",
+    "tag": "v1.0.0",
+    "gitCommit": "6ed32f1ed2a48796f5c0e015205cd47249e1bcef",
+    "archiveSha256": "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
+    "sourceAuthority": "2d-canvas-plus-foldscript"
+  },
+  "publication": {
+    "githubPrerelease": false,
+    "stablePatchRelease": true,
+    "externalMarketplace": false
+  },
+  "escalations": [
+    "credentials",
+    "external-marketplace-publication",
+    "irreversible-permissions",
+    "legal-decisions",
+    "paid-services"
+  ]
+}

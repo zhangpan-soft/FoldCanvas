@@ -215,9 +215,29 @@ def build_release_evidence(
     root: pathlib.Path = ROOT,
 ) -> pathlib.Path:
     package = json.loads((root / "package.json").read_text(encoding="utf-8"))
-    contract_path = root / "Documentation~" / "m17-stable-release.json"
+    current_version = package["version"]
+    patch_contract_path = root / "Documentation~" / "m23-patch-release.json"
+    patch_contract = (
+        json.loads(patch_contract_path.read_text(encoding="utf-8"))
+        if patch_contract_path.is_file()
+        else None
+    )
+    if current_version == "1.0.1":
+        if (
+            not isinstance(patch_contract, dict)
+            or patch_contract.get("packageVersion") != current_version
+            or patch_contract.get("format") != "foldcanvas-patch-release"
+            or patch_contract.get("tag") != f"v{current_version}"
+        ):
+            raise ValueError("M23 patch release contract does not match package.json")
+        contract_path = patch_contract_path
+        contract = patch_contract
+        release_kind = "patch"
+    else:
+        contract_path = root / "Documentation~" / "m17-stable-release.json"
+        contract = json.loads(contract_path.read_text(encoding="utf-8"))
+        release_kind = "stable"
     contract_bytes = contract_path.read_bytes()
-    contract = json.loads(contract_bytes)
     public_api_path = root / "Documentation~" / "public-runtime-api.json"
     public_api = json.loads(public_api_path.read_text(encoding="utf-8"))
     corpus_path = root / "Documentation~" / "m11-production-corpus.json"
@@ -226,17 +246,18 @@ def build_release_evidence(
     archive_bytes = archive_path.read_bytes()
     manifest_bytes = manifest_path.read_bytes()
 
-    current_version = package["version"]
-    stable_version = contract["packageVersion"]
-    is_stable_release = current_version == stable_version
+    stable_version = (
+        contract["stableBaseline"]["packageVersion"]
+        if release_kind == "patch"
+        else contract["packageVersion"]
+    )
+    is_stable_release = release_kind in ("stable", "patch")
     publication = dict(contract["publication"])
-    if not is_stable_release:
-        publication["finalStableRelease"] = False
     document = {
         "format": (
-            "foldcanvas-stable-release-evidence"
-            if is_stable_release
-            else "foldcanvas-patch-release-evidence"
+            "foldcanvas-patch-release-evidence"
+            if release_kind == "patch"
+            else "foldcanvas-stable-release-evidence"
         ),
         "version": "1",
         "state": "built-unverified",
@@ -258,7 +279,7 @@ def build_release_evidence(
             "sha256": sha256_bytes(corpus_bytes),
         },
         "contract": {
-            "path": "Documentation~/m17-stable-release.json",
+            "path": contract_path.relative_to(root).as_posix(),
             "sha256": sha256_bytes(contract_bytes),
         },
         "archive": {
@@ -276,16 +297,33 @@ def build_release_evidence(
             "requiredPostPublicationGates"
         ],
         "rollback": contract["rollback"],
-        "releaseCandidate": contract["releaseCandidate"],
-        "stableQualification": contract["stableQualification"],
         "stableBaseline": {
             "packageVersion": stable_version,
-            "tag": contract["tag"],
+            "tag": (
+                contract["stableBaseline"]["tag"]
+                if release_kind == "patch"
+                else contract["tag"]
+            ),
             "immutable": True,
         },
         "upgrade": contract["upgrade"],
         "publication": publication,
     }
+    if release_kind == "patch":
+        document["patchRelease"] = True
+        document["stableBaseline"] = contract["stableBaseline"]
+        document["publicRuntimeApi"]["normalizedVersionToken"] = contract[
+            "publicRuntimeApi"
+        ]["normalizedVersionToken"]
+        document["publicRuntimeApi"]["normalizedSha256"] = contract[
+            "publicRuntimeApi"
+        ]["normalizedSha256"]
+        document["productionCorpus"]["casesSha256"] = contract[
+            "productionCorpus"
+        ]["casesSha256"]
+    else:
+        document["releaseCandidate"] = contract["releaseCandidate"]
+        document["stableQualification"] = contract["stableQualification"]
     version = current_version
     path = output_directory / f"com.foldcanvas.core-{version}.evidence.json"
     path.write_bytes(canonical_json_bytes(document))

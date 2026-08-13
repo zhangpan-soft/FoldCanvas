@@ -41,6 +41,10 @@ jobs:
         run: python3 Scripts/test_release_candidate.py
       - name: Validate M17 stable release contract
         run: python3 Scripts/test_stable_release.py
+      - name: Validate M23 patch release contract
+        run: |
+          python3 Scripts/test_patch_release.py
+          python3 Scripts/test_patch_release_authorization.py
       - name: Validate exact M16-to-M17 readiness evidence
         run: python3 Scripts/test_stable_readiness.py
       - name: Validate M15 public release verifier

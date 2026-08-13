@@ -20,7 +20,7 @@ from create_upgrade_proof_project import create_project  # noqa: E402
 from validate_upgrade_evidence import validate  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CONTRACT_PATH = ROOT / "Documentation~" / "m17-stable-release.json"
+CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
 
 
 def write_json(path: pathlib.Path, value: dict) -> None:
@@ -147,7 +147,7 @@ def main() -> int:
     fixture = contract["upgrade"]["fixture"]
     source = ROOT / fixture["sourcePath"]
     appearance = ROOT / fixture["appearancePath"]
-    with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-upgrade-") as temp:
+    with tempfile.TemporaryDirectory(prefix="foldcanvas-m23-upgrade-") as temp:
         temp_root = pathlib.Path(temp)
         baseline_version = fixture["baselinePackageVersion"]
         baseline_archive = synthetic_package(

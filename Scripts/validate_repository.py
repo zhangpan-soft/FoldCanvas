@@ -128,6 +128,9 @@ required = [
     "Scripts/validate_stable_readiness.py",
     "Scripts/test_stable_readiness.py",
     "Scripts/test_stable_release.py",
+    "Scripts/test_patch_release.py",
+    "Scripts/verify_patch_release_authorization.py",
+    "Scripts/test_patch_release_authorization.py",
     ".github/foldcanvas-active-candidate.json",
     ".github/workflows/m16-candidate-soak.yml",
     ".github/workflows/m16-stable-exit.yml",
@@ -157,6 +160,7 @@ required = [
     "Scripts/test_readme_proof.py",
     "Codex/M21_PROOF_GALLERY_EVIDENCE.md",
     "Codex/M22_README_PROOF_PATCH.md",
+    "Codex/M23_PATCH_RELEASE.md",
     "Docs/Community/ProofGallery/README.md",
     "Docs/Community/ProofGallery/manifest.json",
     "Docs/Community/ProofGallery/social-preview.png",
@@ -192,6 +196,10 @@ required = [
     "Documentation~/m17-stable-readiness-report.json",
     "Documentation~/stable-release.md",
     "Schema/foldcanvas-stable-release.schema.json",
+    "Documentation~/m23-patch-release.json",
+    "Documentation~/patch-release.md",
+    "Schema/foldcanvas-patch-release.schema.json",
+    "Schema/foldcanvas-patch-publication-proof.schema.json",
     ".github/workflows/public-release-qualification.yml",
     "Scripts/Templates~/M15UpgradeHost/Assets/FoldCanvas.M15.Upgrade.Tests.asmdef",
     "Scripts/Templates~/M15UpgradeHost/Assets/M15SourceUpgradeTests.cs",
@@ -1051,6 +1059,47 @@ for field in (
     if values != sorted(set(values)):
         errors.append(f"M17 {field} must be unique and ordinal")
 
+m23_contract = read_json("Documentation~/m23-patch-release.json")
+m23_schema = read_json("Schema/foldcanvas-patch-release.schema.json")
+m23_properties = m23_schema.get("properties", {})
+if (
+    m23_contract.get("format") != "foldcanvas-patch-release"
+    or m23_contract.get("packageVersion") != "1.0.1"
+    or m23_contract.get("tag") != "v1.0.1"
+    or m23_contract.get("stableRelease") is not True
+    or m23_contract.get("patchRelease") is not True
+):
+    errors.append("M23 patch release header is invalid")
+if (
+    m23_properties.get("format", {}).get("const")
+    != "foldcanvas-patch-release"
+    or m23_properties.get("packageVersion", {}).get("const") != "1.0.1"
+    or m23_properties.get("tag", {}).get("const") != "v1.0.1"
+):
+    errors.append("M23 patch release schema identity is invalid")
+if m23_contract.get("stableBaseline") != {
+    "packageVersion": "1.0.0",
+    "tag": "v1.0.0",
+    "tagCommit": "6ed32f1ed2a48796f5c0e015205cd47249e1bcef",
+    "releaseId": 368700889,
+    "publishedAt": "2026-08-11T16:22:02Z",
+    "archiveSha256": "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
+    "checksumSha256": "a6a976f7fbc8b82d9d1aba232a7232ae86a25fbcf87a60008f968158d841e0d3",
+    "manifestSha256": "06f223038b5f0e467cf7f1bc7010cd62add1704a59eadd62940b982ebe48aae1",
+    "evidenceSha256": "7fe6d4cb2cc0294fcefe7c2cdbc5f061d9b361aecccdfca5a059b29d9e6630fd",
+    "assetCount": 4,
+    "immutable": True,
+}:
+    errors.append("M23 immutable v1.0.0 baseline is invalid")
+for field in (
+    "requiredPrePublicationGates",
+    "requiredPostPublicationGates",
+    "escalations",
+):
+    values = m23_contract.get(field, [])
+    if values != sorted(set(values)):
+        errors.append(f"M23 {field} must be unique and ordinal")
+
 release_workflow = (
     ROOT / ".github" / "workflows" / "package-release.yml"
 ).read_text(encoding="utf-8")
@@ -1061,6 +1110,7 @@ for required_fragment in [
     'tags:',
     '"v*-rc.*"',
     '"v1.0.0"',
+    '"v1.0.1"',
     'python3 Scripts/test_release_package.py',
     'python3 Scripts/test_release_candidate.py',
     'python3 Scripts/test_stable_release.py',
@@ -1070,14 +1120,23 @@ for required_fragment in [
     'if-no-files-found: error',
     "gh release create",
     "--verify-tag",
+    "Require one annotated tag on protected main",
+    "git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main",
+    "$(git rev-parse HEAD)\" = \"$(git rev-parse origin/main)",
+    "git cat-file -t",
+    "Verify exact-head patch release authorization",
+    "python3 Scripts/verify_patch_release_authorization.py",
+    "foldcanvas-patch-release-authorization",
     "--prerelease",
     "contents: read",
     "publish-release:",
     "actions: write",
     "contents: write",
+    "issues: read",
+    "pull-requests: read",
     "actions/download-artifact@",
     "ref: ${{ inputs.release_tag || github.ref }}",
-    "Manual release recovery only accepts immutable v1.0.0.",
+    "Manual release recovery only accepts immutable v1.0.0 or v1.0.1.",
     'report_path="$output_root/download/report.json"',
     '--report "$report_path"',
     "*.manifest.json",
@@ -1307,18 +1366,18 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M22: proof-first README patch" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M22 milestone")
+if "M23: 1.0.1 patch release" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M23 milestone")
 for required_fragment in [
-    "GitHub issue #26, README/social-preview gate only",
-    "1280 x 640",
-    "source canvases and FoldScript remain the only authoritative geometry input",
-    "package/compiler version `1.0.1`",
-    "public Runtime API shape remains",
-    "Published `v1.0.0` and RC2 artifacts",
+    "1.0.1 patch release",
+    "2D canvas plus FoldScript",
+    "v1.0.1",
+    "v1.0.0",
+    "source-first",
+    "exact-head",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M22 active plan is missing: " + required_fragment)
+        errors.append("M23 active plan is missing: " + required_fragment)
 repository_checks_text = (
     ROOT / ".github" / "workflows" / "repository-checks.yml"
 ).read_text(encoding="utf-8")
@@ -1329,6 +1388,15 @@ for required_fragment in [
 ]:
     if required_fragment not in repository_checks_text:
         errors.append("Repository workflow is missing M22 proof validation: " + required_fragment)
+for required_fragment in [
+    "python3 Scripts/test_patch_release.py",
+    "python3 Scripts/test_patch_release_authorization.py",
+]:
+    if required_fragment not in repository_checks_text:
+        errors.append(
+            "Repository workflow must validate M23 release evidence: "
+            + required_fragment
+        )
 for required_fragment in [
     "fetch-depth: 0",
     "python3 Scripts/test_public_release.py",

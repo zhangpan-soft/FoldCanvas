@@ -38,9 +38,9 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ### Publication status
 
-- `1.0.1` is under repository and hosted qualification; this iteration does
-  not create a tag, GitHub release, registry package, social-preview setting,
-  or external marketplace publication
+- `1.0.1` remains unpublished while M23 qualifies its exact GitHub release;
+  this version does not apply a social-preview setting, publish a registry or
+  marketplace package, or add geometry behavior
 
 ## [1.0.0] - 2026-08-11
 
