@@ -8,6 +8,10 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [1.0.1] - 2026-08-13
 
+### Fixed
+
+- Fixed the M23 release-authorization collector to pipe paginated `gh api --slurp` output through standalone `jq`, preserving fail-closed publication on GitHub runners whose GitHub CLI rejects combining `--slurp` with `--jq`.
+
 ### Added
 
 - proof-first English and Chinese README heroes that place each maintained 2D
