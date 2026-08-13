@@ -1,26 +1,24 @@
 # Current task
 
-Execute **M24: deterministic off-grid crease topology split**.
+Execute **M25: 1.1.0 minor release qualification**.
 
 Authoritative task file:
-[`Codex/M24_CREASE_TOPOLOGY_SPLIT.md`](Codex/M24_CREASE_TOPOLOGY_SPLIT.md)
+[`Codex/M25_MINOR_RELEASE_QUALIFICATION.md`](Codex/M25_MINOR_RELEASE_QUALIFICATION.md)
 
-M23 is complete. Exact package `v1.0.1` was published from audited merge
-`867f3bd5501218aa95872db6e7e66cb213031cab`; the public qualification run
-`31677125745` passed, and the release archive SHA-256 is
-`4188d23b18b924f6642f9e4eabbc15500fb60fb3d3916f23857a5a19966e1de5`.
-Immutable `v1.0.0` remains the documented patch rollback.
+M24 is complete. PR #41 retained audited head
+`c9845d758359b385ca9c861e2b38b68cc950fc6a` and merged as
+`7ffa350b139be7183bb4c414d1dd817398a56b6b`. Exact protected-main repository,
+Unity, and long-run workflows were green; Unity `6000.3.20f1` passed 491/491
+Edit Mode tests with zero failures, skips, or inconclusive results.
 
-M24 activates the roadmap task previously guarded by
-`FC3011 FoldCreaseRequiresTopologySplit`: compatible straight off-grid
-rectangle creases are refined in normalized source space before panel emission,
-then the existing current-frame rigid Fold executes without triangle stretch.
+M25 resolves the package-identity boundary exposed by that backward-compatible
+geometry addition. Public `v1.0.1` remains immutable at archive SHA-256
+`4188d23b18b924f6642f9e4eabbc15500fb60fb3d3916f23857a5a19966e1de5`;
+the M24-capable package advances to `1.1.0`. A checked-in immutable-release
+ledger and offline rebuild gate prevent one semantic version from ever naming
+different package bytes again.
 
-Implementation and local verification are complete on
-`agent/m24-crease-topology-split`; exact-head PR audit, hosted required checks,
-and protected-main merge remain.
-
-The maintainer may research, plan, implement, audit, merge, and close this
-repository-only milestone autonomously. Credentials, paid services,
-irreversible permission changes, legal decisions, and external marketplace
-publication remain owner escalation points.
+The maintainer may research, plan, implement, audit, merge, tag, publish the
+GitHub release, and qualify it autonomously. Credentials, paid services,
+irreversible permission changes, legal decisions, and registry or external
+marketplace publication remain owner escalation points.

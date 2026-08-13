@@ -6,7 +6,7 @@ on:
       release_tag:
         description: Exact FoldCanvas release tag to qualify
         required: true
-        default: "v1.0.0"
+        default: "v1.1.0"
         type: string
   release:
     types:
@@ -65,6 +65,9 @@ jobs:
               ;;
             v1.0.1)
               contract_path="Documentation~/m23-patch-release.json"
+              ;;
+            v1.1.0)
+              contract_path="Documentation~/m25-minor-release.json"
               ;;
             v1.0.0-rc.2)
               contract_path="Documentation~/m15-public-distribution.json"
@@ -318,6 +321,13 @@ jobs:
             artifacts/m15-source-upgrade/before-expected.json
           baseline_version="$(jq -r '.packageVersion' artifacts/m15-upgrade-host/M15Expected.json)"
           baseline_sha256="$(jq -r '.packageSha256' artifacts/m15-upgrade-host/M15Expected.json)"
+          if jq -e '.minorRelease == true' "$contract_path" > /dev/null; then
+            expected_baseline_sha256="$(jq -r '.stableBaseline.archiveSha256' "$contract_path")"
+            if [[ "$baseline_sha256" != "$expected_baseline_sha256" ]]; then
+              echo "::error::Rebuilt minor baseline differs from its immutable public archive."
+              exit 1
+            fi
+          fi
           printf '%s  %s\n' \
             "$(sha256sum artifacts/m15-upgrade-host/M15Input/m12-production-cup.foldcanvas.json | cut -d' ' -f1)" \
             'm12-production-cup.foldcanvas.json' \
@@ -860,5 +870,130 @@ jobs:
         with:
           name: foldcanvas-patch-publication-proof
           path: artifacts/m23-patch-proof/report.json
+          if-no-files-found: error
+          retention-days: 90
+
+  minor-publication-proof:
+    name: Bind stable minor public assets, consumers, and source upgrade
+    needs:
+      - verify-public-assets
+      - public-release-consumers
+      - source-first-upgrade
+    if: needs.verify-public-assets.outputs.package_version == '1.1.0'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact minor release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Download verified public release identity
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: foldcanvas-public-release-assets
+          path: artifacts/m25-minor-proof/public-release
+
+      - name: Download public consumer evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: unity-public-release-consumer-results-and-logs
+          path: artifacts/m25-minor-proof/public-consumers
+
+      - name: Download source-first upgrade evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: unity-source-first-upgrade-results-and-logs
+          path: artifacts/m25-minor-proof/source-upgrade
+
+      - name: Validate and bind public minor evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          proof_root="artifacts/m25-minor-proof"
+          verification_json="$(find "$proof_root/public-release" -type f -name verification.json -print -quit)"
+          consumer_json="$(find "$proof_root/public-consumers" -type f -name m15-public-consumer-comparison.json -print -quit)"
+          upgrade_json="$(find "$proof_root/source-upgrade" -type f -name comparison.json -print -quit)"
+          test -n "$verification_json"
+          test -n "$consumer_json"
+          test -n "$upgrade_json"
+          jq -e '
+            .qualified == true and
+            .stableRelease == true and
+            .tag == "v1.1.0" and
+            .packageVersion == "1.1.0" and
+            .assetCount == 4
+          ' "$verification_json" > /dev/null
+          archive_sha256="$(jq -r '.archiveSha256' "$verification_json")"
+          jq -e \
+            --arg archive "$archive_sha256" '
+              .format == "foldcanvas-clean-install-comparison" and
+              .installations == 2 and
+              .packageVersion == "1.1.0" and
+              .packageSha256 == $archive
+            ' "$consumer_json" > /dev/null
+          jq -e '
+            .format == "foldcanvas-m15-source-upgrade-comparison" and
+            .baselineVersion == "1.0.1" and
+            .candidateVersion == "1.1.0" and
+            .sourceAuthority == "2d-canvas-plus-foldscript" and
+            .derivedInputCount == 0 and
+            .isSingleClosedVolume == true
+          ' "$upgrade_json" > /dev/null
+          jq -e '
+            .stableRelease == true and
+            .minorRelease == true and
+            .publication.githubPrerelease == false and
+            .publication.stableMinorRelease == true and
+            .publication.externalMarketplace == false
+          ' Documentation~/m25-minor-release.json > /dev/null
+          jq -n \
+            --arg tag "$RELEASE_TAG" \
+            --arg tagCommit "${{ needs.verify-public-assets.outputs.tag_commit }}" \
+            --arg packageVersion "${{ needs.verify-public-assets.outputs.package_version }}" \
+            --arg archiveSha256 "$archive_sha256" \
+            --arg verificationSha256 "$(sha256sum "$verification_json" | cut -d' ' -f1)" \
+            --arg consumerSha256 "$(sha256sum "$consumer_json" | cut -d' ' -f1)" \
+            --arg upgradeSha256 "$(sha256sum "$upgrade_json" | cut -d' ' -f1)" \
+            '{
+              format: "foldcanvas-minor-publication-proof",
+              version: "1",
+              tag: $tag,
+              tagCommit: $tagCommit,
+              packageVersion: $packageVersion,
+              archiveSha256: $archiveSha256,
+              publicReleaseVerificationSha256: $verificationSha256,
+              publicConsumerComparisonSha256: $consumerSha256,
+              sourceUpgradeComparisonSha256: $upgradeSha256,
+              publicConsumerInstallations: 2,
+              upgradeBaselineVersion: "1.0.1",
+              sourceAuthority: "2d-canvas-plus-foldscript",
+              qualified: true
+            }' > "$proof_root/report.json"
+          python3 - <<'PY'
+          import json
+          import pathlib
+
+          schema = json.loads(
+              pathlib.Path(
+                  "Schema/foldcanvas-minor-publication-proof.schema.json"
+              ).read_text(encoding="utf-8")
+          )
+          report = json.loads(
+              pathlib.Path(
+                  "artifacts/m25-minor-proof/report.json"
+              ).read_text(encoding="utf-8")
+          )
+          if sorted(report) != sorted(schema["required"]):
+              raise SystemExit("minor proof fields differ from schema")
+          for key, definition in schema["properties"].items():
+              if "const" in definition and report.get(key) != definition["const"]:
+                  raise SystemExit(f"minor proof constant differs: {key}")
+          PY
+
+      - name: Upload final minor-publication proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: foldcanvas-minor-publication-proof
+          path: artifacts/m25-minor-proof/report.json
           if-no-files-found: error
           retention-days: 90

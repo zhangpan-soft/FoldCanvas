@@ -31,8 +31,8 @@ def validate(root: pathlib.Path = ROOT) -> list[str]:
     version_source = (root / "Runtime/Data/FoldCanvasVersion.cs").read_text(
         encoding="utf-8"
     )
-    if package_version != "1.0.1" or 'Package = "1.0.1"' not in version_source:
-        errors.append("M22 package/compiler version must be exact 1.0.1")
+    if package_version != "1.1.0" or 'Package = "1.1.0"' not in version_source:
+        errors.append("Current package/compiler version must be exact 1.1.0")
     if "## [1.0.1] - 2026-08-13" not in (root / "CHANGELOG.md").read_text(
         encoding="utf-8"
     ):

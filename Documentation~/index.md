@@ -17,6 +17,7 @@
 - [M11 clean-install, public API, corpus, trust, and release evidence](production-readiness.md)
 - [FoldCanvas 1.0.0 stable release](stable-release.md)
 - [FoldCanvas 1.0.1 stable patch release](patch-release.md)
+- [FoldCanvas 1.1.0 minor release](minor-release.md)
 - [M12 source-first production archive, import, receipt, and rebuild contract](production-handoff.md)
 - [Package, Runtime API, Unity, and FoldScript compatibility policy](compatibility.md)
 - [M14 release-candidate install, evidence, troubleshooting, and rollback guide](release-candidate.md)

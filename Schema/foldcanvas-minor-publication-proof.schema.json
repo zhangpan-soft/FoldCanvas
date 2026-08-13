@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foldcanvas.dev/schema/foldcanvas-minor-publication-proof.schema.json",
+  "title": "FoldCanvas minor publication proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "tag",
+    "tagCommit",
+    "packageVersion",
+    "archiveSha256",
+    "publicReleaseVerificationSha256",
+    "publicConsumerComparisonSha256",
+    "sourceUpgradeComparisonSha256",
+    "publicConsumerInstallations",
+    "upgradeBaselineVersion",
+    "sourceAuthority",
+    "qualified"
+  ],
+  "properties": {
+    "format": { "const": "foldcanvas-minor-publication-proof" },
+    "version": { "const": "1" },
+    "tag": { "const": "v1.1.0" },
+    "tagCommit": { "$ref": "#/$defs/commit" },
+    "packageVersion": { "const": "1.1.0" },
+    "archiveSha256": { "$ref": "#/$defs/sha256" },
+    "publicReleaseVerificationSha256": { "$ref": "#/$defs/sha256" },
+    "publicConsumerComparisonSha256": { "$ref": "#/$defs/sha256" },
+    "sourceUpgradeComparisonSha256": { "$ref": "#/$defs/sha256" },
+    "publicConsumerInstallations": { "const": 2 },
+    "upgradeBaselineVersion": { "const": "1.0.1" },
+    "sourceAuthority": { "const": "2d-canvas-plus-foldscript" },
+    "qualified": { "const": true }
+  },
+  "$defs": {
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

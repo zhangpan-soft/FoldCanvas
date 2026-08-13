@@ -130,27 +130,29 @@ def compare(
         raise ValueError("M15 before package version is not an approved baseline")
     target_version = after.get("packageVersion")
     if contract.get("stableRelease") is True:
-        stable_version = str(
-            contract.get("stableBaseline", {}).get(
-                "packageVersion",
-                contract.get("packageVersion"),
-            )
-        )
         contracted_target = str(contract.get("packageVersion"))
-        stable_parts = stable_version.split(".")
         target_parts = str(target_version).split(".")
         if (
             not isinstance(target_version, str)
             or SEMANTIC_VERSION.fullmatch(target_version) is None
-            or len(stable_parts) != 3
             or len(target_parts) != 3
-            or stable_parts[:2] != target_parts[:2]
-            or not stable_parts[2].isdigit()
-            or not target_parts[2].isdigit()
-            or int(target_parts[2]) < int(stable_parts[2])
             or target_version != contracted_target
         ):
             raise ValueError("M15 after package version is not the stable lineage")
+        stable_baseline = contract.get("stableBaseline")
+        if isinstance(stable_baseline, dict):
+            stable_version = stable_baseline.get("packageVersion")
+            stable_parts = str(stable_version).split(".")
+            if (
+                not isinstance(stable_version, str)
+                or SEMANTIC_VERSION.fullmatch(stable_version) is None
+                or len(stable_parts) != 3
+                or tuple(int(value) for value in target_parts)
+                <= tuple(int(value) for value in stable_parts)
+            ):
+                raise ValueError(
+                    "M15 after package version is not newer than the stable baseline"
+                )
     elif target_version != contract.get("candidateVersion"):
         raise ValueError("M15 after package version is not the contract target")
     if before.get("packageVersion") == after.get("packageVersion"):

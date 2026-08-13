@@ -20,7 +20,7 @@ from create_upgrade_proof_project import create_project  # noqa: E402
 from validate_upgrade_evidence import validate  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
+CONTRACT_PATH = ROOT / "Documentation~" / "m25-minor-release.json"
 
 
 def write_json(path: pathlib.Path, value: dict) -> None:
@@ -206,7 +206,7 @@ def main() -> int:
         if before_validation["tests"]["passed"] != 1:
             raise AssertionError("before-phase Unity evidence did not validate")
 
-        for invalid_version in ("1.0.01", "1.1.0", "2.0.0"):
+        for invalid_version in ("1.0.01", "1.0.2", "2.0.0"):
             invalid_archive = synthetic_package(
                 temp_root / f"com.foldcanvas.core-{invalid_version}.tgz",
                 invalid_version,

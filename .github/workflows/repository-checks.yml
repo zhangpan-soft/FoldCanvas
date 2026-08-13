@@ -37,6 +37,10 @@ jobs:
           python3 Scripts/test_readme_proof.py
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
+      - name: Validate immutable public release identities
+        run: |
+          python3 Scripts/validate_public_release_identities.py
+          python3 Scripts/test_public_release_identities.py
       - name: Validate immutable RC2 release-candidate contract
         run: python3 Scripts/test_release_candidate.py
       - name: Validate M17 stable release contract
@@ -45,6 +49,10 @@ jobs:
         run: |
           python3 Scripts/test_patch_release.py
           python3 Scripts/test_patch_release_authorization.py
+      - name: Validate M25 minor release contract
+        run: |
+          python3 Scripts/test_minor_release.py
+          python3 Scripts/test_minor_release_authorization.py
       - name: Validate exact M16-to-M17 readiness evidence
         run: python3 Scripts/test_stable_readiness.py
       - name: Validate M15 public release verifier

@@ -200,6 +200,17 @@ required = [
     "Documentation~/patch-release.md",
     "Schema/foldcanvas-patch-release.schema.json",
     "Schema/foldcanvas-patch-publication-proof.schema.json",
+    "Documentation~/m25-minor-release.json",
+    "Documentation~/minor-release.md",
+    "Schema/foldcanvas-minor-release.schema.json",
+    "Schema/foldcanvas-minor-publication-proof.schema.json",
+    "Docs/Release/public-release-identities.json",
+    "Schema/foldcanvas-public-release-identities.schema.json",
+    "Scripts/validate_public_release_identities.py",
+    "Scripts/test_public_release_identities.py",
+    "Scripts/test_minor_release.py",
+    "Scripts/verify_minor_release_authorization.py",
+    "Scripts/test_minor_release_authorization.py",
     ".github/workflows/public-release-qualification.yml",
     "Scripts/Templates~/M15UpgradeHost/Assets/FoldCanvas.M15.Upgrade.Tests.asmdef",
     "Scripts/Templates~/M15UpgradeHost/Assets/M15SourceUpgradeTests.cs",
@@ -705,8 +716,8 @@ if (
     or m14_contract.get("foldScriptVersion") != "0.1"
 ):
     errors.append("Historical M14 release-candidate header is invalid")
-if package_version != "1.0.1":
-    errors.append("M22 package version must be exact patch 1.0.1")
+if package_version != "1.1.0":
+    errors.append("M25 package version must be exact minor 1.1.0")
 
 m14_unity_matrix = m14_contract.get("unityMatrix")
 if m14_unity_matrix != [
@@ -1101,6 +1112,51 @@ for field in (
     if values != sorted(set(values)):
         errors.append(f"M23 {field} must be unique and ordinal")
 
+m25_contract = read_json("Documentation~/m25-minor-release.json")
+m25_schema = read_json("Schema/foldcanvas-minor-release.schema.json")
+m25_properties = m25_schema.get("properties", {})
+if (
+    m25_contract.get("format") != "foldcanvas-minor-release"
+    or m25_contract.get("packageVersion") != "1.1.0"
+    or m25_contract.get("tag") != "v1.1.0"
+    or m25_contract.get("stableRelease") is not True
+    or m25_contract.get("minorRelease") is not True
+):
+    errors.append("M25 minor release header is invalid")
+if (
+    m25_properties.get("format", {}).get("const")
+    != "foldcanvas-minor-release"
+    or m25_properties.get("packageVersion", {}).get("const") != "1.1.0"
+    or m25_properties.get("tag", {}).get("const") != "v1.1.0"
+):
+    errors.append("M25 minor release schema identity is invalid")
+if m25_contract.get("stableBaseline") != {
+    "packageVersion": "1.0.1",
+    "tag": "v1.0.1",
+    "tagCommit": "867f3bd5501218aa95872db6e7e66cb213031cab",
+    "releaseId": 369729288,
+    "publishedAt": "2026-08-13T07:16:56Z",
+    "archiveSha256": "4188d23b18b924f6642f9e4eabbc15500fb60fb3d3916f23857a5a19966e1de5",
+    "checksumSha256": "2fc1301f537be0a1224242154de870992b7ca13b38bcbf4174bbcebb3dd930b8",
+    "manifestSha256": "cabf6b76e61ee96e82978c10213b88f1fa1785ba2b02b9900906ea989b57e54f",
+    "evidenceSha256": "deba3003217325eeb0549f367eb98b43bbeb53d62e817b1d22f27a2621e64b7f",
+    "assetCount": 4,
+    "immutable": True,
+}:
+    errors.append("M25 immutable v1.0.1 baseline is invalid")
+if m25_contract.get("productionCorpus", {}).get("casesSha256") != (
+    "15d1bdbc978b73b245a2bb074b5e9ba4f2e354e83adb2da588b667154e9133bd"
+):
+    errors.append("M25 production corpus digest is invalid")
+for field in (
+    "requiredPrePublicationGates",
+    "requiredPostPublicationGates",
+    "escalations",
+):
+    values = m25_contract.get(field, [])
+    if values != sorted(set(values)):
+        errors.append(f"M25 {field} must be unique and ordinal")
+
 release_workflow = (
     ROOT / ".github" / "workflows" / "package-release.yml"
 ).read_text(encoding="utf-8")
@@ -1112,6 +1168,7 @@ for required_fragment in [
     '"v*-rc.*"',
     '"v1.0.0"',
     '"v1.0.1"',
+    '"v1.1.0"',
     'python3 Scripts/test_release_package.py',
     'python3 Scripts/test_release_candidate.py',
     'python3 Scripts/test_stable_release.py',
@@ -1128,6 +1185,9 @@ for required_fragment in [
     "Verify exact-head patch release authorization",
     "python3 Scripts/verify_patch_release_authorization.py",
     "foldcanvas-patch-release-authorization",
+    "Verify exact-head minor release authorization",
+    "python3 Scripts/verify_minor_release_authorization.py",
+    "foldcanvas-minor-release-authorization",
     "gh api --paginate --slurp",
     "| jq 'add'",
     "| jq '{workflow_runs: [.[].workflow_runs[]]}'",
@@ -1140,7 +1200,7 @@ for required_fragment in [
     "pull-requests: read",
     "actions/download-artifact@",
     "ref: ${{ inputs.release_tag || github.ref }}",
-    "Manual release recovery only accepts immutable v1.0.0 or v1.0.1.",
+    "Manual release recovery only accepts immutable v1.0.0, v1.0.1, or v1.1.0.",
     'report_path="$output_root/download/report.json"',
     '--report "$report_path"',
     "*.manifest.json",
@@ -1190,6 +1250,10 @@ if "python3 Scripts/test_release_candidate.py" not in repository_workflow:
     errors.append("Repository checks must validate immutable RC2 evidence")
 if "python3 Scripts/test_stable_release.py" not in repository_workflow:
     errors.append("Repository checks must validate the M17 stable contract")
+if "python3 Scripts/test_minor_release.py" not in repository_workflow:
+    errors.append("Repository checks must validate the M25 minor contract")
+if "python3 Scripts/test_public_release_identities.py" not in repository_workflow:
+    errors.append("Repository checks must validate immutable public releases")
 if "python3 Scripts/test_stable_readiness.py" not in repository_workflow:
     errors.append("Repository checks must validate exact stable readiness")
 if "python3 Scripts/test_public_release.py" not in repository_workflow:
@@ -1254,6 +1318,11 @@ for required_fragment in [
     "Scripts/validate_clean_install_evidence.py",
     "Scripts/compare_clean_install_evidence.py",
     "source-first-upgrade:",
+    "v1.1.0)",
+    "Documentation~/m25-minor-release.json",
+    "minor-publication-proof:",
+    "foldcanvas-minor-publication-proof",
+    "upgradeBaselineVersion: \"1.0.1\"",
     "Scripts/create_upgrade_proof_project.py",
     "Scripts/advance_upgrade_proof_project.py",
     "Scripts/validate_upgrade_evidence.py",
@@ -1375,18 +1444,18 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M24: deterministic off-grid crease topology split" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M24 milestone")
+if "M25: 1.1.0 minor release qualification" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M25 milestone")
 for required_fragment in [
-    "M24",
+    "M25",
     "2D canvas plus FoldScript",
     "v1.0.1",
-    "v1.0.0",
+    "1.1.0",
     "off-grid",
-    "contiguous",
+    "immutable",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M24 active plan is missing: " + required_fragment)
+        errors.append("M25 active plan is missing: " + required_fragment)
 repository_checks_text = (
     ROOT / ".github" / "workflows" / "repository-checks.yml"
 ).read_text(encoding="utf-8")
@@ -1404,6 +1473,17 @@ for required_fragment in [
     if required_fragment not in repository_checks_text:
         errors.append(
             "Repository workflow must validate M23 release evidence: "
+            + required_fragment
+        )
+for required_fragment in [
+    "python3 Scripts/validate_public_release_identities.py",
+    "python3 Scripts/test_public_release_identities.py",
+    "python3 Scripts/test_minor_release.py",
+    "python3 Scripts/test_minor_release_authorization.py",
+]:
+    if required_fragment not in repository_checks_text:
+        errors.append(
+            "Repository workflow must validate M25 release evidence: "
             + required_fragment
         )
 for required_fragment in [
@@ -1557,7 +1637,7 @@ for required_fragment in [
     "Scripts/validate_upgrade_evidence.py",
     "Scripts/compare_upgrade_evidence.py",
     'sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-pr-host',
-    "Documentation~/m23-patch-release.json",
+    "Documentation~/m25-minor-release.json",
     "FoldCanvas Source Upgrade Before Stable",
     "FoldCanvas Source Upgrade Stable",
     "unity-source-upgrade-pre-release-results-and-logs",

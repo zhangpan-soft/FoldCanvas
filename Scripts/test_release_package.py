@@ -63,6 +63,8 @@ def main() -> int:
                 "package/Documentation~/m17-stable-readiness-report.json",
                 "package/Documentation~/m17-stable-release.json",
                 "package/Documentation~/m23-patch-release.json",
+                "package/Documentation~/m25-minor-release.json",
+                "package/Documentation~/minor-release.md",
                 "package/Documentation~/patch-release.md",
                 "package/Documentation~/release-candidate.md",
                 "package/Documentation~/stable-release.md",
@@ -135,14 +137,25 @@ def main() -> int:
             evidence = json.loads(
                 first_evidence.read_text(encoding="utf-8")
             )
-            is_patch = version == "1.0.1"
-            expected_format = "foldcanvas-patch-release-evidence"
+            is_minor = version == "1.1.0"
+            expected_format = (
+                "foldcanvas-minor-release-evidence"
+                if is_minor
+                else "foldcanvas-patch-release-evidence"
+            )
+            contract_path = (
+                ROOT / "Documentation~" / "m25-minor-release.json"
+                if is_minor
+                else ROOT / "Documentation~" / "m23-patch-release.json"
+            )
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
             if (
                 evidence.get("format") != expected_format
                 or evidence.get("state") != "built-unverified"
                 or evidence.get("packageVersion") != version
                 or evidence.get("stableRelease") is not True
-                or evidence.get("patchRelease") is not is_patch
+                or evidence.get("patchRelease") is not False
+                or evidence.get("minorRelease") is not is_minor
                 or evidence.get("archive", {}).get("sha256") != digest
                 or evidence.get("fileManifest", {}).get("file")
                 != first_manifest.name
@@ -150,18 +163,14 @@ def main() -> int:
                 != hashlib.sha256(first_manifest.read_bytes()).hexdigest()
                 or evidence.get("publication", {}).get("githubPrerelease")
                 is not False
-                or evidence.get("publication", {}).get("stablePatchRelease")
+                or evidence.get("publication", {}).get("stableMinorRelease")
                 is not True
                 or evidence.get("publication", {}).get("externalMarketplace")
                 is not False
                 or evidence.get("contract", {}).get("path")
-                != "Documentation~/m23-patch-release.json"
+                != "Documentation~/m25-minor-release.json"
                 or evidence.get("stableBaseline")
-                != json.loads(
-                    (ROOT / "Documentation~" / "m23-patch-release.json").read_text(
-                        encoding="utf-8"
-                    )
-                )["stableBaseline"]
+                != contract["stableBaseline"]
                 or "exact-head-audit"
                 not in evidence.get("requiredPrePublicationGates", [])
             ):

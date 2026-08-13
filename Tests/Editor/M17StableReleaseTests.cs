@@ -14,7 +14,7 @@ namespace FoldCanvas.Tests
     public sealed class M17StableReleaseTests
     {
         private const string StableVersion = "1.0.0";
-        private const string CurrentVersion = "1.0.1";
+        private const string CurrentVersion = "1.1.0";
         private const string QualifiedUnityVersion = "6000.3.20f1";
         private const string NormalizedVersionToken = "{PACKAGE_VERSION}";
 
@@ -79,7 +79,7 @@ namespace FoldCanvas.Tests
                 Is.EqualTo(contract.publicRuntimeApi.signatureCount));
             Assert.That(current.sha256,
                 Is.EqualTo(
-                    "006894afe985e177a3ccbddf42fac93f4febc33366e36a881b968933cfced9ac"));
+                    "f7627b9c4233977991d3ec6de36c0cff0ce044b026917b853d7a842d675c65d1"));
             string[] normalized = current.signatures
                 .Select(signature => signature.Replace(
                     CurrentVersion,
@@ -96,7 +96,7 @@ namespace FoldCanvas.Tests
             ProductionCorpus corpus = JsonUtility.FromJson<ProductionCorpus>(
                 File.ReadAllText(Path.Combine(
                     root,
-                    "Documentation~/m11-production-corpus.json")));
+                    "Documentation~/m24-production-corpus.json")));
 
             Assert.That(corpus.packageVersion, Is.EqualTo(CurrentVersion));
             Assert.That(corpus.foldScriptVersion, Is.EqualTo("0.1"));
@@ -105,7 +105,7 @@ namespace FoldCanvas.Tests
             Assert.That(corpus.cases.Select(value => value.id), Is.EqualTo(new[]
             {
                 "cyclic-torus",
-                "invalid-off-grid-fold",
+                "off-grid-fold",
                 "planar-artwork",
                 "production-cup",
                 "registered-wave",

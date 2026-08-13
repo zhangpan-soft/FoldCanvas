@@ -216,13 +216,30 @@ def build_release_evidence(
 ) -> pathlib.Path:
     package = json.loads((root / "package.json").read_text(encoding="utf-8"))
     current_version = package["version"]
+    minor_contract_path = root / "Documentation~" / "m25-minor-release.json"
+    minor_contract = (
+        json.loads(minor_contract_path.read_text(encoding="utf-8"))
+        if minor_contract_path.is_file()
+        else None
+    )
     patch_contract_path = root / "Documentation~" / "m23-patch-release.json"
     patch_contract = (
         json.loads(patch_contract_path.read_text(encoding="utf-8"))
         if patch_contract_path.is_file()
         else None
     )
-    if current_version == "1.0.1":
+    if current_version == "1.1.0":
+        if (
+            not isinstance(minor_contract, dict)
+            or minor_contract.get("packageVersion") != current_version
+            or minor_contract.get("format") != "foldcanvas-minor-release"
+            or minor_contract.get("tag") != f"v{current_version}"
+        ):
+            raise ValueError("M25 minor release contract does not match package.json")
+        contract_path = minor_contract_path
+        contract = minor_contract
+        release_kind = "minor"
+    elif current_version == "1.0.1":
         if (
             not isinstance(patch_contract, dict)
             or patch_contract.get("packageVersion") != current_version
@@ -240,7 +257,11 @@ def build_release_evidence(
     contract_bytes = contract_path.read_bytes()
     public_api_path = root / "Documentation~" / "public-runtime-api.json"
     public_api = json.loads(public_api_path.read_text(encoding="utf-8"))
-    corpus_path = root / "Documentation~" / "m11-production-corpus.json"
+    corpus_path = root / "Documentation~" / (
+        "m24-production-corpus.json"
+        if release_kind == "minor"
+        else "m11-production-corpus.json"
+    )
     corpus_bytes = corpus_path.read_bytes()
     corpus = json.loads(corpus_bytes)
     archive_bytes = archive_path.read_bytes()
@@ -248,14 +269,16 @@ def build_release_evidence(
 
     stable_version = (
         contract["stableBaseline"]["packageVersion"]
-        if release_kind == "patch"
+        if release_kind in ("patch", "minor")
         else contract["packageVersion"]
     )
-    is_stable_release = release_kind in ("stable", "patch")
+    is_stable_release = release_kind in ("stable", "patch", "minor")
     publication = dict(contract["publication"])
     document = {
         "format": (
-            "foldcanvas-patch-release-evidence"
+            "foldcanvas-minor-release-evidence"
+            if release_kind == "minor"
+            else "foldcanvas-patch-release-evidence"
             if release_kind == "patch"
             else "foldcanvas-stable-release-evidence"
         ),
@@ -309,8 +332,9 @@ def build_release_evidence(
         "upgrade": contract["upgrade"],
         "publication": publication,
     }
-    if release_kind == "patch":
-        document["patchRelease"] = True
+    if release_kind in ("patch", "minor"):
+        document["patchRelease"] = release_kind == "patch"
+        document["minorRelease"] = release_kind == "minor"
         document["stableBaseline"] = contract["stableBaseline"]
         document["publicRuntimeApi"]["normalizedVersionToken"] = contract[
             "publicRuntimeApi"

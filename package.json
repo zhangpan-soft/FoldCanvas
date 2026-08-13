@@ -1,6 +1,6 @@
 {
   "name": "com.foldcanvas.core",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "displayName": "FoldCanvas",
   "description": "A deterministic 2D-first Unity surface compiler with explicit topology, canonical FoldScript, bounded extensions, tiered validation, clean-install evidence, and replayable robustness gates.",
   "unity": "6000.3",

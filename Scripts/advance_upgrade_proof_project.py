@@ -141,24 +141,28 @@ def advance_project(
     target_version = package_version
     if contract.get("stableRelease") is True:
         target_version = contract.get("packageVersion")
-        stable_version = contract.get("stableBaseline", {}).get(
-            "packageVersion",
-            target_version,
-        )
-        if package_version != target_version:
+        package_parts = str(package_version).split(".")
+        if (
+            SEMANTIC_VERSION.fullmatch(package_version) is None
+            or len(package_parts) != 3
+            or package_version != target_version
+        ):
+            raise ValueError(
+                "upgrade target archive does not match the contract stable lineage"
+            )
+        stable_baseline = contract.get("stableBaseline")
+        if isinstance(stable_baseline, dict):
+            stable_version = stable_baseline.get("packageVersion")
             stable_parts = str(stable_version).split(".")
-            package_parts = str(package_version).split(".")
             if (
-                SEMANTIC_VERSION.fullmatch(package_version) is None
+                not isinstance(stable_version, str)
+                or SEMANTIC_VERSION.fullmatch(stable_version) is None
                 or len(stable_parts) != 3
-                or len(package_parts) != 3
-                or stable_parts[:2] != package_parts[:2]
-                or not stable_parts[2].isdigit()
-                or not package_parts[2].isdigit()
-                or int(package_parts[2]) <= int(stable_parts[2])
+                or tuple(int(value) for value in package_parts)
+                <= tuple(int(value) for value in stable_parts)
             ):
                 raise ValueError(
-                    "upgrade target archive does not match the contract stable lineage"
+                    "upgrade target archive is not newer than the stable baseline"
                 )
     else:
         target_version = contract.get("candidateVersion")
