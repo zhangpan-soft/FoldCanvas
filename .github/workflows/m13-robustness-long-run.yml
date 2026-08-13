@@ -22,6 +22,7 @@ on:
   push:
     paths:
       - .github/workflows/m13-robustness-long-run.yml
+      - Documentation~/m23-patch-release.json
       - Documentation~/m13-resource-envelopes.json
       - Editor/Robustness/**
       - Runtime/**
