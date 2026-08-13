@@ -28,6 +28,8 @@ The format follows Keep a Changelog principles, and package versions follow sema
 - hosted proof qualification uses two independent clean Unity hosts for
   platform-local pixel repeatability while preserving source, geometry,
   topology, tool, and fixed-dimension cross-platform evidence
+- hosted patch qualification rebuilds the exact public `1.0.0` rollback and
+  proves the unchanged 2D canvas plus FoldScript source against `1.0.1`
 
 ### Preserved
 

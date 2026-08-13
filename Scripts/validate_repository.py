@@ -1547,7 +1547,7 @@ for required_fragment in [
     "Scripts/validate_upgrade_evidence.py",
     "Scripts/compare_upgrade_evidence.py",
     'sudo chown -R -- "$(id -u):$(id -g)" artifacts/m15-upgrade-pr-host',
-    "Documentation~/m17-stable-release.json",
+    "Documentation~/m23-patch-release.json",
     "FoldCanvas Source Upgrade Before Stable",
     "FoldCanvas Source Upgrade Stable",
     "unity-source-upgrade-pre-release-results-and-logs",

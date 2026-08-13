@@ -22,6 +22,7 @@ from verify_public_release import (  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
+UNITY_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "unity-tests.yml"
 REPOSITORY = "zhangpan-soft/FoldCanvas"
 VERSION = "1.0.1"
 TAG = "v1.0.1"
@@ -111,6 +112,19 @@ def main() -> int:
             contract[field] == sorted(set(contract[field])),
             f"M23 {field} must be unique and ordinal",
         )
+
+    unity_workflow = UNITY_WORKFLOW_PATH.read_text(encoding="utf-8")
+    source_upgrade_job = unity_workflow.split(
+        "  unity-source-upgrade-tests:", 1
+    )[1]
+    require(
+        source_upgrade_job.count("Documentation~/m23-patch-release.json") == 2,
+        "Hosted source-first upgrade must use the M23 baseline and comparison contract",
+    )
+    require(
+        "Documentation~/m17-stable-release.json" not in source_upgrade_job,
+        "Hosted source-first patch upgrade retained the RC2-to-1.0.0 contract",
+    )
 
     with tempfile.TemporaryDirectory(prefix="foldcanvas-m23-") as temporary:
         root = pathlib.Path(temporary)
