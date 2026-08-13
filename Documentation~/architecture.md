@@ -205,6 +205,12 @@ MVP seam modes:
 
 Operations transform a panel or a selected region. They are executed in stable list order for MVP. A later DAG representation may be added only through an ADR.
 
+M24 adds an immutable pre-tessellation planning stage for compatible straight
+off-grid rectangle Fold creases. It refines normalized 2D source topology in
+authored Fold order, then emits each panel once so panel ranges remain
+contiguous. The planner never deforms 3D geometry and its inserted vertices
+remain derived compiler data, not editable source.
+
 MVP operation family:
 
 - rigid transform

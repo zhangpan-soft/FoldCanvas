@@ -36,6 +36,41 @@ namespace FoldCanvas.Tests
             Destroy(result, asset);
         }
 
+        [Test]
+        public void ZeroDegreeOffGridFold_IsIdentityWithoutTopologyChurn()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(CreateFold(
+                "off-grid-identity",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                0f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.CompiledData.Vertices, Has.Count.EqualTo(4));
+            Assert.That(
+                result.CompiledData.TriangleIndices.Count / 3,
+                Is.EqualTo(2));
+            for (int i = 0; i < result.CompiledData.Vertices.Count; i++)
+            {
+                FoldCanvasCompiledVertex vertex =
+                    result.CompiledData.Vertices[i];
+                Assert.That(
+                    vertex.Position,
+                    Is.EqualTo(new Vector3(
+                        vertex.SourcePosition.x,
+                        vertex.SourcePosition.y,
+                        0f)));
+            }
+
+            Destroy(result, asset);
+        }
+
         [TestCase(90f, 0.5f)]
         [TestCase(-90f, -0.5f)]
         public void SignedNinetyDegreeFold_UsesDirectedAxisHandedness(
@@ -463,7 +498,7 @@ namespace FoldCanvas.Tests
         }
 
         [Test]
-        public void Fold_OffGridCrease_ReturnsRequiresTopologySplitDiagnostic()
+        public void Fold_OffGridCrease_SplitsTrianglesAndFoldsWithoutStretch()
         {
             FoldCanvasAsset asset = CreatePanelAsset(1, 1);
             asset.Operations.Add(CreateFold(
@@ -474,10 +509,634 @@ namespace FoldCanvas.Tests
                 FoldSide.Positive,
                 90f));
 
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.CompiledData.Vertices.Count, Is.EqualTo(7));
+            Assert.That(
+                result.CompiledData.TriangleIndices.Count / 3,
+                Is.EqualTo(6));
+
+            int bottomCrease = FindVertexBySourcePosition(
+                result,
+                new Vector2(-0.2f, -0.5f));
+            int diagonalCrease = FindVertexBySourcePosition(
+                result,
+                new Vector2(-0.2f, -0.2f));
+            int topCrease = FindVertexBySourcePosition(
+                result,
+                new Vector2(-0.2f, 0.5f));
+            Assert.That(bottomCrease, Is.GreaterThanOrEqualTo(0));
+            Assert.That(diagonalCrease, Is.GreaterThanOrEqualTo(0));
+            Assert.That(topCrease, Is.GreaterThanOrEqualTo(0));
+            Assert.That(
+                Vector3.Distance(
+                    result.CompiledData.Vertices[bottomCrease].Position,
+                    new Vector3(-0.2f, -0.5f, 0f)),
+                Is.LessThanOrEqualTo(PositionTolerance));
+            Assert.That(
+                Vector3.Distance(
+                    result.CompiledData.Vertices[diagonalCrease].Position,
+                    new Vector3(-0.2f, -0.2f, 0f)),
+                Is.LessThanOrEqualTo(PositionTolerance));
+            Assert.That(
+                Vector3.Distance(
+                    result.CompiledData.Vertices[topCrease].Position,
+                    new Vector3(-0.2f, 0.5f, 0f)),
+                Is.LessThanOrEqualTo(PositionTolerance));
+
+            for (int offset = 0;
+                offset < result.CompiledData.TriangleIndices.Count;
+                offset += 3)
+            {
+                bool hasLeft = false;
+                bool hasRight = false;
+                for (int corner = 0; corner < 3; corner++)
+                {
+                    FoldCanvasCompiledVertex vertex =
+                        result.CompiledData.Vertices[
+                            result.CompiledData.TriangleIndices[
+                                offset + corner]];
+                    hasLeft |= vertex.SourcePosition.x <
+                        -0.2f - PositionTolerance;
+                    hasRight |= vertex.SourcePosition.x >
+                        -0.2f + PositionTolerance;
+                }
+
+                Assert.That(
+                    hasLeft && hasRight,
+                    Is.False,
+                    $"Triangle {offset / 3} spans the crease.");
+            }
+
+            FoldCanvasCompiledPanel panel =
+                result.CompiledData.Panels[0];
+            CollectionAssert.AreEqual(
+                new[] { 0, bottomCrease, 1 },
+                panel.GetBoundary("vMin").VertexIndices);
+            CollectionAssert.AreEqual(
+                new[] { 2, topCrease, 3 },
+                panel.GetBoundary("vMax").VertexIndices);
+            CollectionAssert.AreEqual(
+                new[] { 0, 2 },
+                panel.GetBoundary("uMin").VertexIndices);
+            CollectionAssert.AreEqual(
+                new[] { 1, 3 },
+                panel.GetBoundary("uMax").VertexIndices);
+
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Fold_ReversedOffGridCrease_PreservesNamedBoundaryOrder()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(CreateFold(
+                "reversed",
+                "panel",
+                new Vector2(0.3f, 1f),
+                new Vector2(0.3f, 0f),
+                FoldSide.Negative,
+                -90f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            int bottomCrease = FindVertexBySourcePosition(
+                result,
+                new Vector2(-0.2f, -0.5f));
+            int topCrease = FindVertexBySourcePosition(
+                result,
+                new Vector2(-0.2f, 0.5f));
+            FoldCanvasCompiledPanel panel = result.CompiledData.Panels[0];
+            CollectionAssert.AreEqual(
+                new[] { 0, bottomCrease, 1 },
+                panel.GetBoundary("vMin").VertexIndices);
+            CollectionAssert.AreEqual(
+                new[] { 2, topCrease, 3 },
+                panel.GetBoundary("vMax").VertexIndices);
+
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Fold_OffGridCrease_PreservesInterpolatedSourceUv()
+        {
+            FoldCanvasAsset asset = ScriptableObject
+                .CreateInstance<FoldCanvasAsset>();
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "panel",
+                new Rect(0.1f, 0.2f, 0.6f, 0.4f),
+                new Vector2(2f, 4f),
+                1,
+                1));
+            asset.Operations.Add(CreateFold(
+                "uv",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            for (int i = 0; i < result.CompiledData.Vertices.Count; i++)
+            {
+                FoldCanvasCompiledVertex vertex =
+                    result.CompiledData.Vertices[i];
+                if (Mathf.Abs(vertex.SourcePosition.x + 0.4f) >
+                    PositionTolerance)
+                {
+                    continue;
+                }
+
+                Assert.That(
+                    vertex.SourceUv.x,
+                    Is.EqualTo(0.28f).Within(PositionTolerance));
+                float normalizedV =
+                    vertex.SourcePosition.y / 4f + 0.5f;
+                Assert.That(
+                    vertex.SourceUv.y,
+                    Is.EqualTo(0.2f + normalizedV * 0.4f)
+                        .Within(PositionTolerance));
+            }
+
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Fold_OffGridCrease_AfterRigidTransformUsesCurrentFrame()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "place",
+                PanelId = "panel",
+                Translation = new Vector3(2f, 3f, 4f),
+                RotationEuler = new Vector3(15f, 30f, 45f),
+                Scale = Vector3.one
+            });
+            asset.Operations.Add(CreateFold(
+                "off-grid-current-frame",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Quaternion placement = Quaternion.Euler(15f, 30f, 45f);
+            for (int i = 0; i < result.CompiledData.Vertices.Count; i++)
+            {
+                FoldCanvasCompiledVertex vertex =
+                    result.CompiledData.Vertices[i];
+                if (Mathf.Abs(vertex.SourcePosition.x + 0.2f) >
+                    PositionTolerance)
+                {
+                    continue;
+                }
+
+                Vector3 expected = placement * new Vector3(
+                    vertex.SourcePosition.x,
+                    vertex.SourcePosition.y,
+                    0f) + new Vector3(2f, 3f, 4f);
+                AssertVectorWithin(vertex.Position, expected);
+            }
+
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Fold_OffGridCrease_RepeatedCompileIsDeterministic()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(CreateFold(
+                "deterministic",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Negative,
+                -67f));
+
+            FoldCanvasCompileResult first =
+                FoldCanvasCompiler.Compile(asset);
+            FoldCanvasCompileResult second =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(first.Success, Is.True, JoinDiagnostics(first));
+            Assert.That(second.Success, Is.True, JoinDiagnostics(second));
+            CollectionAssert.AreEqual(
+                first.CompiledData.Vertices,
+                second.CompiledData.Vertices);
+            CollectionAssert.AreEqual(
+                first.CompiledData.TriangleIndices,
+                second.CompiledData.TriangleIndices);
+            for (int i = 0; i < first.CompiledData.Panels[0].Boundaries.Count; i++)
+            {
+                CollectionAssert.AreEqual(
+                    first.CompiledData.Panels[0].Boundaries[i]
+                        .VertexIndices,
+                    second.CompiledData.Panels[0].Boundaries[i]
+                        .VertexIndices);
+            }
+
+            Object.DestroyImmediate(first.Mesh);
+            Object.DestroyImmediate(second.Mesh);
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void Fold_AngledOffGridCrease_HasNoSpanningOrZeroAreaTriangle()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            Vector2 lineStart = new Vector2(0f, 0.2f);
+            Vector2 lineEnd = new Vector2(1f, 0.8f);
+            asset.Operations.Add(CreateFold(
+                "angled",
+                "panel",
+                lineStart,
+                lineEnd,
+                FoldSide.Positive,
+                53f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.CompiledData.Vertices, Has.Count.EqualTo(7));
+            Assert.That(
+                result.CompiledData.TriangleIndices.Count / 3,
+                Is.EqualTo(6));
+            AssertSourceTrianglesRespectCrease(result, lineStart, lineEnd);
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void Fold_MultipleParallelOffGridCreases_RefineInAuthoredOrder()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(CreateFold(
+                "first",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                25f));
+            asset.Operations.Add(CreateFold(
+                "second",
+                "panel",
+                new Vector2(0.7f, 0f),
+                new Vector2(0.7f, 1f),
+                FoldSide.Positive,
+                -40f));
+
+            FoldCanvasCompileResult first =
+                FoldCanvasCompiler.Compile(asset);
+            FoldCanvasCompileResult second =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(first.Success, Is.True, JoinDiagnostics(first));
+            Assert.That(second.Success, Is.True, JoinDiagnostics(second));
+            Assert.That(first.CompiledData.Vertices, Has.Count.EqualTo(11));
+            Assert.That(
+                first.CompiledData.TriangleIndices.Count / 3,
+                Is.EqualTo(12));
+            AssertSourceTrianglesRespectCrease(
+                first,
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f));
+            AssertSourceTrianglesRespectCrease(
+                first,
+                new Vector2(0.7f, 0f),
+                new Vector2(0.7f, 1f));
+            CollectionAssert.AreEqual(
+                first.CompiledData.Vertices,
+                second.CompiledData.Vertices);
+            CollectionAssert.AreEqual(
+                first.CompiledData.TriangleIndices,
+                second.CompiledData.TriangleIndices);
+
+            Object.DestroyImmediate(first.Mesh);
+            Object.DestroyImmediate(second.Mesh);
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void Fold_InteriorEndingCrease_ReturnsRequiresTopologySplitDiagnostic()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Operations.Add(CreateFold(
+                "interior-ending",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 0.7f),
+                FoldSide.Positive,
+                90f));
+
             AssertSingleDiagnostic(
                 asset,
                 FoldCanvasDiagnosticCodes.FoldCreaseRequiresTopologySplit,
-                "off-grid");
+                "interior-ending");
+        }
+
+        [Test]
+        public void Fold_OffGridDiskCrease_ReturnsRequiresTopologySplitDiagnostic()
+        {
+            FoldCanvasAsset asset = ScriptableObject
+                .CreateInstance<FoldCanvasAsset>();
+            asset.Panels.Add(PanelDefinition.CreateDisk(
+                "disk",
+                new Rect(0f, 0f, 1f, 1f),
+                Vector2.one,
+                16,
+                2));
+            asset.Operations.Add(CreateFold(
+                "disk-crease",
+                "disk",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            AssertSingleDiagnostic(
+                asset,
+                FoldCanvasDiagnosticCodes.FoldCreaseRequiresTopologySplit,
+                "disk-crease");
+        }
+
+        [Test]
+        public void Fold_OffGridCrease_UsesRefinedGeometryBudget()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.CompileSettings.MaxGeneratedVertices = 6;
+            asset.CompileSettings.MaxGeneratedTriangles = 6;
+            asset.Operations.Add(CreateFold(
+                "budget",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.CompiledData, Is.Null);
+            Assert.That(result.Diagnostics, Has.Count.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(
+                    FoldCanvasDiagnosticCodes
+                        .GeneratedVertexLimitExceeded));
+            Assert.That(result.Diagnostics[0].PanelId, Is.EqualTo("panel"));
+
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void Fold_OffGridCrease_UsesRefinedTriangleBudget()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.CompileSettings.MaxGeneratedVertices = 7;
+            asset.CompileSettings.MaxGeneratedTriangles = 5;
+            asset.Operations.Add(CreateFold(
+                "triangle-budget",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Mesh, Is.Null);
+            Assert.That(result.CompiledData, Is.Null);
+            Assert.That(result.Diagnostics, Has.Count.EqualTo(1));
+            Assert.That(
+                result.Diagnostics[0].Code,
+                Is.EqualTo(
+                    FoldCanvasDiagnosticCodes
+                        .GeneratedTriangleLimitExceeded));
+            Assert.That(result.Diagnostics[0].PanelId, Is.EqualTo("panel"));
+
+            Object.DestroyImmediate(asset);
+        }
+
+        [Test]
+        public void Fold_OffGridCrease_PreservesLaterPanelRanges()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "later",
+                new Rect(0f, 0f, 1f, 1f),
+                Vector2.one,
+                1,
+                1));
+            asset.Operations.Add(CreateFold(
+                "range",
+                "panel",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                90f));
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            Assert.That(result.CompiledData.Panels[0].VertexStart, Is.Zero);
+            Assert.That(result.CompiledData.Panels[0].VertexCount,
+                Is.EqualTo(7));
+            Assert.That(result.CompiledData.Panels[1].VertexStart,
+                Is.EqualTo(7));
+            Assert.That(result.CompiledData.Panels[1].VertexCount,
+                Is.EqualTo(4));
+            for (int i = 7; i < 11; i++)
+            {
+                Assert.That(
+                    result.CompiledData.Vertices[i].PanelIndex,
+                    Is.EqualTo(1));
+            }
+
+            Destroy(result, asset);
+        }
+
+        [Test]
+        public void OffGridFoldBoundaries_StitchThenSolidifyIntoClosedVolume()
+        {
+            FoldCanvasAsset asset = CreatePanelAsset(1, 1);
+            asset.Panels[0].Id = "lower";
+            asset.Panels.Add(PanelDefinition.CreateRectangle(
+                "upper",
+                new Rect(0f, 0f, 1f, 1f),
+                Vector2.one,
+                1,
+                1));
+            asset.Seams.Add(new SeamDefinition
+            {
+                Id = "refined-join",
+                A = new BoundaryReference("lower", "vMax"),
+                B = new BoundaryReference("upper", "vMin"),
+                Mode = SeamMode.Weld,
+                ReverseB = false,
+                SampleCount = 3
+            });
+            asset.Operations.Add(new RigidTransformOperationDefinition
+            {
+                Id = "place-upper",
+                PanelId = "upper",
+                Translation = Vector3.up,
+                RotationEuler = Vector3.zero,
+                Scale = Vector3.one
+            });
+            asset.Operations.Add(CreateFold(
+                "fold-lower",
+                "lower",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                45f));
+            asset.Operations.Add(CreateFold(
+                "fold-upper",
+                "upper",
+                new Vector2(0.3f, 0f),
+                new Vector2(0.3f, 1f),
+                FoldSide.Positive,
+                45f));
+            StitchOperationDefinition stitch =
+                new StitchOperationDefinition { Id = "stitch-refined" };
+            stitch.SeamIds.Add("refined-join");
+            asset.Operations.Add(stitch);
+            SolidifyOperationDefinition solidify =
+                new SolidifyOperationDefinition
+                {
+                    Id = "solidify-refined",
+                    Thickness = 0.02f,
+                    Direction = SolidifyDirection.Centered
+                };
+            solidify.PanelIds.Add("lower");
+            solidify.PanelIds.Add("upper");
+            asset.Operations.Add(solidify);
+
+            FoldCanvasCompileResult result =
+                FoldCanvasCompiler.Compile(asset);
+
+            Assert.That(result.Success, Is.True, JoinDiagnostics(result));
+            FoldCanvasCompiledBoundary lower = result.CompiledData
+                .GetPanel("lower").GetBoundary("vMax");
+            FoldCanvasCompiledBoundary upper = result.CompiledData
+                .GetPanel("upper").GetBoundary("vMin");
+            // The authored crease contributes the 0.3 breakpoint while the
+            // Stitch sample count contributes 0.5. Neither may be discarded.
+            Assert.That(lower.VertexIndices, Has.Count.EqualTo(4));
+            Assert.That(upper.VertexIndices, Has.Count.EqualTo(4));
+            bool foundRefinedBreakpoint = false;
+            for (int i = 0; i < lower.VertexIndices.Count; i++)
+            {
+                FoldCanvasCompiledVertex a = result.CompiledData.Vertices[
+                    lower.VertexIndices[i]];
+                FoldCanvasCompiledVertex b = result.CompiledData.Vertices[
+                    upper.VertexIndices[i]];
+                foundRefinedBreakpoint |= Mathf.Abs(
+                    a.SourcePosition.x + 0.2f) <= PositionTolerance;
+                Assert.That(a.TopologyVertexId, Is.EqualTo(b.TopologyVertexId));
+                Assert.That(
+                    Vector3.Distance(a.Position, b.Position),
+                    Is.LessThanOrEqualTo(PositionTolerance));
+            }
+            Assert.That(foundRefinedBreakpoint, Is.True);
+
+            Assert.That(
+                result.SolidifyClosedVolumeReports,
+                Has.Count.EqualTo(1));
+            Assert.That(
+                result.SolidifyClosedVolumeReports[0].IsClosedVolume,
+                Is.True);
+            Assert.That(
+                result.SolidifyClosedVolumeReports[0].OpenEdgeCount,
+                Is.Zero);
+
+            Destroy(result, asset);
+        }
+
+        private static int FindVertexBySourcePosition(
+            FoldCanvasCompileResult result,
+            Vector2 sourcePosition)
+        {
+            for (int i = 0; i < result.CompiledData.Vertices.Count; i++)
+            {
+                if (Vector2.Distance(
+                        result.CompiledData.Vertices[i].SourcePosition,
+                        sourcePosition) <= PositionTolerance)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static void AssertSourceTrianglesRespectCrease(
+            FoldCanvasCompileResult result,
+            Vector2 lineStart,
+            Vector2 lineEnd)
+        {
+            Vector2 line = lineEnd - lineStart;
+            for (int offset = 0;
+                offset < result.CompiledData.TriangleIndices.Count;
+                offset += 3)
+            {
+                Vector2 a = ToNormalizedSource(
+                    result.CompiledData.Vertices[
+                        result.CompiledData.TriangleIndices[offset]]);
+                Vector2 b = ToNormalizedSource(
+                    result.CompiledData.Vertices[
+                        result.CompiledData.TriangleIndices[offset + 1]]);
+                Vector2 c = ToNormalizedSource(
+                    result.CompiledData.Vertices[
+                        result.CompiledData.TriangleIndices[offset + 2]]);
+                float area = Cross2(b - a, c - a);
+                Assert.That(
+                    Mathf.Abs(area),
+                    Is.GreaterThan(1e-7f),
+                    $"Triangle {offset / 3} has zero source area.");
+                float da = Cross2(line, a - lineStart);
+                float db = Cross2(line, b - lineStart);
+                float dc = Cross2(line, c - lineStart);
+                bool positive = da > PositionTolerance ||
+                    db > PositionTolerance ||
+                    dc > PositionTolerance;
+                bool negative = da < -PositionTolerance ||
+                    db < -PositionTolerance ||
+                    dc < -PositionTolerance;
+                Assert.That(
+                    positive && negative,
+                    Is.False,
+                    $"Triangle {offset / 3} spans the crease.");
+            }
+        }
+
+        private static Vector2 ToNormalizedSource(
+            FoldCanvasCompiledVertex vertex)
+        {
+            return vertex.SourcePosition + Vector2.one * 0.5f;
+        }
+
+        private static float Cross2(Vector2 left, Vector2 right)
+        {
+            return left.x * right.y - left.y * right.x;
         }
 
         private static FoldCanvasAsset CreatePanelAsset(int uSegments, int vSegments)

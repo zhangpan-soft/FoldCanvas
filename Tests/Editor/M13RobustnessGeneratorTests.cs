@@ -86,7 +86,7 @@ namespace FoldCanvas.Tests
                 .Where(item => item.expectedSuccess)
                 .ToArray();
 
-            Assert.That(valid.Length, Is.EqualTo(8));
+            Assert.That(valid.Length, Is.EqualTo(12));
             Assert.That(valid.All(item => item.actualSuccess), Is.True);
             Assert.That(valid.All(item => item.meshReturned), Is.True);
             Assert.That(valid.All(item => item.compiledDataReturned), Is.True);
@@ -108,7 +108,7 @@ namespace FoldCanvas.Tests
                 .Where(item => !item.expectedSuccess)
                 .ToArray();
 
-            Assert.That(invalid.Length, Is.EqualTo(8));
+            Assert.That(invalid.Length, Is.EqualTo(4));
             Assert.That(invalid.All(item => !item.actualSuccess), Is.True);
             Assert.That(invalid.All(item => !item.meshReturned), Is.True);
             Assert.That(invalid.All(item => !item.compiledDataReturned),

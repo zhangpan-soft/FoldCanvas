@@ -253,21 +253,25 @@ Positive angle semantics must match Unity
 `Quaternion.AngleAxis(angleDegrees, axisFromAtoB)`. Samples on the hinge remain
 stationary. Degenerate lines or ambiguous samples produce diagnostics.
 
-M02 executes a rigid crease as follows:
+Fold executes a rigid crease as follows:
 
 1. Validate the target, finite line, normalized range, nonzero line length,
    side, finite angle, and `falloff`.
-2. Verify both line endpoints are existing source vertices and the complete
-   line is covered without gaps by a continuous chain of existing triangle
-   edges.
-3. Map the complete source line through the target panel's deterministic source
+2. If the target is a rectangle and the straight crease runs from perimeter to
+   perimeter but crosses triangle interiors, M24 refines the normalized source
+   topology before panel emission. Shared crossed edges reuse one inserted
+   vertex, clipped polygons are triangulated in stable source order, and any
+   crossed named boundary receives the vertex in its existing direction.
+3. Verify both line endpoints are source vertices and the complete line is
+   covered without gaps by the resulting continuous triangle-edge chain.
+4. Map the complete source line through the target panel's deterministic source
    triangles into the panel's **current** 3D embedding.
-4. Check every line/triangle-edge crossing and each interval midpoint. The
+5. Check every line/triangle-edge crossing and each interval midpoint. The
    mapped samples must form one non-collapsed, order-preserving straight axis.
-5. Classify every vertex using its immutable normalized source position.
-6. Rotate only the selected side's current position about the directed current
-   axis. Source position, UV, ownership, provenance, indices, and boundaries
-   remain unchanged.
+6. Classify every vertex using its immutable normalized source position.
+7. Rotate only the selected side's current position about the directed current
+   axis. Source position, UV, ownership, provenance, topology, and refined
+   boundaries remain unchanged during deformation.
 
 The first source-order triangle is used when a mapped point lies on a shared
 triangle edge. This is deterministic and produces the same position because
@@ -281,11 +285,14 @@ Line endpoints must be inside `[0,1]²` and the complete line must lie inside th
 panel's source triangulation. This latter condition matters for non-rectangular
 domains such as disks.
 
-M03 adds a safety contract without adding topology: if the authored crease is
-not already an edge chain, compilation returns
-`FC3011 FoldCreaseRequiresTopologySplit`, produces no Mesh, and does not rotate
-an approximate set of existing vertices. Deterministic crease splitting is a
-separate future roadmap task.
+M24 supports straight rectangle creases whose endpoints lie on the perimeter
+and whose open segment partitions the panel. Source position maps as
+`x=(u-0.5)*physicalWidth`, `y=(v-0.5)*physicalHeight`; source UV maps through
+the unchanged `canvasRect`. Existing edge chains are not refined. A zero-angle
+Fold is an exact identity and does not require or insert a crease chain. Curved,
+branched, disk, interior-ending, collinear-overlap, or wrap-managed off-grid
+domains return `FC3011 FoldCreaseRequiresTopologySplit`, produce no Mesh, and
+never rotate an approximate set of existing vertices.
 
 ### 6.3 `roll` — implemented in M03
 

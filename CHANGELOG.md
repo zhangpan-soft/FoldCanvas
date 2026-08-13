@@ -6,6 +6,13 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+### Added
+
+- Added M24 deterministic source-topology refinement for compatible straight
+  off-grid rectangle Fold creases, preserving source UVs, ordered named
+  boundaries, downstream contiguous panel ranges, and exact zero-angle identity
+  before rigid deformation.
+
 ## [1.0.1] - 2026-08-13
 
 ### Fixed
@@ -45,9 +52,12 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ### Publication status
 
-- `1.0.1` remains unpublished while M23 qualifies its exact GitHub release;
-  this version does not apply a social-preview setting, publish a registry or
-  marketplace package, or add geometry behavior
+- Published as exact tag and GitHub release `v1.0.1` from audited merge
+  `867f3bd5501218aa95872db6e7e66cb213031cab`; public qualification run
+  `31677125745` passed and the release archive SHA-256 is
+  `4188d23b18b924f6642f9e4eabbc15500fb60fb3d3916f23857a5a19966e1de5`.
+- This release did not apply a social-preview setting or publish a registry or
+  marketplace package.
 
 ## [1.0.0] - 2026-08-11
 

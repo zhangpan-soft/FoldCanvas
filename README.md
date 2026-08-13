@@ -78,6 +78,8 @@ evidence/documentation gates**:
 - Ordered rigid-transform operations
 - Ordered rigid-crease Fold operations with documented signed handedness
 - Deterministic source-line embedding into the panel's current 3D surface
+- Planned source-topology refinement for straight perimeter-to-perimeter
+  off-grid rectangle creases, with exact UV and named-boundary preservation
 - Stable diagnostics for invalid lines, missing targets, nonzero falloff, and
   non-linear current hinges
 - Circular Roll in the target's current congruent planar frame, with
@@ -418,7 +420,9 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M19 | Executable Schema-to-field-reference coverage — complete |
 | M20 | Roll handedness review diagram — complete |
 | M21 | Deterministic cup/sphere proof-gallery evidence — complete |
-| M22 | Proof-first README and social-preview patch — active |
+| M22 | Proof-first README and social-preview patch — complete |
+| M23 | Audited `v1.0.1` patch release and public qualification — complete |
+| M24 | Deterministic off-grid rectangle crease topology split — active |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

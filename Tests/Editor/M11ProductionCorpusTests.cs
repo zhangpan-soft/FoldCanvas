@@ -22,7 +22,7 @@ namespace FoldCanvas.Tests
                 Is.EqualTo(new[]
                 {
                     "cyclic-torus",
-                    "invalid-off-grid-fold",
+                    "off-grid-fold",
                     "planar-artwork",
                     "production-cup",
                     "registered-wave",
@@ -32,17 +32,12 @@ namespace FoldCanvas.Tests
                 report.cases.Select(item => item.validationLevel)
                     .Distinct(StringComparer.Ordinal),
                 Is.EquivalentTo(new[] { "Basic", "Standard", "Strict" }));
-            Assert.That(report.cases.Count(item => item.success),
-                Is.EqualTo(5));
-            FoldCanvasProductionCorpusCase invalid = report.cases.Single(
-                item => item.id == "invalid-off-grid-fold");
-            Assert.That(invalid.success, Is.False);
-            Assert.That(invalid.renderVertices, Is.Zero);
-            Assert.That(
-                invalid.errorDiagnosticCode,
-                Is.EqualTo(
-                    FoldCanvasDiagnosticCodes
-                        .FoldCreaseRequiresTopologySplit));
+            Assert.That(report.cases.All(item => item.success), Is.True);
+            FoldCanvasProductionCorpusCase offGrid = report.cases.Single(
+                item => item.id == "off-grid-fold");
+            Assert.That(offGrid.renderVertices, Is.EqualTo(7));
+            Assert.That(offGrid.triangles, Is.EqualTo(6));
+            Assert.That(offGrid.errorDiagnosticCode, Is.Empty);
         }
 
         [Test]

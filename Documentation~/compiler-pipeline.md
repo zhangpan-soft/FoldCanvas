@@ -88,14 +88,23 @@ For every operation:
 5. preserve UV0
 6. record operation-specific diagnostics
 
-### M02 rigid-crease Fold
+### M24 rigid-crease Fold with planned source refinement
 
-A Fold line is authored in normalized panel coordinates. Before moving any
-vertex, the compiler verifies that both endpoints are existing source vertices
-and that the full parameter interval is covered without gaps by collinear
-existing triangle edges. A crease that crosses triangle interiors returns
-`FC3011 FoldCreaseRequiresTopologySplit`; M03 does not insert vertices or
-silently approximate the fold.
+A Fold line is authored in normalized panel coordinates. Before allocating the
+global mesh buffer, the compiler gathers compatible enabled rectangle Fold
+operations in authored order. A straight perimeter-to-perimeter crease that
+crosses triangle interiors clips the local source triangles on both sides,
+canonicalizes intersections by undirected source edge, triangulates each
+polygon in stable source order, and updates crossed named boundaries. The
+refined panel is then emitted once, retaining contiguous vertex and triangle
+ranges for every later compiler stage.
+
+Existing edge-chain creases do not change topology. A zero-angle Fold is an
+exact identity and performs neither refinement nor hinge resolution because no
+source point can move. Unsupported curved,
+branched, disk, interior-ending, collinear-overlap, or SphericalWrap/ToroidalWrap
+managed off-grid domains return `FC3011 FoldCreaseRequiresTopologySplit`; the
+compiler never silently approximates the fold.
 
 For an existing edge chain, the compiler maps its endpoints, every
 source-triangle-edge crossing, and every interval midpoint through barycentric
@@ -108,7 +117,8 @@ outside the panel triangulation, compilation stops with
 `FC3007 AmbiguousFoldHinge`. Otherwise the selected positive or negative source
 side is rotated using `Quaternion.AngleAxis` around the directed current axis.
 Hinge samples stay fixed, and all source/provenance/topology data is preserved.
-Only zero falloff is supported in M02.
+Only zero falloff is supported. New source UVs are evaluated directly from the
+normalized intersection and immutable panel `CanvasRect`.
 
 ### M03 current-frame Roll
 

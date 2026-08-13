@@ -35,8 +35,24 @@ namespace FoldCanvas
         public static PanelBuildRecord Append(
             PanelDefinition panel,
             MeshBuildBuffer buffer,
-            SphericalTessellationHint? sphericalHint = null)
+            SphericalTessellationHint? sphericalHint = null,
+            FoldCreaseRefinedPanel refinedPanel = null)
         {
+            if (refinedPanel != null)
+            {
+                if (panel.Shape != PanelShape.Rectangle ||
+                    sphericalHint.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Fold crease refinement requires a regular rectangle tessellation.");
+                }
+
+                return AppendRefinedRectangle(
+                    panel,
+                    buffer,
+                    refinedPanel);
+            }
+
             switch (panel.Shape)
             {
                 case PanelShape.Rectangle:
@@ -55,6 +71,79 @@ namespace FoldCanvas
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(panel.Shape), panel.Shape, null);
             }
+        }
+
+        private static PanelBuildRecord AppendRefinedRectangle(
+            PanelDefinition panel,
+            MeshBuildBuffer buffer,
+            FoldCreaseRefinedPanel refinedPanel)
+        {
+            int start = buffer.Vertices.Count;
+            int triangleIndexStart = buffer.Triangles.Count;
+            int panelIndex = buffer.PanelCount;
+            Vector2 size = panel.PhysicalSize;
+            Rect canvasRect = panel.CanvasRect;
+            for (int i = 0;
+                i < refinedPanel.NormalizedVertices.Count;
+                i++)
+            {
+                Vector2 normalized =
+                    refinedPanel.NormalizedVertices[i];
+                Vector2 sourcePosition = new Vector2(
+                    (normalized.x - 0.5f) * size.x,
+                    (normalized.y - 0.5f) * size.y);
+                Vector2 sourceUv = new Vector2(
+                    canvasRect.xMin +
+                        normalized.x * canvasRect.width,
+                    canvasRect.yMin +
+                        normalized.y * canvasRect.height);
+                buffer.AddVertex(
+                    new Vector3(
+                        sourcePosition.x,
+                        sourcePosition.y,
+                        0f),
+                    sourcePosition,
+                    sourceUv,
+                    panelIndex);
+            }
+
+            for (int i = 0;
+                i < refinedPanel.TriangleIndices.Count;
+                i++)
+            {
+                buffer.Triangles.Add(
+                    start + refinedPanel.TriangleIndices[i]);
+            }
+
+            PanelBuildRecord record = new PanelBuildRecord(
+                panel,
+                panelIndex,
+                start,
+                refinedPanel.VertexCount,
+                triangleIndexStart,
+                buffer.Triangles.Count - triangleIndexStart);
+            for (int boundaryIndex = 0;
+                boundaryIndex < refinedPanel.Boundaries.Count;
+                boundaryIndex++)
+            {
+                FoldCreaseRefinedBoundary boundary =
+                    refinedPanel.Boundaries[boundaryIndex];
+                int[] globalIndices =
+                    new int[boundary.VertexIndices.Count];
+                for (int i = 0; i < globalIndices.Length; i++)
+                {
+                    globalIndices[i] =
+                        start + boundary.VertexIndices[i];
+                }
+
+                record.AddBoundary(
+                    boundary.Id,
+                    globalIndices,
+                    boundary.IsClosed);
+            }
+
+            buffer.AddPanel(record);
+            return record;
         }
 
         private static PanelBuildRecord AppendRectangle(PanelDefinition panel, MeshBuildBuffer buffer)

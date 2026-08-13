@@ -39,6 +39,7 @@ namespace FoldCanvas
 
             Dictionary<string, SphericalTessellationHint>
                 sphericalTessellationHints = null;
+            FoldCreaseRefinementPlan foldCreaseRefinementPlan = null;
             SphereValidationPlan sphereValidationPlan = null;
             if (!result.HasErrors())
             {
@@ -46,6 +47,12 @@ namespace FoldCanvas
                     asset,
                     result,
                     out sphericalTessellationHints);
+            }
+
+            if (!result.HasErrors())
+            {
+                foldCreaseRefinementPlan =
+                    FoldCreaseRefinementPlan.Build(asset, result);
             }
 
             if (!result.HasErrors())
@@ -88,10 +95,24 @@ namespace FoldCanvas
                             sphericalHint = resolvedHint;
                         }
 
-                        FoldCanvasSourceValidator.TryEstimateGeometry(
-                            panel,
-                            out long panelVertices,
-                            out long panelTriangles);
+                        FoldCreaseRefinedPanel refinedPanel = null;
+                        long panelVertices;
+                        long panelTriangles;
+                        if (foldCreaseRefinementPlan.TryGetPanel(
+                                panel.Id,
+                                out refinedPanel))
+                        {
+                            panelVertices = refinedPanel.VertexCount;
+                            panelTriangles = refinedPanel.TriangleCount;
+                        }
+                        else
+                        {
+                            FoldCanvasSourceValidator.TryEstimateGeometry(
+                                panel,
+                                out panelVertices,
+                                out panelTriangles);
+                        }
+
                         if (!buffer.TryBeginGeometryOperation(
                                 panelVertices,
                                 panelTriangles,
@@ -108,7 +129,8 @@ namespace FoldCanvas
                             PanelTessellator.Append(
                                 panel,
                                 buffer,
-                                sphericalHint);
+                                sphericalHint,
+                                refinedPanel);
                         }
                     }
 
