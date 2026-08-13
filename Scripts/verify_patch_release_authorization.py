@@ -137,6 +137,24 @@ def authorize(
         ):
             successful.add(name)
             run_ids[name] = run["id"]
+    # The long-run workflow is path-filtered on main. An annotated tag at the
+    # already-proven protected-main tip reruns the identical tree, so accept
+    # that exact-SHA tag push as the long-run evidence when main did not route
+    # a run for a CI-only merge.
+    if "M13 robustness long run" not in successful:
+        for run in workflow_runs["workflow_runs"]:
+            if (
+                isinstance(run, dict)
+                and run.get("name") == "M13 robustness long run"
+                and run.get("event") == "push"
+                and run.get("head_branch") == tag
+                and run.get("head_sha") == tag_commit
+                and run.get("status") == "completed"
+                and run.get("conclusion") == "success"
+                and isinstance(run.get("id"), int)
+            ):
+                successful.add("M13 robustness long run")
+                run_ids["M13 robustness long run"] = run["id"]
     missing = sorted(set(REQUIRED_MAIN_WORKFLOWS).difference(successful))
     if missing:
         raise PatchReleaseAuthorizationError(

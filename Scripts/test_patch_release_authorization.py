@@ -96,6 +96,38 @@ def main() -> int:
         raise AssertionError("valid authorization report differs")
     cases = 1
 
+    tag_routed = fixtures()
+    tag_routed["workflow_runs"]["workflow_runs"] = [
+        run
+        for run in tag_routed["workflow_runs"]["workflow_runs"]
+        if run["name"] != "M13 robustness long run"
+    ]
+    tag_routed["workflow_runs"]["workflow_runs"].append(
+        {
+            "id": 777,
+            "name": "M13 robustness long run",
+            "event": "push",
+            "head_branch": "v1.0.1",
+            "head_sha": TAG_COMMIT,
+            "status": "completed",
+            "conclusion": "success",
+        }
+    )
+    tag_report = run(tag_routed)
+    if tag_report["mainWorkflowRuns"][0]["runId"] != 777:
+        raise AssertionError("exact-tag long-run evidence differs")
+    cases += 1
+
+    rejected_tag = copy.deepcopy(tag_routed)
+    rejected_tag["workflow_runs"]["workflow_runs"][-1]["head_branch"] = "v1.0.2"
+    try:
+        run(rejected_tag)
+    except PatchReleaseAuthorizationError:
+        pass
+    else:
+        raise AssertionError("authorization accepted another tag's long run")
+    cases += 1
+
     rejected(lambda value: value["pull_requests"].clear(), "missing PR")
     cases += 1
     rejected(
