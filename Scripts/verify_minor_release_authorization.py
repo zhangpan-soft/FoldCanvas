@@ -103,7 +103,8 @@ def authorize(
         and comment["user"].get("login") == maintainer
         and comment.get("author_association") == "OWNER"
         and isinstance(comment.get("body"), str)
-        and marker in comment["body"]
+        and marker
+        in comment["body"].replace("\r\n", "\n").replace("\r", "\n")
     ]
     if len(matching_audits) != 1:
         raise MinorReleaseAuthorizationError(

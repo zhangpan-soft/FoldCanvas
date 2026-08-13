@@ -29,16 +29,17 @@ def main() -> int:
         "v1.0.0-rc.2",
         "v1.0.0",
         "v1.0.1",
+        "v1.1.0",
     ]:
         raise AssertionError("public release ledger order differs")
     cases = 1
 
     report = validator.validate(ROOT, validator.DEFAULT_LEDGER, rebuild_all=True)
     if (
-        report["releaseCount"] != 4
-        or report["rebuiltReleaseCount"] != 4
+        report["releaseCount"] != 5
+        or report["rebuiltReleaseCount"] != 5
         or report["currentPackageVersion"] != "1.1.0"
-        or report["currentVersionPublished"] is not False
+        or report["currentVersionPublished"] is not True
         or report["valid"] is not True
     ):
         raise AssertionError("public release identity report differs")
@@ -135,6 +136,31 @@ def main() -> int:
                 raise
         else:
             raise AssertionError("current tree reused published 1.0.1 bytes")
+        cases += 1
+
+    with tempfile.TemporaryDirectory(prefix="foldcanvas-current-identity-drift-") as temporary:
+        root = pathlib.Path(temporary) / "root"
+        shutil.copytree(
+            ROOT,
+            root,
+            ignore=shutil.ignore_patterns(".git", "Project~", "artifacts"),
+        )
+        readme_path = root / "Documentation~" / "index.md"
+        readme_path.write_text(
+            readme_path.read_text(encoding="utf-8") + "\nPublished-byte drift.\n",
+            encoding="utf-8",
+        )
+        try:
+            validator.validate(
+                root,
+                root / "Docs" / "Release" / "public-release-identities.json",
+                rebuild_all=False,
+            )
+        except validator.PublicReleaseIdentityError as error:
+            if "reuses immutable version" not in str(error):
+                raise
+        else:
+            raise AssertionError("current tree changed published 1.1.0 bytes")
         cases += 1
 
     print(f"Immutable public release identity tests passed: {cases} cases.")
