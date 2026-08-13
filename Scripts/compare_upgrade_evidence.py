@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import pathlib
+import re
 
 
 SHA_FIELDS = (
@@ -43,6 +44,9 @@ STABLE_FIELDS = (
     "components",
     "isClosedVolume",
     "isSingleClosedVolume",
+)
+SEMANTIC_VERSION = re.compile(
+    r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
 )
 
 
@@ -124,12 +128,23 @@ def compare(
         "fromPackageVersions", []
     ):
         raise ValueError("M15 before package version is not an approved baseline")
-    target_version = (
-        contract.get("packageVersion")
-        if contract.get("stableRelease") is True
-        else contract.get("candidateVersion")
-    )
-    if after.get("packageVersion") != target_version:
+    target_version = after.get("packageVersion")
+    if contract.get("stableRelease") is True:
+        stable_version = str(contract.get("packageVersion"))
+        stable_parts = stable_version.split(".")
+        target_parts = str(target_version).split(".")
+        if (
+            not isinstance(target_version, str)
+            or SEMANTIC_VERSION.fullmatch(target_version) is None
+            or len(stable_parts) != 3
+            or len(target_parts) != 3
+            or stable_parts[:2] != target_parts[:2]
+            or not stable_parts[2].isdigit()
+            or not target_parts[2].isdigit()
+            or int(target_parts[2]) < int(stable_parts[2])
+        ):
+            raise ValueError("M15 after package version is not the stable lineage")
+    elif target_version != contract.get("candidateVersion"):
         raise ValueError("M15 after package version is not the contract target")
     if before.get("packageVersion") == after.get("packageVersion"):
         raise ValueError("M15 upgrade did not replace the package version")

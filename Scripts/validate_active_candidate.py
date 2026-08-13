@@ -14,6 +14,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SHA256 = re.compile(r"[0-9a-f]{64}")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 VERSION = re.compile(r"1\.0\.0-rc\.[1-9][0-9]*")
+PACKAGE_VERSION = re.compile(r"1\.0\.(?:0|[1-9][0-9]*)")
 SEED = re.compile(r"[0-9a-f]{16}")
 
 
@@ -48,11 +49,26 @@ def validate(control: dict, contract: dict, package: dict) -> dict:
 
     candidate_version = control.get("candidateVersion")
     stable_target = contract.get("stableExit", {}).get("targetVersion")
+    package_version = package.get("version")
+    package_parts = str(package_version).split(".")
+    stable_parts = str(stable_target).split(".")
+    stable_patch_line = (
+        isinstance(package_version, str)
+        and PACKAGE_VERSION.fullmatch(package_version) is not None
+        and len(package_parts) == 3
+        and len(stable_parts) == 3
+        and package_parts[:2] == stable_parts[:2]
+        and int(package_parts[2]) >= int(stable_parts[2])
+    )
     if (
         not isinstance(candidate_version, str)
         or VERSION.fullmatch(candidate_version) is None
         or candidate_version != contract.get("candidateVersion")
-        or package.get("version") not in {candidate_version, stable_target}
+        or not isinstance(package_version, str)
+        or (
+            package_version not in {candidate_version, stable_target}
+            and not stable_patch_line
+        )
     ):
         raise ValueError(
             "active candidate version does not match the RC/stable lineage"

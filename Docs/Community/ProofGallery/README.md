@@ -46,6 +46,15 @@ python3 Scripts/validate_proof_gallery.py
 python3 Scripts/test_proof_gallery.py
 ```
 
-The package-root README intentionally does not embed this gallery in M21. It is
-part of the UPM archive; gallery integration therefore belongs to a separately
-versioned patch release. Published `v1.0.0` and RC2 assets remain immutable.
+M21 generated and audited the release-excluded evidence while preserving the
+published `v1.0.0` archive byte-for-byte. M22 embeds the gallery in both package
+READMEs as patch `1.0.1` and adds [`social-preview.png`](social-preview.png), a
+deterministic `1280 x 640` candidate composed only from these six proof images.
+Published `v1.0.0` and RC2 assets remain immutable.
+
+Regenerate the social candidate without Unity or third-party libraries:
+
+```sh
+python3 Scripts/generate_social_preview.py
+python3 Scripts/validate_readme_proof.py
+```

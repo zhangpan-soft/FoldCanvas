@@ -55,6 +55,23 @@ def main() -> int:
     if validate(CONTROL, CONTRACT, historical_package) != values:
         raise AssertionError("RC2 and stable lineage validation differ")
 
+    for invalid_version in ("1.0.01", "1.1.0", "2.0.0", "9.9.9"):
+        invalid_package = copy.deepcopy(PACKAGE)
+        invalid_package["version"] = invalid_version
+        first = second = None
+        try:
+            validate(CONTROL, CONTRACT, invalid_package)
+        except ValueError as error:
+            first = str(error)
+        try:
+            validate(CONTROL, CONTRACT, copy.deepcopy(invalid_package))
+        except ValueError as error:
+            second = str(error)
+        if first is None or first != second:
+            raise AssertionError(
+                f"invalid package lineage was accepted: {invalid_version}"
+            )
+
     assert_rejected(lambda value: value.update(active=False))
     assert_rejected(lambda value: value.update(candidateVersion="1.0.0-rc.1"))
     assert_rejected(lambda value: value.update(candidateTag="v1.0.0-rc.1"))

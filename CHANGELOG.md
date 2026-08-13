@@ -6,6 +6,39 @@ The format follows Keep a Changelog principles, and package versions follow sema
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-13
+
+### Added
+
+- proof-first English and Chinese README heroes that place each maintained 2D
+  canvas beside its real compiled textured result and logical-topology proof
+- a deterministic `1280 x 640` repository social-preview candidate composed
+  only from the six Unity-generated M21 proof images
+- package-contained byte-identical proof images so installed UPM README links
+  remain valid while provenance continues to point at the public M21 manifest
+- dependency-free README/social-proof validation with adversarial fixtures and
+  explicit provenance links
+
+### Changed
+
+- package and compiler version advanced to compatible patch `1.0.1` because
+  the root READMEs are deterministic UPM archive members
+- public Runtime API and production-corpus headers advanced to `1.0.1` while
+  preserving normalized API shape and every geometry/topology case identity
+
+### Preserved
+
+- no compiler, geometry, topology, FoldScript `0.1`, source UV, sample, shader,
+  dependency, or Unity `6000.3.20f1` behavior change
+- the six M21 proof images, geometry hashes, topology values, and all published
+  `v1.0.0`/RC2 release assets remain immutable
+
+### Publication status
+
+- `1.0.1` is under repository and hosted qualification; this iteration does
+  not create a tag, GitHub release, registry package, social-preview setting,
+  or external marketplace publication
+
 ## [1.0.0] - 2026-08-11
 
 ### Added

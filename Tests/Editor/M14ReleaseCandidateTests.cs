@@ -14,7 +14,7 @@ namespace FoldCanvas.Tests
     public sealed class M14ReleaseCandidateTests
     {
         private const string CandidateVersion = "1.0.0-rc.2";
-        private const string StableVersion = "1.0.0";
+        private const string CurrentVersion = "1.0.1";
         private const string QualifiedUnityVersion = "6000.3.20f1";
 
         [Test]
@@ -26,9 +26,9 @@ namespace FoldCanvas.Tests
             ReleaseCandidateContract contract = LoadContract(root);
 
             Assert.That(package.name, Is.EqualTo("com.foldcanvas.core"));
-            Assert.That(package.version, Is.EqualTo(StableVersion));
-            Assert.That(FoldCanvasVersion.Package, Is.EqualTo(StableVersion));
-            Assert.That(FoldCanvasVersion.Compiler, Is.EqualTo(StableVersion));
+            Assert.That(package.version, Is.EqualTo(CurrentVersion));
+            Assert.That(FoldCanvasVersion.Package, Is.EqualTo(CurrentVersion));
+            Assert.That(FoldCanvasVersion.Compiler, Is.EqualTo(CurrentVersion));
             Assert.That(package.unity, Is.EqualTo("6000.3"));
             Assert.That(package.unityRelease, Is.EqualTo("20f1"));
             Assert.That(contract.candidateVersion, Is.EqualTo(CandidateVersion));

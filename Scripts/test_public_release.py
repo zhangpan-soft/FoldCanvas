@@ -8,6 +8,7 @@ import io
 import json
 import pathlib
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -29,6 +30,10 @@ REPOSITORY = "zhangpan-soft/FoldCanvas"
 VERSION = "1.0.0"
 TAG = "v" + VERSION
 TAG_COMMIT = "a" * 40
+STABLE_SOURCE_COMMIT = "6ed32f1ed2a48796f5c0e015205cd47249e1bcef"
+STABLE_ARCHIVE_SHA256 = (
+    "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7"
+)
 
 
 def sha256(path: pathlib.Path) -> str:
@@ -68,6 +73,20 @@ def write_metadata(path: pathlib.Path, assets: pathlib.Path, value: dict | None 
     )
 
 
+def export_stable_source(destination: pathlib.Path) -> None:
+    archive = subprocess.run(
+        ["git", "archive", STABLE_SOURCE_COMMIT],
+        cwd=ROOT,
+        check=True,
+        stdout=subprocess.PIPE,
+    ).stdout
+    subprocess.run(
+        ["tar", "-x", "-C", str(destination)],
+        input=archive,
+        check=True,
+    )
+
+
 def main() -> int:
     contract_path = ROOT / "Documentation~" / "m17-stable-release.json"
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
@@ -82,7 +101,16 @@ def main() -> int:
         temporary_path = pathlib.Path(temporary)
         asset_directory = temporary_path / "assets"
         asset_directory.mkdir()
-        archive, manifest, evidence = build_release_bundle(asset_directory, TAG)
+        stable_source = temporary_path / "stable-source"
+        stable_source.mkdir()
+        export_stable_source(stable_source)
+        archive, manifest, evidence = build_release_bundle(
+            asset_directory,
+            TAG,
+            root=stable_source,
+        )
+        if sha256(archive) != STABLE_ARCHIVE_SHA256:
+            raise AssertionError("rebuilt stable archive differs from public v1.0.0")
         checksum = archive.with_suffix(archive.suffix + ".sha256")
         if sorted(path.name for path in asset_directory.iterdir()) != (
             expected_asset_names(VERSION)

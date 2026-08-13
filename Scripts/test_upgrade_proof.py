@@ -205,6 +205,35 @@ def main() -> int:
         )
         if before_validation["tests"]["passed"] != 1:
             raise AssertionError("before-phase Unity evidence did not validate")
+
+        for invalid_version in ("1.0.01", "1.1.0", "2.0.0"):
+            invalid_archive = synthetic_package(
+                temp_root / f"com.foldcanvas.core-{invalid_version}.tgz",
+                invalid_version,
+            )
+            invalid_project = temp_root / f"invalid-target-{invalid_version}"
+            invalid_expected = create_project(
+                invalid_project,
+                baseline_archive,
+                source,
+                appearance,
+            )
+            write_json(
+                invalid_project / "M15Evidence" / "before.json",
+                proof_report(
+                    invalid_expected,
+                    invalid_project,
+                    "before",
+                    "com.foldcanvas.core@invalid-baseline",
+                    contract,
+                ),
+            )
+            expect_value_error(
+                lambda project=invalid_project, archive=invalid_archive: advance_project(
+                    project, archive
+                ),
+                "stable lineage",
+            )
         for directory in ("Library", "Logs", "Temp", "obj"):
             generated = project / directory
             generated.mkdir(parents=True)
@@ -215,8 +244,11 @@ def main() -> int:
         appearance_before = (project / "M15Input" / appearance.name).read_bytes()
 
         after_expected = advance_project(project, current_archive)
-        if after_expected["packageVersion"] != contract["packageVersion"]:
-            raise AssertionError("upgrade advance used the wrong stable target")
+        current_version = json.loads(
+            (ROOT / "package.json").read_text(encoding="utf-8")
+        )["version"]
+        if after_expected["packageVersion"] != current_version:
+            raise AssertionError("upgrade advance used the wrong patch target")
         if after_expected["phase"] != "after":
             raise AssertionError("upgrade advance did not enter after phase")
         for directory in ("Library", "Logs", "Temp", "obj"):

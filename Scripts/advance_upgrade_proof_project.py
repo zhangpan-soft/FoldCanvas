@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
 import shutil
 import sys
 
@@ -22,6 +23,11 @@ from create_upgrade_proof_project import (  # noqa: E402
     sha256_file,
     validate_fixture,
     write_json,
+)
+
+
+SEMANTIC_VERSION = re.compile(
+    r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
 )
 
 
@@ -132,11 +138,26 @@ def advance_project(
         raise ValueError("M15Input must contain only two regular source files")
 
     package_version, package_digest = archive_metadata(archive_path)
-    target_version = (
-        contract.get("packageVersion")
-        if contract.get("stableRelease") is True
-        else contract.get("candidateVersion")
-    )
+    target_version = package_version
+    if contract.get("stableRelease") is True:
+        stable_version = contract.get("packageVersion")
+        if package_version != stable_version:
+            stable_parts = str(stable_version).split(".")
+            package_parts = str(package_version).split(".")
+            if (
+                SEMANTIC_VERSION.fullmatch(package_version) is None
+                or len(stable_parts) != 3
+                or len(package_parts) != 3
+                or stable_parts[:2] != package_parts[:2]
+                or not stable_parts[2].isdigit()
+                or not package_parts[2].isdigit()
+                or int(package_parts[2]) <= int(stable_parts[2])
+            ):
+                raise ValueError(
+                    "upgrade target archive does not match the contract stable lineage"
+                )
+    else:
+        target_version = contract.get("candidateVersion")
     if package_version != target_version:
         raise ValueError(
             "upgrade target archive does not match the contract target version"

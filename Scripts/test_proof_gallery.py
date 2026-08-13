@@ -49,31 +49,56 @@ def main() -> int:
         stale = copy.deepcopy(manifest)
         stale["artifacts"][0]["sha256"] = "0" * 64
         path = fixture(base / "stale", stale)
-        require_error(validator.validate(base / "stale", path), "SHA-256 is stale")
+        require_error(
+            validator.validate(
+                base / "stale", path, expected_package_version="1.0.0"
+            ),
+            "SHA-256 is stale",
+        )
         cases += 1
 
         remote = copy.deepcopy(manifest)
         remote["sources"][0]["sourceCanvasPath"] = "https://example.invalid/a.png"
         path = fixture(base / "remote", remote)
-        require_error(validator.validate(base / "remote", path), "repository-relative")
+        require_error(
+            validator.validate(
+                base / "remote", path, expected_package_version="1.0.0"
+            ),
+            "repository-relative",
+        )
         cases += 1
 
         reordered = copy.deepcopy(manifest)
         reordered["sources"].reverse()
         path = fixture(base / "order", reordered)
-        require_error(validator.validate(base / "order", path), "source order")
+        require_error(
+            validator.validate(
+                base / "order", path, expected_package_version="1.0.0"
+            ),
+            "source order",
+        )
         cases += 1
 
         weakened = copy.deepcopy(manifest)
         weakened["geometry"][1]["values"]["openEdgeCount"] = "1"
         path = fixture(base / "weakened", weakened)
-        require_error(validator.validate(base / "weakened", path), "openEdgeCount")
+        require_error(
+            validator.validate(
+                base / "weakened", path, expected_package_version="1.0.0"
+            ),
+            "openEdgeCount",
+        )
         cases += 1
 
         tool = copy.deepcopy(manifest)
         tool["generatorSha256"] = "f" * 64
         path = fixture(base / "tool", tool)
-        require_error(validator.validate(base / "tool", path), "does not match")
+        require_error(
+            validator.validate(
+                base / "tool", path, expected_package_version="1.0.0"
+            ),
+            "does not match",
+        )
         cases += 1
 
         identical = copy.deepcopy(manifest)
@@ -83,7 +108,10 @@ def main() -> int:
         (path.parent / "sphere-source.png").write_bytes(pixels)
         identical["artifacts"][3]["sha256"] = validator.sha256_bytes(pixels)
         path.write_text(json.dumps(identical, indent=2) + "\n", encoding="utf-8")
-        require_error(validator.validate(root, path), "byte-distinct")
+        require_error(
+            validator.validate(root, path, expected_package_version="1.0.0"),
+            "byte-distinct",
+        )
         cases += 1
 
         truncated = copy.deepcopy(manifest)
@@ -93,7 +121,10 @@ def main() -> int:
         image.write_bytes(image.read_bytes()[:-12])
         truncated["artifacts"][0]["sha256"] = validator.sha256_file(image)
         path.write_text(json.dumps(truncated, indent=2) + "\n", encoding="utf-8")
-        require_error(validator.validate(root, path), "missing required PNG chunks")
+        require_error(
+            validator.validate(root, path, expected_package_version="1.0.0"),
+            "missing required PNG chunks",
+        )
         cases += 1
 
         first = validator.validate()

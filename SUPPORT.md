@@ -2,10 +2,11 @@
 
 ## Supported release
 
-The supported stable package is `1.0.0` on Unity `6000.3.20f1`. Immutable
-`1.0.0-rc.2` is its first rollback. Other Unity versions may work, but they are not
-release-qualified until they pass the same hosted package, clean-install,
-handoff, corpus, and robustness gates.
+The current published stable package is `1.0.0` on Unity `6000.3.20f1`.
+Compatible patch `1.0.1` is under qualification and is not yet a published
+release. Immutable `1.0.0-rc.2` remains the first rollback. Other Unity
+versions may work, but they are not release-qualified until they pass the same
+hosted package, clean-install, handoff, corpus, and robustness gates.
 
 Support is best effort and no response-time or availability SLA is offered.
 

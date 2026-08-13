@@ -31,13 +31,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/m21-package
+          package_version="$(jq -r '.version' package.json)"
           python3 Scripts/build_release_package.py \
             --output artifacts/m21-package \
-            --tag v1.0.0
+            --tag "v$package_version"
           python3 Scripts/create_proof_gallery_project.py \
             --project artifacts/m21-proof-host \
             --package-archive \
-            artifacts/m21-package/com.foldcanvas.core-1.0.0.tgz
+            "artifacts/m21-package/com.foldcanvas.core-$package_version.tgz"
           echo "generator_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           echo "test_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           echo "runner_hash=$(sha256sum Scripts/generate_proof_gallery.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
@@ -95,11 +96,19 @@ jobs:
               pathlib.Path("artifacts/m21-proof-output/manifest.json")
               .read_text(encoding="utf-8")
           )
+          current_version = json.loads(
+              pathlib.Path("package.json").read_text(encoding="utf-8")
+          )["version"]
+          if tracked["packageVersion"] != "1.0.0":
+              raise SystemExit("tracked M21 evidence must remain anchored to 1.0.0")
+          if regenerated["packageVersion"] != current_version:
+              raise SystemExit(
+                  "regenerated proof package version does not match current package"
+              )
           for key in (
               "format",
               "version",
               "unityVersion",
-              "packageVersion",
               "foldScriptVersion",
               "generator",
               "generatorSha256",
@@ -112,6 +121,19 @@ jobs:
           ):
               if regenerated[key] != tracked[key]:
                   raise SystemExit(f"regenerated proof contract drifted: {key}")
+          tracked_artifacts = {
+              item["path"]: item for item in tracked["artifacts"]
+          }
+          regenerated_artifacts = {
+              item["path"]: item for item in regenerated["artifacts"]
+          }
+          if regenerated_artifacts != tracked_artifacts:
+              raise SystemExit("regenerated proof artifact contract drifted")
+          for name, artifact in tracked_artifacts.items():
+              regenerated_path = pathlib.Path("artifacts/m21-proof-output") / name
+              packaged_path = pathlib.Path("Documentation~/ProofGallery") / name
+              if regenerated_path.read_bytes() != packaged_path.read_bytes():
+                  raise SystemExit(f"packaged proof copy drifted: {name}")
           PY
 
       - name: Upload proof-gallery regeneration evidence
