@@ -11,6 +11,7 @@ The format follows Keep a Changelog principles, and package versions follow sema
 ### Fixed
 
 - Fixed the M23 release-authorization collector to pipe paginated `gh api --slurp` output through standalone `jq`, preserving fail-closed publication on GitHub runners whose GitHub CLI rejects combining `--slurp` with `--jq`.
+- Allowed the required M13 robustness evidence to come from the exact `v1.0.1` tag push when a CI-only protected-main merge is outside that workflow's path filter; repository and Unity evidence still must be successful exact-main runs.
 
 ### Added
 
