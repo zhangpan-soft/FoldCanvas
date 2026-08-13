@@ -1127,6 +1127,9 @@ for required_fragment in [
     "Verify exact-head patch release authorization",
     "python3 Scripts/verify_patch_release_authorization.py",
     "foldcanvas-patch-release-authorization",
+    "gh api --paginate --slurp",
+    "| jq 'add'",
+    "| jq '{workflow_runs: [.[].workflow_runs[]]}'",
     "--prerelease",
     "contents: read",
     "publish-release:",
@@ -1151,6 +1154,11 @@ for required_fragment in [
             "Package release workflow is missing required configuration: "
             f"{required_fragment}"
         )
+
+if "--slurp --jq" in release_workflow:
+    errors.append(
+        "Package release workflow uses an unsupported gh --slurp/--jq combination"
+    )
 
 if 'find "$output_root/download" -type f -name report.json' in release_workflow:
     errors.append(

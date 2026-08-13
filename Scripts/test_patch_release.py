@@ -23,6 +23,9 @@ from verify_public_release import (  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "Documentation~" / "m23-patch-release.json"
 UNITY_WORKFLOW_PATH = ROOT / ".github" / "workflows" / "unity-tests.yml"
+PACKAGE_RELEASE_WORKFLOW_PATH = (
+    ROOT / ".github" / "workflows" / "package-release.yml"
+)
 LONG_RUN_WORKFLOW_PATH = (
     ROOT / ".github" / "workflows" / "m13-robustness-long-run.yml"
 )
@@ -132,6 +135,18 @@ def main() -> int:
     require(
         "      - Documentation~/m23-patch-release.json" in long_run_workflow,
         "M23 contract changes must trigger the exact-main-SHA long run",
+    )
+    package_release_workflow = PACKAGE_RELEASE_WORKFLOW_PATH.read_text(
+        encoding="utf-8"
+    )
+    require(
+        "--slurp --jq" not in package_release_workflow
+        and package_release_workflow.count("gh api --paginate --slurp") >= 2
+        and "| jq 'add' > \"$output_root/comments.json\""
+        in package_release_workflow
+        and "| jq '{workflow_runs: [.[].workflow_runs[]]}'"
+        in package_release_workflow,
+        "M23 authorization collection must pipe slurped pages to jq for gh compatibility",
     )
 
     with tempfile.TemporaryDirectory(prefix="foldcanvas-m23-") as temporary:

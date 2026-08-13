@@ -136,9 +136,10 @@ jobs:
           pull_number="$(jq -er 'if length == 1 then .[0].number else error("expected one PR") end' "$output_root/pull-requests.json")"
           gh api --paginate --slurp \
             "repos/$GITHUB_REPOSITORY/issues/$pull_number/comments?per_page=100" \
-            --jq 'add' > "$output_root/comments.json"
-          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$tag_commit&per_page=100" \
-            --slurp --jq '{workflow_runs: [.[].workflow_runs[]]}' \
+            | jq 'add' > "$output_root/comments.json"
+          gh api --paginate --slurp \
+            "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$tag_commit&per_page=100" \
+            | jq '{workflow_runs: [.[].workflow_runs[]]}' \
             > "$output_root/workflow-runs.json"
           gh api -X GET search/issues \
             -f q="repo:$GITHUB_REPOSITORY is:issue is:open label:release-blocker" \
