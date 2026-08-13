@@ -53,8 +53,8 @@ EXCLUDED_NAMES = {
 }
 
 
-def package_version() -> str:
-    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+def package_version(root: pathlib.Path = ROOT) -> str:
+    package = json.loads((root / "package.json").read_text(encoding="utf-8"))
     version = package.get("version")
     if not isinstance(version, str) or not re.fullmatch(
         r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
@@ -64,13 +64,13 @@ def package_version() -> str:
         raise ValueError("package.json contains an invalid package version")
 
     runtime_source = (
-        ROOT / "Runtime" / "Data" / "FoldCanvasVersion.cs"
+        root / "Runtime" / "Data" / "FoldCanvasVersion.cs"
     ).read_text(encoding="utf-8")
     runtime_match = re.search(r'\bPackage\s*=\s*"([^"]+)"\s*;', runtime_source)
     if runtime_match is None or runtime_match.group(1) != version:
         raise ValueError("FoldCanvasVersion.Package must match package.json")
 
-    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
     if f"## [{version}]" not in changelog:
         raise ValueError("CHANGELOG.md lacks the package version heading")
     return version
@@ -92,16 +92,16 @@ def canonical_json_bytes(value: dict) -> bytes:
     ).encode("utf-8")
 
 
-def collect_package_files() -> list[pathlib.Path]:
+def collect_package_files(root: pathlib.Path = ROOT) -> list[pathlib.Path]:
     files: list[pathlib.Path] = []
     for relative in PACKAGE_FILES:
-        path = ROOT / relative
+        path = root / relative
         if not path.is_file():
             raise FileNotFoundError(f"Required package file is missing: {relative}")
         files.append(path)
 
     for directory_name in PACKAGE_DIRECTORIES:
-        directory = ROOT / directory_name
+        directory = root / directory_name
         if not directory.is_dir():
             raise FileNotFoundError(
                 f"Required package directory is missing: {directory_name}"
@@ -109,17 +109,22 @@ def collect_package_files() -> list[pathlib.Path]:
         for path in directory.rglob("*"):
             if path.is_symlink():
                 raise ValueError(
-                    f"Release package cannot contain symlinks: {path.relative_to(ROOT)}"
+                    f"Release package cannot contain symlinks: {path.relative_to(root)}"
                 )
             if path.is_file() and path.name not in EXCLUDED_NAMES:
                 files.append(path)
 
-    unique = {path.relative_to(ROOT).as_posix(): path for path in files}
+    unique = {path.relative_to(root).as_posix(): path for path in files}
     return [unique[key] for key in sorted(unique)]
 
 
-def build_archive(output_directory: pathlib.Path, tag: str | None = None) -> pathlib.Path:
-    version = package_version()
+def build_archive(
+    output_directory: pathlib.Path,
+    tag: str | None = None,
+    *,
+    root: pathlib.Path = ROOT,
+) -> pathlib.Path:
+    version = package_version(root)
     if tag is not None and tag != f"v{version}":
         raise ValueError(
             f"Release tag '{tag}' must exactly equal package version tag 'v{version}'"
@@ -128,7 +133,7 @@ def build_archive(output_directory: pathlib.Path, tag: str | None = None) -> pat
     output_directory.mkdir(parents=True, exist_ok=True)
     archive_path = output_directory / f"com.foldcanvas.core-{version}.tgz"
     temporary_path = archive_path.with_suffix(".tgz.tmp")
-    files = collect_package_files()
+    files = collect_package_files(root)
 
     with temporary_path.open("wb") as raw:
         with gzip.GzipFile(
@@ -144,7 +149,7 @@ def build_archive(output_directory: pathlib.Path, tag: str | None = None) -> pat
                 format=tarfile.USTAR_FORMAT,
             ) as archive:
                 for path in files:
-                    relative = path.relative_to(ROOT).as_posix()
+                    relative = path.relative_to(root).as_posix()
                     data = path.read_bytes()
                     info = tarfile.TarInfo(f"package/{relative}")
                     info.size = len(data)
@@ -170,12 +175,14 @@ def build_archive(output_directory: pathlib.Path, tag: str | None = None) -> pat
 def build_file_manifest(
     output_directory: pathlib.Path,
     archive_path: pathlib.Path,
+    *,
+    root: pathlib.Path = ROOT,
 ) -> pathlib.Path:
-    version = package_version()
+    version = package_version(root)
     archive_bytes = archive_path.read_bytes()
     entries = []
-    for path in collect_package_files():
-        relative = path.relative_to(ROOT).as_posix()
+    for path in collect_package_files(root):
+        relative = path.relative_to(root).as_posix()
         data = path.read_bytes()
         entries.append(
             {
@@ -204,26 +211,38 @@ def build_release_evidence(
     output_directory: pathlib.Path,
     archive_path: pathlib.Path,
     manifest_path: pathlib.Path,
+    *,
+    root: pathlib.Path = ROOT,
 ) -> pathlib.Path:
-    package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
-    contract_path = ROOT / "Documentation~" / "m17-stable-release.json"
+    package = json.loads((root / "package.json").read_text(encoding="utf-8"))
+    contract_path = root / "Documentation~" / "m17-stable-release.json"
     contract_bytes = contract_path.read_bytes()
     contract = json.loads(contract_bytes)
-    public_api_path = ROOT / "Documentation~" / "public-runtime-api.json"
+    public_api_path = root / "Documentation~" / "public-runtime-api.json"
     public_api = json.loads(public_api_path.read_text(encoding="utf-8"))
-    corpus_path = ROOT / "Documentation~" / "m11-production-corpus.json"
+    corpus_path = root / "Documentation~" / "m11-production-corpus.json"
     corpus_bytes = corpus_path.read_bytes()
     corpus = json.loads(corpus_bytes)
     archive_bytes = archive_path.read_bytes()
     manifest_bytes = manifest_path.read_bytes()
 
+    current_version = package["version"]
+    stable_version = contract["packageVersion"]
+    is_stable_release = current_version == stable_version
+    publication = dict(contract["publication"])
+    if not is_stable_release:
+        publication["finalStableRelease"] = False
     document = {
-        "format": "foldcanvas-stable-release-evidence",
+        "format": (
+            "foldcanvas-stable-release-evidence"
+            if is_stable_release
+            else "foldcanvas-patch-release-evidence"
+        ),
         "version": "1",
         "state": "built-unverified",
         "packageName": package["name"],
         "packageVersion": package["version"],
-        "stableRelease": True,
+        "stableRelease": is_stable_release,
         "unity": {
             "packageMinimum": package["unity"],
             "packageRelease": package["unityRelease"],
@@ -259,10 +278,15 @@ def build_release_evidence(
         "rollback": contract["rollback"],
         "releaseCandidate": contract["releaseCandidate"],
         "stableQualification": contract["stableQualification"],
+        "stableBaseline": {
+            "packageVersion": stable_version,
+            "tag": contract["tag"],
+            "immutable": True,
+        },
         "upgrade": contract["upgrade"],
-        "publication": contract["publication"],
+        "publication": publication,
     }
-    version = package["version"]
+    version = current_version
     path = output_directory / f"com.foldcanvas.core-{version}.evidence.json"
     path.write_bytes(canonical_json_bytes(document))
     return path
@@ -271,10 +295,14 @@ def build_release_evidence(
 def build_release_bundle(
     output_directory: pathlib.Path,
     tag: str | None = None,
+    *,
+    root: pathlib.Path = ROOT,
 ) -> tuple[pathlib.Path, pathlib.Path, pathlib.Path]:
-    archive = build_archive(output_directory, tag)
-    manifest = build_file_manifest(output_directory, archive)
-    evidence = build_release_evidence(output_directory, archive, manifest)
+    archive = build_archive(output_directory, tag, root=root)
+    manifest = build_file_manifest(output_directory, archive, root=root)
+    evidence = build_release_evidence(
+        output_directory, archive, manifest, root=root
+    )
     return archive, manifest, evidence
 
 

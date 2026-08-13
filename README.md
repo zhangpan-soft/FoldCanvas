@@ -1,6 +1,37 @@
 # FoldCanvas
 
-> **Stable 1.0.0.** A 2D-first, deterministic surface compiler for Unity.
+> **Patch 1.0.1 in qualification.** A 2D-first, deterministic surface compiler
+> for Unity. The published stable release remains `v1.0.0` until the patch has
+> completed its own release gate.
+
+**2D canvas + FoldScript -> deterministic 3D geometry.** The images below are
+real Unity `6000.3.20f1` outputs from the maintained source—not primitives,
+stock meshes, or generated marketing art. Click any image for the full-size
+proof; inspect the [provenance manifest](https://github.com/zhangpan-soft/FoldCanvas/blob/main/Docs/Community/ProofGallery/manifest.json)
+and [reproduction guide](https://github.com/zhangpan-soft/FoldCanvas/blob/main/Docs/Community/ProofGallery/README.md) for source,
+tool, geometry, topology, and SHA-256 evidence.
+
+### Closed cup: canvas -> textured result -> logical topology
+
+| Authoritative 2D source | Compiled textured cup | Closed-volume topology |
+| --- | --- | --- |
+| [![Production cup 2D canvas containing the full wall rectangle and matching bottom disk](Documentation~/ProofGallery/cup-source.png)](Documentation~/ProofGallery/cup-source.png) | [![Textured closed cup compiled from the maintained FoldCanvas source](Documentation~/ProofGallery/cup-textured.png)](Documentation~/ProofGallery/cup-textured.png) | [![Texture-free wireframe of the welded and solidified closed cup](Documentation~/ProofGallery/cup-topology.png)](Documentation~/ProofGallery/cup-topology.png) |
+
+The maintained [production-cup source](Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json)
+compiles to one closed component with zero open, non-manifold, or
+orientation-conflict edges and positive volume.
+
+### Eight-gore sphere: canvas -> textured result -> seam topology
+
+| Eight authored 2D gores | Compiled textured sphere | Closed-sphere topology |
+| --- | --- | --- |
+| [![Eight explicit rectangular sphere gores in the authoritative 2D canvas](Documentation~/ProofGallery/sphere-source.png)](Documentation~/ProofGallery/sphere-source.png) | [![Closed textured sphere reconstructed from eight FoldCanvas gore panels](Documentation~/ProofGallery/sphere-textured.png)](Documentation~/ProofGallery/sphere-textured.png) | [![Wireframe and seam proof of the stitched closed sphere](Documentation~/ProofGallery/sphere-topology.png)](Documentation~/ProofGallery/sphere-topology.png) |
+
+The maintained [sphere source](Samples~/Sphere/sphere-golden.foldcanvas.json)
+has eight panels, Euler characteristic `2`, zero open/non-manifold/orientation-
+conflict edges, and outward winding. The [`1280 x 640` social-preview
+candidate](https://github.com/zhangpan-soft/FoldCanvas/blob/main/Docs/Community/ProofGallery/social-preview.png) is composed from
+these same audited pixels.
 
 ## Why this project exists
 
@@ -35,7 +66,8 @@ Editor authoring workspace, M07 geometry validator, M08 FoldScript
 interchange/repair boundary, M09 cyclic-topology proof, M10 bounded extension
   ecosystem, M11 production-readiness evidence, M12 source-first production
 handoff, M13 robustness/scale evidence, M14/M15 release qualification, M16
-candidate soak, and the active M17 stable release**:
+candidate soak, M17 stable release, and the M18-M22 production-readiness
+evidence/documentation gates**:
 
 - Unity Package Manager package layout
 - Serializable source asset model
@@ -381,7 +413,12 @@ Do not ask Codex to implement the entire roadmap in one turn. Complete one miles
 | M14 | Public API/FoldScript freeze and immutable `1.0.0-rc.1` — merged and published through PR #13 |
 | M15 | Public release assets, source-first upgrade, and immutable `1.0.0-rc.2` — complete |
 | M16 | Candidate-pinned soak, reviewed gate ledger, and contributor trust boundary — complete |
-| M17 | Stable `1.0.0`, RC2 upgrade proof, and public qualification — active |
+| M17 | Stable `1.0.0`, RC2 upgrade proof, and public qualification — complete |
+| M18 | Node 24 GitHub Action qualification — complete |
+| M19 | Executable Schema-to-field-reference coverage — complete |
+| M20 | Roll handedness review diagram — complete |
+| M21 | Deterministic cup/sphere proof-gallery evidence — complete |
+| M22 | Proof-first README and social-preview patch — active |
 
 The detailed acceptance criteria live in [`Documentation~/roadmap.md`](Documentation~/roadmap.md).
 

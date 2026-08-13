@@ -38,6 +38,12 @@ compiles them through the package Runtime API, and accepts only the seven
 expected evidence files. It does not use `Project~`, an existing scene, a Unity
 primitive sphere, Blender, ImageGen, or a manually repaired Mesh.
 
+The tracked M21 PNG bytes were generated and repeated on the qualified macOS
+host. Hosted CI regenerates twice on independent clean Linux hosts and requires
+those two outputs to be byte-identical. Across platforms, the invariant is the
+same source hashes, geometry hashes, topology values, tools, and dimensions;
+GPU raster bytes are intentionally not treated as cross-platform identity.
+
 Validate the source, geometry claims, tool hashes, PNG structure/content,
 dimensions, and all SHA-256 values with:
 
@@ -46,6 +52,15 @@ python3 Scripts/validate_proof_gallery.py
 python3 Scripts/test_proof_gallery.py
 ```
 
-The package-root README intentionally does not embed this gallery in M21. It is
-part of the UPM archive; gallery integration therefore belongs to a separately
-versioned patch release. Published `v1.0.0` and RC2 assets remain immutable.
+M21 generated and audited the release-excluded evidence while preserving the
+published `v1.0.0` archive byte-for-byte. M22 embeds the gallery in both package
+READMEs as patch `1.0.1` and adds [`social-preview.png`](social-preview.png), a
+deterministic `1280 x 640` candidate composed only from these six proof images.
+Published `v1.0.0` and RC2 assets remain immutable.
+
+Regenerate the social candidate without Unity or third-party libraries:
+
+```sh
+python3 Scripts/generate_social_preview.py
+python3 Scripts/validate_readme_proof.py
+```

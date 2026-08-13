@@ -1,6 +1,33 @@
 # FoldCanvas
 
-> **稳定版 1.0.0。** 一个面向 Unity 的“二维优先、确定性编译”三维曲面引擎。
+> **1.0.1 补丁正在验收。** 一个面向 Unity 的“二维优先、确定性编译”三维曲面
+> 引擎；在补丁完成独立发布门禁前，当前公开稳定版仍是 `v1.0.0`。
+
+**二维画布 + FoldScript -> 确定性三维几何。** 下面不是 Unity 原始体、库存模型
+或生成式宣传图，而是由维护中的源资产通过 Unity `6000.3.20f1` 实际编译、渲染
+的结果。点击图片可查看原图；[证据清单](https://github.com/zhangpan-soft/FoldCanvas/blob/main/Docs/Community/ProofGallery/manifest.json)
+与[复现说明](https://github.com/zhangpan-soft/FoldCanvas/blob/main/Docs/Community/ProofGallery/README.md)记录了源文件、工具、几何、
+拓扑和 SHA-256。
+
+### 闭合杯体：二维源 -> 贴图结果 -> 逻辑拓扑
+
+| 权威二维源 | 编译后的贴图杯体 | 闭合体拓扑 |
+| --- | --- | --- |
+| [![包含完整杯壁矩形和匹配杯底圆盘的生产杯二维画布](Documentation~/ProofGallery/cup-source.png)](Documentation~/ProofGallery/cup-source.png) | [![由 FoldCanvas 维护源编译出的贴图闭合杯体](Documentation~/ProofGallery/cup-textured.png)](Documentation~/ProofGallery/cup-textured.png) | [![杯壁与杯底焊接并加厚后的无贴图闭合体线框](Documentation~/ProofGallery/cup-topology.png)](Documentation~/ProofGallery/cup-topology.png) |
+
+维护中的[生产杯 FoldScript](Samples~/BootstrapPanel/m12-production-cup.foldcanvas.json)
+会得到一个闭合组件：开放边、非流形边、方向冲突边都是 `0`，并且体积为正。
+
+### 八瓣球体：二维源 -> 贴图结果 -> 接缝拓扑
+
+| 八块显式二维球瓣 | 编译后的贴图球体 | 闭合球拓扑 |
+| --- | --- | --- |
+| [![权威二维画布中的八块显式矩形球瓣](Documentation~/ProofGallery/sphere-source.png)](Documentation~/ProofGallery/sphere-source.png) | [![由八块 FoldCanvas 球瓣重建的贴图闭合球体](Documentation~/ProofGallery/sphere-textured.png)](Documentation~/ProofGallery/sphere-textured.png) | [![完成 Stitch 后闭合球体的线框与接缝证据](Documentation~/ProofGallery/sphere-topology.png)](Documentation~/ProofGallery/sphere-topology.png) |
+
+维护中的[球体 FoldScript](Samples~/Sphere/sphere-golden.foldcanvas.json)包含八个面板，
+欧拉特征为 `2`，开放边、非流形边、方向冲突边都是 `0`，三角形朝外。
+[`1280 x 640` 社交预览候选图](https://github.com/zhangpan-soft/FoldCanvas/blob/main/Docs/Community/ProofGallery/social-preview.png)
+也只使用了这组已经审计的真实像素。
 
 ## 为什么要做这个引擎
 

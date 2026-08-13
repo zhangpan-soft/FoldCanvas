@@ -150,9 +150,22 @@ required = [
     "Scripts/generate_proof_gallery.py",
     "Scripts/validate_proof_gallery.py",
     "Scripts/test_proof_gallery.py",
+    "Scripts/compare_proof_gallery_evidence.py",
+    "Scripts/test_compare_proof_gallery_evidence.py",
+    "Scripts/generate_social_preview.py",
+    "Scripts/validate_readme_proof.py",
+    "Scripts/test_readme_proof.py",
     "Codex/M21_PROOF_GALLERY_EVIDENCE.md",
+    "Codex/M22_README_PROOF_PATCH.md",
     "Docs/Community/ProofGallery/README.md",
     "Docs/Community/ProofGallery/manifest.json",
+    "Docs/Community/ProofGallery/social-preview.png",
+    "Documentation~/ProofGallery/cup-source.png",
+    "Documentation~/ProofGallery/cup-textured.png",
+    "Documentation~/ProofGallery/cup-topology.png",
+    "Documentation~/ProofGallery/sphere-source.png",
+    "Documentation~/ProofGallery/sphere-textured.png",
+    "Documentation~/ProofGallery/sphere-topology.png",
     "Scripts/Templates~/M21ProofGallery/Assets/FoldCanvas.M21.ProofGallery.asmdef",
     "Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs",
     "Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryTests.cs",
@@ -675,8 +688,8 @@ if (
     or m14_contract.get("foldScriptVersion") != "0.1"
 ):
     errors.append("Historical M14 release-candidate header is invalid")
-if package_version != "1.0.0":
-    errors.append("M17 package version must be exact stable 1.0.0")
+if package_version != "1.0.1":
+    errors.append("M22 package version must be exact patch 1.0.1")
 
 m14_unity_matrix = m14_contract.get("unityMatrix")
 if m14_unity_matrix != [
@@ -945,7 +958,7 @@ if (
     m17_contract.get("format") != "foldcanvas-stable-release"
     or m17_contract.get("version") != "1"
     or m17_contract.get("packageName") != "com.foldcanvas.core"
-    or m17_contract.get("packageVersion") != package_version
+    or m17_contract.get("packageVersion") != "1.0.0"
     or m17_contract.get("tag") != "v1.0.0"
     or m17_contract.get("stableRelease") is not True
     or m17_contract.get("foldScriptVersion") != "0.1"
@@ -966,7 +979,7 @@ if (
     or m17_qualification.get("reportSha256")
     != "c581d89bb45a6269d183ff73d881d450f20c49e0dbd565e679ac9a922f779ad4"
     or m17_qualification.get("status") != "ready"
-    or m17_qualification.get("targetVersion") != package_version
+    or m17_qualification.get("targetVersion") != "1.0.0"
     or m17_qualification.get("soakHours", 0) < 168
     or m17_qualification.get("qualifyingScheduledLongRuns", 0) < 2
     or m17_qualification.get("satisfiedGateCount")
@@ -980,7 +993,7 @@ if hashlib.sha256(m17_report_path.read_bytes()).hexdigest() != (
     errors.append("M17 stable readiness report digest drifted")
 if (
     m17_report.get("status") != "ready"
-    or m17_report.get("targetVersion") != package_version
+    or m17_report.get("targetVersion") != "1.0.0"
     or m17_report.get("candidateCommit")
     != m17_qualification.get("candidateCommit")
     or m17_report.get("blockers") != []
@@ -1294,18 +1307,42 @@ agent_policy_text = (
 pull_request_template_text = (
     ROOT / ".github" / "pull_request_template.md"
 ).read_text(encoding="utf-8")
-if "M21: proof-gallery evidence generation" not in current_task_text:
-    errors.append("CURRENT_TASK.md must identify the active M21 milestone")
+if "M22: proof-first README patch" not in current_task_text:
+    errors.append("CURRENT_TASK.md must identify the active M22 milestone")
 for required_fragment in [
-    "GitHub issue #26, proof-generation gate only",
-    "eight-gore sphere",
-    "zero open",
-    "source canvases and FoldScript remain the only authoritative asset input",
-    "package-included README changes",
-    "16fc41fcdbe40861b19c9e928569ef84fadca347cd85b329ea835c6a59ab66e7",
+    "GitHub issue #26, README/social-preview gate only",
+    "1280 x 640",
+    "source canvases and FoldScript remain the only authoritative geometry input",
+    "package/compiler version `1.0.1`",
+    "public Runtime API shape remains",
+    "Published `v1.0.0` and RC2 artifacts",
 ]:
     if required_fragment not in active_plan_text:
-        errors.append("M21 active plan is missing: " + required_fragment)
+        errors.append("M22 active plan is missing: " + required_fragment)
+repository_checks_text = (
+    ROOT / ".github" / "workflows" / "repository-checks.yml"
+).read_text(encoding="utf-8")
+for required_fragment in [
+    "Validate proof-first README patch",
+    "python3 Scripts/validate_readme_proof.py",
+    "python3 Scripts/test_readme_proof.py",
+]:
+    if required_fragment not in repository_checks_text:
+        errors.append("Repository workflow is missing M22 proof validation: " + required_fragment)
+for required_fragment in [
+    "fetch-depth: 0",
+    "python3 Scripts/test_public_release.py",
+]:
+    if required_fragment not in repository_checks_text:
+        errors.append(
+            "Repository workflow cannot rebuild the frozen public release: "
+            + required_fragment
+        )
+package_release_text = (
+    ROOT / ".github" / "workflows" / "package-release.yml"
+).read_text(encoding="utf-8")
+if "fetch-depth: 0" not in package_release_text:
+    errors.append("Package workflow cannot rebuild the frozen public release")
 for required_fragment in [
     "actions/checkout",
     "3d3c42e5aac5ba805825da76410c181273ba90b1",
@@ -1379,8 +1416,9 @@ for required_fragment in [
     "unity-proof-gallery:",
     "Scripts/create_proof_gallery_project.py",
     "--package-archive",
-    "com.foldcanvas.core-1.0.0.tgz",
+    'com.foldcanvas.core-$package_version.tgz',
     "FoldCanvas Proof Gallery",
+    "FoldCanvas Proof Gallery Repeat",
     "generator_hash=",
     "FoldCanvas.M21Proof.FoldCanvasProofGalleryTests",
     "customParameters: >-",
@@ -1390,6 +1428,9 @@ for required_fragment in [
     "-foldCanvasProofTestSha256",
     "-foldCanvasProofRunnerSha256",
     "-foldCanvasProofProjectBuilderSha256",
+    "Scripts/compare_proof_gallery_evidence.py",
+    "artifacts/m21-proof-output-a/manifest.json",
+    "artifacts/m21-proof-output-b/manifest.json",
     "unity-proof-gallery-evidence",
 ]:
     if required_fragment not in unity_workflow:
@@ -1397,6 +1438,10 @@ for required_fragment in [
             "Unity workflow is missing M21 proof-gallery evidence: "
             f"{required_fragment}"
         )
+if unity_workflow.count("FoldCanvas.M21Proof.FoldCanvasProofGalleryTests") < 2:
+    errors.append("Unity workflow must run two independent proof-gallery hosts")
+if unity_workflow.count("Scripts/create_proof_gallery_project.py") < 2:
+    errors.append("Unity workflow must create two independent proof-gallery hosts")
 
 for required_fragment in [
     "artifacts/m11-clean-host-a",

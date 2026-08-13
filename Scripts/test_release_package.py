@@ -50,6 +50,12 @@ def main() -> int:
                 "package/Samples~/Gallery/gallery.json",
                 "package/Samples~/OperationExtension/README.md",
                 "package/Documentation~/index.md",
+                "package/Documentation~/ProofGallery/cup-source.png",
+                "package/Documentation~/ProofGallery/cup-textured.png",
+                "package/Documentation~/ProofGallery/cup-topology.png",
+                "package/Documentation~/ProofGallery/sphere-source.png",
+                "package/Documentation~/ProofGallery/sphere-textured.png",
+                "package/Documentation~/ProofGallery/sphere-topology.png",
                 "package/Documentation~/m14-release-candidate.json",
                 "package/Documentation~/m15-public-distribution.json",
                 "package/Documentation~/m17-stable-readiness-report.json",
@@ -125,11 +131,17 @@ def main() -> int:
             evidence = json.loads(
                 first_evidence.read_text(encoding="utf-8")
             )
+            is_stable = version == "1.0.0"
+            expected_format = (
+                "foldcanvas-stable-release-evidence"
+                if is_stable
+                else "foldcanvas-patch-release-evidence"
+            )
             if (
-                evidence.get("format") != "foldcanvas-stable-release-evidence"
+                evidence.get("format") != expected_format
                 or evidence.get("state") != "built-unverified"
                 or evidence.get("packageVersion") != version
-                or evidence.get("stableRelease") is not True
+                or evidence.get("stableRelease") is not is_stable
                 or evidence.get("archive", {}).get("sha256") != digest
                 or evidence.get("fileManifest", {}).get("file")
                 != first_manifest.name
@@ -138,7 +150,7 @@ def main() -> int:
                 or evidence.get("publication", {}).get("githubPrerelease")
                 is not False
                 or evidence.get("publication", {}).get("finalStableRelease")
-                is not True
+                is not is_stable
                 or evidence.get("publication", {}).get("externalMarketplace")
                 is not False
                 or evidence.get("contract", {}).get("path")
@@ -147,10 +159,16 @@ def main() -> int:
                 is not True
                 or evidence.get("stableQualification", {}).get("status")
                 != "ready"
+                or evidence.get("stableBaseline")
+                != {
+                    "packageVersion": "1.0.0",
+                    "tag": "v1.0.0",
+                    "immutable": True,
+                }
                 or "stable-exit-ready"
                 not in evidence.get("requiredPrePublicationGates", [])
             ):
-                raise AssertionError("Stable release evidence contract is invalid")
+                raise AssertionError("Release evidence contract is invalid")
 
     print(f"Release package validation passed for {version}.")
     print(f"Deterministic SHA256 {digest}")

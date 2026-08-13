@@ -51,15 +51,15 @@ def main() -> int:
     report_path = ROOT / "Documentation~" / "m17-stable-readiness-report.json"
     report = json.loads(report_path.read_text(encoding="utf-8"))
 
-    require(package["version"] == "1.0.0", "Stable package version drifted")
+    require(package["version"] == "1.0.1", "Current patch version drifted")
     require(package["unity"] == "6000.3", "Unity major/minor minimum drifted")
     require(package["unityRelease"] == "20f1", "Unity exact release drifted")
     require(
         contract["format"] == "foldcanvas-stable-release"
         and contract["version"] == "1"
         and contract["packageName"] == package["name"]
-        and contract["packageVersion"] == package["version"]
-        and contract["tag"] == "v" + package["version"]
+        and contract["packageVersion"] == "1.0.0"
+        and contract["tag"] == "v1.0.0"
         and contract["stableRelease"] is True,
         "Stable release contract header drifted",
     )
@@ -75,7 +75,7 @@ def main() -> int:
     )
     require(
         report["status"] == "ready"
-        and report["targetVersion"] == package["version"]
+        and report["targetVersion"] == contract["packageVersion"]
         and report["candidateCommit"]
         == contract["releaseCandidate"]["candidateCommit"]
         and report["soakHours"] >= 168
@@ -166,8 +166,8 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-a-") as first_dir:
         with tempfile.TemporaryDirectory(prefix="foldcanvas-m17-b-") as second_dir:
-            first = build_release_bundle(pathlib.Path(first_dir), "v1.0.0")
-            second = build_release_bundle(pathlib.Path(second_dir), "v1.0.0")
+            first = build_release_bundle(pathlib.Path(first_dir), "v1.0.1")
+            second = build_release_bundle(pathlib.Path(second_dir), "v1.0.1")
             for first_path, second_path in zip(first, second):
                 require(
                     first_path.read_bytes() == second_path.read_bytes(),
@@ -175,18 +175,27 @@ def main() -> int:
                 )
             evidence = json.loads(first[2].read_text(encoding="utf-8"))
             require(
-                evidence["format"] == "foldcanvas-stable-release-evidence"
-                and evidence["stableRelease"] is True
+                evidence["format"] == "foldcanvas-patch-release-evidence"
+                and evidence["stableRelease"] is False
                 and evidence["stableQualification"]
                 == contract["stableQualification"]
                 and evidence["releaseCandidate"] == release_candidate,
-                "Stable release evidence drifted",
+                "Stable baseline or patch evidence drifted",
+            )
+            require(
+                evidence["publication"]
+                == {
+                    "githubPrerelease": False,
+                    "finalStableRelease": False,
+                    "externalMarketplace": False,
+                },
+                "Unpublished patch evidence claims stable publication",
             )
             for wrong_tag in (
                 "v1.0.0-rc.2",
-                "v1.0.1",
+                "v1.0.0",
                 "v2.0.0",
-                "1.0.0",
+                "1.0.1",
             ):
                 try:
                     build_release_bundle(pathlib.Path(second_dir), wrong_tag)
@@ -201,8 +210,8 @@ def main() -> int:
         re.fullmatch(r"[0-9a-f]{64}", normalized_digest) is not None,
         "Normalized Runtime API digest is invalid",
     )
-    print("M17 stable release validation passed.")
-    print("Stable 1.0.0; Unity 6000.3.20f1; FoldScript 0.1.")
+    print("M17 stable baseline and M22 patch compatibility validation passed.")
+    print("Patch 1.0.1; stable baseline 1.0.0; Unity 6000.3.20f1; FoldScript 0.1.")
     return 0
 
 

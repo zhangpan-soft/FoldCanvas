@@ -14,6 +14,7 @@ namespace FoldCanvas.Tests
     public sealed class M17StableReleaseTests
     {
         private const string StableVersion = "1.0.0";
+        private const string CurrentVersion = "1.0.1";
         private const string QualifiedUnityVersion = "6000.3.20f1";
         private const string NormalizedVersionToken = "{PACKAGE_VERSION}";
 
@@ -26,11 +27,11 @@ namespace FoldCanvas.Tests
             StableReleaseContract contract = LoadContract(root);
 
             Assert.That(package.name, Is.EqualTo("com.foldcanvas.core"));
-            Assert.That(package.version, Is.EqualTo(StableVersion));
+            Assert.That(package.version, Is.EqualTo(CurrentVersion));
             Assert.That(package.unity, Is.EqualTo("6000.3"));
             Assert.That(package.unityRelease, Is.EqualTo("20f1"));
-            Assert.That(FoldCanvasVersion.Package, Is.EqualTo(StableVersion));
-            Assert.That(FoldCanvasVersion.Compiler, Is.EqualTo(StableVersion));
+            Assert.That(FoldCanvasVersion.Package, Is.EqualTo(CurrentVersion));
+            Assert.That(FoldCanvasVersion.Compiler, Is.EqualTo(CurrentVersion));
             Assert.That(contract.packageVersion, Is.EqualTo(StableVersion));
             Assert.That(contract.tag, Is.EqualTo("v" + StableVersion));
             Assert.That(contract.stableRelease, Is.True);
@@ -73,15 +74,15 @@ namespace FoldCanvas.Tests
                     typeof(FoldCanvasCompiler).Assembly,
                     FoldCanvasVersion.Package);
 
-            Assert.That(current.packageVersion, Is.EqualTo(StableVersion));
+            Assert.That(current.packageVersion, Is.EqualTo(CurrentVersion));
             Assert.That(current.signatureCount,
                 Is.EqualTo(contract.publicRuntimeApi.signatureCount));
             Assert.That(current.sha256,
                 Is.EqualTo(
-                    "81423d50792126cc9682fa32a6985f68bc24af28f8b9f93bdeeb5c43eee0c82a"));
+                    "006894afe985e177a3ccbddf42fac93f4febc33366e36a881b968933cfced9ac"));
             string[] normalized = current.signatures
                 .Select(signature => signature.Replace(
-                    StableVersion,
+                    CurrentVersion,
                     NormalizedVersionToken))
                 .ToArray();
             Assert.That(SignatureSha256(normalized),
@@ -97,7 +98,7 @@ namespace FoldCanvas.Tests
                     root,
                     "Documentation~/m11-production-corpus.json")));
 
-            Assert.That(corpus.packageVersion, Is.EqualTo(StableVersion));
+            Assert.That(corpus.packageVersion, Is.EqualTo(CurrentVersion));
             Assert.That(corpus.foldScriptVersion, Is.EqualTo("0.1"));
             Assert.That(corpus.unityVersion,
                 Is.EqualTo(QualifiedUnityVersion));

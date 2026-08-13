@@ -434,7 +434,8 @@ M16 does not change geometry, FoldScript, package dependencies, or RC2 bytes.
 
 ## M17: Stable 1.0.0 general availability
 
-**Status:** active on `agent/m17-stable-ga`.
+**Status:** complete. PR #29 merged the audited stable head and public
+`v1.0.0` passed its post-publication qualification.
 
 **Proof:** the exact M16 ready report authorizes one deterministic stable
 package. Normalized public Runtime API shape and all six production-corpus case
@@ -451,6 +452,31 @@ an RC2-to-stable source-first recompilation.
 
 M17 does not add geometry, topology, operations, dependencies, marketplace
 publication, or support for an unqualified Unity version.
+
+## M18-M21: Post-stable production evidence
+
+**Status:** complete through PR #35.
+
+M18 qualified reviewed Node 24 first-party Action pins while retaining one
+documented GameCI exception. M19 made all 72 scoped FoldScript fields
+executable documentation gates. M20 added a source-controlled Roll handedness
+review diagram. M21 generated six deterministic Unity proof PNGs and a
+canonical provenance manifest for the maintained cup and eight-gore sphere,
+outside the public `v1.0.0` package bytes.
+
+## M22: Proof-first README patch
+
+**Status:** active on `agent/m22-readme-proof-patch`.
+
+**Proof:** both package READMEs place the maintained 2D source beside the real
+textured and topology outputs. A deterministic `1280 x 640` social-preview
+candidate uses only those audited pixels. Because README files are UPM archive
+members, the package advances to compatible patch `1.0.1`; normalized Runtime
+API shape, corpus geometry, FoldScript `0.1`, Unity `6000.3.20f1`, dependencies,
+and all published `v1.0.0`/RC2 assets remain unchanged.
+
+M22 does not publish a tag, GitHub release, repository social setting, registry
+package, marketplace listing, or new geometry behavior.
 
 ## Deliberate product non-goals
 

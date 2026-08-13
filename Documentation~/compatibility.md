@@ -1,7 +1,9 @@
 # Compatibility and migration policy
 
-FoldCanvas `1.0.0` is the stable package, and compatibility changes
-are explicit rather than accidental. The checked-in public Runtime API manifest, canonical
+FoldCanvas `1.0.1` is the compatible patch currently under qualification;
+public `v1.0.0` remains the installable stable release until a separate release
+gate publishes the patch. Compatibility changes are explicit rather than
+accidental. The checked-in public Runtime API manifest, canonical
 FoldScript version, package version, Unity evidence, and migration notes are
 separate contracts.
 
@@ -9,7 +11,7 @@ separate contracts.
 
 | Surface | Current contract | Qualification |
 |---|---|---|
-| UPM package | `1.0.0` | deterministic `.tgz`, checksum, file manifest, and stable public-release evidence |
+| UPM package | `1.0.1` | deterministic `.tgz`, checksum, file manifest, and patch qualification evidence |
 | FoldScript | `0.1` | bounded reader and canonical writer |
 | Unity package minimum | `6000.3.20f1` | `unity: 6000.3` plus `unityRelease: 20f1` |
 | Unity production evidence | `6000.3.20f1` | repository tests and two clean archive installs |
@@ -19,7 +21,7 @@ Only `6000.3.20f1` is currently release-qualified. Other Unity 6000.3 patch
 versions may work, but they are not claimed as production evidence until CI
 runs them. The package has no URP/HDRP, third-party, or network dependency.
 
-Stable `1.0.0` carries forward replayable Editor-only robustness, scale,
+Patch `1.0.1` carries forward stable `1.0.0`'s replayable Editor-only robustness, scale,
 cancellation/retry, resource-envelope, hosted long-run, public-asset, and
 source-upgrade evidence. It does not add or remove a Runtime geometry operation
 or change FoldScript `0.1`.
@@ -96,9 +98,9 @@ changes are reviewed evidence, not migrations of the authoritative source.
 
 ## Release-candidate and semantic versions
 
-`1.0.0` preserves the normalized RC2 public API and exact production-corpus
-geometry. RC1 and RC2 are immutable prior releases; neither is rebuilt or
-relabeled. A stable patch keeps the public API and compatible behavior, a
+`1.0.1` preserves the normalized stable public API and exact production-corpus
+geometry. `1.0.0`, RC1, and RC2 are immutable prior releases; none is rebuilt
+or relabeled. A stable patch keeps the public API and compatible behavior, a
 minor version may add backward-compatible API, and a major version is required
 for a removal, changed signature, or incompatible behavior.
 
@@ -112,7 +114,8 @@ are documented in the [`stable release guide`](stable-release.md).
 
 ## 中文摘要
 
-FoldCanvas 当前稳定版为 `1.0.0`，不会把破坏性变化藏在普通提交里。公共 Runtime API
+FoldCanvas `1.0.1` 兼容补丁正在验收，当前已公开稳定版仍是 `v1.0.0`。项目不会把
+破坏性变化藏在普通提交里。公共 Runtime API
 由实际编译程序集生成基线；删除或修改签名必须有 ADR、迁移说明和明确版本决策。
 FoldScript 目前只支持 `0.1`，未知版本会稳定拒绝，不能猜测解析。当前真正跑过完整
 证据的 Unity 版本是 `6000.3.20f1`；`package.json` 同时声明 `6000.3` 和

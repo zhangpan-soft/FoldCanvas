@@ -35,7 +35,7 @@ def main() -> int:
         )
     )
 
-    require(package["version"] == "1.0.0", "Current stable version drifted")
+    require(package["version"] == "1.0.1", "Current patch version drifted")
     require(package["unity"] == "6000.3", "Unity major/minor minimum drifted")
     require(package["unityRelease"] == "20f1", "Unity exact release drifted")
     require(

@@ -225,6 +225,7 @@ def validate(
     manifest_path: pathlib.Path = MANIFEST,
     *,
     require_readme: bool = True,
+    expected_package_version: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     try:
@@ -245,8 +246,21 @@ def validate(
     if manifest["unityVersion"] != "6000.3.20f1":
         errors.append("proof Unity version must be 6000.3.20f1")
     package = json.loads((root / "package.json").read_text(encoding="utf-8"))
-    if manifest["packageVersion"] != package.get("version"):
-        errors.append("proof package version differs from package.json")
+    package_version = package.get("version")
+    if expected_package_version is None:
+        tracked_manifest = root / "Docs" / "Community" / "ProofGallery" / "manifest.json"
+        expected_package_version = (
+            "1.0.0"
+            if manifest_path.resolve() == tracked_manifest.resolve()
+            else package_version
+        )
+    if manifest["packageVersion"] != expected_package_version:
+        errors.append(
+            "proof package version must be "
+            f"{expected_package_version} for this evidence context"
+        )
+    if package_version not in {"1.0.0", "1.0.1"}:
+        errors.append("proof consumer package version is unsupported")
     if manifest["foldScriptVersion"] != "0.1":
         errors.append("proof FoldScript version must be 0.1")
     if manifest["generator"] != (
@@ -274,6 +288,9 @@ def validate(
     expected_gallery_files = {"manifest.json", *EXPECTED_ARTIFACTS}
     if require_readme:
         expected_gallery_files.add("README.md")
+        social_preview = manifest_path.parent / "social-preview.png"
+        if social_preview.is_file():
+            expected_gallery_files.add("social-preview.png")
     if gallery_files != expected_gallery_files:
         errors.append("proof gallery contains unexpected or missing files")
 

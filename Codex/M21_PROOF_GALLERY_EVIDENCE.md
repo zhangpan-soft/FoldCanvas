@@ -79,5 +79,7 @@ README integration is deferred to a separately versioned patch iteration.
 
 Unity `6000.3.20f1` regenerated the evidence twice from disposable clean hosts,
 and all seven files were byte-identical. Six PNGs were visually inspected. The
-full local repository matrix and exact stable-archive identity pass. Hosted
-exact-head checks, audit, and merge remain.
+full local repository matrix and exact stable-archive identity passed. Hosted
+exact-head checks passed on audited head
+`334fb01cc273888d3dadfbf188431cd49c23eb7d`; PR #35 merged as
+`67fb659ff53e13f21e464b8a4e837b72bdc60c50`. M21 is complete.

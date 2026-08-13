@@ -1,9 +1,9 @@
 # Current task
 
-Execute **M21: proof-gallery evidence generation**.
+Execute **M22: proof-first README patch**.
 
 Authoritative task file:
-[`Codex/M21_PROOF_GALLERY_EVIDENCE.md`](Codex/M21_PROOF_GALLERY_EVIDENCE.md)
+[`Codex/M22_README_PROOF_PATCH.md`](Codex/M22_README_PROOF_PATCH.md)
 
 M17 is complete. PR #29 merged stable package head
 `b0d2a849ff2bb990a209ff3104390fcdb200fd42` as merge commit
@@ -31,15 +31,22 @@ M20 is complete. PR #34 merged exact audited head
 `31607803239` and `31607803162` passed repository checks, 477/477 Edit Mode
 tests, two clean installs, producer/receiver handoff, and source-first upgrade.
 
-M21 is the release-excluded first gate of GitHub issue #26. It creates a
-deterministic Unity batch proof renderer for the maintained cup and eight-gore
-sphere, source-controlled proof images, and a machine-readable provenance
-manifest. It deliberately does not modify package-included `README.md`: the
-root README is part of the UPM archive, so README integration requires a later
-explicit patch-version decision. Published `v1.0.0` and RC2 release assets stay
-immutable.
+M21 is complete. PR #35 merged exact audited head
+`334fb01cc273888d3dadfbf188431cd49c23eb7d` as merge commit
+`67fb659ff53e13f21e464b8a4e837b72bdc60c50`. Main runs `31642947182` and
+`31642947199` passed repository checks, proof regeneration, 477/477 Edit Mode
+tests, repeated clean installs, producer/receiver handoff, and source-first
+upgrade. The six proof PNGs and canonical manifest are release-excluded, and
+the published stable archive stayed byte-identical.
 
-Implementation is active on `agent/m21-proof-gallery-evidence`.
+M22 is GitHub issue #26's separately versioned second gate. It integrates the
+audited M21 proof into both package READMEs and produces a deterministic
+`1280 x 640` social-preview candidate. Because both root READMEs are explicit
+UPM archive members, the package advances to compatible patch `1.0.1` with a
+new deterministic archive identity. Published `v1.0.0` and RC2 assets remain
+immutable; M22 does not publish a new tag, GitHub release, or external listing.
+
+Implementation is active on `agent/m22-readme-proof-patch`.
 
 The maintainer may research, plan, implement, audit, merge, and close this
 repository-only milestone autonomously. Credentials, paid services,

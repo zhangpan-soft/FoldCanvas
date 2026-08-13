@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - name: Validate immutable GitHub Action pins
         run: |
           python3 Scripts/validate_action_pins.py
@@ -28,6 +30,11 @@ jobs:
         run: |
           python3 Scripts/validate_proof_gallery.py
           python3 Scripts/test_proof_gallery.py
+          python3 Scripts/test_compare_proof_gallery_evidence.py
+      - name: Validate proof-first README patch
+        run: |
+          python3 Scripts/validate_readme_proof.py
+          python3 Scripts/test_readme_proof.py
       - name: Validate deterministic release archive
         run: python3 Scripts/test_release_package.py
       - name: Validate immutable RC2 release-candidate contract
