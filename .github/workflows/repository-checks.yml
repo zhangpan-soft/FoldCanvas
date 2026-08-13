@@ -30,6 +30,7 @@ jobs:
         run: |
           python3 Scripts/validate_proof_gallery.py
           python3 Scripts/test_proof_gallery.py
+          python3 Scripts/test_compare_proof_gallery_evidence.py
       - name: Validate proof-first README patch
         run: |
           python3 Scripts/validate_readme_proof.py

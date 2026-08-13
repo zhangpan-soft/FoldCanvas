@@ -38,6 +38,12 @@ compiles them through the package Runtime API, and accepts only the seven
 expected evidence files. It does not use `Project~`, an existing scene, a Unity
 primitive sphere, Blender, ImageGen, or a manually repaired Mesh.
 
+The tracked M21 PNG bytes were generated and repeated on the qualified macOS
+host. Hosted CI regenerates twice on independent clean Linux hosts and requires
+those two outputs to be byte-identical. Across platforms, the invariant is the
+same source hashes, geometry hashes, topology values, tools, and dimensions;
+GPU raster bytes are intentionally not treated as cross-platform identity.
+
 Validate the source, geometry claims, tool hashes, PNG structure/content,
 dimensions, and all SHA-256 values with:
 

@@ -25,6 +25,9 @@ The format follows Keep a Changelog principles, and package versions follow sema
   the root READMEs are deterministic UPM archive members
 - public Runtime API and production-corpus headers advanced to `1.0.1` while
   preserving normalized API shape and every geometry/topology case identity
+- hosted proof qualification uses two independent clean Unity hosts for
+  platform-local pixel repeatability while preserving source, geometry,
+  topology, tool, and fixed-dimension cross-platform evidence
 
 ### Preserved
 

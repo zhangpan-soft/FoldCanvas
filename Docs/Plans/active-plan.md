@@ -49,8 +49,12 @@ source, tool, geometry, topology, and SHA-256 evidence.
 # Geometry invariants
 
 - source canvases and FoldScript remain the only authoritative geometry input
-- the six M21 PNGs remain byte-identical and continue to bind to the same cup
-  and sphere geometry hashes and topology values
+- the six M21 PNGs and their package copies remain byte-identical and continue
+  to bind to the same cup and sphere geometry hashes and topology values
+- each hosted platform proves deterministic render bytes through two
+  independent clean-host regenerations; PNG bytes are not compared across GPU
+  platforms, while source, geometry, topology, tool, and dimensions are
+  cross-platform invariants
 - README image targets are package-contained byte copies of those exact PNGs;
   provenance and the release-excluded social candidate use public repository
   links so installed-package READMEs contain no broken `Docs/` references
@@ -76,8 +80,8 @@ source, tool, geometry, topology, and SHA-256 evidence.
    repeatability, plus adversarial fixtures.
 5. Advance package/compiler/changelog/API/corpus version evidence to `1.0.1`
    while proving normalized API shape and corpus cases unchanged.
-6. Wire repository validation and update the M21 proof host to consume the
-   current archive version without weakening its geometry evidence.
+6. Wire repository validation and update two independent M21 proof hosts to
+   consume the current archive version without weakening geometry evidence.
 7. Run complete static/archive/Unity/clean-host/proof gates and visual checks.
 8. Push a PR, require green exact-head hosted checks, record an exact-head
    maintainer audit, and merge only if all protected-main requirements pass.
@@ -135,6 +139,9 @@ source migration is required.
   compatible patch `1.0.1` instead of mutating or pretending to preserve the
   published `1.0.0` archive.
 - 2026-08-13: inspected all six M21 PNGs and retained their exact bytes.
+- 2026-08-13: hosted Linux regeneration reproduced source, geometry, topology,
+  and tool evidence but exposed platform-specific PNG raster bytes; replaced
+  the invalid macOS-to-Linux byte comparison with two-host Linux repeatability.
 
 # Decisions made
 
@@ -155,12 +162,12 @@ including 44 Action-pin fixtures, 72 Schema fields, 14 Roll review fixtures,
 stable-baseline compatibility, public-release verifier, source-first upgrade,
 clean-install, handoff, trust, JSON, and diff checks. The final `1.0.1`
 archive is byte-deterministic with SHA-256
-`5e27d390b02c46a5bb8d7f255cfa73e6f654771bd0f750a67da6c161a07b97c3`.
+`56699767ff482e7bfd4a8fcf90e5d2eb5b8ca8d553cf6a2387e5f29f03a4e656`.
 
 Unity `6000.3.20f1` installed that exact archive into a disposable clean host
-and passed 477/477 full package Edit Mode tests with zero failures, skips, or
+and passed 478/478 full package Edit Mode tests with zero failures, skips, or
 inconclusive results. `test-results.xml` and `Editor.log` exist under
-`/tmp/foldcanvas-m22-final-unity.tvLgRL/results/`. All six README package
+`/private/tmp/foldcanvas-m22-ci-fix-full.aHcxW2/results/`. All six README package
 images are byte-identical to M21, and the social candidate was visually
 inspected. Hosted exact-head checks, audit, and merge remain. M22 does not
 implement a new geometry operation or any later milestone behavior.

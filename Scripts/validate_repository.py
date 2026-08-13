@@ -150,6 +150,8 @@ required = [
     "Scripts/generate_proof_gallery.py",
     "Scripts/validate_proof_gallery.py",
     "Scripts/test_proof_gallery.py",
+    "Scripts/compare_proof_gallery_evidence.py",
+    "Scripts/test_compare_proof_gallery_evidence.py",
     "Scripts/generate_social_preview.py",
     "Scripts/validate_readme_proof.py",
     "Scripts/test_readme_proof.py",
@@ -1416,6 +1418,7 @@ for required_fragment in [
     "--package-archive",
     'com.foldcanvas.core-$package_version.tgz',
     "FoldCanvas Proof Gallery",
+    "FoldCanvas Proof Gallery Repeat",
     "generator_hash=",
     "FoldCanvas.M21Proof.FoldCanvasProofGalleryTests",
     "customParameters: >-",
@@ -1425,6 +1428,9 @@ for required_fragment in [
     "-foldCanvasProofTestSha256",
     "-foldCanvasProofRunnerSha256",
     "-foldCanvasProofProjectBuilderSha256",
+    "Scripts/compare_proof_gallery_evidence.py",
+    "artifacts/m21-proof-output-a/manifest.json",
+    "artifacts/m21-proof-output-b/manifest.json",
     "unity-proof-gallery-evidence",
 ]:
     if required_fragment not in unity_workflow:
@@ -1432,6 +1438,10 @@ for required_fragment in [
             "Unity workflow is missing M21 proof-gallery evidence: "
             f"{required_fragment}"
         )
+if unity_workflow.count("FoldCanvas.M21Proof.FoldCanvasProofGalleryTests") < 2:
+    errors.append("Unity workflow must run two independent proof-gallery hosts")
+if unity_workflow.count("Scripts/create_proof_gallery_project.py") < 2:
+    errors.append("Unity workflow must create two independent proof-gallery hosts")
 
 for required_fragment in [
     "artifacts/m11-clean-host-a",

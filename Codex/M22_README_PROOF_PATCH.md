@@ -47,8 +47,12 @@ FoldScript `0.1`, dependencies, or public Runtime API shape.
 - proof provenance continues to identify Unity `6000.3.20f1`, the maintained
   generator command, sources, geometry hashes, and validation values;
 - the immutable M21 manifest remains anchored to package `1.0.0`; hosted
-  regeneration records current package `1.0.1` and must reproduce the same
-  sources, geometry values, tool hashes, and proof pixels;
+  regeneration records current package `1.0.1` in two independent clean hosts
+  and must reproduce the same source, geometry, topology, tool, and per-run
+  pixel evidence in both hosts;
+- the frozen M21 macOS PNGs and package copies remain byte-identical; hosted
+  Linux raster bytes are compared only to a second Linux regeneration because
+  GPU raster output is not a cross-platform byte-identity contract;
 - package/runtime/changelog/API/corpus version headers agree on `1.0.1` while
   normalized Runtime API shape and all six corpus case identities remain
   unchanged;
@@ -70,6 +74,12 @@ request existed at start. Hosted main repository and Unity runs were green.
 
 Local implementation is complete. The full static/archive/install/upgrade
 matrix passes. Unity `6000.3.20f1` installed the final deterministic archive
-`5e27d390b02c46a5bb8d7f255cfa73e6f654771bd0f750a67da6c161a07b97c3`
-and passed 477/477 Edit Mode tests with zero failures, skips, or inconclusive
+`56699767ff482e7bfd4a8fcf90e5d2eb5b8ca8d553cf6a2387e5f29f03a4e656`
+and passed 478/478 Edit Mode tests with zero failures, skips, or inconclusive
 results. Hosted exact-head checks, maintainer audit, and merge remain.
+
+Hosted review of head `9dd3966f5564c23c29c83f77dd960258edbefca7`
+exposed an invalid cross-platform assertion: Linux Unity reproduced the exact
+source hashes, geometry hashes, and topology values but not the macOS PNG
+bytes. M22 now keeps the six M21/macOS bytes frozen while requiring two clean
+Linux regenerations to match each other byte-for-byte.

@@ -36,7 +36,11 @@ jobs:
             --output artifacts/m21-package \
             --tag "v$package_version"
           python3 Scripts/create_proof_gallery_project.py \
-            --project artifacts/m21-proof-host \
+            --project artifacts/m21-proof-host-a \
+            --package-archive \
+            "artifacts/m21-package/com.foldcanvas.core-$package_version.tgz"
+          python3 Scripts/create_proof_gallery_project.py \
+            --project artifacts/m21-proof-host-b \
             --package-archive \
             "artifacts/m21-package/com.foldcanvas.core-$package_version.tgz"
           echo "generator_hash=$(sha256sum Scripts/Templates~/M21ProofGallery/Assets/FoldCanvasProofGalleryGenerator.cs | awk '{print $1}')" >> "$GITHUB_OUTPUT"
@@ -44,8 +48,8 @@ jobs:
           echo "runner_hash=$(sha256sum Scripts/generate_proof_gallery.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           echo "project_builder_hash=$(sha256sum Scripts/create_proof_gallery_project.py | awk '{print $1}')" >> "$GITHUB_OUTPUT"
 
-      - name: Regenerate proof-gallery evidence
-        id: unity-proof
+      - name: Regenerate first proof-gallery evidence
+        id: unity-proof-a
         uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -53,17 +57,51 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: artifacts/m21-proof-host
+          projectPath: artifacts/m21-proof-host-a
           unityVersion: 6000.3.20f1
           testMode: EditMode
-          artifactsPath: artifacts/m21-proof-host/CIArtifacts/unity-proof-gallery
+          artifactsPath: artifacts/m21-proof-host-a/CIArtifacts/unity-proof-gallery
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: FoldCanvas Proof Gallery
           customParameters: >-
             -testFilter
             FoldCanvas.M21Proof.FoldCanvasProofGalleryTests
             -foldCanvasProofOutput
-            /github/workspace/artifacts/m21-proof-output
+            /github/workspace/artifacts/m21-proof-output-a
+            -foldCanvasProofSourceRevision
+            ${{ github.event.pull_request.head.sha || github.sha }}
+            -foldCanvasProofGeneratorSha256
+            ${{ steps.proof-inputs.outputs.generator_hash }}
+            -foldCanvasProofTestSha256
+            ${{ steps.proof-inputs.outputs.test_hash }}
+            -foldCanvasProofRunnerSha256
+            ${{ steps.proof-inputs.outputs.runner_hash }}
+            -foldCanvasProofProjectBuilderSha256
+            ${{ steps.proof-inputs.outputs.project_builder_hash }}
+
+      # The two clean hosts intentionally run on the same GitHub runner/GPU.
+      # Source/geometry/topology claims are cross-platform; raster bytes are
+      # only required to repeat within one platform and graphics environment.
+      - name: Regenerate second proof-gallery evidence
+        id: unity-proof-b
+        uses: game-ci/unity-test-runner@0ff419b913a3630032cbe0de48a0099b5a9f0ed9 # v4.3.1
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: artifacts/m21-proof-host-b
+          unityVersion: 6000.3.20f1
+          testMode: EditMode
+          artifactsPath: artifacts/m21-proof-host-b/CIArtifacts/unity-proof-gallery
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: FoldCanvas Proof Gallery Repeat
+          customParameters: >-
+            -testFilter
+            FoldCanvas.M21Proof.FoldCanvasProofGalleryTests
+            -foldCanvasProofOutput
+            /github/workspace/artifacts/m21-proof-output-b
             -foldCanvasProofSourceRevision
             ${{ github.event.pull_request.head.sha || github.sha }}
             -foldCanvasProofGeneratorSha256
@@ -79,62 +117,9 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          output="artifacts/m21-proof-output"
-          test -d "$output"
-          python3 Scripts/validate_proof_gallery.py \
-            --manifest "$output/manifest.json" \
-            --allow-missing-readme
-          python3 - <<'PY'
-          import json
-          import pathlib
-
-          tracked = json.loads(
-              pathlib.Path("Docs/Community/ProofGallery/manifest.json")
-              .read_text(encoding="utf-8")
-          )
-          regenerated = json.loads(
-              pathlib.Path("artifacts/m21-proof-output/manifest.json")
-              .read_text(encoding="utf-8")
-          )
-          current_version = json.loads(
-              pathlib.Path("package.json").read_text(encoding="utf-8")
-          )["version"]
-          if tracked["packageVersion"] != "1.0.0":
-              raise SystemExit("tracked M21 evidence must remain anchored to 1.0.0")
-          if regenerated["packageVersion"] != current_version:
-              raise SystemExit(
-                  "regenerated proof package version does not match current package"
-              )
-          for key in (
-              "format",
-              "version",
-              "unityVersion",
-              "foldScriptVersion",
-              "generator",
-              "generatorSha256",
-              "runnerSha256",
-              "testSha256",
-              "projectBuilderSha256",
-              "command",
-              "sources",
-              "geometry",
-          ):
-              if regenerated[key] != tracked[key]:
-                  raise SystemExit(f"regenerated proof contract drifted: {key}")
-          tracked_artifacts = {
-              item["path"]: item for item in tracked["artifacts"]
-          }
-          regenerated_artifacts = {
-              item["path"]: item for item in regenerated["artifacts"]
-          }
-          if regenerated_artifacts != tracked_artifacts:
-              raise SystemExit("regenerated proof artifact contract drifted")
-          for name, artifact in tracked_artifacts.items():
-              regenerated_path = pathlib.Path("artifacts/m21-proof-output") / name
-              packaged_path = pathlib.Path("Documentation~/ProofGallery") / name
-              if regenerated_path.read_bytes() != packaged_path.read_bytes():
-                  raise SystemExit(f"packaged proof copy drifted: {name}")
-          PY
+          python3 Scripts/compare_proof_gallery_evidence.py \
+            --first artifacts/m21-proof-output-a/manifest.json \
+            --second artifacts/m21-proof-output-b/manifest.json
 
       - name: Upload proof-gallery regeneration evidence
         if: always()
@@ -142,8 +127,10 @@ jobs:
         with:
           name: unity-proof-gallery-evidence
           path: |
-            artifacts/m21-proof-output
-            artifacts/m21-proof-host/CIArtifacts/unity-proof-gallery
+            artifacts/m21-proof-output-a
+            artifacts/m21-proof-output-b
+            artifacts/m21-proof-host-a/CIArtifacts/unity-proof-gallery
+            artifacts/m21-proof-host-b/CIArtifacts/unity-proof-gallery
           if-no-files-found: error
           retention-days: 14
 
